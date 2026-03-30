@@ -1,0 +1,35 @@
+[package]
+name = "aimforge"
+version = "0.1.0"
+description = "FPS Aim Calibration & Training Tool"
+authors = ["AimForge"]
+license = "MIT"
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-log = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+log = "0.4"
+rusqlite = { version = "0.34", features = ["bundled"] }
+crossbeam = "0.8"
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.58", features = [
+  "Win32_UI_Input",
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_Devices_HumanInterfaceDevice",
+  "Win32_Foundation",
+  "Win32_System_Performance",
+  "Win32_System_Registry",
+  "Win32_System_Threading",
+] }
