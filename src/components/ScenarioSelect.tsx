@@ -6,8 +6,9 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useSettingsStore } from '../stores/settingsStore';
-import type { GamePreset, ScenarioType, BatteryPreset } from '../utils/types';
+import type { GamePreset, ScenarioType, BatteryPreset, StageType } from '../utils/types';
 import { ConversionPanel } from './ConversionPanel';
+import { CrosshairSettings } from './CrosshairSettings';
 
 /** 시나리오 시작에 필요한 모든 파라미터 */
 export interface ScenarioParams {
@@ -44,13 +45,49 @@ export interface BatteryParams {
   preset: BatteryPreset;
 }
 
+/** Training 시나리오 시작 파라미터 */
+export interface TrainingStartParams {
+  stageType: StageType;
+}
+
 interface ScenarioSelectProps {
   onStart: (scenarioType: ScenarioType, params: ScenarioParams) => void;
+  onTrainingStart?: (params: TrainingStartParams) => void;
   onCalibration?: () => void;
   onZoomCalibration?: () => void;
   onBattery?: (params: BatteryParams) => void;
   onHistory?: () => void;
 }
+
+/** 9개 세분류 훈련 카탈로그 */
+const TRAINING_CATALOG = [
+  {
+    category: 'Flick',
+    icon: '///',
+    items: [
+      { type: 'flick_micro' as StageType, name: 'Micro Flick', desc: '5-15° 손가락 정밀 플릭', color: '#ff6b6b' },
+      { type: 'flick_medium' as StageType, name: 'Medium Flick', desc: '30-60° 손목 플릭 (핵심)', color: '#ffa500', star: true },
+      { type: 'flick_macro' as StageType, name: 'Macro Flick', desc: '90-180° 팔 대각/턴샷', color: '#e74c3c' },
+    ],
+  },
+  {
+    category: 'Tracking',
+    icon: '~~~',
+    items: [
+      { type: 'tracking_close' as StageType, name: 'Close Range', desc: '10-15m 근거리 (팔 움직임)', color: '#00b894' },
+      { type: 'tracking_mid' as StageType, name: 'Mid Range', desc: '20-30m 중거리 (손목+팔)', color: '#0984e3' },
+      { type: 'tracking_long' as StageType, name: 'Long Range', desc: '40-60m 원거리 (손목)', color: '#6c5ce7' },
+    ],
+  },
+  {
+    category: 'Switching',
+    icon: '<->',
+    items: [
+      { type: 'switching_close' as StageType, name: 'Close Multi', desc: '15-45° 근접 타겟 전환', color: '#fdcb6e' },
+      { type: 'switching_wide' as StageType, name: 'Wide Multi', desc: '60-150° 넓은 타겟 전환', color: '#e17055' },
+    ],
+  },
+];
 
 /** 시나리오 탭 정의 */
 const SCENARIO_TABS: Array<{ type: ScenarioType; label: string }> = [
@@ -62,7 +99,11 @@ const SCENARIO_TABS: Array<{ type: ScenarioType; label: string }> = [
   { type: 'micro_flick', label: 'Micro-Flick' },
 ];
 
-export function ScenarioSelect({ onStart, onCalibration, onZoomCalibration, onBattery, onHistory }: ScenarioSelectProps) {
+/** 메인 메뉴 탭 */
+type MainTab = 'training' | 'quickplay' | 'crosshair' | 'tools';
+
+export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoomCalibration, onBattery, onHistory }: ScenarioSelectProps) {
+  const [mainTab, setMainTab] = useState<MainTab>('training');
   const {
     dpi, sensitivity, selectedGame,
     setDpi, setSensitivity, selectGame,
@@ -228,9 +269,9 @@ export function ScenarioSelect({ onStart, onCalibration, onZoomCalibration, onBa
 
   return (
     <div className="scenario-select">
-      <h2>AimForge Test Engine</h2>
+      <h2>AimForge</h2>
 
-      {/* 하드웨어/게임 설정 */}
+      {/* 하드웨어/게임 설정 (항상 보임) */}
       <section className="settings-section">
         <h3>설정</h3>
         <div className="settings-grid">
@@ -272,90 +313,151 @@ export function ScenarioSelect({ onStart, onCalibration, onZoomCalibration, onBa
         </div>
       </section>
 
-      {/* 시나리오 선택 */}
-      <section className="settings-section">
-        <h3>시나리오</h3>
-        <div className="scenario-tabs">
-          {SCENARIO_TABS.map(({ type, label }) => (
-            <button
-              key={type}
-              className={scenarioType === type ? 'active' : ''}
-              onClick={() => setScenarioType(type)}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {renderParams()}
-      </section>
-
-      {/* 배터리 프리셋 */}
-      <section className="settings-section">
-        <h3>시나리오 배터리</h3>
-        <div className="battery-presets">
-          {(['TACTICAL', 'MOVEMENT', 'BR', 'CUSTOM'] as BatteryPreset[]).map((preset) => (
-            <label key={preset} className="battery-radio">
-              <input
-                type="radio"
-                name="battery"
-                value={preset}
-                checked={batteryPreset === preset}
-                onChange={() => setBatteryPreset(preset)}
-              />
-              {preset}
-            </label>
-          ))}
-        </div>
-        {onBattery && (
+      {/* 메인 탭 네비게이션 */}
+      <div className="main-tabs">
+        {([
+          { key: 'training' as MainTab, label: 'Training' },
+          { key: 'quickplay' as MainTab, label: 'Quick Play' },
+          { key: 'crosshair' as MainTab, label: 'Crosshair' },
+          { key: 'tools' as MainTab, label: 'Tools' },
+        ]).map(({ key, label }) => (
           <button
-            className="battery-button"
-            onClick={() => onBattery({ preset: batteryPreset })}
-            disabled={!selectedGame}
+            key={key}
+            className={`main-tab ${mainTab === key ? 'active' : ''}`}
+            onClick={() => setMainTab(key)}
           >
-            배터리 시작 ({batteryPreset})
+            {label}
           </button>
-        )}
-      </section>
-
-      {/* 감도 변환기 */}
-      <ConversionPanel games={games} />
-
-      <div className="action-buttons">
-        <button
-          className="start-button"
-          onClick={handleStart}
-          disabled={!selectedGame}
-        >
-          {getStartLabel()}
-        </button>
-        {onCalibration && (
-          <button
-            className="calibration-button"
-            onClick={onCalibration}
-            disabled={!selectedGame}
-          >
-            Quick Calibration
-          </button>
-        )}
-        {onZoomCalibration && (
-          <button
-            className="calibration-button"
-            onClick={onZoomCalibration}
-            disabled={!selectedGame}
-          >
-            Zoom Calibration
-          </button>
-        )}
-        {onHistory && (
-          <button
-            className="calibration-button"
-            onClick={onHistory}
-          >
-            히스토리
-          </button>
-        )}
+        ))}
       </div>
+
+      {/* ── Training 카탈로그 ── */}
+      {mainTab === 'training' && (
+        <section className="training-catalog">
+          {TRAINING_CATALOG.map(({ category, icon, items }) => (
+            <div key={category} className="catalog-category">
+              <h3 className="category-header">
+                <span className="category-icon">{icon}</span> {category}
+              </h3>
+              <div className="catalog-items">
+                {items.map((item) => (
+                  <button
+                    key={item.type}
+                    className="catalog-item"
+                    style={{ borderLeftColor: item.color }}
+                    disabled={!selectedGame}
+                    onClick={() => onTrainingStart?.({ stageType: item.type })}
+                  >
+                    <div className="catalog-item-header">
+                      <span className="catalog-item-name">
+                        {item.name}
+                        {'star' in item && item.star && <span className="star-badge">CORE</span>}
+                      </span>
+                    </div>
+                    <span className="catalog-item-desc">{item.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {/* ── Quick Play (기존 시나리오) ── */}
+      {mainTab === 'quickplay' && (
+        <>
+          <section className="settings-section">
+            <h3>시나리오</h3>
+            <div className="scenario-tabs">
+              {SCENARIO_TABS.map(({ type, label }) => (
+                <button
+                  key={type}
+                  className={scenarioType === type ? 'active' : ''}
+                  onClick={() => setScenarioType(type)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {renderParams()}
+            <button
+              className="start-button"
+              onClick={handleStart}
+              disabled={!selectedGame}
+            >
+              {getStartLabel()}
+            </button>
+          </section>
+
+          {/* 배터리 프리셋 */}
+          <section className="settings-section">
+            <h3>시나리오 배터리</h3>
+            <div className="battery-presets">
+              {(['TACTICAL', 'MOVEMENT', 'BR', 'CUSTOM'] as BatteryPreset[]).map((preset) => (
+                <label key={preset} className="battery-radio">
+                  <input
+                    type="radio"
+                    name="battery"
+                    value={preset}
+                    checked={batteryPreset === preset}
+                    onChange={() => setBatteryPreset(preset)}
+                  />
+                  {preset}
+                </label>
+              ))}
+            </div>
+            {onBattery && (
+              <button
+                className="battery-button"
+                onClick={() => onBattery({ preset: batteryPreset })}
+                disabled={!selectedGame}
+              >
+                배터리 시작 ({batteryPreset})
+              </button>
+            )}
+          </section>
+        </>
+      )}
+
+      {/* ── 크로스헤어 설정 ── */}
+      {mainTab === 'crosshair' && (
+        <CrosshairSettings />
+      )}
+
+      {/* ── Tools (캘리브레이션, 변환기, 히스토리) ── */}
+      {mainTab === 'tools' && (
+        <>
+          <ConversionPanel games={games} />
+          <div className="action-buttons">
+            {onCalibration && (
+              <button
+                className="calibration-button"
+                onClick={onCalibration}
+                disabled={!selectedGame}
+              >
+                Quick Calibration
+              </button>
+            )}
+            {onZoomCalibration && (
+              <button
+                className="calibration-button"
+                onClick={onZoomCalibration}
+                disabled={!selectedGame}
+              >
+                Zoom Calibration
+              </button>
+            )}
+            {onHistory && (
+              <button
+                className="calibration-button"
+                onClick={onHistory}
+              >
+                히스토리
+              </button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

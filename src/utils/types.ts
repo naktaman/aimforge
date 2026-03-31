@@ -434,38 +434,126 @@ export interface RadarAxis {
 
 // ========== Training Stage 시스템 ==========
 
-/** 훈련 스테이지 카테고리 */
+/** 훈련 스테이지 카테고리 (세분류 체계) */
 export type StageCategory =
-  | 'flick_shot'
+  | 'flick'
   | 'tracking'
+  | 'switching'
+  | 'assessment'
+  // 레거시 호환
+  | 'flick_shot'
   | 'target_switching'
   | 'close_range'
-  | 'long_range'
-  | 'assessment';
+  | 'long_range';
 
-/** 훈련 스테이지 타입 (15개 시나리오) */
+/** 9개 핵심 세분류 + 레거시 호환 타입 */
 export type StageType =
-  // Flick Shot (3)
+  // ── Flick 세분류 (3): 각도별 독립 DNA 축 ──
+  | 'flick_micro'          // 5-15° 마이크로 플릭 (손가락)
+  | 'flick_medium'         // 30-60° 미디엄 플릭 (손목) — 가중치 최고
+  | 'flick_macro'          // 90-180° 매크로 플릭 (팔)
+  // ── Tracking 세분류 (3): 거리별 독립 DNA 축 ──
+  | 'tracking_close'       // 근거리 트래킹 (팔 움직임, 10-15m)
+  | 'tracking_mid'         // 중거리 트래킹 (손목+팔, 20-30m)
+  | 'tracking_long'        // 원거리 트래킹 (손목, 40-60m)
+  // ── Switching 세분류 (2): 타겟 간격별 독립 DNA 축 ──
+  | 'switching_close'      // 근접 멀티타겟 (15-45° 간격)
+  | 'switching_wide'       // 원거리 멀티타겟 (60-150° 간격)
+  // ── Assessment (1) ──
+  | 'aim_dna_scan'         // Aim DNA 스캔
+  // ── 레거시 호환 ──
   | 'static_flick'
   | 'reaction_flick'
   | 'scoped_flick'
-  // Tracking (3)
   | 'horizontal_tracking'
   | 'aerial_tracking'
   | 'circular_tracking'
-  // Target Switching (2)
   | 'multi_flick'
   | 'zoom_multi_flick'
-  // Close Range (3)
   | 'close_range_180'
   | 'jump_tracking'
   | 'strafe_tracking'
-  // Long Range (2)
   | 'long_range_precision'
   | 'bulletdrop_sniping'
-  // Assessment (2)
-  | 'aim_dna_scan'
   | 'custom_drill';
+
+/** 트래킹 이동 패턴 — 실제 FPS 적 움직임 시뮬레이션 */
+export type MovementPattern =
+  | 'linear'        // 직선 이동 후 반전
+  | 'parabolic'     // 포물선/곡선 이동
+  | 'jitter'        // ADAD 스트레이핑 (불규칙 좌우 전환)
+  | 'acceleration'  // 가속/감속 이동
+  | 'mixed';        // 위 4가지 랜덤 조합
+
+/** 이동 패턴별 설정 */
+export interface MovementPatternConfig {
+  pattern: MovementPattern;
+  /** 기본 속도 (도/초) */
+  baseSpeedDegPerSec: number;
+  /** 방향 전환 빈도 (회/초) — jitter용 */
+  directionChangeFreq?: number;
+  /** 가속 배율 — acceleration용 (1.5 = 50% 가속) */
+  accelMultiplier?: number;
+  /** 곡선 진폭 (도) — parabolic용 */
+  arcAmplitudeDeg?: number;
+}
+
+/** 트래킹 세분류 시나리오 설정 */
+export interface TrackingStageConfig {
+  stageType: 'tracking_close' | 'tracking_mid' | 'tracking_long';
+  difficulty: DifficultyConfig;
+  /** 타겟 거리 (m) */
+  distance: number;
+  /** 이동 패턴 시퀀스 — 순서대로 전환됨 */
+  patterns: MovementPatternConfig[];
+  /** 전체 지속 시간 (ms) */
+  durationMs: number;
+}
+
+/** 플릭 세분류 시나리오 설정 */
+export interface FlickStageConfig {
+  stageType: 'flick_micro' | 'flick_medium' | 'flick_macro';
+  difficulty: DifficultyConfig;
+  /** 플릭 각도 범위 [min, max] (도) */
+  angleRange: [number, number];
+  /** 타겟 수 */
+  numTargets: number;
+  /** 타겟당 제한 시간 (ms) */
+  timeoutMs: number;
+}
+
+/** 스위칭 세분류 시나리오 설정 */
+export interface SwitchingStageConfig {
+  stageType: 'switching_close' | 'switching_wide';
+  difficulty: DifficultyConfig;
+  /** 타겟 간격 범위 [min, max] (도) */
+  separationRange: [number, number];
+  /** 웨이브 수 */
+  waveCount: number;
+  /** 웨이브당 타겟 수 */
+  targetsPerWave: number;
+}
+
+/** 세분류 시나리오 결과 — DNA 업데이트에 사용 */
+export interface SubCategoryResult {
+  stageType: StageType;
+  category: StageCategory;
+  /** 0-100 정규화 점수 */
+  score: number;
+  accuracy: number;
+  /** 플릭 전용: 평균 TTT (ms) */
+  avgTttMs?: number;
+  /** 플릭 전용: 평균 오버슛 (도) */
+  avgOvershootDeg?: number;
+  /** 트래킹 전용: MAD (도) */
+  trackingMad?: number;
+  /** 트래킹 전용: 패턴별 MAD */
+  patternScores?: Record<MovementPattern, number>;
+  /** 스위칭 전용: 평균 스위치 시간 (ms) */
+  avgSwitchTimeMs?: number;
+  /** 원시 메트릭 JSON */
+  rawMetrics: string;
+}
 
 /** 스테이지 메타데이터 */
 export interface StageMeta {
@@ -608,3 +696,104 @@ export interface TimelinePrediction {
   perFeature: Array<{ feature: string; gapPct: number; estimatedDays: number }>;
   disclaimer: string;
 }
+
+// ========== 크로스헤어 커스터마이징 ==========
+
+/** 크로스헤어 형태 */
+export type CrosshairShape = 'cross' | 'dot' | 'circle' | 't_shape' | 'cross_dot';
+
+/** 크로스헤어 설정 */
+export interface CrosshairConfig {
+  /** 형태 */
+  shape: CrosshairShape;
+  /** 내부선 길이 (px) */
+  innerLength: number;
+  /** 외부선 길이 (px, 0이면 없음) */
+  outerLength: number;
+  /** 두께 (px) */
+  thickness: number;
+  /** 센터 갭 (px) */
+  gap: number;
+  /** 메인 색상 (hex) */
+  color: string;
+  /** 메인 투명도 (0-1) */
+  opacity: number;
+  /** 아웃라인 사용 */
+  outlineEnabled: boolean;
+  /** 아웃라인 두께 (px) */
+  outlineThickness: number;
+  /** 아웃라인 색상 (hex) */
+  outlineColor: string;
+  /** 센터 도트 사용 */
+  dotEnabled: boolean;
+  /** 센터 도트 크기 (px) */
+  dotSize: number;
+  /** 다이나믹 크로스헤어 (발사 시 벌어짐) */
+  dynamicEnabled: boolean;
+  /** 다이나믹 벌어짐 크기 (px) */
+  dynamicSpread: number;
+}
+
+/** 크로스헤어 프리셋 */
+export interface CrosshairPreset {
+  name: string;
+  config: CrosshairConfig;
+}
+
+/** 기본 크로스헤어 프리셋 목록 */
+export const CROSSHAIR_PRESETS: CrosshairPreset[] = [
+  {
+    name: 'CS2 Default',
+    config: {
+      shape: 'cross', innerLength: 5, outerLength: 0, thickness: 1, gap: 3,
+      color: '#4ade80', opacity: 1, outlineEnabled: true, outlineThickness: 1,
+      outlineColor: '#000000', dotEnabled: false, dotSize: 2,
+      dynamicEnabled: false, dynamicSpread: 3,
+    },
+  },
+  {
+    name: 'Valorant Default',
+    config: {
+      shape: 'cross', innerLength: 4, outerLength: 2, thickness: 2, gap: 3,
+      color: '#00ff00', opacity: 1, outlineEnabled: true, outlineThickness: 1,
+      outlineColor: '#000000', dotEnabled: true, dotSize: 2,
+      dynamicEnabled: false, dynamicSpread: 0,
+    },
+  },
+  {
+    name: 'Dot Only',
+    config: {
+      shape: 'dot', innerLength: 0, outerLength: 0, thickness: 0, gap: 0,
+      color: '#ff4444', opacity: 1, outlineEnabled: true, outlineThickness: 1,
+      outlineColor: '#000000', dotEnabled: true, dotSize: 4,
+      dynamicEnabled: false, dynamicSpread: 0,
+    },
+  },
+  {
+    name: 'Circle',
+    config: {
+      shape: 'circle', innerLength: 0, outerLength: 0, thickness: 2, gap: 10,
+      color: '#ffffff', opacity: 0.8, outlineEnabled: false, outlineThickness: 0,
+      outlineColor: '#000000', dotEnabled: true, dotSize: 2,
+      dynamicEnabled: false, dynamicSpread: 0,
+    },
+  },
+  {
+    name: 'T-Shape',
+    config: {
+      shape: 't_shape', innerLength: 6, outerLength: 0, thickness: 2, gap: 2,
+      color: '#00ffff', opacity: 1, outlineEnabled: true, outlineThickness: 1,
+      outlineColor: '#000000', dotEnabled: false, dotSize: 0,
+      dynamicEnabled: false, dynamicSpread: 0,
+    },
+  },
+  {
+    name: 'Minimal',
+    config: {
+      shape: 'cross', innerLength: 3, outerLength: 0, thickness: 1, gap: 2,
+      color: '#ffffff', opacity: 0.7, outlineEnabled: false, outlineThickness: 0,
+      outlineColor: '#000000', dotEnabled: false, dotSize: 0,
+      dynamicEnabled: false, dynamicSpread: 0,
+    },
+  },
+];

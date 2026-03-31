@@ -4,7 +4,8 @@
  */
 import { create } from 'zustand';
 import { gameSensToCm360, gameFovToHfov } from '../utils/physics';
-import type { GamePreset } from '../utils/types';
+import type { GamePreset, CrosshairConfig } from '../utils/types';
+import { CROSSHAIR_PRESETS } from '../utils/types';
 
 interface SettingsState {
   // 하드웨어
@@ -24,6 +25,9 @@ interface SettingsState {
   currentZoom: number; // 1 = hipfire
   scopeMultiplier: number;
 
+  // 크로스헤어
+  crosshair: CrosshairConfig;
+
   // 액션
   setDpi: (dpi: number) => void;
   setPollingRate: (rate: number) => void;
@@ -31,6 +35,10 @@ interface SettingsState {
   setSensitivity: (sens: number) => void;
   setFovSetting: (fov: number) => void;
   setZoom: (zoom: number, multiplier: number) => void;
+  setCrosshair: (config: Partial<CrosshairConfig>) => void;
+  setCrosshairPreset: (presetName: string) => void;
+  exportCrosshairCode: () => string;
+  importCrosshairCode: (code: string) => boolean;
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
@@ -93,4 +101,42 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   setZoom: (currentZoom, scopeMultiplier) =>
     set({ currentZoom, scopeMultiplier }),
+
+  // 크로스헤어 기본값: CS2 프리셋
+  crosshair: { ...CROSSHAIR_PRESETS[0].config },
+
+  setCrosshair: (partial) => {
+    const current = get().crosshair;
+    set({ crosshair: { ...current, ...partial } });
+  },
+
+  setCrosshairPreset: (presetName) => {
+    const preset = CROSSHAIR_PRESETS.find((p) => p.name === presetName);
+    if (preset) set({ crosshair: { ...preset.config } });
+  },
+
+  /** 크로스헤어 설정을 share code로 인코딩 */
+  exportCrosshairCode: () => {
+    const c = get().crosshair;
+    // 설정을 JSON → base64 인코딩 후 AIM- 프리픽스
+    const json = JSON.stringify(c);
+    const b64 = btoa(json);
+    return `AIM-${b64}`;
+  },
+
+  /** share code에서 크로스헤어 설정 복원 */
+  importCrosshairCode: (code) => {
+    try {
+      if (!code.startsWith('AIM-')) return false;
+      const b64 = code.slice(4);
+      const json = atob(b64);
+      const config = JSON.parse(json) as CrosshairConfig;
+      // 필수 필드 검증
+      if (typeof config.shape !== 'string' || typeof config.innerLength !== 'number') return false;
+      set({ crosshair: config });
+      return true;
+    } catch {
+      return false;
+    }
+  },
 }));

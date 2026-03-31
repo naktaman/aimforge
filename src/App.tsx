@@ -5,7 +5,7 @@ import { useSettingsStore } from './stores/settingsStore';
 import { useSessionStore } from './stores/sessionStore';
 import { useCalibrationStore, type CalibrationMode, type ConvergenceLevel } from './stores/calibrationStore';
 import { useBatteryStore, BATTERY_SCENARIO_DEFAULTS } from './stores/batteryStore';
-import { ScenarioSelect, type ScenarioParams, type BatteryParams } from './components/ScenarioSelect';
+import { ScenarioSelect, type ScenarioParams, type BatteryParams, type TrainingStartParams } from './components/ScenarioSelect';
 import { Viewport } from './components/Viewport';
 import { TrialResults } from './components/TrialResults';
 import { CalibrationSetup } from './components/CalibrationSetup';
@@ -31,6 +31,19 @@ import { CounterStrafeFlickScenario } from './engine/scenarios/CounterStrafeFlic
 import { MicroFlickScenario } from './engine/scenarios/MicroFlickScenario';
 import { AudioManager } from './engine/AudioManager';
 import { calculateFlickScore, calculateTrackingScore } from './engine/metrics/CompositeScore';
+import {
+  FlickMicroScenario,
+  FlickMediumScenario,
+  FlickMacroScenario,
+  TrackingCloseScenario,
+  TrackingMidScenario,
+  TrackingLongScenario,
+  SwitchingCloseScenario,
+  SwitchingWideScenario,
+  getCloseRangePatterns,
+  getMidRangePatterns,
+  getLongRangePatterns,
+} from './engine/scenarios/stages';
 import type { GameEngine } from './engine/GameEngine';
 import type { ScenarioType } from './utils/types';
 
@@ -228,6 +241,155 @@ function App() {
       }
     },
     [dpi, startScenario, endScenario, setFlickResult, setTrackingResult, setMicroFlickResult, setScreen, handleFlickComplete],
+  );
+
+  /** 훈련 세분류 시나리오 시작 */
+  const handleTrainingStart = useCallback(
+    (params: TrainingStartParams) => {
+      const engine = engineRef.current;
+      const tm = targetManagerRef.current;
+      if (!engine || !tm) return;
+
+      setScreen('viewport');
+      // 세분류 시나리오는 'flick' ScenarioType으로 매핑 (결과 처리는 범용)
+      startScenario('flick');
+
+      /** 훈련 결과 공통 콜백 */
+      const onTrainingComplete = (results: unknown) => {
+        // results에는 stageType, score, accuracy 등이 포함됨
+        const r = results as { score?: number; accuracy?: number; stageType?: string };
+        console.log('[Training]', r.stageType, 'score:', r.score, 'accuracy:', r.accuracy);
+        endScenario();
+        engine.setScenario(null);
+        setScreen('results');
+      };
+
+      // 기본 난이도 설정
+      const defaultDifficulty = {
+        mode: 'benchmark' as const,
+        targetSizeDeg: 3,
+        targetSpeedDegPerSec: 40,
+        reactionWindowMs: 3000,
+        targetCount: 20,
+        adaptiveTargetSuccessRate: 0.75,
+      };
+
+      switch (params.stageType) {
+        case 'flick_micro': {
+          const s = new FlickMicroScenario(engine, tm, {
+            stageType: 'flick_micro',
+            difficulty: { ...defaultDifficulty, targetSizeDeg: 2.5 },
+            angleRange: [5, 15],
+            numTargets: 20,
+            timeoutMs: 2500,
+          });
+          s.setOnComplete(onTrainingComplete);
+          engine.setScenario(s);
+          s.start();
+          audioManager.playSpawn();
+          break;
+        }
+        case 'flick_medium': {
+          const s = new FlickMediumScenario(engine, tm, {
+            stageType: 'flick_medium',
+            difficulty: { ...defaultDifficulty, targetSizeDeg: 3 },
+            angleRange: [30, 60],
+            numTargets: 20,
+            timeoutMs: 3000,
+          });
+          s.setOnComplete(onTrainingComplete);
+          engine.setScenario(s);
+          s.start();
+          audioManager.playSpawn();
+          break;
+        }
+        case 'flick_macro': {
+          const s = new FlickMacroScenario(engine, tm, {
+            stageType: 'flick_macro',
+            difficulty: { ...defaultDifficulty, targetSizeDeg: 4 },
+            angleRange: [90, 180],
+            numTargets: 15,
+            timeoutMs: 4000,
+          });
+          s.setOnComplete(onTrainingComplete);
+          engine.setScenario(s);
+          s.start();
+          audioManager.playSpawn();
+          break;
+        }
+        case 'tracking_close': {
+          const s = new TrackingCloseScenario(engine, tm, {
+            stageType: 'tracking_close',
+            difficulty: { ...defaultDifficulty, targetSizeDeg: 3.5, targetSpeedDegPerSec: 60 },
+            distance: 12,
+            patterns: getCloseRangePatterns(),
+            durationMs: 20000,
+          });
+          s.setOnComplete(onTrainingComplete);
+          engine.setScenario(s);
+          s.start();
+          break;
+        }
+        case 'tracking_mid': {
+          const s = new TrackingMidScenario(engine, tm, {
+            stageType: 'tracking_mid',
+            difficulty: { ...defaultDifficulty, targetSizeDeg: 2.5, targetSpeedDegPerSec: 40 },
+            distance: 25,
+            patterns: getMidRangePatterns(),
+            durationMs: 20000,
+          });
+          s.setOnComplete(onTrainingComplete);
+          engine.setScenario(s);
+          s.start();
+          break;
+        }
+        case 'tracking_long': {
+          const s = new TrackingLongScenario(engine, tm, {
+            stageType: 'tracking_long',
+            difficulty: { ...defaultDifficulty, targetSizeDeg: 1.5, targetSpeedDegPerSec: 20 },
+            distance: 50,
+            patterns: getLongRangePatterns(),
+            durationMs: 20000,
+          });
+          s.setOnComplete(onTrainingComplete);
+          engine.setScenario(s);
+          s.start();
+          break;
+        }
+        case 'switching_close': {
+          const s = new SwitchingCloseScenario(engine, tm, {
+            stageType: 'switching_close',
+            difficulty: { ...defaultDifficulty, targetSizeDeg: 3 },
+            separationRange: [15, 45],
+            waveCount: 6,
+            targetsPerWave: 3,
+          });
+          s.setOnComplete(onTrainingComplete);
+          engine.setScenario(s);
+          s.start();
+          audioManager.playSpawn();
+          break;
+        }
+        case 'switching_wide': {
+          const s = new SwitchingWideScenario(engine, tm, {
+            stageType: 'switching_wide',
+            difficulty: { ...defaultDifficulty, targetSizeDeg: 3.5 },
+            separationRange: [60, 150],
+            waveCount: 5,
+            targetsPerWave: 3,
+          });
+          s.setOnComplete(onTrainingComplete);
+          engine.setScenario(s);
+          s.start();
+          audioManager.playSpawn();
+          break;
+        }
+        default:
+          console.warn('[Training] 미지원 스테이지:', params.stageType);
+          break;
+      }
+    },
+    [startScenario, endScenario, setScreen],
   );
 
   /** 배터리 시작 — ScenarioBattery 인스턴스 생성 후 battery-progress 이동 */
@@ -518,6 +680,7 @@ function App() {
           <main className="app-main">
             <ScenarioSelect
               onStart={handleStart}
+              onTrainingStart={handleTrainingStart}
               onCalibration={() => setScreen('calibration-setup')}
               onZoomCalibration={() => setScreen('zoom-calibration-setup')}
               onBattery={handleBattery}
@@ -533,7 +696,7 @@ function App() {
         {/* 오버레이 */}
         {currentScreen === 'viewport' && (
           <>
-            <Crosshair type="cross" color="#4ade80" size={20} thickness={2} gap={4} />
+            <Crosshair />
             <ScopeOverlay zoomLevel={currentZoom} active={scopeMultiplier > 1} />
             {/* HUD */}
             <div className="hud">
