@@ -76,4 +76,6 @@ pub struct MouseBatch {
     pub total_dy: i32,
     /// 프레임 내 버튼 이벤트 (클릭만 필터링)
     pub button_events: Vec<MouseEvent>,
+    /// 최신 이벤트의 QPC 타임스탬프 (µs) — 입력 레이턴시 측정용
+    pub latest_timestamp_us: u64,
 }

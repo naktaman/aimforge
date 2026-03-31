@@ -10,7 +10,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { rawToCm, cmToDegrees, DEG2RAD } from '../utils/physics';
 import { createEnvironment } from './Environment';
 import { requestPointerLock, isPointerLocked, onPointerLockChange } from './PointerLock';
-import type { MouseBatch, EngineConfig } from '../utils/types';
+import type { MouseBatch, EngineConfig, PerfData } from '../utils/types';
 import type { TargetManager } from './TargetManager';
 import type { Scenario } from './scenarios/Scenario';
 
@@ -58,6 +58,15 @@ export class GameEngine {
   private onFpsUpdate: ((fps: number) => void) | null = null;
   private onPointerLockStateChange: ((locked: boolean) => void) | null = null;
 
+  // === 퍼포먼스 측정 (Phase 5) ===
+  private frameTimeMs = 0;
+  private inputLatencyUs = 0;
+  private onPerfUpdate: ((data: PerfData) => void) | null = null;
+
+  // === 입력 더블 버퍼 (Phase 5: 레이턴시 최소화) ===
+  private pendingBatch: MouseBatch | null = null;
+  private fetchingBatch = false;
+
   constructor(canvas: HTMLCanvasElement, config: EngineConfig) {
     this.canvas = canvas;
     this.dpi = config.dpi;
@@ -86,6 +95,9 @@ export class GameEngine {
 
     // 환경 구성 (Group 반환 — counter-strafe에서 이동용)
     this.environmentGroup = createEnvironment(this.scene);
+
+    // WebGL 컨텍스트 손실 핸들링
+    this.setupContextHandlers();
 
     // 리사이즈 대응
     this.handleResize = this.handleResize.bind(this);
@@ -224,12 +236,51 @@ export class GameEngine {
     this.onPointerLockStateChange = cb;
   }
 
-  /** 리소스 정리 */
+  /** 리소스 정리 — 모든 Three.js 리소스 명시적 해제 */
   dispose(): void {
     this.stop();
     window.removeEventListener('resize', this.handleResize);
-    this.renderer.dispose();
+
+    // 씬 내 모든 geometry/material 명시적 dispose (메모리 누수 방지)
+    this.scene.traverse((obj) => {
+      if (obj instanceof THREE.Mesh) {
+        obj.geometry?.dispose();
+        if (Array.isArray(obj.material)) {
+          obj.material.forEach((m) => m.dispose());
+        } else if (obj.material) {
+          obj.material.dispose();
+        }
+      }
+    });
     this.scene.clear();
+    this.renderer.dispose();
+    this.environmentGroup = null;
+  }
+
+  /** 퍼포먼스 데이터 콜백 설정 */
+  setOnPerfUpdate(cb: (data: PerfData) => void): void {
+    this.onPerfUpdate = cb;
+  }
+
+  /** 현재 메모리 사용 정보 (Three.js renderer) */
+  getMemoryInfo(): { geometries: number; textures: number } {
+    const info = this.renderer.info;
+    return {
+      geometries: info.memory.geometries,
+      textures: info.memory.textures,
+    };
+  }
+
+  /** WebGL 컨텍스트 손실 감지 + 복구 시도 */
+  private setupContextHandlers(): void {
+    this.canvas.addEventListener('webglcontextlost', (e) => {
+      e.preventDefault();
+      this.stop();
+      console.error('[GameEngine] WebGL 컨텍스트 손실');
+    });
+    this.canvas.addEventListener('webglcontextrestored', () => {
+      console.info('[GameEngine] WebGL 컨텍스트 복구됨');
+    });
   }
 
   // === 내부 메서드 ===
@@ -241,19 +292,49 @@ export class GameEngine {
     const deltaTime = (time - this.lastTime) / 1000; // 초 단위
     this.lastTime = time;
 
-    // FPS 계산 (1초마다 업데이트)
+    // FPS + 프레임 타임 계산 (1초마다 업데이트)
+    this.frameTimeMs = deltaTime * 1000;
     this.frameCount++;
     this.fpsAccumulator += deltaTime;
     if (this.fpsAccumulator >= 1.0) {
       this.currentFps = Math.round(this.frameCount / this.fpsAccumulator);
       this.onFpsUpdate?.(this.currentFps);
+      // 퍼포먼스 데이터 콜백
+      this.onPerfUpdate?.({
+        fps: this.currentFps,
+        frameTimeMs: this.frameTimeMs,
+        inputLatencyUs: this.inputLatencyUs,
+        geometries: this.renderer.info.memory.geometries,
+        textures: this.renderer.info.memory.textures,
+      });
       this.frameCount = 0;
       this.fpsAccumulator = 0;
     }
 
-    // 마우스 입력 처리 (Pointer Lock 상태에서만)
+    // 마우스 입력 처리 — 더블 버퍼 패턴으로 IPC 지연 최소화
     if (this.capturing && isPointerLocked()) {
-      this.processMouseInput();
+      // 이전 프레임에서 가져온 배치를 즉시 적용
+      if (this.pendingBatch) {
+        const batch = this.pendingBatch;
+        this.pendingBatch = null;
+        if (batch.total_dx !== 0 || batch.total_dy !== 0) {
+          this.applyMouseDelta(batch.total_dx, batch.total_dy);
+        }
+        if (batch.button_events.length > 0 && this.activeScenario) {
+          for (const evt of batch.button_events) {
+            if (evt.button === 'Left') {
+              this.activeScenario.onClick();
+            }
+          }
+        }
+        // 입력 레이턴시 추정 (최신 이벤트 타임스탬프 기준)
+        if (batch.latest_timestamp_us) {
+          const nowUs = performance.now() * 1000;
+          this.inputLatencyUs = Math.max(0, nowUs - batch.latest_timestamp_us);
+        }
+      }
+      // 다음 프레임용 배치를 비동기로 가져옴 (렌더 블로킹 없음)
+      this.prefetchMouseBatch();
     }
 
     // 시나리오 업데이트
@@ -273,25 +354,18 @@ export class GameEngine {
     this.animFrameId = requestAnimationFrame((t) => this.loop(t));
   }
 
-  /** Rust에서 마우스 배치 드레인 후 카메라 회전 적용 */
-  private async processMouseInput(): Promise<void> {
-    try {
-      const batch: MouseBatch = await invoke('drain_mouse_batch');
-      if (batch.total_dx !== 0 || batch.total_dy !== 0) {
-        this.applyMouseDelta(batch.total_dx, batch.total_dy);
-      }
-
-      // 버튼 이벤트 처리 (시나리오에 전달)
-      if (batch.button_events.length > 0 && this.activeScenario) {
-        for (const evt of batch.button_events) {
-          if (evt.button === 'Left') {
-            this.activeScenario.onClick();
-          }
-        }
-      }
-    } catch {
-      // 캡처 중지 중이면 무시
-    }
+  /** 다음 프레임용 마우스 배치를 비동기 프리페치 (렌더 블로킹 없음) */
+  private prefetchMouseBatch(): void {
+    if (this.fetchingBatch) return; // 이미 가져오는 중이면 스킵
+    this.fetchingBatch = true;
+    invoke('drain_mouse_batch')
+      .then((batch) => {
+        this.pendingBatch = batch as MouseBatch;
+        this.fetchingBatch = false;
+      })
+      .catch(() => {
+        this.fetchingBatch = false;
+      });
   }
 
   /** raw delta → 카메라 회전 적용 */

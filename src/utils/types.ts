@@ -16,6 +16,17 @@ export interface MouseBatch {
   total_dx: number;
   total_dy: number;
   button_events: MouseEvent[];
+  /** 최신 이벤트의 QPC 타임스탬프 (µs) — 입력 레이턴시 계산용 */
+  latest_timestamp_us?: number;
+}
+
+/** 퍼포먼스 오버레이 데이터 */
+export interface PerfData {
+  fps: number;
+  frameTimeMs: number;
+  inputLatencyUs: number;
+  geometries: number;
+  textures: number;
 }
 
 /** 게임 프리셋 (Rust GamePreset 대응) */

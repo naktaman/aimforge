@@ -108,9 +108,15 @@ pub fn drain_mouse_batch(state: State<AppState>) -> Result<MouseBatch, String> {
     let mut total_dy: i32 = 0;
 
     // 채널에서 모든 대기 중인 이벤트 드레인 (non-blocking)
+    let mut latest_timestamp_us: u64 = 0;
     while let Ok(event) = input_state.receiver.try_recv() {
         total_dx += event.delta_x;
         total_dy += event.delta_y;
+
+        // 최신 타임스탬프 추적 (입력 레이턴시 측정용)
+        if event.timestamp_us > latest_timestamp_us {
+            latest_timestamp_us = event.timestamp_us;
+        }
 
         // 버튼 이벤트는 별도 분리 (클릭 타이밍 분석용)
         if event.button.is_some() {
@@ -125,5 +131,6 @@ pub fn drain_mouse_batch(state: State<AppState>) -> Result<MouseBatch, String> {
         total_dx,
         total_dy,
         button_events,
+        latest_timestamp_us,
     })
 }

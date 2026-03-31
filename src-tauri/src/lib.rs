@@ -116,6 +116,26 @@ pub fn run() {
             crossgame::commands::compare_game_dna,
             crossgame::commands::predict_crossgame_timeline,
             crossgame::commands::record_crossgame_progress,
+            // Phase 5: 신규 커맨드
+            db::commands::log_crash,
+            db::commands::get_crash_logs,
+            db::commands::get_daily_stats,
+            db::commands::get_skill_progress,
+            db::commands::save_user_setting,
+            db::commands::get_user_setting,
+            db::commands::get_all_user_settings,
+            db::commands::create_game_profile,
+            db::commands::get_game_profiles,
+            db::commands::update_game_profile,
+            db::commands::delete_game_profile,
+            db::commands::set_active_game_profile,
+            db::commands::create_routine,
+            db::commands::get_routines,
+            db::commands::delete_routine,
+            db::commands::add_routine_step,
+            db::commands::get_routine_steps,
+            db::commands::remove_routine_step,
+            db::commands::export_database,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

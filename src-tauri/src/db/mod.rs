@@ -672,6 +672,461 @@ impl Database {
         })?;
         rows.collect()
     }
+
+    // ═══════════════════════════════════════════════════
+    // Phase 5: 신규 테이블 CRUD
+    // ═══════════════════════════════════════════════════
+
+    // ── 크래시 로그 ──
+
+    /// 크래시 로그 저장
+    pub fn insert_crash_log(
+        &self,
+        error_type: &str,
+        error_message: &str,
+        stack_trace: Option<&str>,
+        context: &str,
+        app_version: &str,
+    ) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO crash_logs (error_type, error_message, stack_trace, context, app_version) \
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            rusqlite::params![error_type, error_message, stack_trace, context, app_version],
+        )?;
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    /// 최근 크래시 로그 조회
+    pub fn get_crash_logs(&self, limit: i64) -> Result<Vec<CrashLogRow>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, error_type, error_message, stack_trace, context, app_version, created_at \
+             FROM crash_logs ORDER BY created_at DESC LIMIT ?1"
+        )?;
+        let rows = stmt.query_map(rusqlite::params![limit], |row| {
+            Ok(CrashLogRow {
+                id: row.get(0)?,
+                error_type: row.get(1)?,
+                error_message: row.get(2)?,
+                stack_trace: row.get(3)?,
+                context: row.get(4)?,
+                app_version: row.get(5)?,
+                created_at: row.get(6)?,
+            })
+        })?;
+        rows.collect()
+    }
+
+    // ── 일별 통계 집계 ──
+
+    /// 일별 통계 Upsert (INSERT OR UPDATE)
+    pub fn upsert_daily_stat(
+        &self,
+        profile_id: i64,
+        stat_date: &str,
+        scenario_type: &str,
+        score: f64,
+        accuracy: f64,
+        time_ms: i64,
+    ) -> Result<()> {
+        self.conn.execute(
+            "INSERT INTO daily_stats (profile_id, stat_date, scenario_type, avg_score, max_score, \
+             sessions_count, total_trials, total_time_ms, avg_accuracy) \
+             VALUES (?1, ?2, ?3, ?4, ?4, 1, 1, ?5, ?6) \
+             ON CONFLICT(profile_id, stat_date, scenario_type) DO UPDATE SET \
+             avg_score = (daily_stats.avg_score * daily_stats.total_trials + ?4) / (daily_stats.total_trials + 1), \
+             max_score = MAX(daily_stats.max_score, ?4), \
+             sessions_count = daily_stats.sessions_count + 1, \
+             total_trials = daily_stats.total_trials + 1, \
+             total_time_ms = daily_stats.total_time_ms + ?5, \
+             avg_accuracy = (daily_stats.avg_accuracy * daily_stats.total_trials + ?6) / (daily_stats.total_trials + 1)",
+            rusqlite::params![profile_id, stat_date, scenario_type, score, time_ms, accuracy],
+        )?;
+        Ok(())
+    }
+
+    /// 일별 통계 조회
+    pub fn get_daily_stats(
+        &self,
+        profile_id: i64,
+        days: i64,
+    ) -> Result<Vec<DailyStatRow>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, profile_id, stat_date, scenario_type, avg_score, max_score, \
+             sessions_count, total_trials, total_time_ms, avg_accuracy \
+             FROM daily_stats WHERE profile_id = ?1 \
+             ORDER BY stat_date DESC LIMIT ?2"
+        )?;
+        let rows = stmt.query_map(rusqlite::params![profile_id, days], |row| {
+            Ok(DailyStatRow {
+                id: row.get(0)?,
+                profile_id: row.get(1)?,
+                stat_date: row.get(2)?,
+                scenario_type: row.get(3)?,
+                avg_score: row.get(4)?,
+                max_score: row.get(5)?,
+                sessions_count: row.get(6)?,
+                total_trials: row.get(7)?,
+                total_time_ms: row.get(8)?,
+                avg_accuracy: row.get(9)?,
+            })
+        })?;
+        rows.collect()
+    }
+
+    // ── 스킬 진행도 ──
+
+    /// 스킬 진행도 Upsert
+    pub fn upsert_skill_progress(
+        &self,
+        profile_id: i64,
+        stage_type: &str,
+        score: f64,
+        time_ms: i64,
+    ) -> Result<()> {
+        self.conn.execute(
+            "INSERT INTO skill_progress (profile_id, stage_type, rolling_avg_score, best_score, \
+             total_sessions, total_time_ms) \
+             VALUES (?1, ?2, ?3, ?3, 1, ?4) \
+             ON CONFLICT(profile_id, stage_type) DO UPDATE SET \
+             rolling_avg_score = (skill_progress.rolling_avg_score * 0.9 + ?3 * 0.1), \
+             best_score = MAX(skill_progress.best_score, ?3), \
+             total_sessions = skill_progress.total_sessions + 1, \
+             total_time_ms = skill_progress.total_time_ms + ?4, \
+             last_updated = datetime('now')",
+            rusqlite::params![profile_id, stage_type, score, time_ms],
+        )?;
+        Ok(())
+    }
+
+    /// 스킬 진행도 조회
+    pub fn get_skill_progress(&self, profile_id: i64) -> Result<Vec<SkillProgressRow>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, profile_id, stage_type, rolling_avg_score, best_score, \
+             total_sessions, total_time_ms, last_updated \
+             FROM skill_progress WHERE profile_id = ?1 ORDER BY last_updated DESC"
+        )?;
+        let rows = stmt.query_map(rusqlite::params![profile_id], |row| {
+            Ok(SkillProgressRow {
+                id: row.get(0)?,
+                profile_id: row.get(1)?,
+                stage_type: row.get(2)?,
+                rolling_avg_score: row.get(3)?,
+                best_score: row.get(4)?,
+                total_sessions: row.get(5)?,
+                total_time_ms: row.get(6)?,
+                last_updated: row.get(7)?,
+            })
+        })?;
+        rows.collect()
+    }
+
+    // ── 사용자 설정 ──
+
+    /// 사용자 설정 저장 (Upsert)
+    pub fn save_setting(
+        &self,
+        profile_id: i64,
+        key: &str,
+        value: &str,
+    ) -> Result<()> {
+        self.conn.execute(
+            "INSERT INTO user_settings (profile_id, setting_key, setting_value) \
+             VALUES (?1, ?2, ?3) \
+             ON CONFLICT(profile_id, setting_key) DO UPDATE SET \
+             setting_value = ?3, updated_at = datetime('now')",
+            rusqlite::params![profile_id, key, value],
+        )?;
+        Ok(())
+    }
+
+    /// 사용자 설정 조회
+    pub fn get_setting(&self, profile_id: i64, key: &str) -> Result<Option<String>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT setting_value FROM user_settings WHERE profile_id = ?1 AND setting_key = ?2"
+        )?;
+        let mut rows = stmt.query_map(rusqlite::params![profile_id, key], |row| row.get(0))?;
+        match rows.next() {
+            Some(Ok(v)) => Ok(Some(v)),
+            Some(Err(e)) => Err(e),
+            None => Ok(None),
+        }
+    }
+
+    /// 모든 사용자 설정 조회
+    pub fn get_all_settings(&self, profile_id: i64) -> Result<Vec<(String, String)>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT setting_key, setting_value FROM user_settings WHERE profile_id = ?1"
+        )?;
+        let rows = stmt.query_map(rusqlite::params![profile_id], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+        })?;
+        rows.collect()
+    }
+
+    // ── 게임 프로필 ──
+
+    /// 게임 프로필 생성
+    pub fn insert_game_profile(
+        &self,
+        profile_id: i64,
+        game_id: &str,
+        game_name: &str,
+        sens: f64,
+        dpi: i64,
+        fov: f64,
+        cm360: f64,
+        keybinds: &str,
+    ) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO user_game_profiles (profile_id, game_id, game_name, custom_sens, \
+             custom_dpi, custom_fov, custom_cm360, keybinds_json) \
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            rusqlite::params![profile_id, game_id, game_name, sens, dpi, fov, cm360, keybinds],
+        )?;
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    /// 게임 프로필 목록 조회
+    pub fn get_game_profiles(&self, profile_id: i64) -> Result<Vec<GameProfileRow>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, profile_id, game_id, game_name, custom_sens, custom_dpi, custom_fov, \
+             custom_cm360, keybinds_json, is_active, created_at \
+             FROM user_game_profiles WHERE profile_id = ?1 ORDER BY game_name"
+        )?;
+        let rows = stmt.query_map(rusqlite::params![profile_id], |row| {
+            Ok(GameProfileRow {
+                id: row.get(0)?,
+                profile_id: row.get(1)?,
+                game_id: row.get(2)?,
+                game_name: row.get(3)?,
+                custom_sens: row.get(4)?,
+                custom_dpi: row.get(5)?,
+                custom_fov: row.get(6)?,
+                custom_cm360: row.get(7)?,
+                keybinds_json: row.get(8)?,
+                is_active: row.get(9)?,
+                created_at: row.get(10)?,
+            })
+        })?;
+        rows.collect()
+    }
+
+    /// 게임 프로필 업데이트
+    pub fn update_game_profile(
+        &self,
+        id: i64,
+        sens: f64,
+        dpi: i64,
+        fov: f64,
+        cm360: f64,
+        keybinds: &str,
+    ) -> Result<()> {
+        self.conn.execute(
+            "UPDATE user_game_profiles SET custom_sens = ?2, custom_dpi = ?3, custom_fov = ?4, \
+             custom_cm360 = ?5, keybinds_json = ?6, updated_at = datetime('now') WHERE id = ?1",
+            rusqlite::params![id, sens, dpi, fov, cm360, keybinds],
+        )?;
+        Ok(())
+    }
+
+    /// 게임 프로필 삭제
+    pub fn delete_game_profile(&self, id: i64) -> Result<()> {
+        self.conn.execute("DELETE FROM user_game_profiles WHERE id = ?1", rusqlite::params![id])?;
+        Ok(())
+    }
+
+    /// 활성 게임 프로필 설정
+    pub fn set_active_game_profile(&self, profile_id: i64, game_profile_id: i64) -> Result<()> {
+        // 기존 활성 해제
+        self.conn.execute(
+            "UPDATE user_game_profiles SET is_active = 0 WHERE profile_id = ?1",
+            rusqlite::params![profile_id],
+        )?;
+        // 새로 활성화
+        self.conn.execute(
+            "UPDATE user_game_profiles SET is_active = 1 WHERE id = ?1",
+            rusqlite::params![game_profile_id],
+        )?;
+        Ok(())
+    }
+
+    // ── 커스텀 루틴 ──
+
+    /// 루틴 생성
+    pub fn insert_routine(
+        &self,
+        profile_id: i64,
+        name: &str,
+        description: &str,
+    ) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO routines (profile_id, name, description) VALUES (?1, ?2, ?3)",
+            rusqlite::params![profile_id, name, description],
+        )?;
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    /// 루틴 목록 조회
+    pub fn get_routines(&self, profile_id: i64) -> Result<Vec<RoutineRow>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, profile_id, name, description, total_duration_ms, created_at \
+             FROM routines WHERE profile_id = ?1 ORDER BY updated_at DESC"
+        )?;
+        let rows = stmt.query_map(rusqlite::params![profile_id], |row| {
+            Ok(RoutineRow {
+                id: row.get(0)?,
+                profile_id: row.get(1)?,
+                name: row.get(2)?,
+                description: row.get(3)?,
+                total_duration_ms: row.get(4)?,
+                created_at: row.get(5)?,
+            })
+        })?;
+        rows.collect()
+    }
+
+    /// 루틴 삭제 (CASCADE로 스텝도 삭제됨)
+    pub fn delete_routine(&self, id: i64) -> Result<()> {
+        self.conn.execute("DELETE FROM routines WHERE id = ?1", rusqlite::params![id])?;
+        Ok(())
+    }
+
+    /// 루틴 스텝 추가
+    pub fn insert_routine_step(
+        &self,
+        routine_id: i64,
+        step_order: i64,
+        stage_type: &str,
+        duration_ms: i64,
+        config_json: &str,
+    ) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO routine_steps (routine_id, step_order, stage_type, duration_ms, config_json) \
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            rusqlite::params![routine_id, step_order, stage_type, duration_ms, config_json],
+        )?;
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    /// 루틴 스텝 목록 조회
+    pub fn get_routine_steps(&self, routine_id: i64) -> Result<Vec<RoutineStepRow>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, routine_id, step_order, stage_type, duration_ms, config_json \
+             FROM routine_steps WHERE routine_id = ?1 ORDER BY step_order"
+        )?;
+        let rows = stmt.query_map(rusqlite::params![routine_id], |row| {
+            Ok(RoutineStepRow {
+                id: row.get(0)?,
+                routine_id: row.get(1)?,
+                step_order: row.get(2)?,
+                stage_type: row.get(3)?,
+                duration_ms: row.get(4)?,
+                config_json: row.get(5)?,
+            })
+        })?;
+        rows.collect()
+    }
+
+    /// 루틴 스텝 삭제
+    pub fn delete_routine_step(&self, id: i64) -> Result<()> {
+        self.conn.execute("DELETE FROM routine_steps WHERE id = ?1", rusqlite::params![id])?;
+        Ok(())
+    }
+
+    /// 루틴 총 시간 업데이트
+    pub fn update_routine_duration(&self, routine_id: i64) -> Result<()> {
+        self.conn.execute(
+            "UPDATE routines SET total_duration_ms = \
+             (SELECT COALESCE(SUM(duration_ms), 0) FROM routine_steps WHERE routine_id = ?1), \
+             updated_at = datetime('now') WHERE id = ?1",
+            rusqlite::params![routine_id],
+        )?;
+        Ok(())
+    }
+
+    /// DB 파일 경로 반환 (내보내기용)
+    pub fn get_db_path(&self) -> Result<String> {
+        let path: String = self.conn.query_row("PRAGMA database_list", [], |row| row.get(2))?;
+        Ok(path)
+    }
+}
+
+/// 크래시 로그 행
+#[derive(Debug, Serialize)]
+pub struct CrashLogRow {
+    pub id: i64,
+    pub error_type: String,
+    pub error_message: String,
+    pub stack_trace: Option<String>,
+    pub context: String,
+    pub app_version: String,
+    pub created_at: String,
+}
+
+/// 일별 통계 행
+#[derive(Debug, Serialize)]
+pub struct DailyStatRow {
+    pub id: i64,
+    pub profile_id: i64,
+    pub stat_date: String,
+    pub scenario_type: String,
+    pub avg_score: f64,
+    pub max_score: f64,
+    pub sessions_count: i64,
+    pub total_trials: i64,
+    pub total_time_ms: i64,
+    pub avg_accuracy: f64,
+}
+
+/// 스킬 진행도 행
+#[derive(Debug, Serialize)]
+pub struct SkillProgressRow {
+    pub id: i64,
+    pub profile_id: i64,
+    pub stage_type: String,
+    pub rolling_avg_score: f64,
+    pub best_score: f64,
+    pub total_sessions: i64,
+    pub total_time_ms: i64,
+    pub last_updated: String,
+}
+
+/// 게임 프로필 행
+#[derive(Debug, Serialize)]
+pub struct GameProfileRow {
+    pub id: i64,
+    pub profile_id: i64,
+    pub game_id: String,
+    pub game_name: String,
+    pub custom_sens: f64,
+    pub custom_dpi: i64,
+    pub custom_fov: f64,
+    pub custom_cm360: f64,
+    pub keybinds_json: String,
+    pub is_active: bool,
+    pub created_at: String,
+}
+
+/// 루틴 행
+#[derive(Debug, Serialize)]
+pub struct RoutineRow {
+    pub id: i64,
+    pub profile_id: i64,
+    pub name: String,
+    pub description: String,
+    pub total_duration_ms: i64,
+    pub created_at: String,
+}
+
+/// 루틴 스텝 행
+#[derive(Debug, Serialize)]
+pub struct RoutineStepRow {
+    pub id: i64,
+    pub routine_id: i64,
+    pub step_order: i64,
+    pub stage_type: String,
+    pub duration_ms: i64,
+    pub config_json: String,
 }
 
 const SCHEMA_SQL: &str = r#"
@@ -1047,4 +1502,102 @@ CREATE TABLE IF NOT EXISTS stage_results (
     difficulty_config TEXT NOT NULL DEFAULT '{}',
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+-- ═══════════════════════════════════════════════════
+-- Phase 5: 신규 테이블 (Day 18+)
+-- ═══════════════════════════════════════════════════
+
+-- 크래시 로그 (로컬 저장 + 서버 전송 옵트인)
+CREATE TABLE IF NOT EXISTS crash_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    error_type TEXT NOT NULL,
+    error_message TEXT NOT NULL,
+    stack_trace TEXT,
+    context TEXT NOT NULL DEFAULT '{}',
+    app_version TEXT NOT NULL DEFAULT '0.1.0',
+    sent_to_server INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- 일별 통계 집계 (대시보드 빠른 조회용)
+CREATE TABLE IF NOT EXISTS daily_stats (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_id INTEGER NOT NULL REFERENCES profiles(id),
+    stat_date TEXT NOT NULL,
+    scenario_type TEXT NOT NULL,
+    avg_score REAL NOT NULL DEFAULT 0.0,
+    max_score REAL NOT NULL DEFAULT 0.0,
+    sessions_count INTEGER NOT NULL DEFAULT 0,
+    total_trials INTEGER NOT NULL DEFAULT 0,
+    total_time_ms INTEGER NOT NULL DEFAULT 0,
+    avg_accuracy REAL NOT NULL DEFAULT 0.0,
+    UNIQUE(profile_id, stat_date, scenario_type)
+);
+CREATE INDEX IF NOT EXISTS idx_daily_stats_profile_date ON daily_stats(profile_id, stat_date);
+
+-- 스킬 진행도 (스테이지별 롤링 통계)
+CREATE TABLE IF NOT EXISTS skill_progress (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_id INTEGER NOT NULL REFERENCES profiles(id),
+    stage_type TEXT NOT NULL,
+    rolling_avg_score REAL NOT NULL DEFAULT 0.0,
+    best_score REAL NOT NULL DEFAULT 0.0,
+    total_sessions INTEGER NOT NULL DEFAULT 0,
+    total_time_ms INTEGER NOT NULL DEFAULT 0,
+    last_updated TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(profile_id, stage_type)
+);
+
+-- 범용 사용자 설정 (디스플레이, 퍼포먼스 등)
+CREATE TABLE IF NOT EXISTS user_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_id INTEGER NOT NULL REFERENCES profiles(id),
+    setting_key TEXT NOT NULL,
+    setting_value TEXT NOT NULL,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(profile_id, setting_key)
+);
+
+-- 유저별 게임 프로필 (감도/DPI/FOV/키바인드)
+CREATE TABLE IF NOT EXISTS user_game_profiles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_id INTEGER NOT NULL REFERENCES profiles(id),
+    game_id TEXT NOT NULL,
+    game_name TEXT NOT NULL,
+    custom_sens REAL NOT NULL,
+    custom_dpi INTEGER NOT NULL,
+    custom_fov REAL NOT NULL,
+    custom_cm360 REAL NOT NULL,
+    keybinds_json TEXT NOT NULL DEFAULT '{}',
+    is_active INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- 커스텀 루틴 (시나리오 순서대로 묶기)
+CREATE TABLE IF NOT EXISTS routines (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_id INTEGER NOT NULL REFERENCES profiles(id),
+    name TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    total_duration_ms INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- 루틴 개별 스텝
+CREATE TABLE IF NOT EXISTS routine_steps (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    routine_id INTEGER NOT NULL REFERENCES routines(id) ON DELETE CASCADE,
+    step_order INTEGER NOT NULL,
+    stage_type TEXT NOT NULL,
+    duration_ms INTEGER NOT NULL,
+    config_json TEXT NOT NULL DEFAULT '{}',
+    UNIQUE(routine_id, step_order)
+);
+
+-- 빠른 조회 인덱스
+CREATE INDEX IF NOT EXISTS idx_stage_results_profile_type ON stage_results(profile_id, stage_type, created_at);
+CREATE INDEX IF NOT EXISTS idx_sessions_profile_started ON sessions(profile_id, started_at);
+CREATE INDEX IF NOT EXISTS idx_trials_session ON trials(session_id, created_at);
 "#;
