@@ -138,13 +138,13 @@ export function Crosshair({ config: propConfig, dynamicOffset = 0 }: CrosshairPr
           )}
         </g>
 
-        {/* 센터 도트 */}
-        {c.dotEnabled && (
+        {/* 센터 도트 — cross_dot shape는 dotEnabled 무관하게 항상 표시 */}
+        {(c.dotEnabled || c.shape === 'cross_dot') && (
           <>
             {ol > 0 && (
-              <circle cx={center} cy={center} r={c.dotSize + ol} fill={c.outlineColor} />
+              <circle cx={center} cy={center} r={(c.dotSize || 2) + ol} fill={c.outlineColor} />
             )}
-            <circle cx={center} cy={center} r={c.dotSize} fill={c.color} opacity={c.opacity} />
+            <circle cx={center} cy={center} r={c.dotSize || 2} fill={c.color} opacity={c.opacity} />
           </>
         )}
       </svg>

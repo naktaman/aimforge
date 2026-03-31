@@ -799,6 +799,15 @@ export const CROSSHAIR_PRESETS: CrosshairPreset[] = [
     },
   },
   {
+    name: 'Overwatch Default',
+    config: {
+      shape: 'cross_dot', innerLength: 5, outerLength: 0, thickness: 2, gap: 4,
+      color: '#00ff00', opacity: 1, outlineEnabled: false, outlineThickness: 0,
+      outlineColor: '#000000', dotEnabled: true, dotSize: 3,
+      dynamicEnabled: true, dynamicSpread: 5,
+    },
+  },
+  {
     name: 'Minimal',
     config: {
       shape: 'cross', innerLength: 3, outerLength: 0, thickness: 1, gap: 2,
