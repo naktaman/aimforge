@@ -124,15 +124,33 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     return `AIM-${b64}`;
   },
 
-  /** share code에서 크로스헤어 설정 복원 */
+  /** share code에서 크로스헤어 설정 복원 — 필수 필드 전수 검증 */
   importCrosshairCode: (code) => {
     try {
       if (!code.startsWith('AIM-')) return false;
       const b64 = code.slice(4);
       const json = atob(b64);
       const config = JSON.parse(json) as CrosshairConfig;
-      // 필수 필드 검증
-      if (typeof config.shape !== 'string' || typeof config.innerLength !== 'number') return false;
+      // 유효한 shape인지 확인
+      const validShapes = ['cross', 'dot', 'circle', 't_shape', 'cross_dot'];
+      if (!validShapes.includes(config.shape)) return false;
+      // 숫자 필드 전수 검증
+      const numFields: (keyof CrosshairConfig)[] = [
+        'innerLength', 'outerLength', 'thickness', 'gap',
+        'opacity', 'outlineThickness', 'dotSize', 'dynamicSpread',
+      ];
+      for (const f of numFields) {
+        if (typeof config[f] !== 'number' || isNaN(config[f] as number)) return false;
+      }
+      // 불리언 필드 검증
+      const boolFields: (keyof CrosshairConfig)[] = [
+        'outlineEnabled', 'dotEnabled', 'dynamicEnabled',
+      ];
+      for (const f of boolFields) {
+        if (typeof config[f] !== 'boolean') return false;
+      }
+      // 색상 필드 검증
+      if (typeof config.color !== 'string' || typeof config.outlineColor !== 'string') return false;
       set({ crosshair: config });
       return true;
     } catch {
