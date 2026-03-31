@@ -24,7 +24,15 @@ pub struct Database {
 impl Database {
     pub fn new(path: &Path) -> Result<Self> {
         let conn = Connection::open(path)?;
-        conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;")?;
+        // WAL 모드 + 성능 최적화 PRAGMA 설정
+        conn.execute_batch(
+            "PRAGMA journal_mode=WAL;\
+             PRAGMA foreign_keys=ON;\
+             PRAGMA synchronous=NORMAL;\
+             PRAGMA cache_size=-8000;\
+             PRAGMA temp_store=MEMORY;\
+             PRAGMA mmap_size=268435456;"
+        )?;
         Ok(Database { conn })
     }
 
@@ -1049,6 +1057,77 @@ impl Database {
         let path: String = self.conn.query_row("PRAGMA database_list", [], |row| row.get(2))?;
         Ok(path)
     }
+
+    // ═══════════════════════════════════════════════════
+    // 주별 통계 + 아카이브 + DB 최적화
+    // ═══════════════════════════════════════════════════
+
+    /// 주별 통계 조회 (weekly_stats 뷰 활용)
+    /// weeks: 조회할 주 수 (기본 12주)
+    pub fn get_weekly_stats(
+        &self,
+        profile_id: i64,
+        weeks: i64,
+    ) -> Result<Vec<WeeklyStatRow>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT profile_id, week_start, scenario_type, avg_score, max_score, \
+             sessions_count, total_trials, total_time_ms, avg_accuracy \
+             FROM weekly_stats WHERE profile_id = ?1 \
+             AND week_start >= date('now', '-' || ?2 || ' days') \
+             ORDER BY week_start DESC"
+        )?;
+        let rows = stmt.query_map(rusqlite::params![profile_id, weeks * 7], |row| {
+            Ok(WeeklyStatRow {
+                profile_id: row.get(0)?,
+                week_start: row.get(1)?,
+                scenario_type: row.get(2)?,
+                avg_score: row.get(3)?,
+                max_score: row.get(4)?,
+                sessions_count: row.get(5)?,
+                total_trials: row.get(6)?,
+                total_time_ms: row.get(7)?,
+                avg_accuracy: row.get(8)?,
+            })
+        })?;
+        rows.collect()
+    }
+
+    /// 오래된 트라이얼의 대용량 raw 데이터를 아카이브 (경량화)
+    /// days_old 이전의 트라이얼에서 mouse_trajectory, raw_metrics 컬럼을 비움
+    /// composite_score, angle_breakdown, motor_breakdown은 유지
+    /// 반환: 아카이브된 트라이얼 수
+    pub fn archive_old_trials(&self, days_old: i64) -> Result<usize> {
+        let affected = self.conn.execute(
+            "UPDATE trials SET \
+             mouse_trajectory = '[]', \
+             raw_metrics = '{}' \
+             WHERE created_at < datetime('now', '-' || ?1 || ' days') \
+             AND mouse_trajectory != '[]'",
+            rusqlite::params![days_old],
+        )?;
+        Ok(affected)
+    }
+
+    /// DB 최적화 실행 (VACUUM + ANALYZE)
+    /// 대량 삭제/아카이브 후 호출하여 디스크 공간 회수 및 쿼리 플래너 통계 갱신
+    pub fn optimize_db(&self) -> Result<()> {
+        self.conn.execute_batch("ANALYZE; PRAGMA optimize;")?;
+        Ok(())
+    }
+}
+
+/// 주별 통계 행
+#[derive(Debug, Serialize)]
+pub struct WeeklyStatRow {
+    pub profile_id: i64,
+    pub week_start: String,
+    pub scenario_type: String,
+    pub avg_score: f64,
+    pub max_score: f64,
+    pub sessions_count: i64,
+    pub total_trials: i64,
+    pub total_time_ms: i64,
+    pub avg_accuracy: f64,
 }
 
 /// 크래시 로그 행
@@ -1596,8 +1675,61 @@ CREATE TABLE IF NOT EXISTS routine_steps (
     UNIQUE(routine_id, step_order)
 );
 
--- 빠른 조회 인덱스
+-- ═══════════════════════════════════════════════════
+-- 인덱스: 빈번한 조회 패턴별 최적화
+-- ═══════════════════════════════════════════════════
+
+-- 기존 인덱스
 CREATE INDEX IF NOT EXISTS idx_stage_results_profile_type ON stage_results(profile_id, stage_type, created_at);
 CREATE INDEX IF NOT EXISTS idx_sessions_profile_started ON sessions(profile_id, started_at);
 CREATE INDEX IF NOT EXISTS idx_trials_session ON trials(session_id, created_at);
+
+-- Aim DNA 조회 최적화 (get_latest_aim_dna, get_latest_aim_dna_id)
+CREATE INDEX IF NOT EXISTS idx_aim_dna_profile_created ON aim_dna(profile_id, created_at DESC);
+
+-- Aim DNA 히스토리 필터 조회 최적화
+CREATE INDEX IF NOT EXISTS idx_aim_dna_history_profile_feature ON aim_dna_history(profile_id, feature_name, measured_at DESC);
+
+-- 캘리브레이션 세션 조회 최적화
+CREATE INDEX IF NOT EXISTS idx_calibration_sessions_profile ON calibration_sessions(profile_id, started_at DESC);
+
+-- GP 관측 데이터 FK 조회 최적화
+CREATE INDEX IF NOT EXISTS idx_gp_observations_model ON gp_observations(gp_model_id, iteration);
+
+-- 줌 캘리브레이션 프로필별 조회
+CREATE INDEX IF NOT EXISTS idx_zoom_calibrations_profile ON zoom_calibrations(profile_id, created_at DESC);
+
+-- 크래시 로그 최신순 조회 (get_crash_logs ORDER BY created_at DESC)
+CREATE INDEX IF NOT EXISTS idx_crash_logs_created ON crash_logs(created_at DESC);
+
+-- 게임 프로필 조회 최적화
+CREATE INDEX IF NOT EXISTS idx_user_game_profiles_profile ON user_game_profiles(profile_id, is_active);
+
+-- 루틴 조회 최적화
+CREATE INDEX IF NOT EXISTS idx_routines_profile ON routines(profile_id, updated_at DESC);
+
+-- 트라이얼 시나리오별 점수 분석용 (통계 집계 시 활용)
+CREATE INDEX IF NOT EXISTS idx_trials_scenario_score ON trials(scenario_type, composite_score);
+
+-- 훈련 처방 DNA 연결 조회
+CREATE INDEX IF NOT EXISTS idx_training_prescriptions_dna ON training_prescriptions(aim_dna_id, priority DESC);
+
+-- ═══════════════════════════════════════════════════
+-- 뷰: 주별 통계 집계 (weekly_stats)
+-- daily_stats를 ISO 주 단위로 그룹핑하여 대시보드에서 빠르게 조회
+-- ═══════════════════════════════════════════════════
+CREATE VIEW IF NOT EXISTS weekly_stats AS
+SELECT
+    profile_id,
+    -- ISO 주 시작일 (월요일 기준)
+    date(stat_date, 'weekday 1', '-7 days') AS week_start,
+    scenario_type,
+    ROUND(SUM(avg_score * total_trials) / MAX(SUM(total_trials), 1), 2) AS avg_score,
+    MAX(max_score) AS max_score,
+    SUM(sessions_count) AS sessions_count,
+    SUM(total_trials) AS total_trials,
+    SUM(total_time_ms) AS total_time_ms,
+    ROUND(SUM(avg_accuracy * total_trials) / MAX(SUM(total_trials), 1), 2) AS avg_accuracy
+FROM daily_stats
+GROUP BY profile_id, week_start, scenario_type;
 "#;

@@ -136,6 +136,9 @@ pub fn run() {
             db::commands::get_routine_steps,
             db::commands::remove_routine_step,
             db::commands::export_database,
+            db::commands::get_weekly_stats,
+            db::commands::archive_old_trials,
+            db::commands::optimize_database,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
