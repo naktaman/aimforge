@@ -1,9 +1,11 @@
 mod aim_dna;
 mod calibration;
+mod crossgame;
 mod db;
 mod game_db;
 mod gp;
 mod input;
+mod training;
 mod zoom_calibration;
 
 use calibration::CalibrationEngine;
@@ -105,6 +107,15 @@ pub fn run() {
             aim_dna::commands::get_aim_dna_history,
             aim_dna::commands::get_sessions_history,
             aim_dna::commands::get_session_detail,
+            training::commands::generate_training_prescriptions,
+            training::commands::get_stage_recommendations,
+            training::commands::get_benchmark_preset_list,
+            training::commands::submit_stage_result,
+            training::commands::calculate_adaptive_difficulty,
+            training::commands::get_stage_results,
+            crossgame::commands::compare_game_dna,
+            crossgame::commands::predict_crossgame_timeline,
+            crossgame::commands::record_crossgame_progress,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

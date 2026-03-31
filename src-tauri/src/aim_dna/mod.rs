@@ -114,8 +114,8 @@ pub struct AimDnaProfile {
 }
 
 impl AimDnaProfile {
-    /// 빈 프로파일 생성
-    fn empty(profile_id: i64, session_id: i64) -> Self {
+    /// 빈 프로파일 생성 (테스트 및 외부 모듈용)
+    pub fn empty(profile_id: i64, session_id: i64) -> Self {
         Self {
             profile_id,
             session_id,

@@ -518,6 +518,160 @@ impl Database {
 
         Ok(crate::aim_dna::commands::SessionDetail { session, trials })
     }
+
+    // ── Training 처방 CRUD ──
+
+    /// 훈련 처방 저장 — ID 반환
+    pub fn insert_training_prescription(
+        &self,
+        aim_dna_id: i64,
+        source_type: &str,
+        weakness: &str,
+        scenario_type: &str,
+        scenario_params: &str,
+        priority: f64,
+        estimated_min: Option<f64>,
+    ) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO training_prescriptions (aim_dna_id, source_type, weakness, scenario_type, \
+             scenario_params, priority, estimated_min) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            rusqlite::params![aim_dna_id, source_type, weakness, scenario_type, scenario_params, priority, estimated_min],
+        )?;
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    /// 최신 aim_dna ID 조회
+    pub fn get_latest_aim_dna_id(&self, profile_id: i64) -> Result<Option<i64>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id FROM aim_dna WHERE profile_id = ?1 ORDER BY created_at DESC LIMIT 1"
+        )?;
+        let mut rows = stmt.query_map(rusqlite::params![profile_id], |row| row.get(0))?;
+        match rows.next() {
+            Some(Ok(id)) => Ok(Some(id)),
+            Some(Err(e)) => Err(e),
+            None => Ok(None),
+        }
+    }
+
+    // ── Cross-game CRUD ──
+
+    /// 크로스게임 비교 결과 저장 — ID 반환
+    pub fn insert_crossgame_comparison(
+        &self,
+        profile_a_id: i64,
+        profile_b_id: i64,
+        reference_game_id: i64,
+        deltas: &str,
+        causes: &str,
+        plan: &str,
+        predicted_days: f64,
+    ) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO crossgame_comparisons (profile_a_id, profile_b_id, reference_game_id, \
+             deltas, causes, plan, predicted_days) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            rusqlite::params![profile_a_id, profile_b_id, reference_game_id, deltas, causes, plan, predicted_days],
+        )?;
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    /// 크로스게임 진행 기록 저장 — ID 반환
+    pub fn insert_crossgame_progress(
+        &self,
+        comparison_id: i64,
+        week_number: i64,
+        metrics: &str,
+        gap_reduction_pct: f64,
+    ) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO crossgame_progress (comparison_id, week_number, metrics, gap_reduction_pct) \
+             VALUES (?1, ?2, ?3, ?4)",
+            rusqlite::params![comparison_id, week_number, metrics, gap_reduction_pct],
+        )?;
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    // ── Training Stage 결과 CRUD ──
+
+    /// 스테이지 결과 저장 — ID 반환
+    pub fn insert_stage_result(
+        &self,
+        profile_id: i64,
+        stage_type: &str,
+        category: &str,
+        score: f64,
+        accuracy: f64,
+        avg_ttk_ms: f64,
+        avg_reaction_ms: f64,
+        avg_overshoot_deg: f64,
+        avg_undershoot_deg: f64,
+        tracking_mad: Option<f64>,
+        raw_metrics: &str,
+        difficulty_config: &str,
+    ) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO stage_results (profile_id, stage_type, category, score, accuracy, \
+             avg_ttk_ms, avg_reaction_ms, avg_overshoot_deg, avg_undershoot_deg, tracking_mad, \
+             raw_metrics, difficulty_config) \
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
+            rusqlite::params![
+                profile_id, stage_type, category, score, accuracy,
+                avg_ttk_ms, avg_reaction_ms, avg_overshoot_deg, avg_undershoot_deg,
+                tracking_mad, raw_metrics, difficulty_config
+            ],
+        )?;
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    /// 스테이지 결과 목록 조회 (최근 N개)
+    pub fn get_stage_results(
+        &self,
+        profile_id: i64,
+        limit: i64,
+        stage_type: Option<&str>,
+    ) -> Result<Vec<crate::training::commands::StageResultRow>> {
+        let (sql, params_vec): (String, Vec<Box<dyn rusqlite::types::ToSql>>) = match stage_type {
+            Some(st) => (
+                "SELECT id, profile_id, stage_type, category, score, accuracy, avg_ttk_ms, \
+                 avg_reaction_ms, avg_overshoot_deg, avg_undershoot_deg, tracking_mad, created_at \
+                 FROM stage_results WHERE profile_id = ?1 AND stage_type = ?2 \
+                 ORDER BY created_at DESC LIMIT ?3".into(),
+                vec![
+                    Box::new(profile_id) as Box<dyn rusqlite::types::ToSql>,
+                    Box::new(st.to_string()),
+                    Box::new(limit),
+                ],
+            ),
+            None => (
+                "SELECT id, profile_id, stage_type, category, score, accuracy, avg_ttk_ms, \
+                 avg_reaction_ms, avg_overshoot_deg, avg_undershoot_deg, tracking_mad, created_at \
+                 FROM stage_results WHERE profile_id = ?1 \
+                 ORDER BY created_at DESC LIMIT ?2".into(),
+                vec![
+                    Box::new(profile_id) as Box<dyn rusqlite::types::ToSql>,
+                    Box::new(limit),
+                ],
+            ),
+        };
+        let mut stmt = self.conn.prepare(&sql)?;
+        let params_refs: Vec<&dyn rusqlite::types::ToSql> = params_vec.iter().map(|p| p.as_ref()).collect();
+        let rows = stmt.query_map(params_refs.as_slice(), |row| {
+            Ok(crate::training::commands::StageResultRow {
+                id: row.get(0)?,
+                profile_id: row.get(1)?,
+                stage_type: row.get(2)?,
+                category: row.get(3)?,
+                score: row.get(4)?,
+                accuracy: row.get(5)?,
+                avg_ttk_ms: row.get(6)?,
+                avg_reaction_ms: row.get(7)?,
+                avg_overshoot_deg: row.get(8)?,
+                avg_undershoot_deg: row.get(9)?,
+                tracking_mad: row.get(10)?,
+                created_at: row.get(11)?,
+            })
+        })?;
+        rows.collect()
+    }
 }
 
 const SCHEMA_SQL: &str = r#"
@@ -873,6 +1027,24 @@ CREATE TABLE IF NOT EXISTS partial_aim_dna (
     tracking_smoothness REAL,
     adaptation_rate REAL,
     warmup_trials INTEGER,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- 훈련 스테이지 결과
+CREATE TABLE IF NOT EXISTS stage_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_id INTEGER NOT NULL REFERENCES profiles(id),
+    stage_type TEXT NOT NULL,
+    category TEXT NOT NULL,
+    score REAL NOT NULL,
+    accuracy REAL NOT NULL,
+    avg_ttk_ms REAL NOT NULL,
+    avg_reaction_ms REAL NOT NULL,
+    avg_overshoot_deg REAL NOT NULL DEFAULT 0.0,
+    avg_undershoot_deg REAL NOT NULL DEFAULT 0.0,
+    tracking_mad REAL,
+    raw_metrics TEXT NOT NULL DEFAULT '{}',
+    difficulty_config TEXT NOT NULL DEFAULT '{}',
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 "#;
