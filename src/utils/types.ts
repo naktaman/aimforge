@@ -431,3 +431,180 @@ export interface RadarAxis {
   key: string;
   value: number;
 }
+
+// ========== Training Stage 시스템 ==========
+
+/** 훈련 스테이지 카테고리 */
+export type StageCategory =
+  | 'flick_shot'
+  | 'tracking'
+  | 'target_switching'
+  | 'close_range'
+  | 'long_range'
+  | 'assessment';
+
+/** 훈련 스테이지 타입 (15개 시나리오) */
+export type StageType =
+  // Flick Shot (3)
+  | 'static_flick'
+  | 'reaction_flick'
+  | 'scoped_flick'
+  // Tracking (3)
+  | 'horizontal_tracking'
+  | 'aerial_tracking'
+  | 'circular_tracking'
+  // Target Switching (2)
+  | 'multi_flick'
+  | 'zoom_multi_flick'
+  // Close Range (3)
+  | 'close_range_180'
+  | 'jump_tracking'
+  | 'strafe_tracking'
+  // Long Range (2)
+  | 'long_range_precision'
+  | 'bulletdrop_sniping'
+  // Assessment (2)
+  | 'aim_dna_scan'
+  | 'custom_drill';
+
+/** 스테이지 메타데이터 */
+export interface StageMeta {
+  type: StageType;
+  category: StageCategory;
+  name: string;
+  description: string;
+  icon: string;
+  /** 벤치마크 모드 사용 가능 여부 */
+  hasBenchmark: boolean;
+}
+
+/** 난이도 설정 — 3층 구조 */
+export interface DifficultyConfig {
+  mode: 'benchmark' | 'manual' | 'adaptive';
+  targetSizeDeg: number;
+  targetSpeedDegPerSec: number;
+  reactionWindowMs: number;
+  targetCount: number;
+  adaptiveTargetSuccessRate: number;
+}
+
+/** 무기 설정 */
+export interface WeaponConfig {
+  /** 연사속도 (RPM) */
+  fireRateRpm: number;
+  /** 반동 패턴 (dx, dy 쌍 배열) */
+  recoilPattern: Array<[number, number]>;
+  /** 반동 리셋 시간 (ms) */
+  recoilResetMs: number;
+  /** 줌 배율 (1 = hipfire) */
+  zoomMultiplier: number;
+  /** 줌 FOV (도) */
+  zoomFov: number;
+  /** 줌 시 감도 배율 */
+  zoomSensMultiplier: number;
+  /** Bullet drop 활성화 */
+  bulletDropEnabled: boolean;
+  /** Bullet drop 계수 (m/s² 중력 시뮬) */
+  bulletDropGravity: number;
+  /** 탄속 (m/s) */
+  bulletVelocity: number;
+}
+
+/** 스테이지 결과 (프론트→Rust 전달용) */
+export interface StageResult {
+  profileId: number;
+  stageType: StageType;
+  category: StageCategory;
+  difficulty: DifficultyConfig;
+  accuracy: number;
+  avgTtkMs: number;
+  avgReactionMs: number;
+  avgOvershootDeg: number;
+  avgUndershootDeg: number;
+  trackingMad: number | null;
+  score: number;
+  rawMetrics: string;
+}
+
+/** 스테이지 추천 (Rust→프론트 반환) */
+export interface StageRecommendation {
+  stageType: StageType;
+  category: StageCategory;
+  reason: string;
+  priority: number;
+  suggestedDifficulty: DifficultyConfig;
+}
+
+/** 스테이지 결과 히스토리 행 */
+export interface StageResultRow {
+  id: number;
+  profileId: number;
+  stageType: string;
+  category: string;
+  score: number;
+  accuracy: number;
+  avgTtkMs: number;
+  avgReactionMs: number;
+  avgOvershootDeg: number;
+  avgUndershootDeg: number;
+  trackingMad: number | null;
+  createdAt: string;
+}
+
+/** 벤치마크 프리셋 */
+export interface BenchmarkPreset {
+  key: string;
+  name: string;
+  targetSizeDeg: number;
+  targetSpeedDegPerSec: number;
+  reactionWindowMs: number;
+  targetCount: number;
+}
+
+// ========== Cross-Game DNA ==========
+
+/** 피처별 델타 */
+export interface FeatureDelta {
+  feature: string;
+  refValue: number;
+  targetValue: number;
+  deltaPct: number;
+  severity: string;
+}
+
+/** 갭 원인 */
+export interface GapCause {
+  causeType: string;
+  description: string;
+  contributingFeatures: string[];
+  severity: number;
+}
+
+/** 개선 Phase */
+export interface ImprovementPhase {
+  phase: number;
+  name: string;
+  durationWeeks: string;
+  actions: string[];
+  targetMetrics: string[];
+  scenarios: string[];
+}
+
+/** 크로스게임 비교 결과 */
+export interface CrossGameComparison {
+  refProfileId: number;
+  targetProfileId: number;
+  deltas: FeatureDelta[];
+  causes: GapCause[];
+  overallGap: number;
+  improvementPlan: { phases: ImprovementPhase[] };
+  predictedDays: number;
+}
+
+/** 타임라인 예측 */
+export interface TimelinePrediction {
+  totalDays: number;
+  bottleneckFeature: string;
+  perFeature: Array<{ feature: string; gapPct: number; estimatedDays: number }>;
+  disclaimer: string;
+}

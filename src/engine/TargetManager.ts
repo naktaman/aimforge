@@ -91,6 +91,15 @@ export class TargetManager {
     this.targets.clear();
   }
 
+  /** 타겟 위치 업데이트 — position + mesh 동기화 */
+  updateTargetPosition(id: string, newPos: THREE.Vector3): void {
+    const target = this.targets.get(id);
+    if (target) {
+      target.position.copy(newPos);
+      target.mesh.position.copy(newPos);
+    }
+  }
+
   /** 특정 타겟 가져오기 */
   getTarget(id: string): Target | undefined {
     return this.targets.get(id);
