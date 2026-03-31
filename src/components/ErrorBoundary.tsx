@@ -28,6 +28,13 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error('[ErrorBoundary] 에러 감지:', error, errorInfo);
     this.setState({ errorInfo });
+
+    // 크래시 리포터에 에러 전송 (SQLite 로컬 저장)
+    import('../utils/crashReporter').then(({ logCrash }) => {
+      logCrash('react_error_boundary', error.message, error.stack, {
+        componentStack: errorInfo.componentStack,
+      });
+    });
   }
 
   private handleReset = () => {

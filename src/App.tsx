@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useEngineStore } from './stores/engineStore';
 import { useSettingsStore } from './stores/settingsStore';
@@ -19,6 +19,16 @@ import { BatteryProgress } from './components/BatteryProgress';
 import { BatteryResult } from './components/BatteryResult';
 import { AimDnaResult } from './components/AimDnaResult';
 import { SessionHistory } from './components/SessionHistory';
+import { PerformanceOverlay } from './components/overlays/PerformanceOverlay';
+import { DisplaySettings } from './components/DisplaySettings';
+import { GameProfileManager } from './components/GameProfileManager';
+import { RoutineList } from './components/RoutineList';
+import { RoutineBuilder } from './components/RoutineBuilder';
+import { RoutinePlayer } from './components/RoutinePlayer';
+import { SteamLogin } from './components/SteamLogin';
+import { Leaderboard } from './components/Leaderboard';
+import { CommunityShare } from './components/CommunityShare';
+import { DataManagement } from './components/DataManagement';
 import { useZoomCalibrationStore } from './stores/zoomCalibrationStore';
 import { Crosshair } from './components/overlays/Crosshair';
 import { ScopeOverlay } from './components/overlays/ScopeOverlay';
@@ -52,6 +62,10 @@ const audioManager = new AudioManager();
 
 function App() {
   const { currentScreen, setScreen, fps, pointerLocked } = useEngineStore();
+  /** 루틴 편집/실행 시 사용하는 ID/이름 */
+  const [editingRoutineId, setEditingRoutineId] = useState<number | null>(null);
+  const [editingRoutineName, setEditingRoutineName] = useState('');
+  const [playingRoutineId, setPlayingRoutineId] = useState<number | null>(null);
   const { dpi, cmPer360, currentZoom, scopeMultiplier } = useSettingsStore();
   const {
     startScenario, endScenario,
@@ -670,14 +684,29 @@ function App() {
 
   return (
     <div className="app">
+      {/* 퍼포먼스 오버레이 (항상 렌더, F3 토글) */}
+      <PerformanceOverlay />
+
       {/* 설정 화면 */}
       {currentScreen === 'settings' && (
         <>
           <header className="app-header">
-            <h1>AimForge</h1>
+            <div className="header-left">
+              <h1>AimForge</h1>
+              <span className="version">v0.1.0</span>
+            </div>
             <p className="subtitle">FPS Aim Calibration & Training</p>
+            <div className="header-right">
+              <SteamLogin />
+            </div>
           </header>
           <main className="app-main">
+            {/* 부가 메뉴 버튼 */}
+            <div className="quick-nav">
+              <button className="btn-secondary btn-sm" onClick={() => setScreen('display-settings')}>디스플레이</button>
+              <button className="btn-secondary btn-sm" onClick={() => setScreen('game-profiles')}>게임 프로필</button>
+              <button className="btn-secondary btn-sm" onClick={() => setScreen('routines')}>루틴</button>
+            </div>
             <ScenarioSelect
               onStart={handleStart}
               onTrainingStart={handleTrainingStart}
@@ -819,6 +848,75 @@ function App() {
       {/* 세션 히스토리 */}
       {currentScreen === 'session-history' && (
         <SessionHistory onBack={() => setScreen('settings')} />
+      )}
+
+      {/* 디스플레이 설정 */}
+      {currentScreen === 'display-settings' && (
+        <main className="app-main">
+          <DisplaySettings onBack={() => setScreen('settings')} />
+        </main>
+      )}
+
+      {/* 게임 프로필 */}
+      {currentScreen === 'game-profiles' && (
+        <main className="app-main">
+          <GameProfileManager onBack={() => setScreen('settings')} />
+        </main>
+      )}
+
+      {/* 루틴 목록 */}
+      {currentScreen === 'routines' && editingRoutineId === null && (
+        <main className="app-main">
+          <RoutineList
+            onBack={() => setScreen('settings')}
+            onEdit={(id, name) => { setEditingRoutineId(id); setEditingRoutineName(name); }}
+            onPlay={(id) => { setPlayingRoutineId(id); setScreen('routine-player'); }}
+          />
+        </main>
+      )}
+
+      {/* 루틴 편집 */}
+      {currentScreen === 'routines' && editingRoutineId !== null && (
+        <main className="app-main">
+          <RoutineBuilder
+            routineId={editingRoutineId}
+            routineName={editingRoutineName}
+            onBack={() => setEditingRoutineId(null)}
+            onPlay={(id) => { setPlayingRoutineId(id); setEditingRoutineId(null); setScreen('routine-player'); }}
+          />
+        </main>
+      )}
+
+      {/* 루틴 플레이어 */}
+      {currentScreen === 'routine-player' && playingRoutineId !== null && (
+        <main className="app-main">
+          <RoutinePlayer
+            routineId={playingRoutineId}
+            onComplete={() => { setPlayingRoutineId(null); setScreen('settings'); }}
+            onCancel={() => { setPlayingRoutineId(null); setScreen('settings'); }}
+          />
+        </main>
+      )}
+
+      {/* 리더보드 */}
+      {currentScreen === 'leaderboard' && (
+        <main className="app-main">
+          <Leaderboard onBack={() => setScreen('settings')} />
+        </main>
+      )}
+
+      {/* 커뮤니티 공유 */}
+      {currentScreen === 'community' && (
+        <main className="app-main">
+          <CommunityShare onBack={() => setScreen('settings')} />
+        </main>
+      )}
+
+      {/* 데이터 관리 */}
+      {currentScreen === 'data-management' && (
+        <main className="app-main">
+          <DataManagement onBack={() => setScreen('settings')} />
+        </main>
       )}
     </div>
   );

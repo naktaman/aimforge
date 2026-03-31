@@ -1322,3 +1322,542 @@ body {
   max-height: 300px;
   color: var(--text-secondary);
 }
+
+/* ========== 버전 표시 ========== */
+.version {
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--bg-secondary);
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-right {
+  position: absolute;
+  right: 32px;
+  top: 24px;
+}
+
+.app-header {
+  position: relative;
+}
+
+/* ========== 퍼포먼스 오버레이 ========== */
+.perf-overlay {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #4ade80;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  z-index: 9999;
+  pointer-events: none;
+  line-height: 1.6;
+}
+
+/* ========== Quick Nav 버튼 ========== */
+.quick-nav {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ========== 공통: 섹션 헤더 ========== */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-header h2 {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* ========== 히트맵 ========== */
+.heatmap-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.heatmap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.heatmap-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.heatmap-controls label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.heatmap-canvas {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/* ========== 디스플레이 설정 ========== */
+.display-settings,
+.game-profiles,
+.routine-list-page,
+.routine-builder,
+.routine-player,
+.data-management,
+.leaderboard,
+.community-share {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.settings-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.setting-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.setting-row label {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.setting-row select,
+.setting-row input[type="range"] {
+  width: 100%;
+  max-width: 300px;
+}
+
+.setting-row select {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.setting-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.settings-actions {
+  margin-top: 24px;
+}
+
+.toggle-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggle-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* ========== 프로필 카드 ========== */
+.profile-list,
+.routine-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-card,
+.routine-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-card.active {
+  border-color: var(--accent);
+}
+
+.profile-info h3,
+.routine-info h3 {
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.badge-active {
+  font-size: 11px;
+  background: var(--accent);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-left: 8px;
+}
+
+.profile-stats {
+  display: flex;
+  gap: 16px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.profile-actions,
+.routine-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.routine-duration {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* ========== 프로필/루틴 폼 ========== */
+.profile-form,
+.routine-create-form {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 16px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.form-grid input,
+.routine-create-form input {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+/* ========== 루틴 빌더 ========== */
+.routine-total {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.step-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.step-order {
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 24px;
+}
+
+.step-name {
+  flex: 1;
+}
+
+.step-duration {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.step-add-form {
+  display: flex;
+  gap: 8px;
+  align-items: end;
+  padding: 12px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+}
+
+.step-add-form select {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  padding: 8px;
+  border-radius: 6px;
+}
+
+.step-add-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.step-add-form input {
+  width: 80px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  padding: 8px;
+  border-radius: 6px;
+}
+
+/* ========== 루틴 플레이어 ========== */
+.routine-player {
+  text-align: center;
+}
+
+.player-status {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin: 16px 0;
+  font-size: 16px;
+}
+
+.scenario-name {
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.player-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-secondary);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 12px 0;
+}
+
+.player-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  transition: width 1s linear;
+}
+
+.player-time {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.player-controls {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+/* ========== Steam 로그인 ========== */
+.steam-login {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.online { background: var(--success); }
+.status-dot.offline { background: var(--text-secondary); }
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+/* ========== 리더보드 ========== */
+.leaderboard-filter {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.leaderboard-table th {
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.rank-1 { color: #ffd700; font-weight: 700; }
+.rank-2 { color: #c0c0c0; font-weight: 700; }
+.rank-3 { color: #cd7f32; font-weight: 700; }
+
+/* ========== 커뮤니티 공유 ========== */
+.share-import {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.share-import input {
+  flex: 1;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.share-filter {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.share-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.share-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.share-type-badge {
+  font-size: 11px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.share-code {
+  font-family: monospace;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.share-author {
+  color: var(--text-secondary);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.share-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* ========== 데이터 관리 ========== */
+.data-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.data-section h3 {
+  margin-bottom: 8px;
+}
+
+.data-section p {
+  margin-bottom: 12px;
+}
+
+.data-status {
+  margin-top: 12px;
+  padding: 10px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+/* ========== 공통 버튼 변형 ========== */
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.btn-danger {
+  background: transparent;
+  color: #e94560;
+  border: 1px solid #e94560;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-danger:hover {
+  background: rgba(233, 69, 96, 0.1);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
