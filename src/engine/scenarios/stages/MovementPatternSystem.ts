@@ -258,6 +258,122 @@ export class MovementPatternSystem {
   }
 }
 
+/**
+ * 랜덤 패턴 스케줄러 — 여러 MovementPatternSystem을 랜덤 순서 + 가변 시간으로 순환
+ * 고정 순서 대신 셔플된 순서로 패턴을 전환하여 예측 불가능한 움직임 생성
+ */
+export class RandomPatternScheduler {
+  private systems: MovementPatternSystem[] = [];
+  private configs: MovementPatternConfig[];
+  /** 셔플된 패턴 인덱스 큐 */
+  private shuffledQueue: number[] = [];
+  /** 현재 활성 패턴 인덱스 (shuffledQueue 내 위치) */
+  private queuePosition = 0;
+  /** 현재 패턴 시작 시각 (ms) */
+  private patternStartMs = 0;
+  /** 현재 패턴 지속 시간 (ms) */
+  private currentDurationMs: number;
+  /** 기본 패턴 지속 시간 (ms) — 평균값 */
+  private baseDurationMs: number;
+
+  constructor(
+    configs: MovementPatternConfig[],
+    totalDurationMs: number,
+    xBound: number,
+    yBound: number,
+  ) {
+    this.configs = configs;
+
+    // 패턴당 기본 시간 = 전체 시간 / 패턴 수
+    this.baseDurationMs = totalDurationMs / configs.length;
+
+    // 각 패턴 시스템 생성
+    for (const cfg of configs) {
+      this.systems.push(new MovementPatternSystem(cfg, xBound, yBound));
+    }
+
+    // 초기 셔플
+    this.shuffledQueue = this.createShuffledIndices();
+    this.currentDurationMs = this.randomizeDuration();
+  }
+
+  /** 매 프레임 업데이트 — 패턴 전환 + 위치 계산 */
+  update(deltaTimeSec: number, elapsedMs: number): { x: number; y: number; directionChanged: boolean } {
+    // 패턴 전환 체크
+    const patternElapsed = elapsedMs - this.patternStartMs;
+    if (patternElapsed >= this.currentDurationMs) {
+      this.advancePattern(elapsedMs);
+    }
+
+    const currentSystem = this.systems[this.getCurrentIndex()];
+    return currentSystem.update(deltaTimeSec, elapsedMs);
+  }
+
+  /** 현재 활성 패턴 이름 */
+  getActivePattern(): MovementPattern {
+    return this.systems[this.getCurrentIndex()].getPattern();
+  }
+
+  /** 리셋 — 새 라운드 시작 시 */
+  reset(): void {
+    this.shuffledQueue = this.createShuffledIndices();
+    this.queuePosition = 0;
+    this.patternStartMs = 0;
+    this.currentDurationMs = this.randomizeDuration();
+    for (const sys of this.systems) {
+      sys.reset();
+    }
+  }
+
+  /** 다음 패턴으로 전환 */
+  private advancePattern(elapsedMs: number): void {
+    this.queuePosition++;
+
+    // 큐 소진 시 재셔플 (이전 마지막 패턴과 연속 방지)
+    if (this.queuePosition >= this.shuffledQueue.length) {
+      const lastIdx = this.shuffledQueue[this.shuffledQueue.length - 1];
+      this.shuffledQueue = this.createShuffledIndices(lastIdx);
+      this.queuePosition = 0;
+    }
+
+    this.patternStartMs = elapsedMs;
+    this.currentDurationMs = this.randomizeDuration();
+
+    // 새 패턴 시스템 리셋
+    this.systems[this.getCurrentIndex()].reset();
+  }
+
+  /** 현재 활성 시스템 인덱스 */
+  private getCurrentIndex(): number {
+    return this.shuffledQueue[this.queuePosition];
+  }
+
+  /** Fisher-Yates 셔플로 인덱스 배열 생성 (excludeFirst: 첫 번째 인덱스 방지) */
+  private createShuffledIndices(excludeFirst?: number): number[] {
+    const indices = Array.from({ length: this.configs.length }, (_, i) => i);
+
+    // Fisher-Yates 셔플
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+
+    // 연속 패턴 방지: 셔플 결과의 첫 번째가 제외 대상이면 뒤로 이동
+    if (excludeFirst !== undefined && indices.length > 1 && indices[0] === excludeFirst) {
+      const swapIdx = 1 + Math.floor(Math.random() * (indices.length - 1));
+      [indices[0], indices[swapIdx]] = [indices[swapIdx], indices[0]];
+    }
+
+    return indices;
+  }
+
+  /** 패턴 지속 시간에 ±30% 랜덤 변동 적용 */
+  private randomizeDuration(): number {
+    const variation = 0.7 + Math.random() * 0.6; // 0.7 ~ 1.3
+    return this.baseDurationMs * variation;
+  }
+}
+
 /** 기본 패턴 시퀀스 — Close/Mid/Long 공통 */
 export function getDefaultPatterns(baseSpeed: number): MovementPatternConfig[] {
   return [

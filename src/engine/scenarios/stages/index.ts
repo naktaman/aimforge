@@ -18,7 +18,7 @@ export { SwitchingCloseScenario } from './SwitchingCloseScenario'; // 근접 (15
 export { SwitchingWideScenario } from './SwitchingWideScenario';   // 원거리 (60-150°)
 
 // ── 이동 패턴 시스템 ──
-export { MovementPatternSystem } from './MovementPatternSystem';
+export { MovementPatternSystem, RandomPatternScheduler } from './MovementPatternSystem';
 export { getCloseRangePatterns, getMidRangePatterns, getLongRangePatterns } from './MovementPatternSystem';
 
 // ── 카테고리 4: Assessment (평가) ──

@@ -9,7 +9,7 @@ import { Scenario } from '../Scenario';
 import type { GameEngine } from '../../GameEngine';
 import type { TargetManager } from '../../TargetManager';
 import type { TrackingStageConfig, MovementPattern } from '../../../utils/types';
-import { MovementPatternSystem, getCloseRangePatterns } from './MovementPatternSystem';
+import { RandomPatternScheduler, getCloseRangePatterns } from './MovementPatternSystem';
 
 /** 트래킹 샘플 */
 interface TrackingSample {
@@ -32,11 +32,8 @@ export class TrackingCloseScenario extends Scenario {
   private startTime = 0;
   private currentTargetId: string | null = null;
 
-  // 이동 패턴 시스템
-  private patternSystems: MovementPatternSystem[] = [];
-  private currentPatternIndex = 0;
-  private patternStartTime = 0;
-  private patternDurationMs: number;
+  // 이동 패턴 스케줄러 — 랜덤 순서 + 가변 시간 패턴 전환
+  private patternScheduler: RandomPatternScheduler;
 
   // 측정
   private samples: TrackingSample[] = [];
@@ -57,21 +54,18 @@ export class TrackingCloseScenario extends Scenario {
     this.distance = config.distance || 12;
     this.basePos = new THREE.Vector3(0, 1.6, -this.distance);
 
-    // 이동 패턴 초기화 — 기본 Close Range 패턴 또는 커스텀
+    // 이동 패턴 초기화 — 랜덤 스케줄러로 4가지 패턴 섞어서 순환
     const patterns = config.patterns.length > 0
       ? config.patterns
       : getCloseRangePatterns();
 
     // 이동 범위: 근거리는 넓은 X축 이동 (팔 움직임)
-    const xBound = 6;
-    const yBound = 2.5;
-
-    for (const p of patterns) {
-      this.patternSystems.push(new MovementPatternSystem(p, xBound, yBound));
-    }
-
-    // 각 패턴 지속 시간 균등 분배
-    this.patternDurationMs = config.durationMs / this.patternSystems.length;
+    this.patternScheduler = new RandomPatternScheduler(
+      patterns,
+      config.durationMs,
+      /* xBound */ 6,
+      /* yBound */ 2.5,
+    );
   }
 
   setOnComplete(cb: (results: unknown) => void): void {
@@ -83,8 +77,7 @@ export class TrackingCloseScenario extends Scenario {
     this.samples = [];
     this.startTime = performance.now();
     this.lastSampleTime = 0;
-    this.currentPatternIndex = 0;
-    this.patternStartTime = 0;
+    this.patternScheduler.reset();
 
     // 초기 타겟 스폰
     const target = this.targetManager.spawnTarget(
@@ -109,18 +102,8 @@ export class TrackingCloseScenario extends Scenario {
       return;
     }
 
-    // 패턴 전환 체크
-    const patternElapsed = elapsed - this.patternStartTime;
-    if (patternElapsed >= this.patternDurationMs && this.currentPatternIndex < this.patternSystems.length - 1) {
-      this.currentPatternIndex++;
-      this.patternStartTime = elapsed;
-      // 패턴 전환 시 리셋
-      this.patternSystems[this.currentPatternIndex].reset();
-    }
-
-    // 현재 패턴으로 위치 업데이트
-    const system = this.patternSystems[this.currentPatternIndex];
-    const { x, y, directionChanged } = system.update(deltaTime, elapsed);
+    // 랜덤 스케줄러로 패턴 전환 + 위치 업데이트
+    const { x, y, directionChanged } = this.patternScheduler.update(deltaTime, elapsed);
 
     // 타겟 위치 적용
     if (this.currentTargetId) {
@@ -132,7 +115,7 @@ export class TrackingCloseScenario extends Scenario {
 
     // 트래킹 에러 샘플링
     if (elapsed - this.lastSampleTime >= this.sampleIntervalMs) {
-      this.sampleTrackingError(elapsed, system.getPattern(), directionChanged);
+      this.sampleTrackingError(elapsed, this.patternScheduler.getActivePattern(), directionChanged);
       this.lastSampleTime = elapsed;
     }
   }
