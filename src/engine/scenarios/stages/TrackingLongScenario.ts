@@ -9,7 +9,7 @@ import { Scenario } from '../Scenario';
 import type { GameEngine } from '../../GameEngine';
 import type { TargetManager } from '../../TargetManager';
 import type { TrackingStageConfig, MovementPattern } from '../../../utils/types';
-import { MovementPatternSystem, getLongRangePatterns } from './MovementPatternSystem';
+import { RandomPatternScheduler, getLongRangePatterns } from './MovementPatternSystem';
 
 /** 트래킹 샘플 */
 interface TrackingSample {
@@ -32,10 +32,8 @@ export class TrackingLongScenario extends Scenario {
   private startTime = 0;
   private currentTargetId: string | null = null;
 
-  private patternSystems: MovementPatternSystem[] = [];
-  private currentPatternIndex = 0;
-  private patternStartTime = 0;
-  private patternDurationMs: number;
+  // 이동 패턴 스케줄러 — 랜덤 순서 + 가변 시간 패턴 전환
+  private patternScheduler: RandomPatternScheduler;
 
   private samples: TrackingSample[] = [];
   private lastSampleTime = 0;
@@ -54,19 +52,18 @@ export class TrackingLongScenario extends Scenario {
     this.distance = config.distance || 50;
     this.basePos = new THREE.Vector3(0, 1.6, -this.distance);
 
+    // 이동 패턴 초기화 — 랜덤 스케줄러로 4가지 패턴 섞어서 순환
     const patterns = config.patterns.length > 0
       ? config.patterns
       : getLongRangePatterns();
 
     // 원거리: 좁은 이동 범위 (시각적으로 작은 움직임)
-    const xBound = 3;
-    const yBound = 1.2;
-
-    for (const p of patterns) {
-      this.patternSystems.push(new MovementPatternSystem(p, xBound, yBound));
-    }
-
-    this.patternDurationMs = config.durationMs / this.patternSystems.length;
+    this.patternScheduler = new RandomPatternScheduler(
+      patterns,
+      config.durationMs,
+      /* xBound */ 3,
+      /* yBound */ 1.2,
+    );
   }
 
   setOnComplete(cb: (results: unknown) => void): void {
@@ -78,8 +75,7 @@ export class TrackingLongScenario extends Scenario {
     this.samples = [];
     this.startTime = performance.now();
     this.lastSampleTime = 0;
-    this.currentPatternIndex = 0;
-    this.patternStartTime = 0;
+    this.patternScheduler.reset();
 
     const target = this.targetManager.spawnTarget(
       this.basePos.clone(),
@@ -103,16 +99,8 @@ export class TrackingLongScenario extends Scenario {
       return;
     }
 
-    // 패턴 전환
-    const patternElapsed = elapsed - this.patternStartTime;
-    if (patternElapsed >= this.patternDurationMs && this.currentPatternIndex < this.patternSystems.length - 1) {
-      this.currentPatternIndex++;
-      this.patternStartTime = elapsed;
-      this.patternSystems[this.currentPatternIndex].reset();
-    }
-
-    const system = this.patternSystems[this.currentPatternIndex];
-    const { x, y, directionChanged } = system.update(deltaTime, elapsed);
+    // 랜덤 스케줄러로 패턴 전환 + 위치 업데이트
+    const { x, y, directionChanged } = this.patternScheduler.update(deltaTime, elapsed);
 
     if (this.currentTargetId) {
       const newPos = this.basePos.clone();
@@ -122,7 +110,7 @@ export class TrackingLongScenario extends Scenario {
     }
 
     if (elapsed - this.lastSampleTime >= this.sampleIntervalMs) {
-      this.sampleTrackingError(elapsed, system.getPattern(), directionChanged);
+      this.sampleTrackingError(elapsed, this.patternScheduler.getActivePattern(), directionChanged);
       this.lastSampleTime = elapsed;
     }
   }
