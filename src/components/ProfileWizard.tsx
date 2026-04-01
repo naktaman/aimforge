@@ -49,6 +49,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
   const calibrationStore = useCalibrationStore();
 
   const [games, setGames] = useState<GamePreset[]>([]);
+  const [gameSearch, setGameSearch] = useState('');
 
   /** 게임 목록 로드 */
   useEffect(() => {
@@ -56,6 +57,14 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
       .then(setGames)
       .catch(() => {});
   }, []);
+
+  /** 검색 필터링된 게임 목록 */
+  const filteredGames = gameSearch.trim()
+    ? games.filter(g =>
+        g.name.toLowerCase().includes(gameSearch.toLowerCase()) ||
+        g.id.toLowerCase().includes(gameSearch.toLowerCase())
+      )
+    : games;
 
   /** 캘리브레이션 완료 감지 */
   useEffect(() => {
@@ -247,8 +256,18 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
             <h2>주력 게임 선택</h2>
             <p className="pw-description">가장 많이 플레이하는 게임을 선택하고 현재 감도를 입력하세요.</p>
 
+            {/* 게임 검색 */}
+            <input
+              type="text"
+              className="input-field"
+              placeholder="게임 이름으로 검색..."
+              value={gameSearch}
+              onChange={e => setGameSearch(e.target.value)}
+              style={{ marginBottom: 12, maxWidth: 400 }}
+            />
+
             <div className="pw-game-grid">
-              {games.map(g => (
+              {filteredGames.map(g => (
                 <div
                   key={g.name}
                   className={`pw-game-card ${store.selectedGame?.name === g.name ? 'selected' : ''}`}

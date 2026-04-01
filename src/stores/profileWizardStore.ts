@@ -5,6 +5,7 @@
  */
 import { create } from 'zustand';
 import type { GamePreset, StageType, AimDnaProfile } from '../utils/types';
+import { getGameYawMap, getGameSensFieldsMap, type GameSensField } from '../data/gameDatabase';
 
 /** 위저드 단계 */
 export type WizardStep =
@@ -53,59 +54,14 @@ export const STAGE_DESCRIPTIONS: Record<string, { name: string; description: str
   switching_wide: { name: 'Switching Wide', description: '60~150° 넓은 범위의 타겟 전환 능력을 측정합니다.' },
 };
 
-/** 게임별 감도 필드 정의 */
-export interface GameSensField {
-  key: string;
-  label: string;
-  min: number;
-  max: number;
-  step: number;
-  defaultValue: number;
-}
+/** 게임별 감도 필드 정의 — gameDatabase.ts에서 re-export */
+export type { GameSensField } from '../data/gameDatabase';
 
-/** 게임별 전용 감도 필드 */
-export const GAME_SENS_FIELDS: Record<string, GameSensField[]> = {
-  'Valorant': [
-    { key: 'sensitivity', label: '감도', min: 0.01, max: 10, step: 0.001, defaultValue: 0.3 },
-  ],
-  'CS2': [
-    { key: 'sensitivity', label: '감도', min: 0.01, max: 10, step: 0.01, defaultValue: 1.0 },
-    { key: 'zoom_sensitivity_ratio', label: '줌 감도 비율', min: 0.1, max: 3, step: 0.01, defaultValue: 1.0 },
-  ],
-  'Apex Legends': [
-    { key: 'sensitivity', label: '마우스 감도', min: 0.1, max: 20, step: 0.1, defaultValue: 3.0 },
-    { key: 'ads_1x', label: 'ADS 1x 배율', min: 0.1, max: 5, step: 0.1, defaultValue: 1.0 },
-    { key: 'ads_2x', label: 'ADS 2x 배율', min: 0.1, max: 5, step: 0.1, defaultValue: 1.0 },
-    { key: 'ads_3x', label: 'ADS 3x 배율', min: 0.1, max: 5, step: 0.1, defaultValue: 1.0 },
-    { key: 'ads_4x', label: 'ADS 4x~10x 배율', min: 0.1, max: 5, step: 0.1, defaultValue: 1.0 },
-  ],
-  'PUBG': [
-    { key: 'sensitivity', label: '일반 감도', min: 1, max: 100, step: 1, defaultValue: 50 },
-    { key: 'ads_sensitivity', label: '조준 (ADS)', min: 1, max: 100, step: 1, defaultValue: 50 },
-    { key: 'scope_1x', label: '1배 조준경', min: 1, max: 100, step: 1, defaultValue: 50 },
-    { key: 'scope_2x', label: '2배 조준경', min: 1, max: 100, step: 1, defaultValue: 50 },
-    { key: 'scope_3x', label: '3배 조준경', min: 1, max: 100, step: 1, defaultValue: 50 },
-    { key: 'scope_4x', label: '4배 조준경', min: 1, max: 100, step: 1, defaultValue: 50 },
-    { key: 'scope_6x', label: '6배 조준경', min: 1, max: 100, step: 1, defaultValue: 50 },
-    { key: 'scope_8x', label: '8배 조준경', min: 1, max: 100, step: 1, defaultValue: 50 },
-    { key: 'scope_15x', label: '15배 조준경', min: 1, max: 100, step: 1, defaultValue: 50 },
-    { key: 'freelook', label: '자유시점', min: 1, max: 100, step: 1, defaultValue: 50 },
-  ],
-  'Overwatch 2': [
-    { key: 'sensitivity', label: '감도', min: 0.01, max: 100, step: 0.01, defaultValue: 5.0 },
-    { key: 'zoom_sensitivity', label: '줌 감도', min: 1, max: 100, step: 1, defaultValue: 38 },
-    { key: 'hero_specific', label: '영웅별 감도 (기본)', min: 0.01, max: 100, step: 0.01, defaultValue: 5.0 },
-  ],
-};
+/** 게임별 전용 감도 필드 — gameDatabase.ts 기반 동적 생성 */
+export const GAME_SENS_FIELDS: Record<string, GameSensField[]> = getGameSensFieldsMap();
 
-/** 게임별 yaw 값 (감도 변환용) */
-export const GAME_YAW_VALUES: Record<string, number> = {
-  'Valorant': 0.07,
-  'CS2': 0.022,
-  'Apex Legends': 0.022,
-  'Overwatch 2': 0.0066,
-  'PUBG': 0.002222,
-};
+/** 게임별 yaw 값 (감도 변환용) — gameDatabase.ts 기반 동적 생성 (50+ 게임) */
+export const GAME_YAW_VALUES: Record<string, number> = getGameYawMap();
 
 /** 에임포지 내부 yaw */
 export const AIMFORGE_YAW = 0.022;

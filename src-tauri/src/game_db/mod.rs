@@ -77,109 +77,90 @@ pub struct SnappedSensitivity {
     pub recommended_cm360: f64,
 }
 
+/// 게임 프리셋 헬퍼 매크로 — 반복 코드 축소
+macro_rules! preset {
+    ($id:expr, $name:expr, $yaw:expr, $fov:expr, $fov_type:expr, $ar:expr, $step:expr, $mr:expr) => {
+        GamePreset {
+            id: $id.to_string(),
+            name: $name.to_string(),
+            yaw: $yaw,
+            default_fov: $fov,
+            fov_type: $fov_type.to_string(),
+            default_aspect_ratio: $ar,
+            sens_step: $step,
+            movement_ratio: $mr,
+        }
+    };
+}
+
 /// 기본 게임 프리셋 목록 반환
-/// 주요 FPS 게임 10개의 yaw/FOV 데이터 내장
+/// 50+ FPS/TPS 게임의 yaw/FOV 데이터 내장
+/// 프론트엔드 gameDatabase.ts와 동기화 필수
 pub fn get_default_presets() -> Vec<GamePreset> {
+    let ar16_9 = 16.0 / 9.0;
+    let ar4_3 = 4.0 / 3.0;
+
     vec![
-        GamePreset {
-            id: "cs2".to_string(),
-            name: "Counter-Strike 2".to_string(),
-            yaw: 0.022,
-            default_fov: 106.26, // 4:3 → 16:9 환산 hFOV
-            fov_type: "horizontal".to_string(),
-            default_aspect_ratio: 16.0 / 9.0,
-            sens_step: Some(0.01),
-            movement_ratio: 0.34, // ADAD strafe 비중 높음
-        },
-        GamePreset {
-            id: "valorant".to_string(),
-            name: "Valorant".to_string(),
-            yaw: 0.07,
-            default_fov: 103.0,
-            fov_type: "horizontal".to_string(),
-            default_aspect_ratio: 16.0 / 9.0,
-            sens_step: Some(0.001), // 소수 3자리까지 지원
-            movement_ratio: 0.30,
-        },
-        GamePreset {
-            id: "overwatch2".to_string(),
-            name: "Overwatch 2".to_string(),
-            yaw: 0.0066,
-            default_fov: 103.0,
-            fov_type: "horizontal".to_string(),
-            default_aspect_ratio: 16.0 / 9.0,
-            sens_step: Some(0.01),
-            movement_ratio: 0.30,
-        },
-        GamePreset {
-            id: "apex".to_string(),
-            name: "Apex Legends".to_string(),
-            yaw: 0.022,
-            default_fov: 110.0,
-            fov_type: "horizontal".to_string(),
-            default_aspect_ratio: 16.0 / 9.0,
-            sens_step: Some(0.1),
-            movement_ratio: 0.35, // 이동사격 비중 높음
-        },
-        GamePreset {
-            id: "r6siege".to_string(),
-            name: "Rainbow Six Siege".to_string(),
-            yaw: 0.00572958,
-            default_fov: 60.0, // 기본 vFOV (변환은 fov_type으로 처리)
-            fov_type: "vertical".to_string(),
-            default_aspect_ratio: 16.0 / 9.0,
-            sens_step: Some(1.0), // 정수 감도
-            movement_ratio: 0.25, // 포지션 홀드 비중 높음
-        },
-        GamePreset {
-            id: "fortnite".to_string(),
-            name: "Fortnite".to_string(),
-            yaw: 0.5515,
-            default_fov: 80.0,
-            fov_type: "horizontal".to_string(),
-            default_aspect_ratio: 16.0 / 9.0,
-            sens_step: Some(0.1),
-            movement_ratio: 0.40, // 빌드 모드 + 이동 비중 높음
-        },
-        GamePreset {
-            id: "cod_mw".to_string(),
-            name: "Call of Duty: MW3".to_string(),
-            yaw: 0.0066,
-            default_fov: 80.0,
-            fov_type: "horizontal".to_string(),
-            default_aspect_ratio: 16.0 / 9.0,
-            sens_step: Some(0.01),
-            movement_ratio: 0.30,
-        },
-        GamePreset {
-            id: "battlefield".to_string(),
-            name: "Battlefield 2042".to_string(),
-            yaw: 0.0023328,
-            default_fov: 78.0, // vFOV
-            fov_type: "vertical".to_string(),
-            default_aspect_ratio: 16.0 / 9.0,
-            sens_step: Some(1.0), // 정수 감도
-            movement_ratio: 0.30,
-        },
-        GamePreset {
-            id: "pubg".to_string(),
-            name: "PUBG".to_string(),
-            yaw: 0.002222,
-            default_fov: 103.0,
-            fov_type: "horizontal".to_string(),
-            default_aspect_ratio: 16.0 / 9.0,
-            sens_step: Some(1.0), // 정수 감도
-            movement_ratio: 0.30,
-        },
-        GamePreset {
-            id: "quake".to_string(),
-            name: "Quake Champions".to_string(),
-            yaw: 0.022,
-            default_fov: 130.0,
-            fov_type: "horizontal".to_string(),
-            default_aspect_ratio: 16.0 / 9.0,
-            sens_step: Some(0.01),
-            movement_ratio: 0.30,
-        },
+        // ─── Tier 1: 핵심 FPS (yaw 교차검증 완료) ───
+        preset!("cs2", "Counter-Strike 2", 0.022, 106.26, "horizontal", ar16_9, Some(0.01), 0.34),
+        preset!("valorant", "Valorant", 0.07, 103.0, "horizontal", ar16_9, Some(0.001), 0.30),
+        preset!("overwatch2", "Overwatch 2", 0.0066, 103.0, "horizontal", ar16_9, Some(0.01), 0.30),
+        preset!("apex", "Apex Legends", 0.022, 110.0, "horizontal", ar16_9, Some(0.1), 0.35),
+        preset!("pubg", "PUBG", 0.002222, 103.0, "horizontal", ar16_9, Some(1.0), 0.30),
+        preset!("fortnite", "Fortnite", 0.005555, 80.0, "horizontal", ar16_9, Some(0.1), 0.40),
+        preset!("tarkov", "Escape from Tarkov", 0.125, 50.0, "vertical", ar16_9, Some(0.01), 0.20),
+        preset!("r6siege", "Rainbow Six Siege", 0.00572958, 60.0, "vertical", ar16_9, Some(1.0), 0.25),
+        preset!("cod_mw", "Call of Duty: Warzone/MW3", 0.0066, 80.0, "horizontal", ar16_9, Some(0.01), 0.30),
+        preset!("deadlock", "Deadlock", 0.022, 100.0, "horizontal", ar16_9, Some(0.01), 0.30),
+        preset!("the_finals", "The Finals", 0.0066, 100.0, "horizontal", ar16_9, Some(0.1), 0.35),
+
+        // ─── Tier 2: 인기 FPS/TPS ───
+        preset!("battlefield", "Battlefield 2042", 0.0023328, 78.0, "vertical", ar16_9, Some(1.0), 0.30),
+        preset!("destiny2", "Destiny 2", 0.0066, 105.0, "horizontal", ar16_9, Some(1.0), 0.30),
+        preset!("halo_infinite", "Halo Infinite", 0.022, 78.0, "horizontal", ar16_9, Some(0.1), 0.30),
+        preset!("hunt_showdown", "Hunt: Showdown", 0.022, 103.0, "horizontal", ar16_9, Some(0.01), 0.25),
+        preset!("insurgency", "Insurgency: Sandstorm", 0.07, 90.0, "horizontal", ar16_9, Some(0.01), 0.25),
+        preset!("squad", "Squad", 0.07, 90.0, "horizontal", ar16_9, Some(0.01), 0.25),
+        preset!("rust", "Rust", 0.03, 90.0, "horizontal", ar16_9, Some(0.01), 0.30),
+        preset!("quake", "Quake Champions", 0.022, 130.0, "horizontal", ar16_9, Some(0.01), 0.30),
+        preset!("unreal_tournament", "Unreal Tournament", 0.005555, 100.0, "horizontal", ar16_9, Some(0.1), 0.30),
+        preset!("tf2", "Team Fortress 2", 0.022, 90.0, "horizontal", ar16_9, Some(0.01), 0.30),
+        preset!("l4d2", "Left 4 Dead 2", 0.022, 90.0, "horizontal", ar16_9, Some(0.01), 0.30),
+        preset!("arma3", "ARMA 3", 0.0003927, 74.0, "horizontal", ar16_9, Some(0.01), 0.20),
+        preset!("dayz", "DayZ", 0.0003927, 74.0, "horizontal", ar16_9, Some(0.01), 0.20),
+        preset!("hell_let_loose", "Hell Let Loose", 0.07, 90.0, "horizontal", ar16_9, Some(0.01), 0.25),
+        preset!("ready_or_not", "Ready or Not", 0.07, 90.0, "horizontal", ar16_9, Some(0.01), 0.20),
+        preset!("paladins", "Paladins", 0.005555, 100.0, "horizontal", ar16_9, Some(1.0), 0.30),
+        preset!("splitgate", "Splitgate", 0.005555, 100.0, "horizontal", ar16_9, Some(0.1), 0.30),
+        preset!("rogue_company", "Rogue Company", 0.005555, 80.0, "horizontal", ar16_9, Some(1.0), 0.30),
+        preset!("warframe", "Warframe", 0.01395, 78.0, "horizontal", ar16_9, Some(1.0), 0.35),
+        preset!("xdefiant", "XDefiant", 0.00572958, 90.0, "horizontal", ar16_9, Some(1.0), 0.30),
+        preset!("spectre_divide", "Spectre Divide", 0.07, 103.0, "horizontal", ar16_9, Some(0.001), 0.28),
+        preset!("marvel_rivals", "Marvel Rivals", 0.005555, 100.0, "horizontal", ar16_9, Some(0.1), 0.30),
+        preset!("delta_force", "Delta Force", 0.005555, 90.0, "horizontal", ar16_9, Some(0.1), 0.30),
+        preset!("cs16", "Counter-Strike 1.6", 0.022, 90.0, "horizontal", ar4_3, Some(0.01), 0.30),
+        preset!("css", "Counter-Strike: Source", 0.022, 90.0, "horizontal", ar16_9, Some(0.01), 0.30),
+
+        // ─── 추가 인기 FPS/TPS ───
+        preset!("csgo", "Counter-Strike: GO", 0.022, 106.26, "horizontal", ar16_9, Some(0.01), 0.34),
+        preset!("cod_bo6", "Call of Duty: Black Ops 6", 0.0066, 80.0, "horizontal", ar16_9, Some(0.01), 0.30),
+        preset!("apex_mobile", "Apex Legends Mobile", 0.022, 90.0, "horizontal", ar16_9, Some(0.1), 0.35),
+        preset!("doom_eternal", "DOOM Eternal", 0.022, 120.0, "horizontal", ar16_9, Some(0.1), 0.30),
+        preset!("titanfall2", "Titanfall 2", 0.022, 90.0, "horizontal", ar16_9, Some(0.1), 0.35),
+        preset!("diabotical", "Diabotical", 0.022, 110.0, "horizontal", ar16_9, Some(0.01), 0.30),
+        preset!("hyperscape", "Hyper Scape", 0.00572958, 100.0, "horizontal", ar16_9, Some(1.0), 0.30),
+        preset!("gundam_evolution", "Gundam Evolution", 0.005555, 100.0, "horizontal", ar16_9, Some(0.1), 0.30),
+        preset!("naraka", "Naraka: Bladepoint", 0.03, 90.0, "horizontal", ar16_9, Some(0.1), 0.35),
+        preset!("valorant_console", "Valorant (Console)", 0.07, 103.0, "horizontal", ar16_9, Some(0.001), 0.30),
+        preset!("battlefield_v", "Battlefield V", 0.0023328, 78.0, "vertical", ar16_9, Some(1.0), 0.30),
+        preset!("battlefield_1", "Battlefield 1", 0.0023328, 78.0, "vertical", ar16_9, Some(1.0), 0.30),
+        preset!("super_people", "Super People", 0.005555, 90.0, "horizontal", ar16_9, Some(1.0), 0.30),
+        preset!("back4blood", "Back 4 Blood", 0.07, 90.0, "horizontal", ar16_9, Some(0.1), 0.30),
+        preset!("deep_rock", "Deep Rock Galactic", 0.07, 90.0, "horizontal", ar16_9, Some(0.1), 0.30),
+        preset!("borderlands3", "Borderlands 3", 0.07, 90.0, "horizontal", ar16_9, Some(0.1), 0.30),
+        preset!("remnant2", "Remnant 2", 0.07, 90.0, "horizontal", ar16_9, Some(0.1), 0.30),
+        preset!("gta_online", "GTA Online", 0.0066, 80.0, "horizontal", ar16_9, Some(1.0), 0.30),
+        preset!("arma_reforger", "Arma Reforger", 0.0003927, 74.0, "horizontal", ar16_9, Some(0.01), 0.20),
+        preset!("prey", "Prey (2017)", 0.022, 95.0, "horizontal", ar16_9, Some(0.1), 0.25),
     ]
 }

@@ -59,11 +59,13 @@ const METHODS: Record<string, { label: string; desc: string }> = {
 
 /** 게임 카테고리별 추천 방식 결정 */
 function getRecommended(srcId: string, dstId: string): string {
-  const tactical = ['cs2', 'valorant', 'r6_siege'];
-  const br = ['fortnite', 'pubg', 'apex'];
-  // 둘 다 택티컬이면 MDM_0, BR이면 MDM_56.25, 그 외 MDM_75
+  const tactical = ['cs2', 'csgo', 'css', 'cs16', 'valorant', 'valorant_console', 'r6siege', 'spectre_divide', 'ready_or_not', 'insurgency', 'squad'];
+  const br = ['fortnite', 'pubg', 'apex', 'apex_mobile', 'super_people', 'naraka', 'hyperscape'];
+  const arena = ['quake', 'unreal_tournament', 'diabotical', 'splitgate', 'halo_infinite'];
+  // 둘 다 택티컬이면 MDM_0, BR이면 MDM_56.25, 아레나면 Viewspeed_H, 그 외 MDM_75
   if (tactical.includes(srcId) && tactical.includes(dstId)) return 'MDM_0';
   if (br.includes(srcId) || br.includes(dstId)) return 'MDM_56.25';
+  if (arena.includes(srcId) && arena.includes(dstId)) return 'Viewspeed_H';
   return 'MDM_75';
 }
 
@@ -76,6 +78,8 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AllMethodsConversion | null>(null);
   const [snap, setSnap] = useState<SnappedSensitivity | null>(null);
+  const [srcSearch, setSrcSearch] = useState('');
+  const [dstSearch, setDstSearch] = useState('');
 
   // 게임 목록 로드
   useEffect(() => {
@@ -83,6 +87,13 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
       if (g) setGames(g);
     });
   }, []);
+
+  /** 검색 필터링 */
+  const filterGames = (query: string) => {
+    if (!query.trim()) return games;
+    const q = query.toLowerCase();
+    return games.filter(g => g.name.toLowerCase().includes(q) || g.id.includes(q));
+  };
 
   /** 변환 실행: 6가지 방식으로 변환 후, 추천 방식 기준 스냅 계산 */
   const convert = useCallback(async () => {
@@ -136,12 +147,20 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
       <div className="conversion-controls">
         <label className="form-label">
           소스 게임
+          <input
+            type="text"
+            className="input-field"
+            placeholder="검색..."
+            value={srcSearch}
+            onChange={e => setSrcSearch(e.target.value)}
+            style={{ marginBottom: 4, fontSize: 12 }}
+          />
           <select
             className="select-field"
             value={srcGame}
-            onChange={(e) => { setSrcGame(e.target.value); setResult(null); }}
+            onChange={(e) => { setSrcGame(e.target.value); setResult(null); setSrcSearch(''); }}
           >
-            {games.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+            {filterGames(srcSearch).map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
           </select>
         </label>
 
@@ -151,12 +170,20 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
 
         <label className="form-label">
           대상 게임
+          <input
+            type="text"
+            className="input-field"
+            placeholder="검색..."
+            value={dstSearch}
+            onChange={e => setDstSearch(e.target.value)}
+            style={{ marginBottom: 4, fontSize: 12 }}
+          />
           <select
             className="select-field"
             value={dstGame}
-            onChange={(e) => { setDstGame(e.target.value); setResult(null); }}
+            onChange={(e) => { setDstGame(e.target.value); setResult(null); setDstSearch(''); }}
           >
-            {games.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
+            {filterGames(dstSearch).map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
           </select>
         </label>
 
