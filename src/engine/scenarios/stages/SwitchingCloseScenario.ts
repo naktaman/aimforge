@@ -182,19 +182,27 @@ export class SwitchingCloseScenario extends Scenario {
     this.lastKillTime = performance.now();
     this.previousTargetAngle = 0;
 
-    // 타겟 위치 생성 — 좁은 범위에 클러스터링
+    // 타겟 위치 생성 — 카메라 기준 좁은 범위에 클러스터링
+    const camera = this.engine.getCamera();
+    const cameraPos = camera.position.clone();
     const baseAzimuth = Math.random() * Math.PI * 2;
     for (let i = 0; i < targetsPerWave; i++) {
       const sep = minSep + Math.random() * (maxSep - minSep);
-      const azimuth = baseAzimuth + (i - targetsPerWave / 2) * sep * DEG2RAD;
+      const azimuthOffset = (i - targetsPerWave / 2) * sep * DEG2RAD;
+      const azimuth = baseAzimuth + azimuthOffset;
       const elevation = (Math.random() - 0.5) * 20 * DEG2RAD;
 
-      const x = Math.sin(azimuth) * this.distance;
-      const y = 1.6 + Math.sin(elevation) * this.distance * 0.2;
-      const z = -Math.cos(azimuth) * this.distance;
+      // 카메라 로컬 공간에서 방향 계산
+      const localDir = new THREE.Vector3(
+        Math.sin(azimuth),
+        Math.sin(elevation) * 0.2,
+        -Math.cos(azimuth),
+      ).normalize();
+      const worldDir = localDir.applyQuaternion(camera.quaternion);
+      const targetPos = cameraPos.clone().addScaledVector(worldDir, this.distance);
 
       const target = this.targetManager.spawnTarget(
-        new THREE.Vector3(x, y, z),
+        targetPos,
         {
           angularSizeDeg: this.config.difficulty.targetSizeDeg,
           distanceM: this.distance,

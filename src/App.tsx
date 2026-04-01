@@ -48,6 +48,7 @@ import { Onboarding } from './components/Onboarding';
 import { useZoomCalibrationStore } from './stores/zoomCalibrationStore';
 import { Crosshair } from './components/overlays/Crosshair';
 import { ScopeOverlay } from './components/overlays/ScopeOverlay';
+import { ShootingFeedback, triggerShootingFeedback } from './components/overlays/ShootingFeedback';
 import { TargetManager } from './engine/TargetManager';
 import { FlickScenario } from './engine/scenarios/FlickScenario';
 import { TrackingScenario } from './engine/scenarios/TrackingScenario';
@@ -56,6 +57,7 @@ import { StochasticTrackingScenario } from './engine/scenarios/StochasticTrackin
 import { CounterStrafeFlickScenario } from './engine/scenarios/CounterStrafeFlickScenario';
 import { MicroFlickScenario } from './engine/scenarios/MicroFlickScenario';
 import { AudioManager } from './engine/AudioManager';
+import { RECOIL_PRESETS } from './stores/engineStore';
 import { calculateFlickScore, calculateTrackingScore } from './engine/metrics/CompositeScore';
 import {
   FlickMicroScenario,
@@ -120,6 +122,14 @@ function App() {
     const tm = new TargetManager(engine.getScene());
     targetManagerRef.current = tm;
     engine.setTargetManager(tm);
+
+    // 사격 피드백 연결: 클릭 시 총기음 + 히트마커/미스마커
+    engine.setOnShoot((hit) => {
+      audioManager.playGunshot();
+      triggerShootingFeedback(hit ? 'hit' : 'miss');
+      if (hit) audioManager.playHit();
+      else audioManager.playMiss();
+    });
   }, []);
 
   /** Flick 시나리오 완료 처리 (공통 헬퍼) */
@@ -164,12 +174,24 @@ function App() {
     [setFlickResult, endScenario, setScreen, cmPer360],
   );
 
+  /** 반동 설정을 엔진에 동기화 */
+  const syncRecoilToEngine = useCallback((engine: GameEngine) => {
+    const { recoilEnabled, recoilPreset } = useEngineStore.getState();
+    if (recoilEnabled) {
+      const p = RECOIL_PRESETS[recoilPreset];
+      engine.setRecoil(p.verticalDeg, p.horizontalSpreadDeg, p.recoveryRate);
+    } else {
+      engine.setRecoil(0, 0, 0);
+    }
+  }, []);
+
   /** 시나리오 시작 */
   const handleStart = useCallback(
     (scenarioType: ScenarioType, params: ScenarioParams) => {
       const engine = engineRef.current;
       const tm = targetManagerRef.current;
       if (!engine || !tm) return;
+      syncRecoilToEngine(engine);
 
       setScreen('viewport');
       startScenario(scenarioType);
@@ -363,7 +385,7 @@ function App() {
           break;
       }
     },
-    [dpi, cmPer360, startScenario, endScenario, setFlickResult, setTrackingResult, setMicroFlickResult, setScreen, handleFlickComplete],
+    [dpi, cmPer360, startScenario, endScenario, setFlickResult, setTrackingResult, setMicroFlickResult, setScreen, handleFlickComplete, syncRecoilToEngine],
   );
 
   /** 훈련 세분류 시나리오 시작 */
@@ -372,6 +394,7 @@ function App() {
       const engine = engineRef.current;
       const tm = targetManagerRef.current;
       if (!engine || !tm) return;
+      syncRecoilToEngine(engine);
 
       setScreen('viewport');
       // 세분류 시나리오는 'flick' ScenarioType으로 매핑 (결과 처리는 범용)
@@ -542,7 +565,7 @@ function App() {
           break;
       }
     },
-    [startScenario, endScenario, setScreen],
+    [startScenario, endScenario, setScreen, syncRecoilToEngine],
   );
 
   /** 배터리 시작 — ScenarioBattery 인스턴스 생성 후 battery-progress 이동 */
@@ -864,7 +887,7 @@ function App() {
               <h1>AimForge</h1>
               <span className="version">v0.1.0</span>
             </div>
-            <p className="subtitle">FPS Aim Calibration & Training</p>
+            <p className="subtitle">FPS 감도 최적화 & 에임 트레이너</p>
             <div className="header-right">
               <div className="header-controls">
                 {/* 모드 토글 */}
@@ -881,17 +904,15 @@ function App() {
             </div>
           </header>
           <main className="app-main">
-            {/* 부가 메뉴 버튼 */}
+            {/* 부가 메뉴 — 감도/게임 프로필은 감도 탭으로 이동됨 */}
             <div className="quick-nav">
               <button className="btn-secondary btn-sm" onClick={() => setScreen('display-settings')}>디스플레이</button>
-              <button className="btn-secondary btn-sm" onClick={() => setScreen('game-profiles')}>게임 프로필</button>
               {mode === 'advanced' && (
                 <button className="btn-secondary btn-sm" onClick={() => setScreen('routines')}>루틴</button>
               )}
               {mode === 'advanced' && (
                 <button className="btn-secondary btn-sm" onClick={() => setScreen('recoil-editor')}>반동 편집기</button>
               )}
-              <button className="btn-secondary btn-sm" onClick={() => setScreen('conversion-selector')}>감도 변환</button>
             </div>
             <ScenarioSelect
               onStart={handleStart}
@@ -913,6 +934,7 @@ function App() {
           <>
             <Crosshair />
             <ScopeOverlay zoomLevel={currentZoom} active={scopeMultiplier > 1} />
+            <ShootingFeedback />
             {/* HUD */}
             <div className="hud">
               <div className="hud-item">{fps} FPS</div>

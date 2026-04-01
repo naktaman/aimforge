@@ -1,12 +1,12 @@
 /**
- * 시나리오 설정 UI
- * 게임 선택, DPI, 감도, 시나리오 파라미터 설정 후 시작
- * Day 8~9: 6종 시나리오 + 배터리 프리셋 추가
+ * 메인 허브 UI (재설계)
+ * 탭 구조: 감도 프로파일 | 훈련 | 분석
+ * 피드백 반영: 감도 최적화가 메인 컨셉임을 전면에 배치
  */
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useSettingsStore } from '../stores/settingsStore';
-import { useEngineStore } from '../stores/engineStore';
+import { useEngineStore, RECOIL_PRESETS, type RecoilPreset } from '../stores/engineStore';
 import { useUiStore } from '../stores/uiStore';
 import type { GamePreset, ScenarioType, BatteryPreset, StageType } from '../utils/types';
 import { ConversionPanel } from './ConversionPanel';
@@ -91,22 +91,28 @@ const TRAINING_CATALOG = [
   },
 ];
 
-/** 시나리오 탭 정의 */
+/** 시나리오 탭 정의 (커스텀 플레이용) */
 const SCENARIO_TABS: Array<{ type: ScenarioType; label: string }> = [
   { type: 'flick', label: 'Static Flick' },
   { type: 'tracking', label: 'Linear Tracking' },
-  { type: 'circular_tracking', label: 'Circular Tracking' },
-  { type: 'stochastic_tracking', label: 'Stochastic Tracking' },
+  { type: 'circular_tracking', label: 'Circular' },
+  { type: 'stochastic_tracking', label: 'Stochastic' },
   { type: 'counter_strafe_flick', label: 'Counter-Strafe' },
   { type: 'micro_flick', label: 'Micro-Flick' },
 ];
 
-/** 메인 메뉴 탭 */
-type MainTab = 'training' | 'quickplay' | 'crosshair' | 'tools';
+/** 메인 탭: 감도 프로파일 → 훈련 → 분석 */
+type MainTab = 'sensitivity' | 'training' | 'analysis';
+
+/** 훈련 서브탭 */
+type TrainingSub = 'catalog' | 'custom' | 'battery';
 
 export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoomCalibration, onBattery, onHistory }: ScenarioSelectProps) {
-  const [mainTab, setMainTab] = useState<MainTab>('training');
+  const [mainTab, setMainTab] = useState<MainTab>('sensitivity');
+  const [trainingSub, setTrainingSub] = useState<TrainingSub>('catalog');
+  const [showCrosshair, setShowCrosshair] = useState(false);
   const { mode } = useUiStore();
+  const { recoilEnabled, recoilPreset, toggleRecoil, setRecoilPreset } = useEngineStore();
   const {
     dpi, sensitivity, selectedGame,
     setDpi, setSensitivity, selectGame,
@@ -143,7 +149,6 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
   const [switchFreq, setSwitchFreq] = useState(0.5);
   const [flickAngleMin, setFlickAngleMin] = useState(10);
   const [flickAngleMax, setFlickAngleMax] = useState(60);
-
   // 배터리
   const [batteryPreset, setBatteryPreset] = useState<BatteryPreset>('TACTICAL');
 
@@ -257,26 +262,11 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
     }
   };
 
-  /** 시나리오 타입별 시작 버튼 텍스트 */
-  const getStartLabel = (): string => {
-    const labels: Record<string, string> = {
-      flick: 'Flick 시나리오 시작',
-      tracking: 'Tracking 시나리오 시작',
-      circular_tracking: 'Circular Tracking 시작',
-      stochastic_tracking: 'Stochastic Tracking 시작',
-      counter_strafe_flick: 'Counter-Strafe 시작',
-      micro_flick: 'Micro-Flick 시작',
-    };
-    return labels[scenarioType] ?? '시나리오 시작';
-  };
-
   return (
     <div className="scenario-select">
-      <h2>AimForge</h2>
-
-      {/* 하드웨어/게임 설정 (항상 보임) */}
+      {/* ── 하드웨어/게임 설정 (항상 보임) ── */}
       <section className="settings-section">
-        <h3>설정</h3>
+        <h3>기본 설정</h3>
         <div className="settings-grid">
           <label>
             게임
@@ -316,13 +306,37 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
         </div>
       </section>
 
-      {/* 메인 탭 네비게이션 */}
+      {/* ── 사격 피드백 / 반동 설정 ── */}
+      <section className="settings-section recoil-section">
+        <div className="recoil-toggle">
+          <label className="toggle-label">
+            <input
+              type="checkbox"
+              checked={recoilEnabled}
+              onChange={toggleRecoil}
+            />
+            반동 (리코일)
+          </label>
+          {recoilEnabled && (
+            <select
+              className="recoil-select"
+              value={recoilPreset}
+              onChange={(e) => setRecoilPreset(e.target.value as RecoilPreset)}
+            >
+              {(Object.entries(RECOIL_PRESETS) as [RecoilPreset, typeof RECOIL_PRESETS[RecoilPreset]][]).map(([key, val]) => (
+                <option key={key} value={key}>{val.label}</option>
+              ))}
+            </select>
+          )}
+        </div>
+      </section>
+
+      {/* ── 메인 탭 네비게이션 (재설계) ── */}
       <div className="main-tabs">
         {([
-          { key: 'training' as MainTab, label: 'Training' },
-          { key: 'quickplay' as MainTab, label: 'Quick Play' },
-          { key: 'crosshair' as MainTab, label: 'Crosshair' },
-          { key: 'tools' as MainTab, label: 'Tools' },
+          { key: 'sensitivity' as MainTab, label: '감도 프로파일', emoji: '' },
+          { key: 'training' as MainTab, label: '훈련', emoji: '' },
+          { key: 'analysis' as MainTab, label: '분석', emoji: '' },
         ]).map(({ key, label }) => (
           <button
             key={key}
@@ -332,172 +346,241 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
             {label}
           </button>
         ))}
+        {/* 크로스헤어 토글 버튼 (독립 탭 → 접이식 패널) */}
+        <button
+          className={`main-tab main-tab-secondary ${showCrosshair ? 'active' : ''}`}
+          onClick={() => setShowCrosshair(!showCrosshair)}
+          title="크로스헤어 설정"
+        >
+          +
+        </button>
       </div>
 
-      {/* ── Training 카탈로그 ── */}
-      {mainTab === 'training' && (
-        <section className="training-catalog">
-          {TRAINING_CATALOG.map(({ category, icon, items }) => (
-            <div key={category} className="catalog-category">
-              <h3 className="category-header">
-                <span className="category-icon">{icon}</span> {category}
-              </h3>
-              <div className="catalog-items">
-                {items.map((item) => (
-                  <button
-                    key={item.type}
-                    className="catalog-item"
-                    style={{ borderLeftColor: item.color }}
-                    disabled={!selectedGame}
-                    onClick={() => onTrainingStart?.({ stageType: item.type })}
-                  >
-                    <div className="catalog-item-header">
-                      <span className="catalog-item-name">
-                        {item.name}
-                        {'star' in item && item.star && <span className="star-badge">CORE</span>}
-                      </span>
-                    </div>
-                    <span className="catalog-item-desc">{item.desc}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
+      {/* ── 크로스헤어 접이식 패널 ── */}
+      {showCrosshair && (
+        <section className="crosshair-panel">
+          <CrosshairSettings />
         </section>
       )}
 
-      {/* ── Quick Play (기존 시나리오) ── */}
-      {mainTab === 'quickplay' && (
-        <>
-          <section className="settings-section">
-            <h3>시나리오</h3>
-            <div className="scenario-tabs">
-              {SCENARIO_TABS.map(({ type, label }) => (
+      {/* ══════════════════════════════════════════
+          탭 1: 감도 프로파일 — 앱의 핵심 기능
+          ══════════════════════════════════════════ */}
+      {mainTab === 'sensitivity' && (
+        <section className="sensitivity-hub">
+          {/* 메인 CTA — 감도 캘리브레이션 */}
+          <div className="sensitivity-hero">
+            <h3>나만의 최적 감도 찾기</h3>
+            <p className="sensitivity-desc">
+              Bayesian Optimization으로 당신에게 딱 맞는 cm/360을 찾아드립니다.
+              여러 시나리오를 플레이하며 감도를 자동으로 조정합니다.
+            </p>
+            <div className="sensitivity-actions">
+              {onCalibration && (
                 <button
-                  key={type}
-                  className={scenarioType === type ? 'active' : ''}
-                  onClick={() => setScenarioType(type)}
+                  className="btn-primary btn-lg"
+                  onClick={onCalibration}
+                  disabled={!selectedGame}
                 >
-                  {label}
+                  감도 캘리브레이션 시작
                 </button>
-              ))}
+              )}
+              {onZoomCalibration && mode === 'advanced' && (
+                <button
+                  className="btn-secondary btn-lg"
+                  onClick={onZoomCalibration}
+                  disabled={!selectedGame}
+                >
+                  줌 감도 캘리브레이션
+                </button>
+              )}
             </div>
-            {renderParams()}
-            <button
-              className="start-button"
-              onClick={handleStart}
-              disabled={!selectedGame}
-            >
-              {getStartLabel()}
-            </button>
-          </section>
-
-          {/* 배터리 프리셋 */}
-          <section className="settings-section">
-            <h3>시나리오 배터리</h3>
-            <div className="battery-presets">
-              {(['TACTICAL', 'MOVEMENT', 'BR', 'CUSTOM'] as BatteryPreset[]).map((preset) => (
-                <label key={preset} className="battery-radio">
-                  <input
-                    type="radio"
-                    name="battery"
-                    value={preset}
-                    checked={batteryPreset === preset}
-                    onChange={() => setBatteryPreset(preset)}
-                  />
-                  {preset}
-                </label>
-              ))}
-            </div>
-            {onBattery && (
-              <button
-                className="battery-button"
-                onClick={() => onBattery({ preset: batteryPreset })}
-                disabled={!selectedGame}
-              >
-                배터리 시작 ({batteryPreset})
-              </button>
-            )}
-          </section>
-        </>
-      )}
-
-      {/* ── 크로스헤어 설정 ── */}
-      {mainTab === 'crosshair' && (
-        <CrosshairSettings />
-      )}
-
-      {/* ── Tools (캘리브레이션, 변환기, 히스토리) ── */}
-      {mainTab === 'tools' && (
-        <>
-          <ConversionPanel games={games} />
-          <div className="action-buttons">
-            {onCalibration && (
-              <button
-                className="calibration-button"
-                onClick={onCalibration}
-                disabled={!selectedGame}
-              >
-                Quick Calibration
-              </button>
-            )}
-            {onZoomCalibration && mode === 'advanced' && (
-              <button
-                className="calibration-button"
-                onClick={onZoomCalibration}
-                disabled={!selectedGame}
-              >
-                Zoom Calibration
-              </button>
-            )}
-            {onHistory && (
-              <button
-                className="calibration-button"
-                onClick={onHistory}
-              >
-                히스토리
-              </button>
-            )}
           </div>
-          {/* Day 18: 진행/분석 네비게이션 */}
-          <div className="action-buttons" style={{ marginTop: 12 }}>
-            {mode === 'advanced' && (
-              <button className="calibration-button" onClick={() => useEngineStore.getState().setScreen('training-prescription')}>
-                훈련 처방
-              </button>
-            )}
-            <button className="calibration-button" onClick={() => useEngineStore.getState().setScreen('progress-dashboard')}>
-              진행 대시보드
+
+          {/* 감도 관련 도구 카드 */}
+          <div className="sensitivity-tools">
+            <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('game-profiles')}>
+              <span className="tool-card-title">게임 프로필</span>
+              <span className="tool-card-desc">게임별 감도, DPI, FOV 설정 관리</span>
+            </button>
+            <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('conversion-selector')}>
+              <span className="tool-card-title">감도 변환기</span>
+              <span className="tool-card-desc">게임 간 감도를 cm/360 기준으로 변환</span>
             </button>
             {mode === 'advanced' && (
               <>
-                <button className="calibration-button" onClick={() => useEngineStore.getState().setScreen('trajectory-analysis')}>
-                  궤적 분석
+                <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('fov-comparison')}>
+                  <span className="tool-card-title">FOV 비교</span>
+                  <span className="tool-card-desc">시야각에 따른 에임 영향 분석</span>
                 </button>
-                <button className="calibration-button" onClick={() => useEngineStore.getState().setScreen('style-transition')}>
-                  스타일 전환
+                <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('hardware-compare')}>
+                  <span className="tool-card-title">하드웨어 비교</span>
+                  <span className="tool-card-desc">마우스/패드 조합별 성능 비교</span>
+                </button>
+                <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('dual-landscape')}>
+                  <span className="tool-card-title">퍼포먼스 맵</span>
+                  <span className="tool-card-desc">정적/동적 환경 감도 최적 구간</span>
+                </button>
+                <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('movement-editor')}>
+                  <span className="tool-card-title">무브먼트 에디터</span>
+                  <span className="tool-card-desc">이동 물리 파라미터 조정</span>
                 </button>
               </>
             )}
           </div>
-          {/* Day 20: Movement + FOV + Hardware (Advanced 전용) */}
-          {mode === 'advanced' && (
-            <div className="action-buttons" style={{ marginTop: 12 }}>
-              <button className="calibration-button" onClick={() => useEngineStore.getState().setScreen('movement-editor')}>
-                무브먼트 에디터
+
+          {/* 인라인 감도 변환 패널 */}
+          <ConversionPanel games={games} />
+        </section>
+      )}
+
+      {/* ══════════════════════════════════════════
+          탭 2: 훈련 — 카탈로그 + 커스텀 + 배터리
+          ══════════════════════════════════════════ */}
+      {mainTab === 'training' && (
+        <>
+          {/* 훈련 서브 탭 */}
+          <div className="sub-tabs">
+            {([
+              { key: 'catalog' as TrainingSub, label: '시나리오 카탈로그' },
+              { key: 'custom' as TrainingSub, label: '커스텀 플레이' },
+              { key: 'battery' as TrainingSub, label: '배터리 테스트' },
+            ]).map(({ key, label }) => (
+              <button
+                key={key}
+                className={`sub-tab ${trainingSub === key ? 'active' : ''}`}
+                onClick={() => setTrainingSub(key)}
+              >
+                {label}
               </button>
-              <button className="calibration-button" onClick={() => useEngineStore.getState().setScreen('fov-comparison')}>
-                FOV 비교
+            ))}
+          </div>
+
+          {/* 카탈로그 — 8종 훈련 시나리오 */}
+          {trainingSub === 'catalog' && (
+            <section className="training-catalog">
+              {TRAINING_CATALOG.map(({ category, icon, items }) => (
+                <div key={category} className="catalog-category">
+                  <h3 className="category-header">
+                    <span className="category-icon">{icon}</span> {category}
+                  </h3>
+                  <div className="catalog-items">
+                    {items.map((item) => (
+                      <button
+                        key={item.type}
+                        className="catalog-item"
+                        style={{ borderLeftColor: item.color }}
+                        disabled={!selectedGame}
+                        onClick={() => onTrainingStart?.({ stageType: item.type })}
+                      >
+                        <div className="catalog-item-header">
+                          <span className="catalog-item-name">
+                            {item.name}
+                            {'star' in item && item.star && <span className="star-badge">CORE</span>}
+                          </span>
+                        </div>
+                        <span className="catalog-item-desc">{item.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </section>
+          )}
+
+          {/* 커스텀 플레이 — 6종 시나리오 + 상세 파라미터 */}
+          {trainingSub === 'custom' && (
+            <section className="settings-section">
+              <h3>커스텀 시나리오</h3>
+              <div className="scenario-tabs">
+                {SCENARIO_TABS.map(({ type, label }) => (
+                  <button
+                    key={type}
+                    className={scenarioType === type ? 'active' : ''}
+                    onClick={() => setScenarioType(type)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {renderParams()}
+              <button
+                className="start-button"
+                onClick={handleStart}
+                disabled={!selectedGame}
+              >
+                시나리오 시작
               </button>
-              <button className="calibration-button" onClick={() => useEngineStore.getState().setScreen('hardware-compare')}>
-                하드웨어 비교
-              </button>
-              <button className="calibration-button" onClick={() => useEngineStore.getState().setScreen('dual-landscape')}>
-                듀얼 랜드스케이프
-              </button>
-            </div>
+            </section>
+          )}
+
+          {/* 배터리 테스트 — 종합 능력 측정 */}
+          {trainingSub === 'battery' && (
+            <section className="settings-section">
+              <h3>시나리오 배터리</h3>
+              <p className="battery-desc">여러 시나리오를 연속으로 수행하여 종합 에임 능력을 측정합니다.</p>
+              <div className="battery-presets">
+                {(['TACTICAL', 'MOVEMENT', 'BR', 'CUSTOM'] as BatteryPreset[]).map((preset) => (
+                  <label key={preset} className="battery-radio">
+                    <input
+                      type="radio"
+                      name="battery"
+                      value={preset}
+                      checked={batteryPreset === preset}
+                      onChange={() => setBatteryPreset(preset)}
+                    />
+                    {preset}
+                  </label>
+                ))}
+              </div>
+              {onBattery && (
+                <button
+                  className="battery-button"
+                  onClick={() => onBattery({ preset: batteryPreset })}
+                  disabled={!selectedGame}
+                >
+                  배터리 시작 ({batteryPreset})
+                </button>
+              )}
+            </section>
           )}
         </>
+      )}
+
+      {/* ══════════════════════════════════════════
+          탭 3: 분석 — 진행 추적, 궤적, DNA, 히스토리
+          ══════════════════════════════════════════ */}
+      {mainTab === 'analysis' && (
+        <section className="analysis-hub">
+          <div className="analysis-cards">
+            <button className="tool-card tool-card-wide" onClick={() => useEngineStore.getState().setScreen('progress-dashboard')}>
+              <span className="tool-card-title">진행 대시보드</span>
+              <span className="tool-card-desc">일간/주간 에임 성장 추이와 준비도 확인</span>
+            </button>
+            {onHistory && (
+              <button className="tool-card tool-card-wide" onClick={onHistory}>
+                <span className="tool-card-title">세션 히스토리</span>
+                <span className="tool-card-desc">과거 훈련 기록과 상세 결과 열람</span>
+              </button>
+            )}
+            {mode === 'advanced' && (
+              <>
+                <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('training-prescription')}>
+                  <span className="tool-card-title">훈련 처방</span>
+                  <span className="tool-card-desc">약점 기반 맞춤 훈련 추천</span>
+                </button>
+                <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('trajectory-analysis')}>
+                  <span className="tool-card-title">궤적 분석</span>
+                  <span className="tool-card-desc">마우스 이동 패턴과 GMM 클러스터링</span>
+                </button>
+                <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('style-transition')}>
+                  <span className="tool-card-title">스타일 전환</span>
+                  <span className="tool-card-desc">에임 스타일 변화 추적</span>
+                </button>
+              </>
+            )}
+          </div>
+        </section>
       )}
     </div>
   );

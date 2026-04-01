@@ -163,22 +163,27 @@ export class FlickMacroScenario extends Scenario {
     }
   }
 
+  /** 타겟 스폰 — 카메라 상대좌표 기준으로 배치 */
   private spawnNext(): void {
     const [minAngle, maxAngle] = this.config.angleRange;
     this.targetAngleDeg = minAngle + Math.random() * (maxAngle - minAngle);
 
-    // 주로 좌우 + 후방에서 출현 (상하 편향 적음)
+    // 카메라 기준 로컬 방향 계산 (매크로: 주로 좌우 대각)
     const azimuth = Math.random() * Math.PI * 2;
-    // 수직 편차는 매크로에서 적게
-    const elevation = (Math.random() - 0.5) * 20 * DEG2RAD;
     const angleRad = this.targetAngleDeg * DEG2RAD;
+    const localDir = new THREE.Vector3(
+      Math.sin(angleRad) * Math.cos(azimuth),
+      Math.sin(angleRad) * Math.sin(azimuth - Math.PI / 2),
+      -Math.cos(angleRad),
+    );
 
-    const x = Math.sin(azimuth) * Math.sin(angleRad) * this.distance;
-    const y = 1.6 + Math.sin(elevation) * this.distance * 0.3;
-    const z = -Math.cos(angleRad) * this.distance;
+    // 카메라 quaternion으로 월드 방향 변환
+    const camera = this.engine.getCamera();
+    const worldDir = localDir.applyQuaternion(camera.quaternion);
+    const targetPos = camera.position.clone().addScaledVector(worldDir, this.distance);
 
     const target = this.targetManager.spawnTarget(
-      new THREE.Vector3(x, y, z),
+      targetPos,
       {
         angularSizeDeg: this.config.difficulty.targetSizeDeg,
         distanceM: this.distance,

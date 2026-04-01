@@ -51,6 +51,7 @@ export class TrackingMidScenario extends Scenario {
     this.config = config;
 
     this.distance = config.distance || 25;
+    // basePos는 start() 시점에 카메라 전방 기준으로 설정
     this.basePos = new THREE.Vector3(0, 1.6, -this.distance);
 
     // 이동 패턴 초기화 — 랜덤 스케줄러로 4가지 패턴 섞어서 순환
@@ -77,6 +78,11 @@ export class TrackingMidScenario extends Scenario {
     this.startTime = performance.now();
     this.lastSampleTime = 0;
     this.patternScheduler.reset();
+
+    // 카메라 전방 기준으로 basePos 초기화
+    const camera = this.engine.getCamera();
+    const forward = this.engine.getCameraForward();
+    this.basePos = camera.position.clone().addScaledVector(forward, this.distance);
 
     const target = this.targetManager.spawnTarget(
       this.basePos.clone(),
