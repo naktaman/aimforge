@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useSettingsStore } from '../stores/settingsStore';
-import { useEngineStore, RECOIL_PRESETS, type RecoilPreset } from '../stores/engineStore';
+import { useEngineStore, RECOIL_PRESETS, type RecoilPreset, type FireMode } from '../stores/engineStore';
 import { useUiStore } from '../stores/uiStore';
 import type { GamePreset, ScenarioType, BatteryPreset, StageType } from '../utils/types';
 import { ConversionPanel } from './ConversionPanel';
@@ -112,7 +112,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
   const [trainingSub, setTrainingSub] = useState<TrainingSub>('catalog');
   const [showCrosshair, setShowCrosshair] = useState(false);
   const { mode } = useUiStore();
-  const { recoilEnabled, recoilPreset, toggleRecoil, setRecoilPreset } = useEngineStore();
+  const { recoilEnabled, recoilPreset, toggleRecoil, setRecoilPreset, fireMode, fireRpm, setFireMode, setFireRpm } = useEngineStore();
   const {
     dpi, sensitivity, selectedGame,
     setDpi, setSensitivity, selectGame,
@@ -327,6 +327,37 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
                 <option key={key} value={key}>{val.label}</option>
               ))}
             </select>
+          )}
+        </div>
+
+        {/* 발사 모드 + RPM 설정 */}
+        <div className="fire-mode-settings">
+          <label className="toggle-label">
+            발사 모드
+            <select
+              className="recoil-select"
+              value={fireMode}
+              onChange={(e) => setFireMode(e.target.value as FireMode)}
+            >
+              <option value="semi">단발 (세미)</option>
+              <option value="auto">연사 (풀오토)</option>
+              <option value="burst">점사 (3점사)</option>
+            </select>
+          </label>
+          {fireMode !== 'semi' && (
+            <label className="toggle-label">
+              연사속도
+              <input
+                type="number"
+                className="rpm-input"
+                min={60}
+                max={1200}
+                step={30}
+                value={fireRpm}
+                onChange={(e) => setFireRpm(Number(e.target.value))}
+              />
+              <span className="rpm-unit">RPM</span>
+            </label>
           )}
         </div>
       </section>

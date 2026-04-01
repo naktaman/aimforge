@@ -30,6 +30,9 @@ export type AppScreen =
 /** 반동(리코일) 프리셋 */
 export type RecoilPreset = 'none' | 'light' | 'heavy' | 'shotgun';
 
+/** 발사 모드 */
+export type FireMode = 'semi' | 'auto' | 'burst';
+
 /** 반동 프리셋 설정값 (deg/shot) */
 export const RECOIL_PRESETS: Record<RecoilPreset, { verticalDeg: number; horizontalSpreadDeg: number; recoveryRate: number; label: string }> = {
   none:    { verticalDeg: 0,    horizontalSpreadDeg: 0,    recoveryRate: 0,   label: 'OFF (순수 에임)' },
@@ -57,6 +60,13 @@ interface EngineState {
   /** 반동 프리셋 */
   recoilPreset: RecoilPreset;
 
+  /** 발사 모드 */
+  fireMode: FireMode;
+  /** 연사속도 (RPM) */
+  fireRpm: number;
+  /** 무기 모델 표시 여부 */
+  weaponVisible: boolean;
+
   /** 화면 전환 */
   setScreen: (screen: AppScreen) => void;
   setEngineReady: (ready: boolean) => void;
@@ -68,6 +78,14 @@ interface EngineState {
   toggleRecoil: () => void;
   /** 반동 프리셋 변경 */
   setRecoilPreset: (preset: RecoilPreset) => void;
+  /** 발사 모드 설정 */
+  setFireMode: (mode: FireMode) => void;
+  /** 연사속도 설정 */
+  setFireRpm: (rpm: number) => void;
+  /** 발사 모드 순환 (단발 → 연사 → 점사) */
+  cycleFireMode: () => void;
+  /** 무기 모델 표시 토글 */
+  toggleWeaponVisible: () => void;
 }
 
 export const useEngineStore = create<EngineState>((set) => ({
@@ -79,6 +97,9 @@ export const useEngineStore = create<EngineState>((set) => ({
   perfData: null,
   recoilEnabled: false,
   recoilPreset: 'light',
+  fireMode: 'semi',
+  fireRpm: 600,
+  weaponVisible: true,
 
   setScreen: (currentScreen) => set({ currentScreen }),
   setEngineReady: (engineReady) => set({ engineReady }),
@@ -88,4 +109,12 @@ export const useEngineStore = create<EngineState>((set) => ({
   setPerfData: (perfData) => set({ perfData }),
   toggleRecoil: () => set((s) => ({ recoilEnabled: !s.recoilEnabled })),
   setRecoilPreset: (recoilPreset) => set({ recoilPreset, recoilEnabled: recoilPreset !== 'none' }),
+  setFireMode: (fireMode) => set({ fireMode }),
+  setFireRpm: (fireRpm) => set({ fireRpm: Math.max(60, Math.min(1200, fireRpm)) }),
+  cycleFireMode: () => set((s) => {
+    const order: FireMode[] = ['semi', 'auto', 'burst'];
+    const idx = (order.indexOf(s.fireMode) + 1) % order.length;
+    return { fireMode: order[idx] };
+  }),
+  toggleWeaponVisible: () => set((s) => ({ weaponVisible: !s.weaponVisible })),
 }));

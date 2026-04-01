@@ -51,6 +51,7 @@ import { useZoomCalibrationStore } from './stores/zoomCalibrationStore';
 import { Crosshair } from './components/overlays/Crosshair';
 import { ScopeOverlay } from './components/overlays/ScopeOverlay';
 import { ShootingFeedback, triggerShootingFeedback } from './components/overlays/ShootingFeedback';
+import { FireModeIndicator } from './components/overlays/FireModeIndicator';
 import { TargetManager } from './engine/TargetManager';
 import { FlickScenario } from './engine/scenarios/FlickScenario';
 import { TrackingScenario } from './engine/scenarios/TrackingScenario';
@@ -59,7 +60,9 @@ import { StochasticTrackingScenario } from './engine/scenarios/StochasticTrackin
 import { CounterStrafeFlickScenario } from './engine/scenarios/CounterStrafeFlickScenario';
 import { MicroFlickScenario } from './engine/scenarios/MicroFlickScenario';
 import { AudioManager } from './engine/AudioManager';
-import { RECOIL_PRESETS } from './stores/engineStore';
+import { RECOIL_PRESETS, type RecoilPreset } from './stores/engineStore';
+import { isPointerLocked } from './engine/PointerLock';
+import type { WeaponStyle } from './engine/WeaponViewModel';
 import { calculateFlickScore, calculateTrackingScore } from './engine/metrics/CompositeScore';
 import {
   FlickMicroScenario,
@@ -86,6 +89,22 @@ function App() {
 
   /** 앱 시작 시 UI 설정 로드 + 테마 적용 */
   useEffect(() => { loadFromDb(); }, [loadFromDb]);
+
+  /** B키 — 발사 모드 순환 (포인터 잠금 상태에서만) */
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.key === 'b' || e.key === 'B') && isPointerLocked()) {
+        e.preventDefault();
+        const engine = engineRef.current;
+        if (engine) {
+          const newMode = engine.cycleFireMode();
+          useEngineStore.getState().setFireMode(newMode);
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   /** 모드 전환 시 Advanced 전용 화면에 있으면 settings로 리다이렉트 */
   useEffect(() => {
@@ -132,6 +151,12 @@ function App() {
       if (hit) audioManager.playHit();
       else audioManager.playMiss();
     });
+
+    // 발사 모드 + 무기 표시 상태 동기화
+    const { fireMode, fireRpm, weaponVisible } = useEngineStore.getState();
+    engine.setFireMode(fireMode);
+    engine.setFireRpm(fireRpm);
+    engine.setWeaponVisible(weaponVisible);
   }, []);
 
   /** Flick 시나리오 완료 처리 (공통 헬퍼) */
@@ -176,15 +201,28 @@ function App() {
     [setFlickResult, endScenario, setScreen, cmPer360],
   );
 
-  /** 반동 설정을 엔진에 동기화 */
+  /** 반동 설정을 엔진에 동기화 + 무기 스타일 매핑 */
   const syncRecoilToEngine = useCallback((engine: GameEngine) => {
-    const { recoilEnabled, recoilPreset } = useEngineStore.getState();
+    const { recoilEnabled, recoilPreset, fireMode, fireRpm } = useEngineStore.getState();
     if (recoilEnabled) {
       const p = RECOIL_PRESETS[recoilPreset];
       engine.setRecoil(p.verticalDeg, p.horizontalSpreadDeg, p.recoveryRate);
     } else {
       engine.setRecoil(0, 0, 0);
     }
+
+    // 반동 프리셋 → 무기 스타일 매핑
+    const weaponStyleMap: Record<RecoilPreset, WeaponStyle> = {
+      none: 'pistol',
+      light: 'pistol',
+      heavy: 'rifle',
+      shotgun: 'rifle',
+    };
+    engine.setWeaponStyle(weaponStyleMap[recoilPreset]);
+
+    // 발사 모드 동기화
+    engine.setFireMode(fireMode);
+    engine.setFireRpm(fireRpm);
   }, []);
 
   /** 시나리오 시작 */
@@ -942,6 +980,7 @@ function App() {
             <Crosshair />
             <ScopeOverlay zoomLevel={currentZoom} active={scopeMultiplier > 1} />
             <ShootingFeedback />
+            <FireModeIndicator />
             {/* HUD */}
             <div className="hud">
               <div className="hud-item">{fps} FPS</div>

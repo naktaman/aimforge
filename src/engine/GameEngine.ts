@@ -10,6 +10,10 @@ import { invoke } from '@tauri-apps/api/core';
 import { rawToCm, cmToDegrees, DEG2RAD } from '../utils/physics';
 import { createEnvironment } from './Environment';
 import { requestPointerLock, isPointerLocked, onPointerLockChange } from './PointerLock';
+import { FireModeController } from './FireModeController';
+import { WeaponViewModel } from './WeaponViewModel';
+import type { FireMode } from './FireModeController';
+import type { WeaponStyle } from './WeaponViewModel';
 import type { MouseBatch, EngineConfig, PerfData } from '../utils/types';
 import type { TargetManager } from './TargetManager';
 import type { Scenario } from './scenarios/Scenario';
@@ -79,6 +83,16 @@ export class GameEngine {
   private pendingBatch: MouseBatch | null = null;
   private fetchingBatch = false;
 
+  // === 발사 모드 컨트롤러 ===
+  private fireModeController: FireModeController;
+
+  // === 1인칭 무기 뷰모델 ===
+  private weaponViewModel: WeaponViewModel;
+  private weaponVisible = true;
+
+  // === 마우스 업 핸들러 참조 (정리용) ===
+  private handleMouseUp: ((e: MouseEvent) => void) | null = null;
+
   constructor(canvas: HTMLCanvasElement, config: EngineConfig) {
     this.canvas = canvas;
     this.dpi = config.dpi;
@@ -108,6 +122,13 @@ export class GameEngine {
     // 환경 구성 (Group 반환 — counter-strafe에서 이동용)
     this.environmentGroup = createEnvironment(this.scene);
 
+    // 발사 모드 컨트롤러 초기화
+    this.fireModeController = new FireModeController();
+
+    // 1인칭 무기 뷰모델 초기화
+    this.weaponViewModel = new WeaponViewModel();
+    this.weaponViewModel.updateAspect(config.aspectRatio);
+
     // WebGL 컨텍스트 손실 핸들링
     this.setupContextHandlers();
 
@@ -122,6 +143,14 @@ export class GameEngine {
       }
     };
     canvas.addEventListener('click', this.handleCanvasClick);
+
+    // 마우스 업 이벤트 (auto 모드 연사 중단용) — Rust raw input은 button-down만 캡처
+    this.handleMouseUp = (e: MouseEvent) => {
+      if (e.button === 0) { // 좌클릭
+        this.fireModeController.onMouseUp();
+      }
+    };
+    window.addEventListener('mouseup', this.handleMouseUp);
   }
 
   // === 공개 API ===
@@ -260,12 +289,52 @@ export class GameEngine {
     this.onShoot = cb;
   }
 
+  /** 발사 모드 설정 */
+  setFireMode(mode: FireMode): void {
+    this.fireModeController.setMode(mode);
+  }
+
+  /** RPM 설정 */
+  setFireRpm(rpm: number): void {
+    this.fireModeController.setRpm(rpm);
+  }
+
+  /** 발사 모드 순환 (semi → auto → burst) — B키 등에서 호출 */
+  cycleFireMode(): FireMode {
+    return this.fireModeController.cycleMode();
+  }
+
+  /** 무기 스타일 변경 */
+  setWeaponStyle(style: WeaponStyle): void {
+    this.weaponViewModel.setStyle(style);
+  }
+
+  /** 무기 모델 표시/숨김 */
+  setWeaponVisible(visible: boolean): void {
+    this.weaponVisible = visible;
+  }
+
   /** 반동 파라미터 설정 */
   setRecoil(verticalDeg: number, horizontalSpreadDeg: number, recoveryRate: number): void {
     this.recoilVerticalDeg = verticalDeg;
     this.recoilHorizontalSpreadDeg = horizontalSpreadDeg;
     this.recoilRecoveryRate = recoveryRate;
     this.recoilAccumulated = 0;
+  }
+
+  /** 단일 발사 실행 — 히트 판정 + 콜백 + 반동 + 무기 애니메이션 */
+  private executeFire(): void {
+    const hitBefore = this.targetManager
+      ? this.targetManager.checkHit(this.camera.position, this.getCameraForward())
+      : null;
+    this.activeScenario?.onClick();
+    // 사격 피드백 콜백 (오디오 + 머즐플래시 + 히트마커)
+    this.onShoot?.(hitBefore?.hit ?? false);
+    // 카메라 반동 적용
+    this.applyRecoil();
+    // 무기 모델 반동 애니메이션
+    const intensity = this.recoilVerticalDeg > 0 ? this.recoilVerticalDeg / 2.0 : 0.3;
+    this.weaponViewModel.triggerFireAnimation(intensity);
   }
 
   /** 반동 적용 — 카메라를 위로 밀어올림 + 좌우 랜덤 흔들림 */
@@ -292,6 +361,12 @@ export class GameEngine {
     this.stop();
     window.removeEventListener('resize', this.handleResize);
 
+    // 마우스 업 리스너 정리
+    if (this.handleMouseUp) {
+      window.removeEventListener('mouseup', this.handleMouseUp);
+      this.handleMouseUp = null;
+    }
+
     // 캔버스 이벤트 리스너 정리
     if (this.handleCanvasClick) {
       this.canvas.removeEventListener('click', this.handleCanvasClick);
@@ -305,6 +380,9 @@ export class GameEngine {
       this.canvas.removeEventListener('webglcontextrestored', this.handleContextRestored);
       this.handleContextRestored = null;
     }
+
+    // 무기 뷰모델 정리
+    this.weaponViewModel.dispose();
 
     // 씬 내 모든 geometry/material 명시적 dispose (메모리 누수 방지)
     this.scene.traverse((obj) => {
@@ -390,15 +468,11 @@ export class GameEngine {
         if (batch.button_events.length > 0 && this.activeScenario) {
           for (const evt of batch.button_events) {
             if (evt.button === 'Left') {
-              // 히트 판정 전 시나리오에 클릭 전달
-              const hitBefore = this.targetManager
-                ? this.targetManager.checkHit(this.camera.position, this.getCameraForward())
-                : null;
-              this.activeScenario.onClick();
-              // 사격 피드백 콜백
-              this.onShoot?.(hitBefore?.hit ?? false);
-              // 반동 적용
-              this.applyRecoil();
+              // 발사 모드 컨트롤러를 통한 발사 판정
+              const now = performance.now();
+              if (this.fireModeController.onMouseDown(now)) {
+                this.executeFire();
+              }
             }
           }
         }
@@ -410,6 +484,14 @@ export class GameEngine {
       }
       // 다음 프레임용 배치를 비동기로 가져옴 (렌더 블로킹 없음)
       this.prefetchMouseBatch();
+    }
+
+    // 발사 모드 컨트롤러 업데이트 — auto/burst 추가 발사
+    if (this.activeScenario && isPointerLocked()) {
+      const fireCount = this.fireModeController.update(performance.now());
+      for (let i = 0; i < fireCount; i++) {
+        this.executeFire();
+      }
     }
 
     // 반동 자연 회복 (recoilRecoveryRate > 0이면 점진적으로 원위치)
@@ -434,8 +516,16 @@ export class GameEngine {
       this.targetManager.update(deltaTime);
     }
 
-    // 렌더
+    // 무기 뷰모델 애니메이션 업데이트
+    this.weaponViewModel.update(deltaTime);
+
+    // 메인 씬 렌더
     this.renderer.render(this.scene, this.camera);
+
+    // 무기 오버레이 렌더 (깊이 클리어 후 위에 그림)
+    if (this.weaponVisible) {
+      this.weaponViewModel.render(this.renderer);
+    }
 
     // 다음 프레임 예약
     this.animFrameId = requestAnimationFrame((t) => this.loop(t));
@@ -485,5 +575,7 @@ export class GameEngine {
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
+    // 무기 오버레이 카메라도 종횡비 업데이트
+    this.weaponViewModel.updateAspect(width / height);
   }
 }
