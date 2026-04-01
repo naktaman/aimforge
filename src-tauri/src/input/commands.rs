@@ -102,7 +102,9 @@ pub fn drain_mouse_batch(state: State<AppState>) -> Result<MouseBatch, String> {
         .as_ref()
         .ok_or("마우스 캡처가 실행 중이 아닙니다.")?;
 
-    let mut events = Vec::new();
+    // 채널 잔여량 기반 pre-alloc (정확하지 않을 수 있으나 힌트로 충분)
+    let pending = input_state.receiver.len();
+    let mut events = Vec::with_capacity(pending);
     let mut button_events = Vec::new();
     let mut total_dx: i32 = 0;
     let mut total_dy: i32 = 0;

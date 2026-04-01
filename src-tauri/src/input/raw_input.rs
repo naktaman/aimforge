@@ -10,17 +10,31 @@ use std::sync::Arc;
 #[cfg(target_os = "windows")]
 use windows::Win32::System::Performance::{QueryPerformanceCounter, QueryPerformanceFrequency};
 
+/// QPC 주파수 캐시 — 프로세스 수명 동안 불변이므로 한 번만 조회
+#[cfg(target_os = "windows")]
+static QPC_FREQUENCY: std::sync::OnceLock<i64> = std::sync::OnceLock::new();
+
+/// 캐시된 QPC 주파수 반환 (첫 호출 시 초기화)
+#[cfg(target_os = "windows")]
+fn get_qpc_frequency() -> i64 {
+    *QPC_FREQUENCY.get_or_init(|| {
+        let mut freq = 0i64;
+        unsafe { let _ = QueryPerformanceFrequency(&mut freq); }
+        freq
+    })
+}
+
 /// QueryPerformanceCounter를 사용해 현재 시각을 마이크로초로 반환
+/// QPC 주파수는 OnceLock으로 캐시하여 매 호출마다 syscall 회피
 #[cfg(target_os = "windows")]
 pub fn get_timestamp_us() -> u64 {
-    let mut counter = 0i64;
-    let mut frequency = 0i64;
-    unsafe {
-        let _ = QueryPerformanceCounter(&mut counter);
-        let _ = QueryPerformanceFrequency(&mut frequency);
-    }
+    let frequency = get_qpc_frequency();
     if frequency == 0 {
         return 0;
+    }
+    let mut counter = 0i64;
+    unsafe {
+        let _ = QueryPerformanceCounter(&mut counter);
     }
     // counter * 1_000_000 / frequency → 마이크로초 변환
     ((counter as u128 * 1_000_000) / frequency as u128) as u64
@@ -193,18 +207,24 @@ pub fn start_raw_input_thread(
             SetWindowLongPtrW(hwnd, GWLP_USERDATA, Box::into_raw(sender_box) as isize);
 
             // 메시지 루프 — is_capturing이 false가 될 때까지 실행
+            // PeekMessage + 내부 drain 루프로 대기 중인 메시지 일괄 처리
             let mut msg = MSG::default();
-            while is_capturing.load(Ordering::SeqCst) {
-                // PeekMessage로 non-blocking 체크 (WM_QUIT 대응)
-                if PeekMessageW(&mut msg, hwnd, 0, 0, PM_REMOVE).as_bool() {
+            while is_capturing.load(Ordering::Relaxed) {
+                // 대기 중인 모든 메시지 일괄 처리 (한 번에 drain)
+                let mut processed = false;
+                while PeekMessageW(&mut msg, hwnd, 0, 0, PM_REMOVE).as_bool() {
                     if msg.message == WM_QUIT {
+                        is_capturing.store(false, Ordering::Relaxed);
                         break;
                     }
                     let _ = TranslateMessage(&msg);
                     DispatchMessageW(&msg);
-                } else {
-                    // 메시지 없으면 짧은 대기 (CPU 사용률 절감)
-                    std::thread::sleep(std::time::Duration::from_micros(500));
+                    processed = true;
+                }
+
+                if !processed {
+                    // 메시지 없으면 100µs 대기 (CPU 절감, 기존 500µs → 100µs로 지연 80% 감소)
+                    std::thread::sleep(std::time::Duration::from_micros(100));
                 }
             }
 

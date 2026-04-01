@@ -361,3 +361,40 @@ pub fn export_database(
     let db = state.db.lock().map_err(|e| e.to_string())?;
     db.get_db_path().map_err(|e| e.to_string())
 }
+
+// ═══════════════════════════════════════════════════
+// 주별 통계 + 아카이브 + DB 최적화
+// ═══════════════════════════════════════════════════
+
+/// 주별 통계 조회 (weekly_stats 뷰 활용)
+#[tauri::command]
+pub fn get_weekly_stats(
+    state: State<AppState>,
+    profile_id: i64,
+    weeks: Option<i64>,
+) -> Result<Vec<super::WeeklyStatRow>, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.get_weekly_stats(profile_id, weeks.unwrap_or(12))
+        .map_err(|e| e.to_string())
+}
+
+/// 오래된 트라이얼 raw 데이터 아카이브 (경량화)
+/// days_old일 이전의 mouse_trajectory, raw_metrics를 비움
+#[tauri::command]
+pub fn archive_old_trials(
+    state: State<AppState>,
+    days_old: Option<i64>,
+) -> Result<usize, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.archive_old_trials(days_old.unwrap_or(90))
+        .map_err(|e| e.to_string())
+}
+
+/// DB 최적화 (ANALYZE + optimize)
+#[tauri::command]
+pub fn optimize_database(
+    state: State<AppState>,
+) -> Result<(), String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.optimize_db().map_err(|e| e.to_string())
+}

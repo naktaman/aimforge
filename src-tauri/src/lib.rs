@@ -178,6 +178,10 @@ pub fn run() {
             game_db::recoil_commands::save_recoil_pattern,
             game_db::recoil_commands::update_recoil_pattern,
             game_db::recoil_commands::delete_recoil_pattern,
+            // objective-shamir: 주별 통계 + 아카이브 + DB 최적화
+            db::commands::get_weekly_stats,
+            db::commands::archive_old_trials,
+            db::commands::optimize_database,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

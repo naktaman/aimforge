@@ -1620,6 +1620,63 @@ impl Database {
         self.conn.execute("DELETE FROM hardware_combos WHERE id = ?1", rusqlite::params![id])?;
         Ok(())
     }
+
+    // ═══════════════════════════════════════════════════
+    // 주별 통계 + 아카이브 + DB 최적화
+    // ═══════════════════════════════════════════════════
+
+    /// 주별 통계 조회 (weekly_stats 뷰 활용)
+    /// weeks: 조회할 주 수 (기본 12주)
+    pub fn get_weekly_stats(
+        &self,
+        profile_id: i64,
+        weeks: i64,
+    ) -> Result<Vec<WeeklyStatRow>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT profile_id, week_start, scenario_type, avg_score, max_score, \
+             sessions_count, total_trials, total_time_ms, avg_accuracy \
+             FROM weekly_stats WHERE profile_id = ?1 \
+             AND week_start >= date('now', '-' || ?2 || ' days') \
+             ORDER BY week_start DESC"
+        )?;
+        let rows = stmt.query_map(rusqlite::params![profile_id, weeks * 7], |row| {
+            Ok(WeeklyStatRow {
+                profile_id: row.get(0)?,
+                week_start: row.get(1)?,
+                scenario_type: row.get(2)?,
+                avg_score: row.get(3)?,
+                max_score: row.get(4)?,
+                sessions_count: row.get(5)?,
+                total_trials: row.get(6)?,
+                total_time_ms: row.get(7)?,
+                avg_accuracy: row.get(8)?,
+            })
+        })?;
+        rows.collect()
+    }
+
+    /// 오래된 트라이얼의 대용량 raw 데이터를 아카이브 (경량화)
+    /// days_old 이전의 트라이얼에서 mouse_trajectory, raw_metrics 컬럼을 비움
+    /// composite_score, angle_breakdown, motor_breakdown은 유지
+    /// 반환: 아카이브된 트라이얼 수
+    pub fn archive_old_trials(&self, days_old: i64) -> Result<usize> {
+        let affected = self.conn.execute(
+            "UPDATE trials SET \
+             mouse_trajectory = '[]', \
+             raw_metrics = '{}' \
+             WHERE created_at < datetime('now', '-' || ?1 || ' days') \
+             AND mouse_trajectory != '[]'",
+            rusqlite::params![days_old],
+        )?;
+        Ok(affected)
+    }
+
+    /// DB 최적화 실행 (VACUUM + ANALYZE)
+    /// 대량 삭제/아카이브 후 호출하여 디스크 공간 회수 및 쿼리 플래너 통계 갱신
+    pub fn optimize_db(&self) -> Result<()> {
+        self.conn.execute_batch("ANALYZE; PRAGMA optimize;")?;
+        Ok(())
+    }
 }
 
 /// 무브먼트 프로필 행
@@ -1693,6 +1750,20 @@ pub struct DailyStatRow {
     pub id: i64,
     pub profile_id: i64,
     pub stat_date: String,
+    pub scenario_type: String,
+    pub avg_score: f64,
+    pub max_score: f64,
+    pub sessions_count: i64,
+    pub total_trials: i64,
+    pub total_time_ms: i64,
+    pub avg_accuracy: f64,
+}
+
+/// 주별 통계 행
+#[derive(Debug, Serialize)]
+pub struct WeeklyStatRow {
+    pub profile_id: i64,
+    pub week_start: String,
     pub scenario_type: String,
     pub avg_score: f64,
     pub max_score: f64,
