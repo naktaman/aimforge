@@ -45,6 +45,8 @@ import RecoilEditor from './components/RecoilEditor';
 import ConversionSelector from './components/ConversionSelector';
 import { Toast } from './components/Toast';
 import { Onboarding } from './components/Onboarding';
+import { ProfileWizard } from './components/ProfileWizard';
+import { useProfileWizardStore } from './stores/profileWizardStore';
 import { useZoomCalibrationStore } from './stores/zoomCalibrationStore';
 import { Crosshair } from './components/overlays/Crosshair';
 import { ScopeOverlay } from './components/overlays/ScopeOverlay';
@@ -913,6 +915,11 @@ function App() {
               {mode === 'advanced' && (
                 <button className="btn-secondary btn-sm" onClick={() => setScreen('recoil-editor')}>반동 편집기</button>
               )}
+              <button className="btn-secondary btn-sm" onClick={() => setScreen('conversion-selector')}>감도 변환</button>
+              <button className="btn-primary btn-sm" onClick={() => {
+                useProfileWizardStore.getState().startWizard();
+                setScreen('profile-wizard');
+              }}>프로파일 생성</button>
             </div>
             <ScenarioSelect
               onStart={handleStart}
@@ -1196,6 +1203,22 @@ function App() {
       {currentScreen === 'conversion-selector' && (
         <main className="app-main">
           <ConversionSelector onBack={() => setScreen('settings')} />
+        </main>
+      )}
+
+      {/* 프로파일 생성 위저드 */}
+      {currentScreen === 'profile-wizard' && (
+        <main className="app-main">
+          <ProfileWizard
+            onClose={() => {
+              useProfileWizardStore.getState().resetWizard();
+              setScreen('settings');
+            }}
+            onStartCalibration={() => setScreen('calibration-setup')}
+            onStartTraining={(stageType) => {
+              handleTrainingStart({ stageType });
+            }}
+          />
         </main>
       )}
     </div>

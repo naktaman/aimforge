@@ -24,7 +24,8 @@ export type AppScreen =
   | 'hardware-compare'
   | 'dual-landscape'
   | 'recoil-editor'
-  | 'conversion-selector';
+  | 'conversion-selector'
+  | 'profile-wizard';
 
 /** 반동(리코일) 프리셋 */
 export type RecoilPreset = 'none' | 'light' | 'heavy' | 'shotgun';
