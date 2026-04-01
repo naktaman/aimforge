@@ -26,6 +26,13 @@ const STYLE_TYPES = [
   { value: 'precision', label: '정밀 사수' },
 ] as const;
 
+/** 수렴 퍼센트 기준으로 피처 바 색상 클래스 반환 */
+function featureFillClass(pct: number): string {
+  if (pct > 80) return 'st-feature-fill st-feature-fill--high';
+  if (pct > 50) return 'st-feature-fill st-feature-fill--mid';
+  return 'st-feature-fill st-feature-fill--low';
+}
+
 export default function StyleTransition({ onBack, profileId }: Props) {
   const {
     styleTransition, transitionProgress,
@@ -36,160 +43,162 @@ export default function StyleTransition({ onBack, profileId }: Props) {
   const [toType, setToType] = useState('arm-tracker');
   const [sensRange, setSensRange] = useState('25-35');
 
+  /** 컴포넌트 마운트 시 기존 전환 데이터 로드 */
   useEffect(() => {
     loadStyleTransition(profileId);
   }, [profileId, loadStyleTransition]);
 
+  /** 새 스타일 전환 시작 핸들러 */
   const handleStart = () => {
     startStyleTransition(profileId, fromType, toType, sensRange);
   };
 
+  /** 전환 완료 처리 핸들러 */
   const handleComplete = () => {
     updateStyleTransition(profileId, 'complete');
   };
 
+  /** 현재 Phase 인덱스 (-1이면 아직 전환 없음) */
   const currentPhaseIdx = transitionProgress
     ? PHASES.findIndex(p => p.key === transitionProgress.phase)
     : -1;
 
   return (
-    <div style={{ padding: 32, maxWidth: 700, margin: '0 auto', color: '#e0e0e0' }}>
+    <div className="page page--narrow">
       {/* 헤더 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-        <button onClick={onBack} style={btnStyle}>← 뒤로</button>
-        <h2 style={{ margin: 0, fontSize: 22 }}>스타일 전환</h2>
+      <div className="page-header">
+        <button onClick={onBack} className="btn btn--ghost btn--sm">← 뒤로</button>
+        <h2>스타일 전환</h2>
       </div>
 
       {styleTransition && transitionProgress ? (
         <>
-          {/* 전환 정보 */}
-          <div style={{
-            background: '#1e1e30', borderRadius: 12, padding: 20, marginBottom: 20,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16,
-          }}>
-            <span style={{ fontSize: 16, fontWeight: 600, color: '#60a5fa' }}>
-              {STYLE_TYPES.find(s => s.value === styleTransition.from_type)?.label || styleTransition.from_type}
-            </span>
-            <span style={{ fontSize: 20, color: '#888' }}>→</span>
-            <span style={{ fontSize: 16, fontWeight: 600, color: '#4ade80' }}>
-              {STYLE_TYPES.find(s => s.value === styleTransition.to_type)?.label || styleTransition.to_type}
-            </span>
-          </div>
-
-          {/* Phase 인디케이터 */}
-          <div style={{
-            display: 'flex', justifyContent: 'space-between', marginBottom: 24,
-            background: '#1e1e30', borderRadius: 12, padding: 20,
-          }}>
-            {PHASES.map((phase, i) => {
-              const isActive = i === currentPhaseIdx;
-              const isDone = i < currentPhaseIdx;
-              const color = isDone ? '#4ade80' : isActive ? '#3b82f6' : '#444';
-              return (
-                <div key={phase.key} style={{ textAlign: 'center', flex: 1 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: '50%', margin: '0 auto 8px',
-                    background: isDone ? '#4ade8033' : isActive ? '#3b82f633' : '#2a2a3e',
-                    border: `2px solid ${color}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 14, fontWeight: 700, color,
-                  }}>
-                    {isDone ? '✓' : phase.icon}
-                  </div>
-                  <div style={{ fontSize: 12, color: isActive ? '#fff' : '#888' }}>{phase.label}</div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* 전체 수렴도 */}
-          <div style={{ background: '#1e1e30', borderRadius: 12, padding: 20, marginBottom: 20 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-              <span style={{ fontSize: 14 }}>전체 수렴도</span>
-              <span style={{ fontWeight: 700, color: '#60a5fa' }}>{transitionProgress.convergence_pct.toFixed(1)}%</span>
+          {/* 전환 방향 (From → To) 표시 */}
+          <div className="glass-card page-section">
+            <div className="st-direction">
+              <span className="st-direction__from">
+                {STYLE_TYPES.find(s => s.value === styleTransition.from_type)?.label || styleTransition.from_type}
+              </span>
+              <span className="st-direction__arrow">→</span>
+              <span className="st-direction__to">
+                {STYLE_TYPES.find(s => s.value === styleTransition.to_type)?.label || styleTransition.to_type}
+              </span>
             </div>
-            <div style={{ background: '#2a2a3e', borderRadius: 4, height: 10, overflow: 'hidden' }}>
-              <div style={{
-                width: `${transitionProgress.convergence_pct}%`, height: '100%', borderRadius: 4,
-                background: 'linear-gradient(90deg, #3b82f6, #4ade80)',
-                transition: 'width 0.3s',
-              }} />
+          </div>
+
+          {/* Phase 인디케이터: 4단계 원형 아이콘 */}
+          <div className="glass-card page-section">
+            <div className="st-phases">
+              {PHASES.map((phase, i) => {
+                const isActive = i === currentPhaseIdx;
+                const isDone = i < currentPhaseIdx;
+                const stateClass = isDone ? 'st-phase--done' : isActive ? 'st-phase--active' : '';
+                return (
+                  <div key={phase.key} className={`st-phase ${stateClass}`}>
+                    <div className="st-phase__circle">
+                      {isDone ? '✓' : phase.icon}
+                    </div>
+                    <div className="st-phase__label">{phase.label}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 전체 수렴도 프로그레스 바 */}
+          <div className="glass-card page-section">
+            <div className="st-progress-header">
+              <span className="text-sm">전체 수렴도</span>
+              <span className="font-bold" style={{ color: 'var(--info)' }}>
+                {transitionProgress.convergence_pct.toFixed(1)}%
+              </span>
+            </div>
+            <div className="st-progress-track">
+              <div
+                className="st-progress-fill"
+                style={{ width: `${transitionProgress.convergence_pct}%` }}
+              />
             </div>
 
             {transitionProgress.estimated_days_remaining > 0 && (
-              <div style={{ fontSize: 12, color: '#888', marginTop: 8 }}>
+              <div className="st-remaining">
                 예상 잔여: ~{Math.ceil(transitionProgress.estimated_days_remaining)}일
               </div>
             )}
           </div>
 
-          {/* 피처별 수렴 바 */}
-          <div style={{ background: '#1e1e30', borderRadius: 12, padding: 20, marginBottom: 20 }}>
-            <h3 style={{ fontSize: 14, marginBottom: 12 }}>핵심 피처 수렴</h3>
+          {/* 핵심 피처별 수렴 바 */}
+          <div className="glass-card page-section">
+            <h3 className="page-section__title">핵심 피처 수렴</h3>
             {transitionProgress.key_features_status.map(f => (
-              <div key={f.feature_name} style={{ marginBottom: 10 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+              <div key={f.feature_name} className="st-feature">
+                <div className="st-feature__header">
                   <span>{f.feature_name.replace(/_/g, ' ')}</span>
-                  <span style={{ color: '#aaa' }}>
+                  <span className="text-muted">
                     {f.convergence_pct.toFixed(0)}% ({f.target_direction === 'up' ? '↑' : '↓'})
                   </span>
                 </div>
-                <div style={{ background: '#2a2a3e', borderRadius: 3, height: 6, overflow: 'hidden' }}>
-                  <div style={{
-                    width: `${f.convergence_pct}%`, height: '100%', borderRadius: 3,
-                    background: f.convergence_pct > 80 ? '#4ade80' : f.convergence_pct > 50 ? '#f5a623' : '#e94560',
-                  }} />
+                <div className="st-feature-track">
+                  <div
+                    className={featureFillClass(f.convergence_pct)}
+                    style={{ width: `${f.convergence_pct}%` }}
+                  />
                 </div>
               </div>
             ))}
           </div>
 
-          {/* 플래토 경고 */}
+          {/* 플래토(정체) 경고 메시지 */}
           {transitionProgress.plateau_detected && (
-            <div style={{
-              background: '#f5a62322', border: '1px solid #f5a623',
-              borderRadius: 8, padding: 12, marginBottom: 20, fontSize: 13, color: '#f5a623',
-            }}>
+            <div className="st-plateau-warning">
               플래토 감지: 수렴 속도가 정체되고 있습니다. 훈련 방법 변경을 고려하세요.
             </div>
           )}
 
-          {/* 완료 버튼 */}
-          <div style={{ display: 'flex', gap: 12 }}>
-            <button onClick={handleComplete} style={{ ...btnStyle, background: '#4ade8033', color: '#4ade80' }}>
+          {/* 전환 완료 버튼 */}
+          <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+            <button onClick={handleComplete} className="btn btn--success btn--sm">
               전환 완료
             </button>
           </div>
         </>
       ) : (
         /* 새 전환 시작 폼 */
-        <div style={{ background: '#1e1e30', borderRadius: 12, padding: 24 }}>
-          <h3 style={{ fontSize: 15, marginBottom: 16 }}>새 스타일 전환 시작</h3>
+        <div className="glass-card">
+          <h3 className="page-section__title">새 스타일 전환 시작</h3>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div>
-              <label style={labelStyle}>현재 스타일 (From)</label>
-              <select value={fromType} onChange={e => setFromType(e.target.value)} style={inputStyle}>
+          <div className="st-form">
+            <div className="form-group">
+              <label className="form-label">현재 스타일 (From)</label>
+              <select
+                value={fromType}
+                onChange={e => setFromType(e.target.value)}
+                className="select-field"
+              >
                 {STYLE_TYPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
             </div>
-            <div>
-              <label style={labelStyle}>목표 스타일 (To)</label>
-              <select value={toType} onChange={e => setToType(e.target.value)} style={inputStyle}>
+            <div className="form-group">
+              <label className="form-label">목표 스타일 (To)</label>
+              <select
+                value={toType}
+                onChange={e => setToType(e.target.value)}
+                className="select-field"
+              >
                 {STYLE_TYPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
               </select>
             </div>
-            <div>
-              <label style={labelStyle}>목표 감도 범위 (cm/360)</label>
+            <div className="form-group">
+              <label className="form-label">목표 감도 범위 (cm/360)</label>
               <input
                 type="text"
                 value={sensRange}
                 onChange={e => setSensRange(e.target.value)}
                 placeholder="예: 25-35"
-                style={inputStyle}
+                className="input-field"
               />
             </div>
-            <button onClick={handleStart} style={{ ...btnStyle, background: '#3b82f6', padding: '10px 24px', fontWeight: 600 }}>
+            <button onClick={handleStart} className="btn btn--primary">
               전환 시작
             </button>
           </div>
@@ -198,17 +207,3 @@ export default function StyleTransition({ onBack, profileId }: Props) {
     </div>
   );
 }
-
-const btnStyle: React.CSSProperties = {
-  background: '#2a2a3e', color: '#e0e0e0', border: 'none',
-  borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontSize: 13,
-};
-
-const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: 12, color: '#aaa', marginBottom: 4,
-};
-
-const inputStyle: React.CSSProperties = {
-  background: '#2a2a3e', color: '#e0e0e0', border: '1px solid #444',
-  borderRadius: 6, padding: '8px 12px', width: '100%', fontSize: 13,
-};

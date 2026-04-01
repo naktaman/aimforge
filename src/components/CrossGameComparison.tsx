@@ -23,15 +23,15 @@ const CAUSE_LABELS: Record<string, string> = {
   vertical_weakness_exposed: '수직 에이밍 약점',
 };
 
-/** 심각도 색상 */
-const SEVERITY_COLORS: Record<string, string> = {
-  minor: '#888',
-  moderate: '#f5a623',
-  major: '#e07020',
-  critical: '#e94560',
+/** 심각도 → 뱃지 클래스 매핑 */
+const SEVERITY_BADGE: Record<string, string> = {
+  minor: 'badge',
+  moderate: 'badge badge--warning',
+  major: 'badge badge--danger',
+  critical: 'badge badge--danger',
 };
 
-/** 듀얼 레이더 차트 — ref(파랑) + target(빨강) 오버레이 */
+/** 듀얼 레이더 차트 — ref(파랑) + target(빨강) 오버레이 (D3 인라인 색상 유지) */
 function DualRadarChart({ refAxes, targetAxes }: { refAxes: RadarAxis[]; targetAxes: RadarAxis[] }) {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -125,23 +125,22 @@ function ComparisonSelector({ profiles, onCompare }: {
   const [targetId, setTargetId] = useState<number>(profiles[1]?.id ?? 0);
 
   return (
-    <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 24 }}>
-      <div>
-        <label style={{ color: '#ccc', fontSize: 13, display: 'block', marginBottom: 4 }}>Reference</label>
-        <select value={refId} onChange={e => setRefId(Number(e.target.value))} style={{ padding: '6px 12px', borderRadius: 4, background: '#2a2a2a', color: '#fff', border: '1px solid #444' }}>
+    <div className="cg-selector">
+      <div className="form-group">
+        <label className="form-label">Reference</label>
+        <select className="select-field" value={refId} onChange={e => setRefId(Number(e.target.value))}>
           {profiles.map(p => <option key={p.id} value={p.id}>{p.gameName}</option>)}
         </select>
       </div>
-      <span style={{ color: '#666', fontSize: 20, marginTop: 20 }}>vs</span>
-      <div>
-        <label style={{ color: '#ccc', fontSize: 13, display: 'block', marginBottom: 4 }}>Target</label>
-        <select value={targetId} onChange={e => setTargetId(Number(e.target.value))} style={{ padding: '6px 12px', borderRadius: 4, background: '#2a2a2a', color: '#fff', border: '1px solid #444' }}>
+      <span className="cg-selector__vs text-muted">vs</span>
+      <div className="form-group">
+        <label className="form-label">Target</label>
+        <select className="select-field" value={targetId} onChange={e => setTargetId(Number(e.target.value))}>
           {profiles.map(p => <option key={p.id} value={p.id}>{p.gameName}</option>)}
         </select>
       </div>
       <button
-        className="btn-primary"
-        style={{ marginTop: 20 }}
+        className="btn btn--primary cg-selector__btn"
         disabled={refId === targetId}
         onClick={() => onCompare(refId, targetId)}
       >
@@ -173,14 +172,14 @@ function ComparisonResult({ comparison }: { comparison: ComparisonType }) {
   return (
     <div>
       {/* 전체 갭 요약 */}
-      <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <div style={{ fontSize: 48, fontWeight: 'bold', color: '#e94560' }}>
+      <div className="cg-gap-summary page-section">
+        <div className="stat-value stat-value--accent stat-value--big">
           {comparison.overall_gap.toFixed(1)}%
         </div>
-        <div style={{ color: '#888' }}>전체 갭 크기</div>
-        <div style={{ color: '#aaa', fontSize: 13, marginTop: 4 }}>
-          예상 적응 기간: <strong style={{ color: '#f5a623' }}>{comparison.predicted_days.toFixed(0)}일</strong>
-        </div>
+        <div className="stat-label">전체 갭 크기</div>
+        <p className="text-sm text-muted cg-gap-summary__adapt">
+          예상 적응 기간: <strong className="text-accent">{comparison.predicted_days.toFixed(0)}일</strong>
+        </p>
       </div>
 
       {/* 듀얼 레이더 */}
@@ -189,32 +188,28 @@ function ComparisonResult({ comparison }: { comparison: ComparisonType }) {
       )}
 
       {/* 델타 테이블 */}
-      <h3 style={{ color: '#ddd', marginTop: 24 }}>피처별 델타</h3>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginBottom: 24 }}>
+      <h3 className="page-section__title">피처별 델타</h3>
+      <table className="data-table cg-delta-table">
         <thead>
-          <tr style={{ borderBottom: '1px solid #444', color: '#999' }}>
-            <th style={{ textAlign: 'left', padding: 8 }}>피처</th>
-            <th style={{ textAlign: 'right', padding: 8 }}>Ref</th>
-            <th style={{ textAlign: 'right', padding: 8 }}>Target</th>
-            <th style={{ textAlign: 'right', padding: 8 }}>Delta</th>
-            <th style={{ textAlign: 'center', padding: 8 }}>심각도</th>
+          <tr>
+            <th>피처</th>
+            <th className="text-right">Ref</th>
+            <th className="text-right">Target</th>
+            <th className="text-right">Delta</th>
+            <th className="text-center">심각도</th>
           </tr>
         </thead>
         <tbody>
           {sortedDeltas.map(d => (
-            <tr key={d.feature} style={{ borderBottom: '1px solid #333' }}>
-              <td style={{ padding: 8, color: '#ccc' }}>{d.feature}</td>
-              <td style={{ padding: 8, textAlign: 'right', color: '#4a9eff' }}>{d.ref_value.toFixed(3)}</td>
-              <td style={{ padding: 8, textAlign: 'right', color: '#e94560' }}>{d.target_value.toFixed(3)}</td>
-              <td style={{ padding: 8, textAlign: 'right', color: d.delta_pct > 0 ? '#4caf50' : '#e94560' }}>
+            <tr key={d.feature}>
+              <td>{d.feature}</td>
+              <td className="text-right cg-ref-value">{d.ref_value.toFixed(3)}</td>
+              <td className="text-right cg-target-value">{d.target_value.toFixed(3)}</td>
+              <td className={`text-right ${d.delta_pct > 0 ? 'cg-delta-pos' : 'cg-delta-neg'}`}>
                 {d.delta_pct > 0 ? '+' : ''}{d.delta_pct.toFixed(1)}%
               </td>
-              <td style={{ padding: 8, textAlign: 'center' }}>
-                <span style={{
-                  padding: '2px 8px', borderRadius: 4, fontSize: 11,
-                  background: SEVERITY_COLORS[d.severity] ?? '#888',
-                  color: '#fff',
-                }}>
+              <td className="text-center">
+                <span className={SEVERITY_BADGE[d.severity] ?? 'badge'}>
                   {d.severity}
                 </span>
               </td>
@@ -225,109 +220,93 @@ function ComparisonResult({ comparison }: { comparison: ComparisonType }) {
 
       {/* 갭 원인 카드 */}
       {comparison.causes.length > 0 && (
-        <>
-          <h3 style={{ color: '#ddd' }}>갭 원인 분석</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+        <div className="page-section">
+          <h3 className="page-section__title">갭 원인 분석</h3>
+          <div className="cg-cause-list">
             {comparison.causes.map((cause, i) => (
-              <div key={i} style={{
-                background: '#1e1e1e', border: '1px solid #333', borderRadius: 8, padding: 16,
-              }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                  <strong style={{ color: '#f5a623' }}>
+              <div key={i} className="glass-card glass-card--compact">
+                <div className="cg-cause-header">
+                  <strong className="text-accent">
                     {CAUSE_LABELS[cause.cause_type] ?? cause.cause_type}
                   </strong>
-                  <span style={{ fontSize: 12, color: '#888' }}>
+                  <span className="text-sm text-muted">
                     심각도 {cause.severity.toFixed(0)}%
                   </span>
                 </div>
-                <p style={{ color: '#aaa', margin: '4px 0 8px', fontSize: 13 }}>{cause.description}</p>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <p className="text-sm text-muted cg-cause-desc">{cause.description}</p>
+                <div className="cg-tag-list">
                   {cause.contributing_features.map(f => (
-                    <span key={f} style={{
-                      padding: '2px 8px', background: '#2a2a2a', borderRadius: 4,
-                      fontSize: 11, color: '#ccc',
-                    }}>{f}</span>
+                    <span key={f} className="badge">{f}</span>
                   ))}
                 </div>
               </div>
             ))}
           </div>
-        </>
+        </div>
       )}
 
       {/* 개선 타임라인 */}
-      <h3 style={{ color: '#ddd' }}>개선 플랜</h3>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24, paddingLeft: 20, borderLeft: '2px solid #444' }}>
-        {comparison.improvement_plan.phases.map(phase => (
-          <div key={phase.phase} style={{ position: 'relative' }}>
-            {/* Phase 마커 */}
-            <div style={{
-              position: 'absolute', left: -28, top: 4,
-              width: 16, height: 16, borderRadius: '50%',
-              background: '#e94560', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 10, color: '#fff', fontWeight: 'bold',
-            }}>
-              {phase.phase}
-            </div>
-            <div style={{ paddingLeft: 8 }}>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <strong style={{ color: '#ddd' }}>{phase.name}</strong>
-                <span style={{
-                  padding: '1px 6px', background: '#333', borderRadius: 4,
-                  fontSize: 11, color: '#f5a623',
-                }}>{phase.duration_weeks}</span>
-              </div>
-              <ul style={{ margin: '4px 0', paddingLeft: 20, color: '#aaa', fontSize: 13 }}>
-                {phase.actions.map((a, i) => <li key={i}>{a}</li>)}
-              </ul>
-              {phase.scenarios.length > 0 && (
-                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                  {phase.scenarios.map(s => (
-                    <span key={s} style={{
-                      padding: '1px 6px', background: '#1a1a2e', border: '1px solid #444',
-                      borderRadius: 4, fontSize: 10, color: '#aaa',
-                    }}>{s}</span>
-                  ))}
+      <div className="page-section">
+        <h3 className="page-section__title">개선 플랜</h3>
+        <div className="cg-timeline">
+          {comparison.improvement_plan.phases.map(phase => (
+            <div key={phase.phase} className="cg-timeline__phase">
+              {/* Phase 마커 */}
+              <div className="cg-timeline__marker">{phase.phase}</div>
+              <div className="cg-timeline__content">
+                <div className="cg-timeline__phase-header">
+                  <strong>{phase.name}</strong>
+                  <span className="badge badge--warning">{phase.duration_weeks}</span>
                 </div>
-              )}
+                <ul className="cg-timeline__actions text-sm text-muted">
+                  {phase.actions.map((a, i) => <li key={i}>{a}</li>)}
+                </ul>
+                {phase.scenarios.length > 0 && (
+                  <div className="cg-tag-list">
+                    {phase.scenarios.map(s => (
+                      <span key={s} className="badge badge--info">{s}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* 타임라인 예측 상세 */}
       {comparison.timeline && comparison.timeline.per_feature.length > 0 && (
-        <>
-          <h3 style={{ color: '#ddd' }}>피처별 예상 기간</h3>
-          <div style={{ marginBottom: 24 }}>
+        <div className="page-section">
+          <h3 className="page-section__title">피처별 예상 기간</h3>
+          <div className="cg-feature-bars">
             {comparison.timeline.per_feature
               .sort((a, b) => b.estimated_days - a.estimated_days)
               .slice(0, 8)
               .map(ft => (
-                <div key={ft.feature} style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
-                  <span style={{ width: 180, fontSize: 12, color: '#aaa' }}>{ft.feature}</span>
-                  <div style={{ flex: 1, height: 8, background: '#222', borderRadius: 4, marginRight: 8 }}>
-                    <div style={{
-                      width: `${Math.min(ft.estimated_days / (comparison.timeline.total_days || 1) * 100, 100)}%`,
-                      height: '100%', borderRadius: 4,
-                      background: ft.feature === comparison.timeline.bottleneck_feature ? '#e94560' : '#4a9eff',
-                    }} />
+                <div key={ft.feature} className="cg-feature-bar">
+                  <span className="cg-feature-bar__label text-sm text-muted">{ft.feature}</span>
+                  <div className="cg-feature-bar__track">
+                    <div
+                      className={`cg-feature-bar__fill ${ft.feature === comparison.timeline!.bottleneck_feature ? 'cg-feature-bar__fill--bottleneck' : ''}`}
+                      style={{ width: `${Math.min(ft.estimated_days / (comparison.timeline!.total_days || 1) * 100, 100)}%` }}
+                    />
                   </div>
-                  <span style={{ fontSize: 11, color: '#888', minWidth: 40, textAlign: 'right' }}>
+                  <span className="cg-feature-bar__days text-sm text-muted">
                     {ft.estimated_days.toFixed(0)}일
                   </span>
                 </div>
               ))}
-            <p style={{ fontSize: 12, color: '#666', marginTop: 8, fontStyle: 'italic' }}>
-              {comparison.timeline.disclaimer}
-            </p>
           </div>
-        </>
+          <p className="text-sm text-muted cg-disclaimer">
+            {comparison.timeline.disclaimer}
+          </p>
+        </div>
       )}
     </div>
   );
 }
 
+/** 크로스게임 DNA 비교 메인 컴포넌트 */
 export function CrossGameComparison({ onBack }: Props) {
   const { currentComparison, isComparing, compareGames } = useCrossGameStore();
   const { profiles, loadProfiles } = useGameProfileStore();
@@ -336,20 +315,23 @@ export function CrossGameComparison({ onBack }: Props) {
     loadProfiles();
   }, []);
 
+  /** 두 프로파일 비교 실행 */
   const handleCompare = async (refId: number, targetId: number) => {
     await compareGames(refId, targetId);
   };
 
   return (
     <main className="app-main">
-      <div className="aim-dna-result">
-        <h2>크로스게임 DNA 비교</h2>
+      <div className="page">
+        <div className="page-header">
+          <h2>크로스게임 DNA 비교</h2>
+        </div>
 
         {/* 프로파일 2개 미만 시 안내 */}
         {profiles.length < 2 ? (
-          <div style={{ color: '#aaa', textAlign: 'center', padding: 40 }}>
+          <div className="cg-empty-state">
             <p>크로스게임 비교를 위해 2개 이상의 게임 프로파일이 필요합니다.</p>
-            <p style={{ fontSize: 13, color: '#666' }}>
+            <p className="text-sm text-muted">
               설정 &gt; 게임 프로파일에서 게임을 추가하고, 각각 배터리 테스트를 완료하세요.
             </p>
           </div>
@@ -358,7 +340,7 @@ export function CrossGameComparison({ onBack }: Props) {
             <ComparisonSelector profiles={profiles} onCompare={handleCompare} />
 
             {isComparing && (
-              <div style={{ textAlign: 'center', padding: 40, color: '#aaa' }}>
+              <div className="spinner">
                 비교 분석 중...
               </div>
             )}
@@ -370,7 +352,7 @@ export function CrossGameComparison({ onBack }: Props) {
         )}
 
         <div className="result-actions">
-          <button className="btn-secondary" onClick={onBack}>돌아가기</button>
+          <button className="btn btn--secondary" onClick={onBack}>돌아가기</button>
         </div>
       </div>
     </main>

@@ -57,7 +57,7 @@ const METHODS: Record<string, { label: string; desc: string }> = {
   'Viewspeed_V': { label: 'Viewspeed V', desc: '수직 FOV 비율' },
 };
 
-/** 게임 카테고리별 추천 방식 */
+/** 게임 카테고리별 추천 방식 결정 */
 function getRecommended(srcId: string, dstId: string): string {
   const tactical = ['cs2', 'valorant', 'r6_siege'];
   const br = ['fortnite', 'pubg', 'apex'];
@@ -84,7 +84,7 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
     });
   }, []);
 
-  /** 변환 실행 */
+  /** 변환 실행: 6가지 방식으로 변환 후, 추천 방식 기준 스냅 계산 */
   const convert = useCallback(async () => {
     const sensNum = parseFloat(sens);
     if (isNaN(sensNum) || sensNum <= 0) return;
@@ -108,7 +108,7 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
     setLoading(false);
   }, [srcGame, dstGame, sens, dpi]);
 
-  /** 소스/대상 스왑 */
+  /** 소스/대상 게임 스왑 */
   const swap = () => {
     setSrcGame(dstGame);
     setDstGame(srcGame);
@@ -116,7 +116,7 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
     setSnap(null);
   };
 
-  /** 클립보드 복사 */
+  /** 클립보드에 감도 값 복사 */
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     useToastStore.getState().addToast('복사 완료', 'success', 1500);
@@ -125,72 +125,81 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
   const recommended = result ? getRecommended(srcGame, dstGame) : '';
 
   return (
-    <div style={{ padding: 24, maxWidth: 800, margin: '0 auto', color: '#e0e0e0', width: '100%' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+    <div className="page page--narrow">
+      {/* 헤더: 뒤로가기 + 제목 */}
+      <div className="page-header">
         <BackButton onBack={onBack} />
-        <h2 style={{ fontSize: 20, fontWeight: 700 }}>감도 변환기</h2>
+        <h2>감도 변환기</h2>
       </div>
 
-      {/* 입력 영역 */}
-      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-end', marginBottom: 24, flexWrap: 'wrap' }}>
-        <label style={labelStyle}>
+      {/* 입력 영역: 소스/대상 게임 선택 + 감도 입력 + 변환 버튼 */}
+      <div className="conversion-controls">
+        <label className="form-label">
           소스 게임
-          <select value={srcGame} onChange={(e) => { setSrcGame(e.target.value); setResult(null); }} style={selectStyle}>
+          <select
+            className="select-field"
+            value={srcGame}
+            onChange={(e) => { setSrcGame(e.target.value); setResult(null); }}
+          >
             {games.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
           </select>
         </label>
 
-        <button onClick={swap} style={{
-          background: 'none', border: '1px solid #2a2a3e', color: '#888',
-          borderRadius: 6, padding: '8px 12px', cursor: 'pointer', fontSize: 16,
-          alignSelf: 'flex-end', marginBottom: 2,
-        }}>
-          {'⇄'}
+        <button className="btn btn--ghost btn--icon" onClick={swap} title="소스/대상 스왑">
+          ⇄
         </button>
 
-        <label style={labelStyle}>
+        <label className="form-label">
           대상 게임
-          <select value={dstGame} onChange={(e) => { setDstGame(e.target.value); setResult(null); }} style={selectStyle}>
+          <select
+            className="select-field"
+            value={dstGame}
+            onChange={(e) => { setDstGame(e.target.value); setResult(null); }}
+          >
             {games.map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}
           </select>
         </label>
 
-        <label style={labelStyle}>
+        <label className="form-label">
           소스 감도
           <input
-            value={sens} onChange={(e) => setSens(e.target.value)}
-            type="number" step="0.01" min="0.01"
-            style={{ ...selectStyle, width: 100 }}
+            className="input-field"
+            value={sens}
+            onChange={(e) => setSens(e.target.value)}
+            type="number"
+            step="0.01"
+            min="0.01"
+            style={{ width: 100 }}
           />
         </label>
 
-        <button onClick={convert} disabled={loading} style={{
-          background: '#e94560', color: '#fff', border: 'none', borderRadius: 6,
-          padding: '10px 20px', cursor: 'pointer', fontSize: 14, fontWeight: 600,
-          alignSelf: 'flex-end', marginBottom: 2, opacity: loading ? 0.6 : 1,
-        }}>
+        <button
+          className="btn btn--primary convert-button"
+          onClick={convert}
+          disabled={loading}
+        >
           {loading ? '계산 중...' : '변환'}
         </button>
       </div>
 
       {loading && <LoadingSpinner label="변환 계산 중..." />}
 
-      {/* 결과 테이블 */}
+      {/* 결과 테이블: 6가지 방식의 변환 결과 표시 */}
       {result && !loading && (
         <>
-          <div style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>
+          <div className="conversion-fov-info">
             {result.src_game} → {result.dst_game} | 소스 cm/360: {result.src_cm360.toFixed(2)} | FOV: {result.src_fov_h.toFixed(1)}° → {result.dst_fov_h.toFixed(1)}°
           </div>
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <table className="conversion-table">
             <thead>
-              <tr style={{ borderBottom: '1px solid #2a2a3e' }}>
-                <th style={thStyle}>방식</th>
-                <th style={thStyle}>cm/360</th>
-                <th style={thStyle}>감도</th>
-                <th style={thStyle}>배율</th>
-                <th style={thStyle}>설명</th>
-                <th style={thStyle}></th>
+              <tr>
+                <th>방식</th>
+                <th>cm/360</th>
+                <th>감도</th>
+                <th>배율</th>
+                <th>설명</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -199,23 +208,24 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
                 if (!r) return null;
                 const isRec = key === recommended;
                 return (
-                  <tr key={key} style={{
-                    borderBottom: '1px solid #1a1a2e',
-                    background: isRec ? 'rgba(233,69,96,0.1)' : 'transparent',
-                  }}>
-                    <td style={tdStyle}>
+                  <tr
+                    key={key}
+                    className={isRec ? 'data-table highlight' : ''}
+                    style={isRec ? { background: 'rgba(233,69,96,0.1)' } : undefined}
+                  >
+                    <td>
                       {meta.label}
-                      {isRec && <span style={{ color: '#e94560', fontSize: 10, marginLeft: 6 }}>추천</span>}
+                      {isRec && <span className="badge badge--accent" style={{ marginLeft: 6 }}>추천</span>}
                     </td>
-                    <td style={{ ...tdStyle, fontFamily: 'monospace' }}>{r.cm360.toFixed(2)}</td>
-                    <td style={{ ...tdStyle, fontFamily: 'monospace', fontWeight: 600 }}>{r.sens.toFixed(4)}</td>
-                    <td style={{ ...tdStyle, fontFamily: 'monospace' }}>×{r.multiplier.toFixed(4)}</td>
-                    <td style={{ ...tdStyle, fontSize: 11, color: '#888' }}>{meta.desc}</td>
-                    <td style={tdStyle}>
-                      <button onClick={() => copyToClipboard(r.sens.toFixed(4))} style={{
-                        background: 'none', border: '1px solid #2a2a3e', color: '#888',
-                        borderRadius: 4, padding: '2px 8px', cursor: 'pointer', fontSize: 11,
-                      }}>
+                    <td>{r.cm360.toFixed(2)}</td>
+                    <td className="font-semibold">{r.sens.toFixed(4)}</td>
+                    <td>×{r.multiplier.toFixed(4)}</td>
+                    <td className="text-sm text-muted">{meta.desc}</td>
+                    <td>
+                      <button
+                        className="btn btn--ghost btn--sm"
+                        onClick={() => copyToClipboard(r.sens.toFixed(4))}
+                      >
                         복사
                       </button>
                     </td>
@@ -225,36 +235,32 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
             </tbody>
           </table>
 
-          {/* 감도 스냅 결과 */}
+          {/* 감도 스냅 결과: 추천 방식 기준 floor/ceil/추천 감도 */}
           {snap && (
-            <div style={{
-              marginTop: 16, padding: 16, background: '#1a1a2e',
-              borderRadius: 8, border: '1px solid #2a2a3e',
-            }}>
-              <h3 style={{ fontSize: 14, marginBottom: 8 }}>감도 스냅 (추천 방식 기준)</h3>
-              <div style={{ display: 'flex', gap: 24, fontSize: 13 }}>
+            <div className="conversion-results" style={{ marginTop: 16 }}>
+              <h3 className="page-section__title">감도 스냅 (추천 방식 기준)</h3>
+              <div style={{ display: 'flex', gap: 24 }}>
                 <div>
-                  <div style={{ color: '#888', fontSize: 11 }}>추천 감도</div>
-                  <div style={{ fontFamily: 'monospace', fontWeight: 700, fontSize: 16, color: '#4ade80' }}>
-                    {snap.recommended_sens.toFixed(4)}
-                  </div>
-                  <div style={{ fontSize: 11, color: '#888' }}>{snap.recommended_cm360.toFixed(2)} cm/360</div>
+                  <div className="stat-label">추천 감도</div>
+                  <div className="stat-value stat-value--success">{snap.recommended_sens.toFixed(4)}</div>
+                  <div className="snap-indicator">{snap.recommended_cm360.toFixed(2)} cm/360</div>
                 </div>
                 <div>
-                  <div style={{ color: '#888', fontSize: 11 }}>Floor</div>
-                  <div style={{ fontFamily: 'monospace' }}>{snap.floor_sens.toFixed(4)}</div>
-                  <div style={{ fontSize: 11, color: '#888' }}>{snap.floor_cm360.toFixed(2)} cm/360</div>
+                  <div className="stat-label">Floor</div>
+                  <div className="stat-value">{snap.floor_sens.toFixed(4)}</div>
+                  <div className="snap-indicator">{snap.floor_cm360.toFixed(2)} cm/360</div>
                 </div>
                 <div>
-                  <div style={{ color: '#888', fontSize: 11 }}>Ceil</div>
-                  <div style={{ fontFamily: 'monospace' }}>{snap.ceil_sens.toFixed(4)}</div>
-                  <div style={{ fontSize: 11, color: '#888' }}>{snap.ceil_cm360.toFixed(2)} cm/360</div>
+                  <div className="stat-label">Ceil</div>
+                  <div className="stat-value">{snap.ceil_sens.toFixed(4)}</div>
+                  <div className="snap-indicator">{snap.ceil_cm360.toFixed(2)} cm/360</div>
                 </div>
               </div>
-              <button onClick={() => copyToClipboard(snap.recommended_sens.toFixed(4))} style={{
-                marginTop: 10, background: '#4ade80', color: '#000', border: 'none',
-                borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontSize: 13, fontWeight: 600,
-              }}>
+              <button
+                className="btn btn--success"
+                onClick={() => copyToClipboard(snap.recommended_sens.toFixed(4))}
+                style={{ marginTop: 10 }}
+              >
                 추천 감도 복사
               </button>
             </div>
@@ -264,20 +270,3 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
     </div>
   );
 }
-
-const labelStyle: React.CSSProperties = {
-  fontSize: 12, color: '#aaa', display: 'flex', flexDirection: 'column', gap: 4,
-};
-
-const selectStyle: React.CSSProperties = {
-  background: '#1a1a2e', border: '1px solid #2a2a3e', borderRadius: 4,
-  color: '#e0e0e0', padding: '8px 10px', fontSize: 13,
-};
-
-const thStyle: React.CSSProperties = {
-  textAlign: 'left', padding: '8px 10px', color: '#888', fontSize: 11, fontWeight: 600,
-};
-
-const tdStyle: React.CSSProperties = {
-  padding: '10px 10px',
-};

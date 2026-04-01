@@ -4,12 +4,13 @@
  */
 import { useState, useEffect } from 'react';
 import { useHardwareStore } from '../stores/hardwareStore';
+import { BackButton } from './BackButton';
 
 interface Props {
   onBack: () => void;
 }
 
-/** 피처 한국어 라벨 */
+/** 피처 한국어 라벨 맵 */
 const FEATURE_LABELS: Record<string, string> = {
   flick_peak_velocity: '플릭 최고 속도',
   overshoot_avg: '오버슈팅',
@@ -35,16 +36,25 @@ const FEATURE_LABELS: Record<string, string> = {
   adaptation_rate: '적응 속도',
 };
 
-/** 상태 색상 */
-function statusColor(status: string): string {
+/** 상태에 따른 뱃지 클래스 반환 */
+function statusBadgeClass(status: string): string {
   switch (status) {
-    case 'improved': return '#4ade80';
-    case 'degraded': return '#e94560';
-    default: return '#666';
+    case 'improved': return 'badge badge--success';
+    case 'degraded': return 'badge badge--danger';
+    default: return 'badge';
   }
 }
 
-/** 상태 한국어 */
+/** 상태에 따른 텍스트 CSS 클래스 반환 */
+function statusTextClass(status: string): string {
+  switch (status) {
+    case 'improved': return 'text-success';
+    case 'degraded': return 'text-danger';
+    default: return 'text-muted';
+  }
+}
+
+/** 상태 한국어 라벨 */
 function statusLabel(status: string): string {
   switch (status) {
     case 'improved': return '개선';
@@ -58,117 +68,143 @@ export default function HardwareCompare({ onBack }: Props) {
   const [profileA, setProfileA] = useState<number>(1);
   const [profileB, setProfileB] = useState<number>(2);
 
+  /* 마운트 시 콤보 목록 로드 */
   useEffect(() => {
     loadCombos();
   }, [loadCombos]);
 
+  /** 비교 실행 핸들러 */
   const handleCompare = () => {
     compare(profileA, profileB);
   };
 
   return (
-    <div style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+    <div className="page">
+      {/* 헤더: 제목 + 뒤로가기 */}
+      <div className="page-header">
+        <BackButton onBack={onBack} />
         <h2>하드웨어 비교</h2>
-        <button onClick={onBack}>← 돌아가기</button>
       </div>
 
-      {/* 비교 설정 */}
-      <div style={{ background: '#1a1a2e', padding: 20, borderRadius: 8, marginBottom: 20 }}>
-        <h3 style={{ marginTop: 0 }}>비교 대상 선택</h3>
-        <div style={{ display: 'flex', gap: 20, alignItems: 'flex-end' }}>
-          <label>
-            프로필 A (ID):
-            <input type="number" value={profileA} onChange={(e) => setProfileA(Number(e.target.value))}
-              style={{ width: 80, marginLeft: 8 }} />
-          </label>
-          <label>
-            프로필 B (ID):
-            <input type="number" value={profileB} onChange={(e) => setProfileB(Number(e.target.value))}
-              style={{ width: 80, marginLeft: 8 }} />
-          </label>
-          <button onClick={handleCompare} disabled={isLoading} style={{ padding: '8px 20px' }}>
-            {isLoading ? '비교 중...' : '비교 실행'}
-          </button>
-        </div>
-
-        {/* 등록된 콤보 목록 */}
-        {combos.length > 0 && (
-          <div style={{ marginTop: 16 }}>
-            <h4 style={{ margin: '0 0 8px' }}>등록된 하드웨어 ({combos.length}개)</h4>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {combos.map((c) => (
-                <div key={c.id} style={{
-                  padding: '6px 12px', borderRadius: 4, background: '#16213e',
-                  fontSize: 12, border: '1px solid #333',
-                }}>
-                  {c.mouse_model} / {c.mousepad_model ?? '미지정'} / {c.dpi} DPI
-                </div>
-              ))}
+      {/* 비교 대상 선택 섹션 */}
+      <div className="page-section">
+        <div className="glass-card">
+          <h3 className="page-section__title">비교 대상 선택</h3>
+          <div className="hw-compare__controls">
+            {/* 프로필 A 입력 */}
+            <div className="form-group">
+              <label className="form-label">프로필 A (ID)</label>
+              <input
+                className="input-field hw-compare__id-input"
+                type="number"
+                value={profileA}
+                onChange={(e) => setProfileA(Number(e.target.value))}
+              />
             </div>
+            {/* 프로필 B 입력 */}
+            <div className="form-group">
+              <label className="form-label">프로필 B (ID)</label>
+              <input
+                className="input-field hw-compare__id-input"
+                type="number"
+                value={profileB}
+                onChange={(e) => setProfileB(Number(e.target.value))}
+              />
+            </div>
+            {/* 비교 실행 버튼 */}
+            <button
+              className="btn btn--primary"
+              onClick={handleCompare}
+              disabled={isLoading}
+            >
+              {isLoading ? '비교 중...' : '비교 실행'}
+            </button>
           </div>
-        )}
+
+          {/* 등록된 콤보 목록 */}
+          {combos.length > 0 && (
+            <div className="hw-compare__combo-list">
+              <h4 className="text-sm font-semibold">
+                등록된 하드웨어 ({combos.length}개)
+              </h4>
+              <div className="hw-compare__combo-chips">
+                {combos.map((c) => (
+                  <span key={c.id} className="glass-card--compact hw-compare__chip">
+                    {c.mouse_model} / {c.mousepad_model ?? '미지정'} / {c.dpi} DPI
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* 비교 결과 */}
+      {/* 비교 결과 영역 */}
       {comparison && (
         <>
-          {/* cm/360 이동 요약 */}
-          <div style={{ background: '#0f3460', padding: 20, borderRadius: 8, marginBottom: 20 }}>
-            <div style={{ fontSize: 14, opacity: 0.8 }}>최적 cm/360 이동</div>
-            <div style={{ fontSize: 28, fontWeight: 'bold', marginTop: 4 }}>
-              {comparison.optimal_shift > 0 ? '+' : ''}{comparison.optimal_shift.toFixed(1)} cm
-              <span style={{ fontSize: 16, opacity: 0.7, marginLeft: 8 }}>
-                ({comparison.shift_pct > 0 ? '+' : ''}{comparison.shift_pct.toFixed(1)}%)
-              </span>
+          {/* cm/360 이동 요약 카드 */}
+          <div className="page-section">
+            <div className="glass-card glass-card--glow hw-compare__shift-card">
+              <div className="stat-label">최적 cm/360 이동</div>
+              <div className="stat-value stat-value--big">
+                {comparison.optimal_shift > 0 ? '+' : ''}{comparison.optimal_shift.toFixed(1)} cm
+                <span className="stat-unit">
+                  ({comparison.shift_pct > 0 ? '+' : ''}{comparison.shift_pct.toFixed(1)}%)
+                </span>
+              </div>
+              <p className="text-sm text-muted">{comparison.shift_description}</p>
             </div>
-            <div style={{ marginTop: 8, opacity: 0.8 }}>{comparison.shift_description}</div>
           </div>
 
           {/* DNA 피처 델타 테이블 */}
-          <div style={{ background: '#1a1a2e', padding: 20, borderRadius: 8, marginBottom: 20 }}>
-            <h3 style={{ marginTop: 0 }}>
-              DNA 피처 비교
-              <span style={{ fontSize: 14, fontWeight: 'normal', marginLeft: 12, opacity: 0.7 }}>
-                개선 {comparison.improved_count} / 악화 {comparison.degraded_count}
-              </span>
-            </h3>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid #333' }}>
-                  <th style={{ textAlign: 'left', padding: 6 }}>피처</th>
-                  <th>A</th>
-                  <th>B</th>
-                  <th>변화율</th>
-                  <th>상태</th>
-                </tr>
-              </thead>
-              <tbody>
-                {comparison.dna_deltas
-                  .filter((d) => d.status !== 'unchanged')
-                  .sort((a, b) => Math.abs(b.delta_pct) - Math.abs(a.delta_pct))
-                  .map((d) => (
-                    <tr key={d.feature} style={{ borderBottom: '1px solid #222' }}>
-                      <td style={{ padding: 6 }}>
-                        {FEATURE_LABELS[d.feature] ?? d.feature}
-                      </td>
-                      <td style={{ textAlign: 'center' }}>{d.value_a.toFixed(2)}</td>
-                      <td style={{ textAlign: 'center' }}>{d.value_b.toFixed(2)}</td>
-                      <td style={{ textAlign: 'center', color: statusColor(d.status) }}>
-                        {d.delta_pct > 0 ? '+' : ''}{d.delta_pct.toFixed(1)}%
-                      </td>
-                      <td style={{ textAlign: 'center', color: statusColor(d.status), fontWeight: 'bold' }}>
-                        {statusLabel(d.status)}
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+          <div className="page-section">
+            <div className="glass-card">
+              <h3 className="page-section__title">
+                DNA 피처 비교
+                {' '}
+                <span className="text-sm text-muted">
+                  개선 {comparison.improved_count} / 악화 {comparison.degraded_count}
+                </span>
+              </h3>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>피처</th>
+                    <th>A</th>
+                    <th>B</th>
+                    <th>변화율</th>
+                    <th>상태</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {comparison.dna_deltas
+                    .filter((d) => d.status !== 'unchanged')
+                    .sort((a, b) => Math.abs(b.delta_pct) - Math.abs(a.delta_pct))
+                    .map((d) => (
+                      <tr key={d.feature}>
+                        <td>{FEATURE_LABELS[d.feature] ?? d.feature}</td>
+                        <td className="text-mono">{d.value_a.toFixed(2)}</td>
+                        <td className="text-mono">{d.value_b.toFixed(2)}</td>
+                        <td className={statusTextClass(d.status)}>
+                          {d.delta_pct > 0 ? '+' : ''}{d.delta_pct.toFixed(1)}%
+                        </td>
+                        <td>
+                          <span className={statusBadgeClass(d.status)}>
+                            {statusLabel(d.status)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          {/* 요약 */}
-          <div style={{ background: '#16213e', padding: 16, borderRadius: 8, fontSize: 14, lineHeight: 1.6 }}>
-            {comparison.summary}
+          {/* 요약 텍스트 */}
+          <div className="page-section">
+            <div className="glass-card--compact">
+              <p className="text-sm">{comparison.summary}</p>
+            </div>
           </div>
         </>
       )}

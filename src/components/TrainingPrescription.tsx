@@ -31,126 +31,97 @@ const WEAKNESS_LABELS: Record<string, string> = {
   vertical_weakness_exposed: '수직 약점 노출',
 };
 
-/** 우선순위별 색상 */
-function priorityColor(priority: number): string {
-  if (priority > 70) return '#e94560';
-  if (priority > 40) return '#f5a623';
-  return '#4ade80';
+/** 우선순위 구간별 CSS modifier 반환 */
+function priorityModifier(priority: number): string {
+  if (priority > 70) return 'prescription-priority--high';
+  if (priority > 40) return 'prescription-priority--mid';
+  return 'prescription-priority--low';
 }
 
 export default function TrainingPrescription({ onBack, onTrainingStart, profileId }: Props) {
   const { prescriptions, isLoading, loadPrescriptions, selectPrescription } = useTrainingStore();
   const [sourceFilter, setSourceFilter] = useState<'all' | 'single_game' | 'cross_game'>('all');
 
-  // 초기 로드
+  /** 초기 로드 */
   useEffect(() => {
     loadPrescriptions(profileId);
   }, [profileId, loadPrescriptions]);
 
+  /** 필터 적용된 처방 목록 */
   const filtered = sourceFilter === 'all'
     ? prescriptions
     : prescriptions.filter(p => p.source_type === sourceFilter);
 
   return (
-    <div style={{ padding: 32, maxWidth: 900, margin: '0 auto', color: '#e0e0e0' }}>
+    <div className="page">
       {/* 헤더 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-        <button onClick={onBack} style={btnStyle}>← 뒤로</button>
-        <h2 style={{ margin: 0, fontSize: 22 }}>훈련 처방</h2>
+      <div className="page-header">
+        <button className="btn btn--ghost btn--sm" onClick={onBack}>← 뒤로</button>
+        <h2>훈련 처방</h2>
       </div>
 
-      {/* 소스 필터 탭 */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-        {(['all', 'single_game', 'cross_game'] as const).map(tab => (
-          <button
-            key={tab}
-            onClick={() => setSourceFilter(tab)}
-            style={{
-              ...tabStyle,
-              background: sourceFilter === tab ? '#3b82f6' : '#2a2a3e',
-              color: sourceFilter === tab ? '#fff' : '#aaa',
-            }}
-          >
-            {tab === 'all' ? '전체' : tab === 'single_game' ? '단일 게임' : '크로스게임'}
-          </button>
-        ))}
+      {/* 소스 필터 탭 + 새로고침 버튼 */}
+      <div className="page-header">
+        <div className="tab-group">
+          {(['all', 'single_game', 'cross_game'] as const).map(tab => (
+            <button
+              key={tab}
+              className={`tab-item${sourceFilter === tab ? ' active' : ''}`}
+              onClick={() => setSourceFilter(tab)}
+            >
+              {tab === 'all' ? '전체' : tab === 'single_game' ? '단일 게임' : '크로스게임'}
+            </button>
+          ))}
+        </div>
         <button
+          className="btn btn--secondary btn--sm ml-auto"
           onClick={() => loadPrescriptions(profileId)}
-          style={{ ...btnStyle, marginLeft: 'auto' }}
           disabled={isLoading}
         >
           {isLoading ? '분석 중...' : '처방 새로고침'}
         </button>
       </div>
 
-      {/* 처방 목록 */}
+      {/* 빈 상태 */}
       {filtered.length === 0 && !isLoading && (
-        <div style={{ textAlign: 'center', padding: 40, color: '#888' }}>
-          처방 데이터가 없습니다. 먼저 Aim DNA 배터리를 실행하세요.
+        <div className="empty-state">
+          <p className="empty-state__text">
+            처방 데이터가 없습니다. 먼저 Aim DNA 배터리를 실행하세요.
+          </p>
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {/* 처방 목록 */}
+      <div className="prescription-list">
         {filtered.map((p, i) => (
-          <div
-            key={i}
-            style={{
-              background: '#1e1e30',
-              borderRadius: 10,
-              padding: 16,
-              border: `1px solid ${priorityColor(p.priority)}33`,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 16,
-            }}
-          >
+          <div key={i} className="glass-card glass-card--compact prescription-card">
             {/* 우선순위 뱃지 */}
-            <div style={{
-              width: 48, height: 48, borderRadius: '50%',
-              background: `${priorityColor(p.priority)}22`,
-              border: `2px solid ${priorityColor(p.priority)}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 14, fontWeight: 700, color: priorityColor(p.priority),
-              flexShrink: 0,
-            }}>
+            <div className={`prescription-priority ${priorityModifier(p.priority)}`}>
               {Math.round(p.priority)}
             </div>
 
             {/* 내용 */}
-            <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
-                <span style={{
-                  fontSize: 11, padding: '2px 8px', borderRadius: 4,
-                  background: p.source_type === 'cross_game' ? '#8b5cf622' : '#3b82f622',
-                  color: p.source_type === 'cross_game' ? '#a78bfa' : '#60a5fa',
-                }}>
+            <div className="prescription-body">
+              <div className="prescription-tags">
+                <span className={`badge ${p.source_type === 'cross_game' ? 'badge--accent' : 'badge--info'}`}>
                   {p.source_type === 'cross_game' ? '크로스게임' : '단일 게임'}
                 </span>
-                <span style={{
-                  fontSize: 11, padding: '2px 8px', borderRadius: 4,
-                  background: '#ef444422', color: '#f87171',
-                }}>
+                <span className="badge badge--danger">
                   {WEAKNESS_LABELS[p.weakness] || p.weakness}
                 </span>
               </div>
-              <div style={{ fontSize: 14, fontWeight: 500 }}>{p.description}</div>
-              <div style={{ fontSize: 12, color: '#888', marginTop: 4 }}>
+              <div className="text-base font-semibold">{p.description}</div>
+              <div className="prescription-meta">
                 시나리오: {p.scenario_type} · 예상 {p.estimated_min}분
               </div>
             </div>
 
             {/* 시작 버튼 */}
             <button
+              className="btn btn--primary btn--sm"
               onClick={() => {
                 selectPrescription(p);
                 onTrainingStart(p.scenario_type, p.scenario_params);
-              }}
-              style={{
-                ...btnStyle,
-                background: '#3b82f6',
-                padding: '8px 20px',
-                fontWeight: 600,
-                flexShrink: 0,
               }}
             >
               시작
@@ -161,20 +132,3 @@ export default function TrainingPrescription({ onBack, onTrainingStart, profileI
     </div>
   );
 }
-
-const btnStyle: React.CSSProperties = {
-  background: '#2a2a3e',
-  color: '#e0e0e0',
-  border: 'none',
-  borderRadius: 6,
-  padding: '6px 14px',
-  cursor: 'pointer',
-  fontSize: 13,
-};
-
-const tabStyle: React.CSSProperties = {
-  ...btnStyle,
-  padding: '8px 16px',
-  borderRadius: 8,
-  fontWeight: 500,
-};

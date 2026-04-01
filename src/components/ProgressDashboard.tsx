@@ -31,7 +31,7 @@ const TIME_RANGES = [
   { key: '90d', label: '90일', days: 90 },
 ] as const;
 
-/** DNA 시계열 D3 라인차트 */
+/** DNA 시계열 D3 라인차트 — D3 렌더링 내부 색상은 인라인 유지 */
 function DnaLineChart({ data, label, unit }: { data: AimDnaHistoryEntry[]; label: string; unit: string }) {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -115,39 +115,47 @@ function DnaLineChart({ data, label, unit }: { data: AimDnaHistoryEntry[]; label
       .text(`${label} (${unit})`);
   }, [data, label, unit]);
 
+  // 데이터 없을 때 빈 상태
   if (data.length === 0) {
-    return (
-      <div style={{ width: 520, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
-        데이터 없음
-      </div>
-    );
+    return <div className="chart-empty">데이터 없음</div>;
   }
 
-  return <svg ref={svgRef} style={{ width: '100%', maxWidth: 520, height: 200 }} />;
+  return <svg ref={svgRef} className="chart-svg" />;
+}
+
+/** 스킬 진행률 등급 판별 */
+function skillBarClass(pct: number): string {
+  if (pct > 70) return 'skill-bar__fill skill-bar__fill--high';
+  if (pct > 40) return 'skill-bar__fill skill-bar__fill--mid';
+  return 'skill-bar__fill skill-bar__fill--low';
 }
 
 /** 스킬 진행 카드 */
 function SkillCard({ skill }: { skill: SkillProgressRow }) {
   const pct = Math.min(100, skill.rolling_avg_score);
   return (
-    <div style={{
-      background: '#1e1e30', borderRadius: 8, padding: 12,
-      border: '1px solid #333',
-    }}>
-      <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 6 }}>
+    <div className="glass-card--compact">
+      <div className="skill-card__name">
         {skill.stage_type.replace(/_/g, ' ')}
       </div>
-      <div style={{ background: '#2a2a3e', borderRadius: 4, height: 8, overflow: 'hidden' }}>
-        <div style={{
-          width: `${pct}%`, height: '100%', borderRadius: 4,
-          background: pct > 70 ? '#4ade80' : pct > 40 ? '#f5a623' : '#e94560',
-        }} />
+      <div className="skill-bar">
+        <div className={skillBarClass(pct)} style={{ width: `${pct}%` }} />
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4, fontSize: 11, color: '#888' }}>
+      <div className="skill-card__meta text-sm text-muted">
         <span>평균 {skill.rolling_avg_score.toFixed(1)}</span>
         <span>최고 {skill.best_score.toFixed(1)}</span>
         <span>{skill.total_sessions}회</span>
       </div>
+    </div>
+  );
+}
+
+/** 간단한 통계 카드 */
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="glass-card--compact stat-card">
+      <div className="stat-label">{label}</div>
+      <div className="stat-value">{value}</div>
     </div>
   );
 }
@@ -172,20 +180,20 @@ export default function ProgressDashboard({ onBack, profileId }: Props) {
   const totalSessions = dailyStats.reduce((acc, s) => acc + s.sessions_count, 0);
 
   return (
-    <div style={{ padding: 32, maxWidth: 1000, margin: '0 auto', color: '#e0e0e0' }}>
+    <div className="page page--wide">
       {/* 헤더 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-        <button onClick={onBack} style={btnStyle}>← 뒤로</button>
-        <h2 style={{ margin: 0, fontSize: 22 }}>진행 대시보드</h2>
+      <div className="page-header">
+        <button onClick={onBack} className="btn btn--ghost btn--sm">← 뒤로</button>
+        <h2>진행 대시보드</h2>
       </div>
 
       {/* 상단: Readiness + 요약 통계 */}
-      <div style={{ display: 'flex', gap: 24, marginBottom: 32, flexWrap: 'wrap' }}>
-        <div style={{ background: '#1e1e30', borderRadius: 12, padding: 20, flex: '0 0 240px' }}>
-          <h3 style={{ margin: '0 0 12px 0', fontSize: 15 }}>오늘의 컨디션</h3>
+      <div className="progress-top">
+        <div className="glass-card progress-top__readiness">
+          <h3>오늘의 컨디션</h3>
           <ReadinessWidget result={readiness} />
         </div>
-        <div style={{ display: 'flex', gap: 16, flex: 1, flexWrap: 'wrap' }}>
+        <div className="progress-top__stats">
           <StatCard label="총 세션" value={`${totalSessions}회`} />
           <StatCard label="총 연습 시간" value={`${totalTimeMin.toFixed(0)}분`} />
           <StatCard label="평균 점수" value={
@@ -197,19 +205,15 @@ export default function ProgressDashboard({ onBack, profileId }: Props) {
       </div>
 
       {/* DNA 시계열 차트 */}
-      <div style={{ background: '#1e1e30', borderRadius: 12, padding: 20, marginBottom: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <h3 style={{ margin: 0, fontSize: 15 }}>DNA 변화 추이</h3>
-          <div style={{ display: 'flex', gap: 6 }}>
+      <div className="glass-card page-section">
+        <div className="chart-section__header">
+          <h3>DNA 변화 추이</h3>
+          <div className="tab-group">
             {TIME_RANGES.map(r => (
               <button
                 key={r.key}
                 onClick={() => setTimeRange(r.key as typeof timeRange)}
-                style={{
-                  ...tabStyle,
-                  background: timeRange === r.key ? '#3b82f6' : '#2a2a3e',
-                  color: timeRange === r.key ? '#fff' : '#aaa',
-                }}
+                className={`tab-item${timeRange === r.key ? ' active' : ''}`}
               >
                 {r.label}
               </button>
@@ -218,17 +222,12 @@ export default function ProgressDashboard({ onBack, profileId }: Props) {
         </div>
 
         {/* 피처 선택 탭 */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
+        <div className="feature-tabs">
           {KEY_FEATURES.map(f => (
             <button
               key={f.key}
               onClick={() => setSelectedFeature(f.key)}
-              style={{
-                ...tabStyle,
-                background: selectedFeature === f.key ? '#60a5fa22' : 'transparent',
-                color: selectedFeature === f.key ? '#60a5fa' : '#888',
-                border: selectedFeature === f.key ? '1px solid #60a5fa44' : '1px solid transparent',
-              }}
+              className={`feature-tab${selectedFeature === f.key ? ' active' : ''}`}
             >
               {f.label}
             </button>
@@ -243,12 +242,14 @@ export default function ProgressDashboard({ onBack, profileId }: Props) {
       </div>
 
       {/* 스킬 진행도 그리드 */}
-      <div style={{ marginBottom: 24 }}>
-        <h3 style={{ fontSize: 15, marginBottom: 12 }}>스킬 진행도</h3>
+      <div className="page-section">
+        <h3 className="page-section__title">스킬 진행도</h3>
         {skillProgress.length === 0 ? (
-          <div style={{ color: '#666', padding: 20, textAlign: 'center' }}>아직 훈련 데이터가 없습니다.</div>
+          <div className="empty-state">
+            <div className="empty-state__text">아직 훈련 데이터가 없습니다.</div>
+          </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+          <div className="skill-grid">
             {skillProgress.map(s => (
               <SkillCard key={s.id} skill={s} />
             ))}
@@ -258,26 +259,3 @@ export default function ProgressDashboard({ onBack, profileId }: Props) {
     </div>
   );
 }
-
-/** 간단한 통계 카드 */
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div style={{
-      background: '#1e1e30', borderRadius: 8, padding: 16,
-      minWidth: 120, flex: '1 1 120px',
-    }}>
-      <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700 }}>{value}</div>
-    </div>
-  );
-}
-
-const btnStyle: React.CSSProperties = {
-  background: '#2a2a3e', color: '#e0e0e0', border: 'none',
-  borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontSize: 13,
-};
-
-const tabStyle: React.CSSProperties = {
-  background: 'transparent', color: '#aaa', border: 'none',
-  borderRadius: 6, padding: '6px 12px', cursor: 'pointer', fontSize: 12,
-};

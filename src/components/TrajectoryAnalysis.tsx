@@ -5,6 +5,7 @@
 import { useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { useProgressStore } from '../stores/progressStore';
+import { BackButton } from './BackButton';
 import type { ClickVector, GmmClusterResult } from '../utils/types';
 
 interface Props {
@@ -13,14 +14,14 @@ interface Props {
   trialId?: number;
 }
 
-/** 모터 영역 색상 */
+/** 모터 영역 색상 (D3 차트용) */
 const MOTOR_COLORS: Record<string, string> = {
   finger: '#60a5fa',
   wrist: '#4ade80',
   arm: '#f5a623',
 };
 
-/** 클릭 벡터 산점도 */
+/** 클릭 벡터 산점도 — D3로 렌더링 */
 function ClickVectorScatter({ vectors }: { vectors: ClickVector[] }) {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -41,20 +42,21 @@ function ClickVectorScatter({ vectors }: { vectors: ClickVector[] }) {
       .append('g')
       .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
-    // 스케일
+    // 스케일 계산
     const maxVal = d3.max(vectors, v => Math.max(Math.abs(v.dx_deg), Math.abs(v.dy_deg))) ?? 20;
     const range = maxVal * 1.2;
 
     const xScale = d3.scaleLinear().domain([-range, range]).range([0, w]);
     const yScale = d3.scaleLinear().domain([-range, range]).range([h, 0]);
 
-    // 축
+    // X축
     g.append('g')
       .attr('transform', `translate(0, ${h})`)
       .call(d3.axisBottom(xScale).ticks(5))
       .call(g => g.selectAll('text').attr('fill', '#888').attr('font-size', 10))
       .call(g => g.selectAll('line, path').attr('stroke', '#444'));
 
+    // Y축
     g.append('g')
       .call(d3.axisLeft(yScale).ticks(5))
       .call(g => g.selectAll('text').attr('fill', '#888').attr('font-size', 10))
@@ -66,7 +68,7 @@ function ClickVectorScatter({ vectors }: { vectors: ClickVector[] }) {
     g.append('line').attr('x1', 0).attr('x2', w).attr('y1', yScale(0)).attr('y2', yScale(0))
       .attr('stroke', '#555').attr('stroke-dasharray', '4,4');
 
-    // 포인트
+    // 데이터 포인트
     g.selectAll('.click-dot')
       .data(vectors)
       .enter()
@@ -90,7 +92,7 @@ function ClickVectorScatter({ vectors }: { vectors: ClickVector[] }) {
   return <svg ref={svgRef} style={{ width: '100%', maxWidth: 400, height: 400 }} />;
 }
 
-/** GMM 히스토그램 + 가우시안 오버레이 */
+/** GMM 히스토그램 + 가우시안 오버레이 — D3로 렌더링 */
 function GmmHistogram({ vectors, gmm }: { vectors: ClickVector[]; gmm: GmmClusterResult | null }) {
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -120,18 +122,19 @@ function GmmHistogram({ vectors, gmm }: { vectors: ClickVector[]; gmm: GmmCluste
     const yMax = d3.max(bins, b => b.length) ?? 1;
     const yScale = d3.scaleLinear().domain([0, yMax]).range([h, 0]);
 
-    // 축
+    // X축
     g.append('g').attr('transform', `translate(0, ${h})`)
       .call(d3.axisBottom(xScale).ticks(6))
       .call(g => g.selectAll('text').attr('fill', '#888').attr('font-size', 10))
       .call(g => g.selectAll('line, path').attr('stroke', '#444'));
 
+    // Y축
     g.append('g')
       .call(d3.axisLeft(yScale).ticks(4))
       .call(g => g.selectAll('text').attr('fill', '#888').attr('font-size', 10))
       .call(g => g.selectAll('line, path').attr('stroke', '#444'));
 
-    // 바
+    // 히스토그램 바
     g.selectAll('.bar')
       .data(bins)
       .enter()
@@ -148,6 +151,7 @@ function GmmHistogram({ vectors, gmm }: { vectors: ClickVector[]; gmm: GmmCluste
       const n = magnitudes.length;
       const binWidth = bins[0] ? (xScale(bins[0].x1 ?? 0) - xScale(bins[0].x0 ?? 0)) / (bins[0].x1! - bins[0].x0!) : 1;
 
+      /** 가우시안 곡선 그리기 */
       const drawGaussian = (mean: number, std: number, weight: number, color: string) => {
         const points: [number, number][] = [];
         for (let x = 0; x <= maxMag * 1.1; x += 0.2) {
@@ -165,7 +169,7 @@ function GmmHistogram({ vectors, gmm }: { vectors: ClickVector[]; gmm: GmmCluste
       drawGaussian(gmm.cluster_b.mean, gmm.cluster_b.std_dev, gmm.cluster_b.weight, '#f5a623');
     }
 
-    // 라벨
+    // X축 라벨
     g.append('text').attr('x', w / 2).attr('y', h + 32).attr('text-anchor', 'middle')
       .attr('fill', '#aaa').attr('font-size', 11).text('이동 크기 (°)');
   }, [vectors, gmm]);
@@ -173,10 +177,21 @@ function GmmHistogram({ vectors, gmm }: { vectors: ClickVector[]; gmm: GmmCluste
   return <svg ref={svgRef} style={{ width: '100%', maxWidth: 400, height: 250 }} />;
 }
 
+/** 진단 카드 — stat-value/stat-label 디자인 시스템 사용 */
+function DiagCard({ label, value, color }: { label: string; value: string; color: string }) {
+  return (
+    <div className="traj-diag-card">
+      <div className="stat-label">{label}</div>
+      <div className="stat-value" style={{ color }}>{value}</div>
+    </div>
+  );
+}
+
 export default function TrajectoryAnalysis({ onBack, trialId: initialTrialId }: Props) {
   const { trajectoryAnalysis, isLoading, analyzeTrajectory } = useProgressStore();
   const [trialId, setTrialId] = useState(initialTrialId?.toString() ?? '');
 
+  /** 분석 실행 핸들러 */
   const handleAnalyze = () => {
     const id = parseInt(trialId, 10);
     if (!isNaN(id)) analyzeTrajectory(id);
@@ -185,30 +200,27 @@ export default function TrajectoryAnalysis({ onBack, trialId: initialTrialId }: 
   const result = trajectoryAnalysis;
 
   return (
-    <div style={{ padding: 32, maxWidth: 1000, margin: '0 auto', color: '#e0e0e0' }}>
+    <div className="page page--wide">
       {/* 헤더 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-        <button onClick={onBack} style={btnStyle}>← 뒤로</button>
-        <h2 style={{ margin: 0, fontSize: 22 }}>궤적 분석</h2>
+      <div className="page-header">
+        <BackButton onBack={onBack} />
+        <h2>궤적 분석</h2>
       </div>
 
       {/* 트라이얼 ID 입력 */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 24, alignItems: 'center' }}>
-        <label style={{ fontSize: 13, color: '#aaa' }}>Trial ID:</label>
+      <div className="traj-input-row">
+        <label className="form-label">Trial ID:</label>
         <input
           type="number"
+          className="input-field"
           value={trialId}
           onChange={e => setTrialId(e.target.value)}
-          style={{
-            background: '#2a2a3e', color: '#e0e0e0', border: '1px solid #444',
-            borderRadius: 6, padding: '6px 12px', width: 100, fontSize: 13,
-          }}
         />
-        <button onClick={handleAnalyze} style={{ ...btnStyle, background: '#3b82f6' }} disabled={isLoading}>
+        <button className="btn btn--primary btn--sm" onClick={handleAnalyze} disabled={isLoading}>
           {isLoading ? '분석 중...' : '분석 실행'}
         </button>
         {result && (
-          <span style={{ fontSize: 12, color: '#888' }}>
+          <span className="text-sm text-muted">
             총 {result.total_clicks}개 클릭 분석됨
           </span>
         )}
@@ -217,35 +229,35 @@ export default function TrajectoryAnalysis({ onBack, trialId: initialTrialId }: 
       {result && (
         <>
           {/* 차트 영역 */}
-          <div style={{ display: 'flex', gap: 24, marginBottom: 24, flexWrap: 'wrap' }}>
-            {/* 산점도 */}
-            <div style={{ background: '#1e1e30', borderRadius: 12, padding: 16 }}>
-              <h3 style={{ fontSize: 14, marginBottom: 8 }}>클릭 벡터 분포</h3>
+          <div className="traj-chart-row">
+            {/* 산점도 카드 */}
+            <div className="glass-card glass-card--compact">
+              <h3 className="page-section__title">클릭 벡터 분포</h3>
               <ClickVectorScatter vectors={result.click_vectors} />
               {/* 범례 */}
-              <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 8 }}>
+              <div className="traj-legend">
                 {Object.entries(MOTOR_COLORS).map(([region, color]) => (
-                  <span key={region} style={{ fontSize: 11, color: '#aaa' }}>
-                    <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: color, marginRight: 4 }} />
+                  <span key={region} className="text-sm text-muted">
+                    <span className="traj-legend__dot" style={{ background: color }} />
                     {region}
                   </span>
                 ))}
-                <span style={{ fontSize: 11, color: '#aaa' }}>
-                  <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', border: '2px solid #e94560', marginRight: 4 }} />
+                <span className="text-sm text-muted">
+                  <span className="traj-legend__dot--overshoot" />
                   overshoot
                 </span>
               </div>
             </div>
 
-            {/* GMM 히스토그램 */}
-            <div style={{ background: '#1e1e30', borderRadius: 12, padding: 16, flex: 1 }}>
-              <h3 style={{ fontSize: 14, marginBottom: 8 }}>이동 크기 분포 (GMM)</h3>
+            {/* GMM 히스토그램 카드 */}
+            <div className="glass-card glass-card--compact">
+              <h3 className="page-section__title">이동 크기 분포 (GMM)</h3>
               <GmmHistogram vectors={result.click_vectors} gmm={result.gmm} />
               {result.gmm && (
-                <div style={{ fontSize: 12, color: '#aaa', marginTop: 8, textAlign: 'center' }}>
+                <div className="text-sm text-muted" style={{ textAlign: 'center', marginTop: 8 }}>
                   분리도: {(result.gmm.separation_score * 100).toFixed(0)}%
                   {result.gmm.bimodal_detected && (
-                    <span style={{ color: '#f5a623', marginLeft: 12 }}>이봉 분포 감지</span>
+                    <span className="badge--warning" style={{ marginLeft: 12 }}>이봉 분포 감지</span>
                   )}
                 </div>
               )}
@@ -253,9 +265,9 @@ export default function TrajectoryAnalysis({ onBack, trialId: initialTrialId }: 
           </div>
 
           {/* 감도 진단 */}
-          <div style={{ background: '#1e1e30', borderRadius: 12, padding: 20 }}>
-            <h3 style={{ fontSize: 15, marginBottom: 12 }}>감도 진단</h3>
-            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+          <div className="glass-card page-section">
+            <h3 className="page-section__title">감도 진단</h3>
+            <div className="traj-diag-grid">
               <DiagCard
                 label="행동 유형"
                 value={
@@ -286,7 +298,7 @@ export default function TrajectoryAnalysis({ onBack, trialId: initialTrialId }: 
                 />
               )}
             </div>
-            <p style={{ fontSize: 13, color: '#ccc', marginTop: 12, lineHeight: 1.6 }}>
+            <p className="text-sm" style={{ color: 'var(--text-primary)', marginTop: 12, lineHeight: 1.6 }}>
               {result.diagnosis.details}
             </p>
           </div>
@@ -295,17 +307,3 @@ export default function TrajectoryAnalysis({ onBack, trialId: initialTrialId }: 
     </div>
   );
 }
-
-function DiagCard({ label, value, color }: { label: string; value: string; color: string }) {
-  return (
-    <div style={{ flex: '1 1 140px', minWidth: 120 }}>
-      <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 20, fontWeight: 700, color }}>{value}</div>
-    </div>
-  );
-}
-
-const btnStyle: React.CSSProperties = {
-  background: '#2a2a3e', color: '#e0e0e0', border: 'none',
-  borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontSize: 13,
-};

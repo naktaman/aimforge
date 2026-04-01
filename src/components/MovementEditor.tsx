@@ -48,7 +48,7 @@ export default function MovementEditor({ onBack }: Props) {
     loadPresets();
   }, [loadPresets]);
 
-  // 프리셋 선택 시 슬라이더 동기화
+  /** 프리셋 선택 시 슬라이더 동기화 */
   const selectPreset = (idx: number) => {
     setSelectedIdx(idx);
     const p = presets[idx];
@@ -67,7 +67,7 @@ export default function MovementEditor({ onBack }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [presets]);
 
-  // 가중 추천 계산
+  /** 가중 추천 계산 */
   const handleCalcRecommendation = () => {
     const preset = presets[selectedIdx];
     if (!preset) return;
@@ -80,7 +80,7 @@ export default function MovementEditor({ onBack }: Props) {
     calculateRecommendation(staticOpt, movingOpt, ratio);
   };
 
-  // JSON 내보내기
+  /** JSON 내보내기 */
   const handleExport = async () => {
     const preset = presets[selectedIdx];
     if (!preset) return;
@@ -97,7 +97,7 @@ export default function MovementEditor({ onBack }: Props) {
     setTimeout(() => setExportPath(null), 5000);
   };
 
-  // JSON 가져오기
+  /** JSON 가져오기 */
   const handleImport = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -122,7 +122,7 @@ export default function MovementEditor({ onBack }: Props) {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, [importProfile]);
 
-  // 캘리브레이션 실행
+  /** 캘리브레이션 실행 */
   const handleCalibrate = async () => {
     const preset = presets[selectedIdx];
     if (!preset) return;
@@ -137,31 +137,32 @@ export default function MovementEditor({ onBack }: Props) {
   };
 
   return (
-    <div style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+    <div className="page">
+      {/* 페이지 헤더 */}
+      <div className="page-header">
         <h2>무브먼트 에디터</h2>
-        <button onClick={onBack}>← 돌아가기</button>
+        <button className="btn btn--ghost btn--sm" onClick={onBack}>← 돌아가기</button>
       </div>
 
       {/* 게임 프리셋 선택 + Export/Import */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <div>
-          <label style={{ fontWeight: 'bold' }}>게임 프리셋: </label>
+      <div className="movement-editor__toolbar">
+        <div className="form-group">
+          <label className="form-label font-semibold">게임 프리셋: </label>
           <select
+            className="select-field"
             value={selectedIdx}
             onChange={(e) => selectPreset(Number(e.target.value))}
-            style={{ padding: '4px 8px', fontSize: 14 }}
           >
             {presets.map((p, i) => (
               <option key={p.game_id} value={i}>{p.name}</option>
             ))}
           </select>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button onClick={handleExport} style={{ fontSize: 12, padding: '4px 10px' }}>
+        <div className="movement-editor__actions">
+          <button className="btn btn--secondary btn--sm" onClick={handleExport}>
             JSON 내보내기
           </button>
-          <button onClick={() => fileInputRef.current?.click()} style={{ fontSize: 12, padding: '4px 10px' }}>
+          <button className="btn btn--secondary btn--sm" onClick={() => fileInputRef.current?.click()}>
             JSON 가져오기
           </button>
           <input
@@ -169,38 +170,37 @@ export default function MovementEditor({ onBack }: Props) {
             type="file"
             accept=".json"
             onChange={handleImport}
-            style={{ display: 'none' }}
+            hidden
           />
         </div>
       </div>
 
       {/* Export/Import 알림 */}
       {exportPath && (
-        <div style={{ background: '#0f3460', padding: 8, borderRadius: 4, marginBottom: 12, fontSize: 12, color: '#4ade80' }}>
+        <div className="movement-editor__status-msg movement-editor__status-msg--success">
           저장 완료: {exportPath}
         </div>
       )}
       {importMsg && (
-        <div style={{ background: '#0f3460', padding: 8, borderRadius: 4, marginBottom: 12, fontSize: 12, color: importMsg.includes('실패') ? '#e94560' : '#4ade80' }}>
+        <div className={`movement-editor__status-msg ${importMsg.includes('실패') ? 'movement-editor__status-msg--error' : 'movement-editor__status-msg--success'}`}>
           {importMsg}
         </div>
       )}
 
       {/* 5 슬라이더 + 라이브 프리뷰 */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
+      <div className="movement-editor__columns page-section">
         {/* 슬라이더 영역 */}
-        <div style={{ background: '#1a1a2e', padding: 20, borderRadius: 8, flex: 1 }}>
-          <h3 style={{ marginTop: 0 }}>이동 물리 파라미터</h3>
+        <div className="glass-card movement-editor__sliders">
+          <h3>이동 물리 파라미터</h3>
 
           <SliderRow label="최대 속도" value={maxSpeed} min={100} max={600} step={10}
             unit="u/s" onChange={setMaxSpeed} />
           <SliderRow label="정지 시간" value={stopTime} min={0.01} max={0.3} step={0.01}
             unit="초" onChange={setStopTime} />
 
-          <div style={{ marginBottom: 12 }}>
-            <label>가속 타입: </label>
-            <select value={accelType} onChange={(e) => setAccelType(e.target.value)}
-              style={{ padding: '2px 6px' }}>
+          <div className="slider-row">
+            <label className="form-label">가속 타입: </label>
+            <select className="select-field" value={accelType} onChange={(e) => setAccelType(e.target.value)}>
               {Object.entries(ACCEL_LABELS).map(([k, v]) => (
                 <option key={k} value={k}>{v}</option>
               ))}
@@ -224,64 +224,62 @@ export default function MovementEditor({ onBack }: Props) {
       </div>
 
       {/* 캘리브레이션 가이드 */}
-      <div style={{ background: '#16213e', padding: 20, borderRadius: 8, marginBottom: 20 }}>
-        <h3 style={{ marginTop: 0 }}>실측 캘리브레이션 가이드</h3>
-        <div style={{ fontSize: 13, opacity: 0.8, marginBottom: 12 }}>
-          <p style={{ margin: '0 0 4px' }}>1. 게임에서 벽 근처의 알려진 거리 위치에 서세요</p>
-          <p style={{ margin: '0 0 4px' }}>2. 이동키를 눌러 벽까지 도달하는 시간을 측정하세요</p>
-          <p style={{ margin: '0 0 4px' }}>3. 아래에 거리와 시간을 입력하면 자동으로 계산됩니다</p>
+      <div className="glass-card movement-editor__section">
+        <h3>실측 캘리브레이션 가이드</h3>
+        <div className="movement-editor__guide-steps text-muted">
+          <p>1. 게임에서 벽 근처의 알려진 거리 위치에 서세요</p>
+          <p>2. 이동키를 눌러 벽까지 도달하는 시간을 측정하세요</p>
+          <p>3. 아래에 거리와 시간을 입력하면 자동으로 계산됩니다</p>
         </div>
-        <div style={{ display: 'flex', gap: 16, alignItems: 'flex-end' }}>
-          <label style={{ fontSize: 13 }}>
+        <div className="movement-editor__cal-row">
+          <label className="form-label">
             거리 (game units):
-            <input type="number" min={1} value={calDistance}
-              onChange={(e) => setCalDistance(Number(e.target.value))}
-              style={{ width: 80, marginLeft: 8 }} />
+            <input className="input-field" type="number" min={1} value={calDistance}
+              onChange={(e) => setCalDistance(Number(e.target.value))} />
           </label>
-          <label style={{ fontSize: 13 }}>
+          <label className="form-label">
             측정 시간 (초):
-            <input type="number" min={0.01} step={0.01} value={calTime}
-              onChange={(e) => setCalTime(Number(e.target.value))}
-              style={{ width: 80, marginLeft: 8 }} />
+            <input className="input-field" type="number" min={0.01} step={0.01} value={calTime}
+              onChange={(e) => setCalTime(Number(e.target.value))} />
           </label>
-          <button onClick={handleCalibrate} style={{ fontSize: 13, padding: '4px 12px' }}>
+          <button className="btn btn--primary btn--sm" onClick={handleCalibrate}>
             자동 계산
           </button>
         </div>
         {calResult && (
-          <div style={{ marginTop: 8, fontSize: 13, color: calResult.includes('실패') ? '#e94560' : '#4ade80' }}>
+          <div className={`movement-editor__status-msg ${calResult.includes('실패') ? 'movement-editor__status-msg--error' : 'movement-editor__status-msg--success'}`}>
             {calResult}
           </div>
         )}
       </div>
 
       {/* 가중 추천 계산 */}
-      <div style={{ background: '#16213e', padding: 20, borderRadius: 8, marginBottom: 20 }}>
-        <h3 style={{ marginTop: 0 }}>가중 감도 추천</h3>
-        <div style={{ display: 'flex', gap: 16, marginBottom: 12 }}>
-          <label>
+      <div className="glass-card movement-editor__section">
+        <h3>가중 감도 추천</h3>
+        <div className="movement-editor__rec-row">
+          <label className="form-label">
             정적 최적 cm/360:
-            <input type="number" value={staticOpt} onChange={(e) => setStaticOpt(Number(e.target.value))}
-              style={{ width: 80, marginLeft: 8 }} />
+            <input className="input-field" type="number" value={staticOpt}
+              onChange={(e) => setStaticOpt(Number(e.target.value))} />
           </label>
-          <label>
+          <label className="form-label">
             무빙 최적 cm/360:
-            <input type="number" value={movingOpt} onChange={(e) => setMovingOpt(Number(e.target.value))}
-              style={{ width: 80, marginLeft: 8 }} />
+            <input className="input-field" type="number" value={movingOpt}
+              onChange={(e) => setMovingOpt(Number(e.target.value))} />
           </label>
-          <button onClick={handleCalcRecommendation}>계산</button>
+          <button className="btn btn--primary btn--sm" onClick={handleCalcRecommendation}>계산</button>
         </div>
 
         {recommendation && (
-          <div style={{ background: '#0f3460', padding: 16, borderRadius: 6 }}>
-            <div style={{ fontSize: 24, fontWeight: 'bold', color: '#e94560' }}>
+          <div className="movement-editor__rec-result">
+            <div className="movement-editor__rec-value">
               {recommendation.final_cm360.toFixed(1)} cm/360
             </div>
-            <div style={{ marginTop: 8, opacity: 0.8 }}>
+            <div className="movement-editor__rec-detail text-muted">
               정적 {recommendation.static_optimal.toFixed(1)} × 무빙 {recommendation.moving_optimal.toFixed(1)}
               {' '}(비율 {(recommendation.movement_ratio * 100).toFixed(0)}%)
             </div>
-            <div style={{ marginTop: 4, color: '#4ade80' }}>
+            <div className="movement-editor__rec-direction">
               {recommendation.direction}
             </div>
           </div>
@@ -289,12 +287,12 @@ export default function MovementEditor({ onBack }: Props) {
       </div>
 
       {/* 프리셋 비교 테이블 */}
-      <div style={{ background: '#1a1a2e', padding: 20, borderRadius: 8 }}>
-        <h3 style={{ marginTop: 0 }}>게임별 프리셋 비교</h3>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+      <div className="glass-card">
+        <h3>게임별 프리셋 비교</h3>
+        <table className="data-table">
           <thead>
-            <tr style={{ borderBottom: '1px solid #333' }}>
-              <th style={{ textAlign: 'left', padding: 6 }}>게임</th>
+            <tr>
+              <th>게임</th>
               <th>속도</th>
               <th>정지</th>
               <th>가속</th>
@@ -304,19 +302,18 @@ export default function MovementEditor({ onBack }: Props) {
           </thead>
           <tbody>
             {presets.map((p, i) => (
-              <tr key={p.game_id}
-                style={{
-                  background: i === selectedIdx ? '#0f3460' : 'transparent',
-                  cursor: 'pointer',
-                }}
+              <tr
+                key={p.game_id}
+                className={i === selectedIdx ? 'row-selected' : ''}
                 onClick={() => selectPreset(i)}
+                style={{ cursor: 'pointer' }}
               >
-                <td style={{ padding: 6 }}>{p.name}</td>
-                <td style={{ textAlign: 'center' }}>{p.max_speed}</td>
-                <td style={{ textAlign: 'center' }}>{p.stop_time}s</td>
-                <td style={{ textAlign: 'center' }}>{ACCEL_LABELS[p.accel_type] ?? p.accel_type}</td>
-                <td style={{ textAlign: 'center' }}>{p.air_control}</td>
-                <td style={{ textAlign: 'center' }}>{p.cs_bonus}x</td>
+                <td>{p.name}</td>
+                <td>{p.max_speed}</td>
+                <td>{p.stop_time}s</td>
+                <td>{ACCEL_LABELS[p.accel_type] ?? p.accel_type}</td>
+                <td>{p.air_control}</td>
+                <td>{p.cs_bonus}x</td>
               </tr>
             ))}
           </tbody>
@@ -355,6 +352,7 @@ function MovementPreviewPanel({ maxSpeed, stopTime, accelType, airControl, csBon
     // 3초 주기로 리셋
     const cycleSec = 3;
 
+    /** 프레임 드로우 함수 — 이동 물리 시뮬레이션 + 캔버스 렌더링 */
     const draw = () => {
       elapsed += dt;
       if (elapsed > cycleSec) {
@@ -406,7 +404,7 @@ function MovementPreviewPanel({ maxSpeed, stopTime, accelType, airControl, csBon
       ctx.lineTo(W - 10, H - 30);
       ctx.stroke();
 
-      // 이동 점
+      // 이동 점 — 가속/감속/정지 색상 분기
       const dotColor = phase === 0 ? '#4ade80' : phase === 1 ? '#fbbf24' : '#e94560';
       ctx.fillStyle = dotColor;
       ctx.beginPath();
@@ -452,9 +450,9 @@ function MovementPreviewPanel({ maxSpeed, stopTime, accelType, airControl, csBon
   }, [maxSpeed, stopTime, accelType, airControl, csBonus]);
 
   return (
-    <div style={{ background: '#0d1117', borderRadius: 8, padding: 8, width: 260 }}>
-      <div style={{ fontSize: 12, color: '#888', marginBottom: 4 }}>라이브 프리뷰</div>
-      <canvas ref={canvasRef} width={244} height={120} style={{ borderRadius: 4 }} />
+    <div className="movement-preview">
+      <div className="movement-preview__label">라이브 프리뷰</div>
+      <canvas ref={canvasRef} width={244} height={120} />
     </div>
   );
 }
@@ -470,17 +468,16 @@ function SliderRow({ label, value, min, max, step, unit, onChange }: {
   onChange: (v: number) => void;
 }) {
   return (
-    <div style={{ marginBottom: 12 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <label>{label}</label>
-        <span>{value}{unit}</span>
+    <div className="slider-row">
+      <div className="slider-row__header">
+        <label className="form-label">{label}</label>
+        <span className="text-sm text-accent">{value}{unit}</span>
       </div>
       <input
         type="range"
         min={min} max={max} step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        style={{ width: '100%' }}
       />
     </div>
   );

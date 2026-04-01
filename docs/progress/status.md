@@ -95,14 +95,20 @@
 - **Block E**: conversion.rs 6개 `== 0.0` → `.abs() < EPSILON` (1e-10)
 - 빌드 검증: Rust 147/147 통과, npm build 1,083kB, TS 에러 0
 
+### Day 30: 런칭 + UX 재설계 ✅
+- .msi 빌드 + GitHub 릴리즈 (v0.1.0) 완료
+- README.md + LICENSE 작성
+- **UX 재설계**: 메뉴 구조 3탭 전환 (프로파일 점검/훈련/도구)
+- **UI 폴리싱**: CSS 디자인 시스템, 글래스모피즘, ~440개 인라인 스타일 제거
+- 상세: `docs/progress/ux-redesign-feedback.md`
+
 ---
 
 ## 다음 작업
 
-### Day 30: 런칭 준비
-- .msi 빌드 + 배포
-- GitHub 릴리즈
-- README 작성
+- ReadinessWidget, DualLandscape 등 남은 컴포넌트 인라인 스타일 정리
+- 프로파일 점검 탭에 실제 DNA 데이터 연동 (배터리 완료 → 요약 표시)
+- 사용자 테스트 피드백 반영
 
 ---
 
@@ -111,5 +117,6 @@
 | 항목 | 상태 |
 |------|------|
 | Rust tests | 147/147 통과 |
-| npm build | 성공 (1,082 kB) |
+| npm build | 성공 (1,073 kB) |
+| CSS | 56 kB |
 | 타입 에러 | 0 |
