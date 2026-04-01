@@ -24,7 +24,8 @@ export type AppScreen =
   | 'hardware-compare'
   | 'dual-landscape'
   | 'recoil-editor'
-  | 'conversion-selector';
+  | 'conversion-selector'
+  | 'profile-wizard';
 
 interface EngineState {
   /** 현재 화면 */
