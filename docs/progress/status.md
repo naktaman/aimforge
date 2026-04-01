@@ -1,6 +1,6 @@
 # AimForge 구현 진행 현황
 
-> 마지막 업데이트: 2026-04-02 (P0 Fix Sprint 완료 — 런치 준비 완료)
+> 마지막 업데이트: 2026-04-02 (v1 피드백 이후 기능 확장 완료)
 
 ---
 
@@ -101,6 +101,47 @@
 - **UX 재설계**: 메뉴 구조 3탭 전환 (프로파일 점검/훈련/도구)
 - **UI 폴리싱**: CSS 디자인 시스템, 글래스모피즘, ~440개 인라인 스타일 제거
 - 상세: `docs/progress/ux-redesign-feedback.md`
+
+### v1 피드백 이후 기능 확장 (Post-Launch) ✅
+
+#### 1. UX/메뉴 구조 개편
+- 메뉴 3탭 구조: 감도 프로파일 | 훈련 | 분석
+- 퀵플레이 제거, 감도 최적화가 메인 흐름
+- 크로스헤어를 collapsible 패널로 분리
+- "프로파일 생성" 메인 진입점
+
+#### 2. ProfileWizard 8단계 가이드 플로우
+- Welcome → 게임설정 → 하드웨어(DPI/모니터) → 캘리브레이션 → 풀 어세스먼트(8시나리오) → 분석(Aim DNA + GP 감도추천) → 리테스트(약점 재측정) → 완료(cm/360 + 게임 변환)
+- `profileWizardStore.ts` (Zustand) + `ProfileWizard.tsx`
+
+#### 3. 시나리오 버그 수정
+- 타겟 좌표: 월드 고정 → 카메라 상대좌표 (8개 시나리오 전부)
+
+#### 4. 사격 피드백 시스템
+- 발사음: Web Audio API (noise burst + low-freq punch)
+- 시각: 히트마커(X) + 미스마커(O) + 머즐플래시 CSS 애니메이션
+- `ShootingFeedback.tsx`, `AudioManager.ts`
+
+#### 5. 반동 시스템
+- 3 프리셋: light(권총), heavy(라이플), shotgun
+- OFF 토글, 카메라 적용: 수직 + 수평 반동, 시간 기반 회복
+
+#### 6. 총기 그래픽 + 발사 모드
+- Three.js 프로시저럴 총기 모델 (권총/라이플), 별도 오버레이 씬/카메라
+- 발사 모드: 단발(Semi) / 연발(Auto) / 점사(Burst), RPM 기반 연사 간격
+- B키 또는 UI 드롭다운으로 전환
+- `FireModeController.ts`, `WeaponViewModel.ts`, `FireModeIndicator.tsx`
+
+#### 7. 게임 감도 DB 대규모 확장
+- 50개 게임 메타데이터 (yaw, FOV, 엔진, ADS, 감도필드)
+- Tier1 11개 교차검증 (CS2, Valorant, Apex, PUBG, OW2, Fortnite, Tarkov, Deadlock, CoD, R6S, TF2)
+- `gameDatabase.ts` + Rust `game_db/mod.rs` 50+개 확장, ConversionSelector 검색 UI
+
+#### 8. 입력 지연 최소화 + SQLite 최적화
+- QPC 타임스탬프 기반 raw input
+- `weekly_stats`, `archive_old_trials`, `optimize_db` 함수
+
+- 상세: `docs/progress/v1-feedback-changes.md`
 
 ---
 

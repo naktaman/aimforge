@@ -31,6 +31,7 @@ npm run build          # 프론트엔드 빌드만
   - [scenarios.md](docs/architecture/scenarios.md) — 10종 시나리오, 메트릭 정의, 점수 공식
 - **@docs/progress/** — 구현 진행 현황
   - [status.md](docs/progress/status.md) — Day별 완료 현황 + 다음 작업
+  - [v1-feedback-changes.md](docs/progress/v1-feedback-changes.md) — v1 피드백 이후 8대 변경사항 상세
 - **@docs/quality/** — 코드 규칙
   - [coding-rules.md](docs/quality/coding-rules.md) — 코딩 규칙, 빌드 명령어, 세션 관리
 - **@docs/planning/** — 로드맵
