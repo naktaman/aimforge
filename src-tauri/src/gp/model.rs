@@ -89,8 +89,16 @@ impl GaussianProcess {
             };
         }
 
-        let alpha = self.alpha.as_ref().expect("alpha가 계산되지 않음");
-        let l = self.cholesky_l.as_ref().expect("Cholesky가 계산되지 않음");
+        // Cholesky 분해 실패 시 prior 분포 반환
+        let (alpha, l) = match (self.alpha.as_ref(), self.cholesky_l.as_ref()) {
+            (Some(a), Some(l)) => (a, l),
+            _ => {
+                return Prediction {
+                    mean: self.prior_mean,
+                    variance: self.kernel.signal_var,
+                };
+            }
+        };
 
         // k* = 커널 벡터 (x_new vs 학습 데이터)
         let k_star = self.kernel.compute_vector(x_new, &self.x_train);
@@ -152,8 +160,16 @@ impl GaussianProcess {
             k_matrix[i][i] += self.noise_var + self.jitter;
         }
 
-        // Cholesky 분해: K = LLᵀ
-        let l = cholesky_decompose(&k_matrix);
+        // Cholesky 분해: K = LLᵀ (실패 시 prior 분포로 폴백)
+        let l = match cholesky_decompose(&k_matrix) {
+            Ok(l) => l,
+            Err(e) => {
+                log::warn!("Cholesky 분해 실패, prior 분포로 폴백: {}", e);
+                self.cholesky_l = None;
+                self.alpha = None;
+                return;
+            }
+        };
 
         // α = L⁻ᵀ(L⁻¹(y - prior_mean))
         // prior_mean을 빼서 zero-mean GP로 변환
@@ -167,7 +183,8 @@ impl GaussianProcess {
 }
 
 /// Cholesky 분해: 양정치 대칭 행렬 A → 하삼각 행렬 L (A = LLᵀ)
-fn cholesky_decompose(a: &[Vec<f64>]) -> Vec<Vec<f64>> {
+/// 행렬이 양정치가 아니면 Err 반환 (NaN 입력 등 방어)
+fn cholesky_decompose(a: &[Vec<f64>]) -> Result<Vec<Vec<f64>>, String> {
     let n = a.len();
     let mut l = vec![vec![0.0; n]; n];
 
@@ -180,7 +197,11 @@ fn cholesky_decompose(a: &[Vec<f64>]) -> Vec<Vec<f64>> {
 
             if i == j {
                 let diag = a[i][i] - sum;
-                assert!(diag > 0.0, "Cholesky 실패: 행렬이 양정치가 아님 (i={}, diag={})", i, diag);
+                if diag <= 0.0 || diag.is_nan() {
+                    return Err(format!(
+                        "Cholesky 실패: 행렬이 양정치가 아님 (i={}, diag={})", i, diag
+                    ));
+                }
                 l[i][j] = diag.sqrt();
             } else {
                 l[i][j] = (a[i][j] - sum) / l[j][j];
@@ -188,7 +209,7 @@ fn cholesky_decompose(a: &[Vec<f64>]) -> Vec<Vec<f64>> {
         }
     }
 
-    l
+    Ok(l)
 }
 
 /// 전방 대입: Lx = b → x (하삼각)
@@ -233,7 +254,7 @@ mod tests {
     fn test_cholesky_correctness() {
         // 2×2 양정치 행렬
         let a = vec![vec![4.0, 2.0], vec![2.0, 3.0]];
-        let l = cholesky_decompose(&a);
+        let l = cholesky_decompose(&a).unwrap();
 
         // LLᵀ 복원
         for i in 0..2 {

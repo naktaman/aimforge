@@ -35,6 +35,9 @@ export class SwitchingCloseScenario extends Scenario {
   private previousTargetAngle = 0;
   private waveTimeLimitMs = 8000; // 웨이브당 8초
 
+  // 타이머 정리용
+  private pendingTimeout: ReturnType<typeof setTimeout> | null = null;
+
   private onCompleteCallback: ((results: unknown) => void) | null = null;
 
   constructor(engine: GameEngine, targetManager: TargetManager, config: SwitchingStageConfig) {
@@ -217,7 +220,16 @@ export class SwitchingCloseScenario extends Scenario {
       this.completed = true;
       if (this.onCompleteCallback) this.onCompleteCallback(this.getResults());
     } else {
-      setTimeout(() => this.spawnWave(), 500 + Math.random() * 300);
+      this.pendingTimeout = setTimeout(() => this.spawnWave(), 500 + Math.random() * 300);
     }
+  }
+
+  /** 리소스 정리 — 타이머 해제 */
+  dispose(): void {
+    if (this.pendingTimeout !== null) {
+      clearTimeout(this.pendingTimeout);
+      this.pendingTimeout = null;
+    }
+    super.dispose();
   }
 }

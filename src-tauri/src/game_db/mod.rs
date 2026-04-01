@@ -4,6 +4,7 @@
 
 pub mod commands;
 pub mod conversion;
+pub mod recoil_commands;
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;

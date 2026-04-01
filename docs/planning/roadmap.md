@@ -1,0 +1,41 @@
+# AimForge 30일 로드맵 요약
+
+> 원본: `C:\Users\ned78\Downloads\AIMPRO2\00-roadmap-v5.md`
+
+---
+
+## Week 1 — Foundation (Day 1~7) ✅
+Infrastructure, Three.js 엔진, GP Calibration, Go/No-Go 검증
+
+## Week 2 — Scenarios + Game DB (Day 8~14) ✅
+시나리오 확장, Game DB 10개, Landscape, Zoom Calibration, Comparator
+
+## Week 3 — DNA + Cross-game + Movement (Day 15~21)
+- Day 15~17 ✅ — Aim DNA Engine + Cross-game DNA Comparator
+- Day 18~19 — 훈련 처방 + 궤적 분석 + Progress Dashboard + Game Readiness
+- Day 20~21 — Movement + FOV + Hardware
+
+## Week 4 — Editors + Session + UX + Launch (Day 22~30)
+- Day 22~23 — Recoil/Movement Editor + Conversion Selector
+- Day 24~25 — AI Session Planner + Population 인프라
+- Day 26~27 — UX Polish (Simple/Advanced, 온보딩, 다크모드, i18n)
+- Day 28~29 — 집중 테스트 (10개 플로우)
+- Day 30 — Launch (.msi + GitHub + README)
+
+---
+
+## 설계 원칙
+1. argmax(score) — 높을수록 좋다
+2. 재현성 필수 — 같은 데이터 → 같은 결과
+3. overshoot penalty 명시 + click timing 분리
+4. AI는 "분석" — 궤적만으로 진단
+5. Fixed Sens가 메인 — 머슬메모리 보존
+6. 투명성 — landscape, confidence band, 한계 고지
+7. Cross-game DNA 비교가 핵심 가치
+
+## 프로파일 5축
+1. Sensitivity (cm/360)
+2. Scenario Type + 각도/방향/운동체계별 분리
+3. Movement Profile + movement_ratio
+4. FOV (상시 + 배율별 k-parameter)
+5. Hardware (mouse + pad combo)

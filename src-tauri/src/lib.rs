@@ -2,9 +2,13 @@ mod aim_dna;
 mod calibration;
 mod crossgame;
 mod db;
+mod fov_profile;
 mod game_db;
 mod gp;
+mod hardware;
 mod input;
+mod movement;
+mod trajectory;
 mod training;
 mod zoom_calibration;
 
@@ -51,12 +55,14 @@ pub fn run() {
             let app_dir = app
                 .path()
                 .app_data_dir()
-                .expect("failed to get app data dir");
+                .map_err(|e| format!("앱 데이터 디렉토리 접근 실패: {}", e))?;
             std::fs::create_dir_all(&app_dir).ok();
 
             let db_path = app_dir.join("aimforge.db");
-            let database = Database::new(&db_path).expect("failed to initialize database");
-            database.initialize_schema().expect("failed to create schema");
+            let database = Database::new(&db_path)
+                .map_err(|e| format!("데이터베이스 초기화 실패: {}", e))?;
+            database.initialize_schema()
+                .map_err(|e| format!("스키마 생성 실패: {}", e))?;
 
             app.manage(AppState {
                 db: Mutex::new(database),
@@ -107,15 +113,26 @@ pub fn run() {
             aim_dna::commands::get_aim_dna_history,
             aim_dna::commands::get_sessions_history,
             aim_dna::commands::get_session_detail,
+            aim_dna::commands::get_dna_trend_cmd,
+            aim_dna::commands::detect_reference_game_cmd,
             training::commands::generate_training_prescriptions,
             training::commands::get_stage_recommendations,
             training::commands::get_benchmark_preset_list,
             training::commands::submit_stage_result,
             training::commands::calculate_adaptive_difficulty,
             training::commands::get_stage_results,
+            training::commands::calculate_readiness_score,
+            training::commands::get_readiness_history,
+            training::commands::start_style_transition,
+            training::commands::get_style_transition_status,
+            training::commands::update_style_transition,
             crossgame::commands::compare_game_dna,
             crossgame::commands::predict_crossgame_timeline,
             crossgame::commands::record_crossgame_progress,
+            crossgame::commands::get_cross_game_history_cmd,
+            crossgame::commands::generate_crossgame_prescriptions_cmd,
+            trajectory::commands::analyze_trajectory_cmd,
+            trajectory::commands::get_click_vectors_cmd,
             // Phase 5: 신규 커맨드
             db::commands::log_crash,
             db::commands::get_crash_logs,
@@ -135,7 +152,32 @@ pub fn run() {
             db::commands::add_routine_step,
             db::commands::get_routine_steps,
             db::commands::remove_routine_step,
+            db::commands::swap_routine_step_order,
             db::commands::export_database,
+            // Day 20~21: Movement + FOV + Hardware
+            movement::commands::get_movement_presets,
+            movement::commands::get_movement_profiles,
+            movement::commands::save_movement_profile,
+            movement::commands::update_movement_profile,
+            movement::commands::delete_movement_profile,
+            movement::commands::calculate_weighted_recommendation,
+            movement::commands::export_movement_profile,
+            movement::commands::import_movement_profile_from_string,
+            movement::commands::calibrate_max_speed,
+            fov_profile::commands::save_fov_test_result,
+            fov_profile::commands::get_fov_test_results,
+            fov_profile::commands::compare_fov_profiles,
+            fov_profile::commands::delete_fov_test_results,
+            hardware::commands::save_hardware_combo,
+            hardware::commands::get_hardware_combos,
+            hardware::commands::update_hardware_combo,
+            hardware::commands::delete_hardware_combo,
+            hardware::commands::compare_hardware_combos,
+            // Day 24~25: Recoil Pattern CRUD
+            game_db::recoil_commands::get_recoil_patterns,
+            game_db::recoil_commands::save_recoil_pattern,
+            game_db::recoil_commands::update_recoil_pattern,
+            game_db::recoil_commands::delete_recoil_pattern,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

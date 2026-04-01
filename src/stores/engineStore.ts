@@ -6,14 +6,25 @@
 import { create } from 'zustand';
 import type { PerfData } from '../utils/types';
 
-type AppScreen =
+export type AppScreen =
   | 'settings' | 'viewport' | 'results'
   | 'calibration-setup' | 'calibration-progress' | 'calibration-result'
   | 'zoom-calibration-setup' | 'zoom-calibration-progress' | 'zoom-calibration-result'
   | 'comparator-result'
   | 'battery-progress' | 'battery-result' | 'aim-dna-result' | 'session-history'
   | 'display-settings' | 'game-profiles' | 'routines' | 'routine-player'
-  | 'leaderboard' | 'community' | 'data-management';
+  | 'leaderboard' | 'community' | 'data-management'
+  | 'cross-game-comparison'
+  | 'training-prescription'
+  | 'progress-dashboard'
+  | 'trajectory-analysis'
+  | 'style-transition'
+  | 'movement-editor'
+  | 'fov-comparison'
+  | 'hardware-compare'
+  | 'dual-landscape'
+  | 'recoil-editor'
+  | 'conversion-selector';
 
 interface EngineState {
   /** 현재 화면 */

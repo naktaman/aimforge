@@ -36,6 +36,9 @@ export class FlickMicroScenario extends Scenario {
   private correctionCount = 0;
   private wasApproaching = true;
 
+  // 타이머 정리용
+  private pendingTimeout: ReturnType<typeof setTimeout> | null = null;
+
   private onCompleteCallback: ((results: unknown) => void) | null = null;
 
   constructor(engine: GameEngine, targetManager: TargetManager, config: FlickStageConfig) {
@@ -147,7 +150,7 @@ export class FlickMicroScenario extends Scenario {
       if (this.onCompleteCallback) this.onCompleteCallback(this.getResults());
     } else {
       // 약간의 딜레이 후 다음 타겟
-      setTimeout(() => this.spawnNext(), 300 + Math.random() * 200);
+      this.pendingTimeout = setTimeout(() => this.spawnNext(), 300 + Math.random() * 200);
     }
   }
 
@@ -179,6 +182,15 @@ export class FlickMicroScenario extends Scenario {
     this.minAngularError = Infinity;
     this.correctionCount = 0;
     this.wasApproaching = true;
+  }
+
+  /** 리소스 정리 — 타이머 해제 */
+  dispose(): void {
+    if (this.pendingTimeout !== null) {
+      clearTimeout(this.pendingTimeout);
+      this.pendingTimeout = null;
+    }
+    super.dispose();
   }
 
   /** 오버슛/보정 추적 */

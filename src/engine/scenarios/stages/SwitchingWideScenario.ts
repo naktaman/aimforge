@@ -35,6 +35,9 @@ export class SwitchingWideScenario extends Scenario {
   private lastKilledPosition: THREE.Vector3 | null = null;
   private waveTimeLimitMs = 12000; // 넓은 전환은 12초
 
+  // 타이머 정리용
+  private pendingTimeout: ReturnType<typeof setTimeout> | null = null;
+
   private onCompleteCallback: ((results: unknown) => void) | null = null;
 
   constructor(engine: GameEngine, targetManager: TargetManager, config: SwitchingStageConfig) {
@@ -220,7 +223,16 @@ export class SwitchingWideScenario extends Scenario {
       this.completed = true;
       if (this.onCompleteCallback) this.onCompleteCallback(this.getResults());
     } else {
-      setTimeout(() => this.spawnWave(), 600 + Math.random() * 400);
+      this.pendingTimeout = setTimeout(() => this.spawnWave(), 600 + Math.random() * 400);
     }
+  }
+
+  /** 리소스 정리 — 타이머 해제 */
+  dispose(): void {
+    if (this.pendingTimeout !== null) {
+      clearTimeout(this.pendingTimeout);
+      this.pendingTimeout = null;
+    }
+    super.dispose();
   }
 }

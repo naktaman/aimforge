@@ -5,6 +5,7 @@
  */
 import { create } from 'zustand';
 import { invoke } from '@tauri-apps/api/core';
+import { useToastStore } from './toastStore';
 
 /** 루틴 스텝 */
 export interface RoutineStep {
@@ -60,6 +61,8 @@ interface RoutineState {
   addStep: (routineId: number, scenarioType: string, configJson: string, durationSec: number, stepOrder: number) => Promise<void>;
   /** 스텝 삭제 */
   removeStep: (stepId: number, routineId: number) => Promise<void>;
+  /** 두 스텝 순서 교환 */
+  swapStepOrder: (routineId: number, stepIdA: number, stepIdB: number) => Promise<void>;
 }
 
 function toRoutine(row: RoutineRow): Routine {
@@ -108,6 +111,7 @@ export const useRoutineStore = create<RoutineState>((set) => ({
       return id;
     } catch (e) {
       console.error('[Routine] 생성 실패:', e);
+      useToastStore.getState().addToast('루틴 생성 실패', 'error');
       return null;
     }
   },
@@ -118,6 +122,7 @@ export const useRoutineStore = create<RoutineState>((set) => ({
       set((s) => ({ routines: s.routines.filter(r => r.id !== id) }));
     } catch (e) {
       console.error('[Routine] 삭제 실패:', e);
+      useToastStore.getState().addToast('루틴 삭제 실패', 'error');
     }
   },
 
@@ -127,6 +132,7 @@ export const useRoutineStore = create<RoutineState>((set) => ({
       set({ currentSteps: rows.map(toStep) });
     } catch (e) {
       console.error('[Routine] 스텝 로드 실패:', e);
+      useToastStore.getState().addToast('루틴 스텝 로드 실패', 'error');
     }
   },
 
@@ -140,16 +146,29 @@ export const useRoutineStore = create<RoutineState>((set) => ({
       set({ currentSteps: rows.map(toStep) });
     } catch (e) {
       console.error('[Routine] 스텝 추가 실패:', e);
+      useToastStore.getState().addToast('스텝 추가 실패', 'error');
     }
   },
 
   removeStep: async (stepId, routineId) => {
     try {
-      await invoke('remove_routine_step', { stepId });
+      await invoke('remove_routine_step', { stepId, routineId });
       const rows = await invoke<RoutineStepRow[]>('get_routine_steps', { routineId });
       set({ currentSteps: rows.map(toStep) });
     } catch (e) {
       console.error('[Routine] 스텝 삭제 실패:', e);
+      useToastStore.getState().addToast('스텝 삭제 실패', 'error');
+    }
+  },
+
+  swapStepOrder: async (routineId, stepIdA, stepIdB) => {
+    try {
+      await invoke('swap_routine_step_order', { stepIdA, stepIdB, routineId });
+      const rows = await invoke<RoutineStepRow[]>('get_routine_steps', { routineId });
+      set({ currentSteps: rows.map(toStep) });
+    } catch (e) {
+      console.error('[Routine] 스텝 순서 교환 실패:', e);
+      useToastStore.getState().addToast('스텝 순서 변경 실패', 'error');
     }
   },
 }));

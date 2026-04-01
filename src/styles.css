@@ -10,6 +10,19 @@
   --border: #2a2a3e;
 }
 
+/* ── 라이트 테마 오버라이드 ── */
+[data-theme="light"] {
+  --bg-primary: #f5f5f7;
+  --bg-secondary: #e8e8ec;
+  --bg-card: #ffffff;
+  --text-primary: #1a1a2e;
+  --text-secondary: #666;
+  --accent: #e94560;
+  --accent-dim: #c73e54;
+  --success: #22c55e;
+  --border: #d0d0d8;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -22,6 +35,7 @@ body {
   font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
   overflow: hidden;
   user-select: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .app {
@@ -54,6 +68,19 @@ body {
   justify-content: center;
   overflow-y: auto;
   padding: 24px;
+  animation: fadeSlideIn 0.2s ease-out;
+}
+
+/* 화면 전환 애니메이션 */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 토스트 슬라이드 인 */
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 /* === 뷰포트 === */
@@ -1860,4 +1887,200 @@ body {
 
 .text-secondary {
   color: var(--text-secondary);
+}
+
+/* ========== 테마/모드 토글 (헤더) ========== */
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-toggle {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.15s;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent);
+}
+
+/* Simple/Advanced 모드 필 스위치 */
+.mode-pill {
+  display: flex;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  font-size: 12px;
+}
+
+.mode-pill button {
+  padding: 4px 12px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.mode-pill button.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ========== 온보딩 ========== */
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary);
+  z-index: 1000;
+}
+
+.onboarding-card {
+  width: 480px;
+  max-width: 90vw;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+}
+
+.onboarding-card h2 {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.onboarding-card p {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+/* 진행 도트 */
+.onboarding-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.onboarding-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.2s;
+}
+
+.onboarding-dot.active {
+  background: var(--accent);
+}
+
+.onboarding-dot.done {
+  background: var(--success);
+}
+
+/* 온보딩 폼 요소 */
+.onboarding-field {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.onboarding-field label {
+  display: block;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.onboarding-field input,
+.onboarding-field select {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.onboarding-field .cm360-preview {
+  margin-top: 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+}
+
+/* 게임 선택 그리드 */
+.game-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.game-card {
+  padding: 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: center;
+  transition: all 0.15s;
+}
+
+.game-card:hover {
+  border-color: var(--accent);
+}
+
+.game-card.selected {
+  border-color: var(--accent);
+  background: rgba(233, 69, 96, 0.15);
+}
+
+/* 온보딩 버튼 그룹 */
+.onboarding-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+/* 온보딩 요약 */
+.onboarding-summary {
+  text-align: left;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.onboarding-summary dt {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+
+.onboarding-summary dt:first-child {
+  margin-top: 0;
+}
+
+.onboarding-summary dd {
+  font-size: 15px;
+  font-weight: 600;
+  margin-left: 0;
 }

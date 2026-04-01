@@ -5,6 +5,7 @@
  */
 import { create } from 'zustand';
 import { invoke } from '@tauri-apps/api/core';
+import { useToastStore } from './toastStore';
 
 /** 게임 프로필 */
 export interface GameProfile {
@@ -98,6 +99,7 @@ export const useGameProfileStore = create<GameProfileState>((set) => ({
       set({ profiles: rows.map(toProfile) });
     } catch (e) {
       console.error('[GameProfile] 수정 실패:', e);
+      useToastStore.getState().addToast('프로필 수정 실패', 'error');
     }
   },
 
@@ -107,6 +109,7 @@ export const useGameProfileStore = create<GameProfileState>((set) => ({
       set((s) => ({ profiles: s.profiles.filter(p => p.id !== id) }));
     } catch (e) {
       console.error('[GameProfile] 삭제 실패:', e);
+      useToastStore.getState().addToast('프로필 삭제 실패', 'error');
     }
   },
 
@@ -118,6 +121,7 @@ export const useGameProfileStore = create<GameProfileState>((set) => ({
       }));
     } catch (e) {
       console.error('[GameProfile] 활성 설정 실패:', e);
+      useToastStore.getState().addToast('프로필 활성 설정 실패', 'error');
     }
   },
 }));

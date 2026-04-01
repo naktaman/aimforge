@@ -61,6 +61,8 @@ pub struct ZoomPhaseWeights {
 /// 비율별 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ZoomRatioResult {
+    /// 줌 프로파일 DB ID
+    pub zoom_profile_id: i64,
     /// 줌 비율
     pub ratio: f64,
     /// 스코프 hFOV
@@ -386,6 +388,7 @@ impl ZoomCalibrationEngine {
 
                 let mdm_pred = self.mdm_start(idx);
                 self.ratio_results[idx] = Some(ZoomRatioResult {
+                    zoom_profile_id: profile.id,
                     ratio: profile.zoom_ratio,
                     scope_fov: profile.scope_fov,
                     optimal_multiplier: best_mult,
@@ -734,6 +737,7 @@ mod tests {
             let k_true = 0.8;
             let mult = zoom_multiplier(103.0, p.scope_fov, k_true);
             engine.ratio_results[i] = Some(ZoomRatioResult {
+                zoom_profile_id: p.id,
                 ratio: p.zoom_ratio,
                 scope_fov: p.scope_fov,
                 optimal_multiplier: mult,
@@ -785,6 +789,7 @@ mod tests {
         for i in 0..3 {
             let p = &profiles[i];
             engine.ratio_results[i] = Some(ZoomRatioResult {
+                zoom_profile_id: p.id,
                 ratio: p.zoom_ratio,
                 scope_fov: p.scope_fov,
                 optimal_multiplier: 1.5 + i as f64 * 0.5,

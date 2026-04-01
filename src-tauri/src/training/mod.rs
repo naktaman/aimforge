@@ -2,6 +2,8 @@
 //! Day 16~17: Training Prescription + Stage 시스템
 
 pub mod commands;
+pub mod readiness;
+pub mod style_transition;
 
 use serde::{Deserialize, Serialize};
 

@@ -6,6 +6,8 @@
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useEngineStore } from '../stores/engineStore';
+import { useUiStore } from '../stores/uiStore';
 import type { GamePreset, ScenarioType, BatteryPreset, StageType } from '../utils/types';
 import { ConversionPanel } from './ConversionPanel';
 import { CrosshairSettings } from './CrosshairSettings';
@@ -104,6 +106,7 @@ type MainTab = 'training' | 'quickplay' | 'crosshair' | 'tools';
 
 export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoomCalibration, onBattery, onHistory }: ScenarioSelectProps) {
   const [mainTab, setMainTab] = useState<MainTab>('training');
+  const { mode } = useUiStore();
   const {
     dpi, sensitivity, selectedGame,
     setDpi, setSensitivity, selectGame,
@@ -438,7 +441,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
                 Quick Calibration
               </button>
             )}
-            {onZoomCalibration && (
+            {onZoomCalibration && mode === 'advanced' && (
               <button
                 className="calibration-button"
                 onClick={onZoomCalibration}
@@ -456,6 +459,44 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
               </button>
             )}
           </div>
+          {/* Day 18: 진행/분석 네비게이션 */}
+          <div className="action-buttons" style={{ marginTop: 12 }}>
+            {mode === 'advanced' && (
+              <button className="calibration-button" onClick={() => useEngineStore.getState().setScreen('training-prescription')}>
+                훈련 처방
+              </button>
+            )}
+            <button className="calibration-button" onClick={() => useEngineStore.getState().setScreen('progress-dashboard')}>
+              진행 대시보드
+            </button>
+            {mode === 'advanced' && (
+              <>
+                <button className="calibration-button" onClick={() => useEngineStore.getState().setScreen('trajectory-analysis')}>
+                  궤적 분석
+                </button>
+                <button className="calibration-button" onClick={() => useEngineStore.getState().setScreen('style-transition')}>
+                  스타일 전환
+                </button>
+              </>
+            )}
+          </div>
+          {/* Day 20: Movement + FOV + Hardware (Advanced 전용) */}
+          {mode === 'advanced' && (
+            <div className="action-buttons" style={{ marginTop: 12 }}>
+              <button className="calibration-button" onClick={() => useEngineStore.getState().setScreen('movement-editor')}>
+                무브먼트 에디터
+              </button>
+              <button className="calibration-button" onClick={() => useEngineStore.getState().setScreen('fov-comparison')}>
+                FOV 비교
+              </button>
+              <button className="calibration-button" onClick={() => useEngineStore.getState().setScreen('hardware-compare')}>
+                하드웨어 비교
+              </button>
+              <button className="calibration-button" onClick={() => useEngineStore.getState().setScreen('dual-landscape')}>
+                듀얼 랜드스케이프
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>

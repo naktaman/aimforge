@@ -39,6 +39,9 @@ export class FlickMediumScenario extends Scenario {
   private wasApproaching = true;
   private firstOnTargetTime: number | null = null;
 
+  // 타이머 정리용
+  private pendingTimeout: ReturnType<typeof setTimeout> | null = null;
+
   private onCompleteCallback: ((results: unknown) => void) | null = null;
 
   constructor(engine: GameEngine, targetManager: TargetManager, config: FlickStageConfig) {
@@ -151,7 +154,7 @@ export class FlickMediumScenario extends Scenario {
       this.completed = true;
       if (this.onCompleteCallback) this.onCompleteCallback(this.getResults());
     } else {
-      setTimeout(() => this.spawnNext(), 400 + Math.random() * 300);
+      this.pendingTimeout = setTimeout(() => this.spawnNext(), 400 + Math.random() * 300);
     }
   }
 
@@ -183,6 +186,15 @@ export class FlickMediumScenario extends Scenario {
     this.correctionCount = 0;
     this.wasApproaching = true;
     this.firstOnTargetTime = null;
+  }
+
+  /** 리소스 정리 — 타이머 해제 */
+  dispose(): void {
+    if (this.pendingTimeout !== null) {
+      clearTimeout(this.pendingTimeout);
+      this.pendingTimeout = null;
+    }
+    super.dispose();
   }
 
   /** 궤적 기록 + 오버슛/보정 추적 */

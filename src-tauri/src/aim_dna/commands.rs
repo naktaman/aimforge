@@ -4,7 +4,10 @@ use crate::AppState;
 use serde::{Deserialize, Serialize};
 use tauri::State;
 
-use super::{compute_aim_dna, AimDnaProfile, BatteryMetricsInput};
+use super::{
+    compute_aim_dna, analyze_dna_trend, detect_reference_game,
+    AimDnaProfile, BatteryMetricsInput, DnaTrendResult, ReferenceGameResult,
+};
 
 /// Aim DNA 산출 요청 파라미터
 #[derive(Deserialize)]
@@ -28,6 +31,16 @@ pub fn compute_aim_dna_cmd(
     let pairs = dna.to_feature_pairs();
     db.insert_aim_dna_history_batch(dna.profile_id, &pairs)
         .map_err(|e| e.to_string())?;
+
+    // 레퍼런스 게임 자동 재감지 (배터리 완료마다 실행)
+    if let Ok(all_dnas) = db.get_all_profiles_latest_dna() {
+        if all_dnas.len() >= 2 {
+            let result = detect_reference_game(&all_dnas);
+            if let Some(ref_id) = result.reference_profile_id {
+                let _ = db.set_reference_game(ref_id);
+            }
+        }
+    }
 
     Ok(dna)
 }
@@ -135,4 +148,51 @@ pub fn get_session_detail(
 ) -> Result<SessionDetail, String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
     db.get_session_detail(params.session_id).map_err(|e| e.to_string())
+}
+
+// ── DNA 추세 분석 ──
+
+/// DNA 추세 분석 요청 파라미터
+#[derive(Deserialize)]
+pub struct GetDnaTrendParams {
+    pub profile_id: i64,
+}
+
+/// DNA 시계열 추세 분석 — 재교정 필요 여부 판단
+#[tauri::command]
+pub fn get_dna_trend_cmd(
+    state: State<AppState>,
+    params: GetDnaTrendParams,
+) -> Result<DnaTrendResult, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let history_entries = db
+        .get_aim_dna_history(params.profile_id, None)
+        .map_err(|e| e.to_string())?;
+
+    // AimDnaHistoryEntry → (name, value, measured_at) 튜플 변환
+    let tuples: Vec<(String, f64, String)> = history_entries
+        .into_iter()
+        .map(|e| (e.feature_name, e.value, e.measured_at))
+        .collect();
+
+    Ok(analyze_dna_trend(params.profile_id, &tuples))
+}
+
+// ── 레퍼런스 게임 감지 ──
+
+/// 레퍼런스 게임 자동 감지 — 모든 프로파일 DNA 비교
+#[tauri::command]
+pub fn detect_reference_game_cmd(
+    state: State<AppState>,
+) -> Result<ReferenceGameResult, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let all_dnas = db.get_all_profiles_latest_dna().map_err(|e| e.to_string())?;
+    let result = detect_reference_game(&all_dnas);
+
+    // 결과 반영
+    if let Some(ref_id) = result.reference_profile_id {
+        db.set_reference_game(ref_id).map_err(|e| e.to_string())?;
+    }
+
+    Ok(result)
 }

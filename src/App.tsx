@@ -1,8 +1,11 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { safeInvoke } from './utils/ipc';
 import { useEngineStore } from './stores/engineStore';
 import { useSettingsStore } from './stores/settingsStore';
 import { useSessionStore } from './stores/sessionStore';
+import { useUiStore } from './stores/uiStore';
+import { isScreenAccessible } from './utils/screenAccess';
 import { useCalibrationStore, type CalibrationMode, type ConvergenceLevel } from './stores/calibrationStore';
 import { useBatteryStore, BATTERY_SCENARIO_DEFAULTS } from './stores/batteryStore';
 import { ScenarioSelect, type ScenarioParams, type BatteryParams, type TrainingStartParams } from './components/ScenarioSelect';
@@ -18,6 +21,7 @@ import { ComparatorResult } from './components/ComparatorResult';
 import { BatteryProgress } from './components/BatteryProgress';
 import { BatteryResult } from './components/BatteryResult';
 import { AimDnaResult } from './components/AimDnaResult';
+import { CrossGameComparison } from './components/CrossGameComparison';
 import { SessionHistory } from './components/SessionHistory';
 import { PerformanceOverlay } from './components/overlays/PerformanceOverlay';
 import { DisplaySettings } from './components/DisplaySettings';
@@ -29,6 +33,18 @@ import { SteamLogin } from './components/SteamLogin';
 import { Leaderboard } from './components/Leaderboard';
 import { CommunityShare } from './components/CommunityShare';
 import { DataManagement } from './components/DataManagement';
+import TrainingPrescription from './components/TrainingPrescription';
+import ProgressDashboard from './components/ProgressDashboard';
+import TrajectoryAnalysis from './components/TrajectoryAnalysis';
+import StyleTransition from './components/StyleTransition';
+import MovementEditor from './components/MovementEditor';
+import FovComparison from './components/FovComparison';
+import HardwareCompare from './components/HardwareCompare';
+import DualLandscape from './components/DualLandscape';
+import RecoilEditor from './components/RecoilEditor';
+import ConversionSelector from './components/ConversionSelector';
+import { Toast } from './components/Toast';
+import { Onboarding } from './components/Onboarding';
 import { useZoomCalibrationStore } from './stores/zoomCalibrationStore';
 import { Crosshair } from './components/overlays/Crosshair';
 import { ScopeOverlay } from './components/overlays/ScopeOverlay';
@@ -55,13 +71,25 @@ import {
   getLongRangePatterns,
 } from './engine/scenarios/stages';
 import type { GameEngine } from './engine/GameEngine';
-import type { ScenarioType } from './utils/types';
+import type { ScenarioType, StageType } from './utils/types';
 
 /** 전역 오디오 매니저 */
 const audioManager = new AudioManager();
 
 function App() {
   const { currentScreen, setScreen, fps, pointerLocked } = useEngineStore();
+  const { mode, theme, onboardingCompleted, loaded: uiLoaded, toggleTheme, toggleMode, loadFromDb } = useUiStore();
+
+  /** 앱 시작 시 UI 설정 로드 + 테마 적용 */
+  useEffect(() => { loadFromDb(); }, [loadFromDb]);
+
+  /** 모드 전환 시 Advanced 전용 화면에 있으면 settings로 리다이렉트 */
+  useEffect(() => {
+    if (mode === 'simple' && !isScreenAccessible(currentScreen, mode)) {
+      setScreen('settings');
+    }
+  }, [mode, currentScreen, setScreen]);
+
   /** 루틴 편집/실행 시 사용하는 ID/이름 */
   const [editingRoutineId, setEditingRoutineId] = useState<number | null>(null);
   const [editingRoutineName, setEditingRoutineName] = useState('');
@@ -96,7 +124,7 @@ function App() {
 
   /** Flick 시나리오 완료 처리 (공통 헬퍼) */
   const handleFlickComplete = useCallback(
-    (engine: GameEngine, results: ReturnType<FlickScenario['getResults']>) => {
+    (engine: GameEngine, results: ReturnType<FlickScenario['getResults']>, scenario?: { getTrialJson: () => ReturnType<FlickScenario['getTrialJson']> }) => {
       const byAngle: Record<number, typeof results.overall> = {};
       results.byAngle.forEach((v, k) => { byAngle[k] = v; });
       const byDirection: Record<string, typeof results.overall> = {};
@@ -109,8 +137,31 @@ function App() {
       engine.setScenario(null);
       setScreen('results');
       audioManager.playHit();
+
+      // DB 저장 (비동기, fire-and-forget)
+      const sid = useSessionStore.getState().sessionId;
+      if (sid && scenario) {
+        const raw = scenario.getTrialJson();
+        const total = raw.flickResults.length || 1;
+        const hits = raw.flickResults.filter((r: { hit: boolean }) => r.hit).length;
+        const avgTtt = raw.flickResults.reduce((s: number, r: { ttt: number }) => s + r.ttt, 0) / total;
+        const avgOver = raw.flickResults.reduce((s: number, r: { overshoot: number }) => s + r.overshoot, 0) / total;
+        const preFire = raw.flickResults.filter((r: { clickType: string }) => r.clickType === 'PreFire').length;
+        const score = calculateFlickScore(hits / total, avgTtt, avgOver, preFire / total);
+        safeInvoke('save_trial', { params: {
+          session_id: sid, scenario_type: 'flick', cm360_tested: cmPer360,
+          composite_score: score,
+          raw_metrics: JSON.stringify(raw.flickResults),
+          mouse_trajectory: '[]', click_events: '[]',
+          angle_breakdown: JSON.stringify(byAngle),
+          motor_breakdown: JSON.stringify(byMotor),
+        }}).then(() => safeInvoke('end_session', { params: {
+          session_id: sid, total_trials: 1,
+          avg_fps: useEngineStore.getState().fps, monitor_refresh: 0,
+        }}));
+      }
     },
-    [setFlickResult, endScenario, setScreen],
+    [setFlickResult, endScenario, setScreen, cmPer360],
   );
 
   /** 시나리오 시작 */
@@ -123,6 +174,11 @@ function App() {
       setScreen('viewport');
       startScenario(scenarioType);
 
+      // 세션 생성 (비동기, sessionId를 결과 저장 시 사용)
+      safeInvoke<number>('start_session', { params: {
+        profile_id: 1, mode: 'quick_play', session_type: scenarioType,
+      }}).then((sid) => { if (sid) useSessionStore.getState().setSessionId(sid); });
+
       switch (scenarioType) {
         case 'flick': {
           const scenario = new FlickScenario(engine, tm, {
@@ -133,7 +189,7 @@ function App() {
             timeout: params.timeout,
           }, dpi);
 
-          scenario.setOnComplete((results) => handleFlickComplete(engine, results));
+          scenario.setOnComplete((results) => handleFlickComplete(engine, results, scenario));
           engine.setScenario(scenario);
           scenario.start();
           audioManager.playSpawn();
@@ -155,6 +211,20 @@ function App() {
             endScenario();
             engine.setScenario(null);
             setScreen('results');
+            // DB 저장
+            const sid = useSessionStore.getState().sessionId;
+            if (sid) {
+              const score = calculateTrackingScore(results.mad, results.velocityMatchRatio);
+              safeInvoke('save_trial', { params: {
+                session_id: sid, scenario_type: 'tracking', cm360_tested: cmPer360,
+                composite_score: score, raw_metrics: JSON.stringify(results),
+                mouse_trajectory: '[]', click_events: '[]',
+                angle_breakdown: '{}', motor_breakdown: '{}',
+              }}).then(() => safeInvoke('end_session', { params: {
+                session_id: sid, total_trials: 1,
+                avg_fps: useEngineStore.getState().fps, monitor_refresh: 0,
+              }}));
+            }
           });
 
           engine.setScenario(scenario);
@@ -179,6 +249,19 @@ function App() {
             endScenario();
             engine.setScenario(null);
             setScreen('results');
+            const sid = useSessionStore.getState().sessionId;
+            if (sid) {
+              const score = calculateTrackingScore(results.mad, results.velocityMatchRatio);
+              safeInvoke('save_trial', { params: {
+                session_id: sid, scenario_type: 'circular_tracking', cm360_tested: cmPer360,
+                composite_score: score, raw_metrics: JSON.stringify(results),
+                mouse_trajectory: '[]', click_events: '[]',
+                angle_breakdown: '{}', motor_breakdown: '{}',
+              }}).then(() => safeInvoke('end_session', { params: {
+                session_id: sid, total_trials: 1,
+                avg_fps: useEngineStore.getState().fps, monitor_refresh: 0,
+              }}));
+            }
           });
 
           engine.setScenario(scenario);
@@ -201,6 +284,19 @@ function App() {
             endScenario();
             engine.setScenario(null);
             setScreen('results');
+            const sid = useSessionStore.getState().sessionId;
+            if (sid) {
+              const score = calculateTrackingScore(results.mad, results.velocityMatchRatio);
+              safeInvoke('save_trial', { params: {
+                session_id: sid, scenario_type: 'stochastic_tracking', cm360_tested: cmPer360,
+                composite_score: score, raw_metrics: JSON.stringify(results),
+                mouse_trajectory: '[]', click_events: '[]',
+                angle_breakdown: '{}', motor_breakdown: '{}',
+              }}).then(() => safeInvoke('end_session', { params: {
+                session_id: sid, total_trials: 1,
+                avg_fps: useEngineStore.getState().fps, monitor_refresh: 0,
+              }}));
+            }
           });
 
           engine.setScenario(scenario);
@@ -219,7 +315,7 @@ function App() {
             timeout: params.timeout,
           }, dpi);
 
-          scenario.setOnComplete((results) => handleFlickComplete(engine, results));
+          scenario.setOnComplete((results) => handleFlickComplete(engine, results, scenario));
           engine.setScenario(scenario);
           scenario.start();
           audioManager.playSpawn();
@@ -242,6 +338,19 @@ function App() {
             endScenario();
             engine.setScenario(null);
             setScreen('results');
+            const sid = useSessionStore.getState().sessionId;
+            if (sid) {
+              safeInvoke('save_trial', { params: {
+                session_id: sid, scenario_type: 'micro_flick', cm360_tested: cmPer360,
+                composite_score: results.compositeScore ?? 0,
+                raw_metrics: JSON.stringify(results),
+                mouse_trajectory: '[]', click_events: '[]',
+                angle_breakdown: '{}', motor_breakdown: '{}',
+              }}).then(() => safeInvoke('end_session', { params: {
+                session_id: sid, total_trials: 1,
+                avg_fps: useEngineStore.getState().fps, monitor_refresh: 0,
+              }}));
+            }
           });
 
           engine.setScenario(scenario);
@@ -254,7 +363,7 @@ function App() {
           break;
       }
     },
-    [dpi, startScenario, endScenario, setFlickResult, setTrackingResult, setMicroFlickResult, setScreen, handleFlickComplete],
+    [dpi, cmPer360, startScenario, endScenario, setFlickResult, setTrackingResult, setMicroFlickResult, setScreen, handleFlickComplete],
   );
 
   /** 훈련 세분류 시나리오 시작 */
@@ -268,14 +377,44 @@ function App() {
       // 세분류 시나리오는 'flick' ScenarioType으로 매핑 (결과 처리는 범용)
       startScenario('flick');
 
+      /** 스테이지 타입 → 카테고리 매핑 */
+      const categoryFromStageType = (st: string): string => {
+        if (st.startsWith('flick')) return 'flick';
+        if (st.startsWith('tracking')) return 'tracking';
+        if (st.startsWith('switching')) return 'switching';
+        return 'flick';
+      };
+
       /** 훈련 결과 공통 콜백 */
       const onTrainingComplete = (results: unknown) => {
-        // results에는 stageType, score, accuracy 등이 포함됨
-        const r = results as { score?: number; accuracy?: number; stageType?: string };
+        const r = results as {
+          score?: number; accuracy?: number; stageType?: string;
+          avgTtkMs?: number; avgReactionMs?: number;
+          avgOvershootDeg?: number; avgUndershootDeg?: number;
+          trackingMad?: number; mad?: number;
+        };
         console.log('[Training]', r.stageType, 'score:', r.score, 'accuracy:', r.accuracy);
         endScenario();
         engine.setScenario(null);
         setScreen('results');
+
+        // DB 저장 — submit_stage_result
+        if (r.stageType) {
+          safeInvoke('submit_stage_result', { params: { result: {
+            profile_id: 1,
+            stage_type: r.stageType,
+            category: categoryFromStageType(r.stageType),
+            difficulty: defaultDifficulty,
+            accuracy: r.accuracy ?? 0,
+            avg_ttk_ms: r.avgTtkMs ?? 0,
+            avg_reaction_ms: r.avgReactionMs ?? 0,
+            avg_overshoot_deg: r.avgOvershootDeg ?? 0,
+            avg_undershoot_deg: r.avgUndershootDeg ?? 0,
+            tracking_mad: r.trackingMad ?? r.mad ?? null,
+            score: r.score ?? 0,
+            raw_metrics: JSON.stringify(results),
+          }}});
+        }
       };
 
       // 기본 난이도 설정
@@ -446,6 +585,17 @@ function App() {
         endScenario();
         engine.setScenario(null);
         setScreen('battery-progress');
+
+        // 개별 트라이얼 DB 저장
+        const sid = useBatteryStore.getState().sessionId;
+        if (sid) {
+          safeInvoke('save_trial', { params: {
+            session_id: sid, scenario_type: scenarioType, cm360_tested: cmPer360,
+            composite_score: score, raw_metrics: JSON.stringify(rawMetrics),
+            mouse_trajectory: '[]', click_events: '[]',
+            angle_breakdown: '{}', motor_breakdown: '{}',
+          }}, true); // silent — 배터리 중 에러 토스트 억제
+        }
       };
 
       /** Flick 계열 완료 콜백 — FlickTrialMetrics → score + raw data */
@@ -580,10 +730,21 @@ function App() {
     setScreen('settings');
   }, [setScreen]);
 
-  /** 배터리 완료 → 결과 화면 */
+  /** 배터리 완료 → 결과 화면 + 세션 종료 */
   const handleBatteryComplete = useCallback(() => {
+    const { sessionId, completedScores } = useBatteryStore.getState();
     useBatteryStore.getState().finalizeBattery();
     setScreen('battery-result');
+
+    // 세션 종료 DB 저장
+    if (sessionId) {
+      safeInvoke('end_session', { params: {
+        session_id: sessionId,
+        total_trials: Object.keys(completedScores).length,
+        avg_fps: useEngineStore.getState().fps,
+        monitor_refresh: 0,
+      }});
+    }
   }, [setScreen]);
 
   /** 캘리브레이션 시작 */
@@ -682,8 +843,16 @@ function App() {
     [resetCalibration, setScreen],
   );
 
+  /* UI 설정 로드 전 빈 화면 */
+  if (!uiLoaded) return null;
+
+  /* 온보딩 미완료 시 위자드 표시 */
+  if (!onboardingCompleted) return <Onboarding />;
+
   return (
     <div className="app">
+      {/* 전역 토스트 알림 */}
+      <Toast />
       {/* 퍼포먼스 오버레이 (항상 렌더, F3 토글) */}
       <PerformanceOverlay />
 
@@ -697,7 +866,18 @@ function App() {
             </div>
             <p className="subtitle">FPS Aim Calibration & Training</p>
             <div className="header-right">
-              <SteamLogin />
+              <div className="header-controls">
+                {/* 모드 토글 */}
+                <div className="mode-pill">
+                  <button className={mode === 'simple' ? 'active' : ''} onClick={() => mode !== 'simple' && toggleMode()}>Simple</button>
+                  <button className={mode === 'advanced' ? 'active' : ''} onClick={() => mode !== 'advanced' && toggleMode()}>Advanced</button>
+                </div>
+                {/* 테마 토글 */}
+                <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? '라이트 모드' : '다크 모드'}>
+                  {theme === 'dark' ? '\u2600' : '\u263E'}
+                </button>
+                <SteamLogin />
+              </div>
             </div>
           </header>
           <main className="app-main">
@@ -705,7 +885,13 @@ function App() {
             <div className="quick-nav">
               <button className="btn-secondary btn-sm" onClick={() => setScreen('display-settings')}>디스플레이</button>
               <button className="btn-secondary btn-sm" onClick={() => setScreen('game-profiles')}>게임 프로필</button>
-              <button className="btn-secondary btn-sm" onClick={() => setScreen('routines')}>루틴</button>
+              {mode === 'advanced' && (
+                <button className="btn-secondary btn-sm" onClick={() => setScreen('routines')}>루틴</button>
+              )}
+              {mode === 'advanced' && (
+                <button className="btn-secondary btn-sm" onClick={() => setScreen('recoil-editor')}>반동 편집기</button>
+              )}
+              <button className="btn-secondary btn-sm" onClick={() => setScreen('conversion-selector')}>감도 변환</button>
             </div>
             <ScenarioSelect
               onStart={handleStart}
@@ -916,6 +1102,78 @@ function App() {
       {currentScreen === 'data-management' && (
         <main className="app-main">
           <DataManagement onBack={() => setScreen('settings')} />
+        </main>
+      )}
+
+      {currentScreen === 'cross-game-comparison' && (
+        <main className="app-main">
+          <CrossGameComparison onBack={() => setScreen('settings')} />
+        </main>
+      )}
+
+      {currentScreen === 'training-prescription' && (
+        <main className="app-main">
+          <TrainingPrescription
+            onBack={() => setScreen('settings')}
+            onTrainingStart={(stageType, _params) => {
+              handleTrainingStart({ stageType: stageType as StageType });
+            }}
+            profileId={1}
+          />
+        </main>
+      )}
+
+      {currentScreen === 'progress-dashboard' && (
+        <main className="app-main">
+          <ProgressDashboard onBack={() => setScreen('settings')} profileId={1} />
+        </main>
+      )}
+
+      {currentScreen === 'trajectory-analysis' && (
+        <main className="app-main">
+          <TrajectoryAnalysis onBack={() => setScreen('settings')} />
+        </main>
+      )}
+
+      {currentScreen === 'style-transition' && (
+        <main className="app-main">
+          <StyleTransition onBack={() => setScreen('settings')} profileId={1} />
+        </main>
+      )}
+
+      {currentScreen === 'movement-editor' && (
+        <main className="app-main">
+          <MovementEditor onBack={() => setScreen('settings')} profileId={1} />
+        </main>
+      )}
+
+      {currentScreen === 'fov-comparison' && (
+        <main className="app-main">
+          <FovComparison onBack={() => setScreen('settings')} profileId={1} />
+        </main>
+      )}
+
+      {currentScreen === 'hardware-compare' && (
+        <main className="app-main">
+          <HardwareCompare onBack={() => setScreen('settings')} />
+        </main>
+      )}
+
+      {currentScreen === 'dual-landscape' && (
+        <main className="app-main">
+          <DualLandscape onBack={() => setScreen('settings')} profileId={1} />
+        </main>
+      )}
+
+      {currentScreen === 'recoil-editor' && (
+        <main className="app-main">
+          <RecoilEditor onBack={() => setScreen('settings')} />
+        </main>
+      )}
+
+      {currentScreen === 'conversion-selector' && (
+        <main className="app-main">
+          <ConversionSelector onBack={() => setScreen('settings')} />
         </main>
       )}
     </div>

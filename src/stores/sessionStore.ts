@@ -43,6 +43,8 @@ interface SessionState {
   setMicroFlickResult: (result: MicroFlickTrialMetrics) => void;
   setBatteryResult: (result: BatteryResult) => void;
   incrementTrialCount: () => void;
+  /** 세션 초기화 (세션 종료 후 호출) */
+  resetSession: () => void;
 }
 
 export const useSessionStore = create<SessionState>((set) => ({
@@ -65,4 +67,9 @@ export const useSessionStore = create<SessionState>((set) => ({
   setMicroFlickResult: (lastMicroFlickResult) => set({ lastMicroFlickResult }),
   setBatteryResult: (lastBatteryResult) => set({ lastBatteryResult }),
   incrementTrialCount: () => set((s) => ({ trialCount: s.trialCount + 1 })),
+  resetSession: () => set({
+    sessionId: null, scenarioType: null, isRunning: false, trialCount: 0,
+    lastFlickResult: null, lastTrackingResult: null, lastZoomResult: null,
+    lastMicroFlickResult: null, lastBatteryResult: null,
+  }),
 }));

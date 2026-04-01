@@ -49,6 +49,8 @@ export interface PredictedMultiplier {
 /** 방식별 점수 */
 export interface MethodScore {
   method: string;
+  /** 해당 방식에 사용된 배율 */
+  multiplier_used: number;
   steady_mean: number;
   correction_mean: number;
   zoomout_mean: number;

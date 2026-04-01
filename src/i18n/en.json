@@ -1,0 +1,62 @@
+{
+  "app.title": "AimForge",
+  "app.subtitle": "FPS Aim Calibration & Training",
+  "app.version": "v0.1.0",
+
+  "tab.training": "Training",
+  "tab.quickPlay": "Quick Play",
+  "tab.crosshair": "Crosshair",
+  "tab.tools": "Tools",
+
+  "nav.display": "Display",
+  "nav.gameProfile": "Game Profiles",
+  "nav.routines": "Routines",
+  "nav.recoilEditor": "Recoil Editor",
+  "nav.conversion": "Sens Converter",
+
+  "tool.quickCal": "Quick Calibration",
+  "tool.zoomCal": "Zoom Calibration",
+  "tool.history": "History",
+  "tool.prescription": "Training Prescription",
+  "tool.progressDashboard": "Progress Dashboard",
+  "tool.trajectory": "Trajectory Analysis",
+  "tool.styleTransition": "Style Transition",
+  "tool.movementEditor": "Movement Editor",
+  "tool.fovComparison": "FOV Comparison",
+  "tool.hardwareCompare": "Hardware Compare",
+  "tool.dualLandscape": "Dual Landscape",
+
+  "common.back": "Back",
+  "common.start": "Start",
+  "common.next": "Next",
+  "common.prev": "Previous",
+  "common.save": "Save",
+  "common.cancel": "Cancel",
+  "common.delete": "Delete",
+  "common.close": "Close",
+  "common.copy": "Copy",
+  "common.export": "Export",
+  "common.import": "Import",
+
+  "settings.dpi": "DPI",
+  "settings.sensitivity": "Sensitivity",
+  "settings.game": "Game",
+
+  "onboarding.welcome": "AimForge",
+  "onboarding.welcomeDesc": "Welcome to the FPS Aim Calibration & Training tool.",
+  "onboarding.getStarted": "Get Started",
+  "onboarding.mouseSetup": "Mouse Setup",
+  "onboarding.mouseSetupDesc": "Enter your current mouse DPI.",
+  "onboarding.gameSelect": "Select Game",
+  "onboarding.gameSelectDesc": "Choose your primary game.",
+  "onboarding.sensSetup": "Sensitivity Setup",
+  "onboarding.done": "All Set!",
+  "onboarding.uiMode": "UI Mode",
+  "onboarding.simpleDesc": "Simple: Core features only / Advanced: All features",
+
+  "mode.simple": "Simple",
+  "mode.advanced": "Advanced",
+
+  "theme.light": "Light Mode",
+  "theme.dark": "Dark Mode"
+}

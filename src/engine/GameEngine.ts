@@ -54,6 +54,11 @@ export class GameEngine {
   // === Pointer Lock 해제 콜백 ===
   private cleanupPointerLock: (() => void) | null = null;
 
+  // === 이벤트 핸들러 참조 (정리용) ===
+  private handleCanvasClick: (() => void) | null = null;
+  private handleContextLost: ((e: Event) => void) | null = null;
+  private handleContextRestored: (() => void) | null = null;
+
   // === 콜백 ===
   private onFpsUpdate: ((fps: number) => void) | null = null;
   private onPointerLockStateChange: ((locked: boolean) => void) | null = null;
@@ -103,12 +108,13 @@ export class GameEngine {
     this.handleResize = this.handleResize.bind(this);
     window.addEventListener('resize', this.handleResize);
 
-    // 클릭 이벤트 (Pointer Lock 진입)
-    canvas.addEventListener('click', () => {
+    // 클릭 이벤트 (Pointer Lock 진입) — 핸들러 참조 저장하여 dispose 시 제거
+    this.handleCanvasClick = () => {
       if (!isPointerLocked()) {
         requestPointerLock(canvas);
       }
-    });
+    };
+    canvas.addEventListener('click', this.handleCanvasClick);
   }
 
   // === 공개 API ===
@@ -123,8 +129,14 @@ export class GameEngine {
       await invoke('start_mouse_capture');
       this.capturing = true;
     } catch (e) {
-      console.warn('마우스 캡처 시작 실패 (이미 실행 중?):', e);
-      this.capturing = true; // 이미 실행 중이면 계속 진행
+      const msg = String(e).toLowerCase();
+      // 이미 실행 중인 경우만 계속 진행, 그 외 실패는 capturing=false 유지
+      if (msg.includes('already') || msg.includes('이미')) {
+        this.capturing = true;
+      } else {
+        console.error('마우스 캡처 시작 실패:', e);
+        this.capturing = false;
+      }
     }
 
     // Pointer Lock 상태 감지
@@ -241,6 +253,20 @@ export class GameEngine {
     this.stop();
     window.removeEventListener('resize', this.handleResize);
 
+    // 캔버스 이벤트 리스너 정리
+    if (this.handleCanvasClick) {
+      this.canvas.removeEventListener('click', this.handleCanvasClick);
+      this.handleCanvasClick = null;
+    }
+    if (this.handleContextLost) {
+      this.canvas.removeEventListener('webglcontextlost', this.handleContextLost);
+      this.handleContextLost = null;
+    }
+    if (this.handleContextRestored) {
+      this.canvas.removeEventListener('webglcontextrestored', this.handleContextRestored);
+      this.handleContextRestored = null;
+    }
+
     // 씬 내 모든 geometry/material 명시적 dispose (메모리 누수 방지)
     this.scene.traverse((obj) => {
       if (obj instanceof THREE.Mesh) {
@@ -271,16 +297,18 @@ export class GameEngine {
     };
   }
 
-  /** WebGL 컨텍스트 손실 감지 + 복구 시도 */
+  /** WebGL 컨텍스트 손실 감지 + 복구 시도 — 핸들러 참조 저장 */
   private setupContextHandlers(): void {
-    this.canvas.addEventListener('webglcontextlost', (e) => {
+    this.handleContextLost = (e: Event) => {
       e.preventDefault();
       this.stop();
       console.error('[GameEngine] WebGL 컨텍스트 손실');
-    });
-    this.canvas.addEventListener('webglcontextrestored', () => {
+    };
+    this.handleContextRestored = () => {
       console.info('[GameEngine] WebGL 컨텍스트 복구됨');
-    });
+    };
+    this.canvas.addEventListener('webglcontextlost', this.handleContextLost);
+    this.canvas.addEventListener('webglcontextrestored', this.handleContextRestored);
   }
 
   // === 내부 메서드 ===

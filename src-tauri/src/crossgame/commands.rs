@@ -4,7 +4,8 @@ use crate::AppState;
 use serde::Deserialize;
 use tauri::State;
 
-use super::{compare_games, predict_timeline, CrossGameComparison, TimelinePrediction};
+use serde::Serialize;
+use super::{compare_games, generate_crossgame_prescriptions, predict_timeline, CrossGameComparison, TimelinePrediction};
 
 /// 크로스게임 비교 요청 파라미터
 #[derive(Deserialize)]
@@ -37,16 +38,32 @@ pub fn compare_game_dna(
     let ref_movement = params.ref_game_movement_ratio.unwrap_or(0.3);
     let target_movement = params.target_game_movement_ratio.unwrap_or(0.3);
 
-    let comparison = compare_games(&ref_dna, &target_dna, ref_movement, target_movement);
+    // 레퍼런스 게임 ID + cm/360 차이 조회
+    let reference_game_id = db.get_reference_game_profile_id()
+        .map_err(|e| e.to_string())?
+        .unwrap_or(params.ref_profile_id);
+    let ref_cm360 = db.get_profile_cm360(params.ref_profile_id)
+        .map_err(|e| e.to_string())?
+        .unwrap_or(0.0);
+    let target_cm360 = db.get_profile_cm360(params.target_profile_id)
+        .map_err(|e| e.to_string())?
+        .unwrap_or(0.0);
+    let sens_diff = (target_cm360 - ref_cm360).abs();
+
+    let comparison = compare_games(
+        &ref_dna, &target_dna,
+        ref_movement, target_movement,
+        reference_game_id, sens_diff,
+    );
 
     // DB 저장
     db.insert_crossgame_comparison(
         params.ref_profile_id,
         params.target_profile_id,
-        0, // reference_game_id — 프론트엔드에서 별도 지정
-        &serde_json::to_string(&comparison.deltas).unwrap_or_default(),
-        &serde_json::to_string(&comparison.causes).unwrap_or_default(),
-        &serde_json::to_string(&comparison.improvement_plan).unwrap_or_default(),
+        reference_game_id,
+        &serde_json::to_string(&comparison.deltas).map_err(|e| e.to_string())?,
+        &serde_json::to_string(&comparison.causes).map_err(|e| e.to_string())?,
+        &serde_json::to_string(&comparison.improvement_plan).map_err(|e| e.to_string())?,
         comparison.predicted_days,
     )
     .map_err(|e| e.to_string())?;
@@ -82,7 +99,7 @@ pub fn predict_crossgame_timeline(
         .ok_or("Target DNA 없음")?;
 
     // 피처 비교를 위해 compare_games 호출
-    let comparison = compare_games(&ref_dna, &target_dna, 0.3, 0.3);
+    let comparison = compare_games(&ref_dna, &target_dna, 0.3, 0.3, 0, 0.0);
 
     let timeline = predict_timeline(
         &comparison.deltas,
@@ -116,4 +133,87 @@ pub fn record_crossgame_progress(
         params.gap_reduction_pct,
     )
     .map_err(|e| e.to_string())
+}
+
+// ── 크로스게임 비교 조회 ──
+
+/// 크로스게임 비교 요약 (리스트용)
+#[derive(Debug, Clone, Serialize)]
+pub struct CrossGameComparisonSummary {
+    pub id: i64,
+    pub profile_a_id: i64,
+    pub profile_b_id: i64,
+    pub overall_gap: f64,
+    pub predicted_days: f64,
+    pub created_at: String,
+}
+
+/// 크로스게임 비교 히스토리 조회 파라미터
+#[derive(Deserialize)]
+pub struct GetComparisonHistoryParams {
+    pub profile_id: i64,
+    pub limit: Option<i64>,
+}
+
+/// 프로파일별 크로스게임 비교 히스토리
+#[tauri::command]
+pub fn get_cross_game_history_cmd(
+    state: State<AppState>,
+    params: GetComparisonHistoryParams,
+) -> Result<Vec<CrossGameComparisonSummary>, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.get_crossgame_history(params.profile_id, params.limit.unwrap_or(20))
+        .map_err(|e| e.to_string())
+}
+
+/// 크로스게임 갭 기반 훈련 처방 생성
+#[tauri::command]
+pub fn generate_crossgame_prescriptions_cmd(
+    state: State<AppState>,
+    params: CompareGamesParams,
+) -> Result<Vec<crate::training::TrainingPrescription>, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+
+    let ref_dna = db
+        .get_latest_aim_dna(params.ref_profile_id)
+        .map_err(|e| e.to_string())?
+        .ok_or("Reference DNA 없음")?;
+    let target_dna = db
+        .get_latest_aim_dna(params.target_profile_id)
+        .map_err(|e| e.to_string())?
+        .ok_or("Target DNA 없음")?;
+
+    let ref_movement = params.ref_game_movement_ratio.unwrap_or(0.3);
+    let target_movement = params.target_game_movement_ratio.unwrap_or(0.3);
+    let ref_cm360 = db.get_profile_cm360(params.ref_profile_id).map_err(|e| e.to_string())?.unwrap_or(0.0);
+    let target_cm360 = db.get_profile_cm360(params.target_profile_id).map_err(|e| e.to_string())?.unwrap_or(0.0);
+    let sens_diff = (target_cm360 - ref_cm360).abs();
+    let ref_game_id = db.get_reference_game_profile_id().map_err(|e| e.to_string())?.unwrap_or(params.ref_profile_id);
+
+    let comparison = compare_games(&ref_dna, &target_dna, ref_movement, target_movement, ref_game_id, sens_diff);
+    let prescriptions = generate_crossgame_prescriptions(&comparison);
+
+    // DB에 처방 캐싱 — 보조 저장이므로 경고만 출력
+    if let Ok(Some(dna_id)) = db.get_latest_aim_dna_id(params.target_profile_id) {
+        for p in &prescriptions {
+            let params_json = serde_json::to_string(&p.scenario_params)
+                .unwrap_or_else(|e| {
+                    log::warn!("크로스게임 처방 파라미터 직렬화 실패: {}", e);
+                    "{}".to_string()
+                });
+            if let Err(e) = db.insert_training_prescription(
+                dna_id,
+                &p.source_type,
+                &p.weakness,
+                &p.scenario_type,
+                &params_json,
+                p.priority,
+                Some(p.estimated_min),
+            ) {
+                log::warn!("크로스게임 처방 DB 저장 실패: {}", e);
+            }
+        }
+    }
+
+    Ok(prescriptions)
 }

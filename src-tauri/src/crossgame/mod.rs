@@ -21,6 +21,8 @@ pub struct CrossGameComparison {
     pub improvement_plan: ImprovementPlan,
     /// 예상 적응 기간 (일)
     pub predicted_days: f64,
+    /// 상세 타임라인 예측
+    pub timeline: TimelinePrediction,
 }
 
 /// 피처별 델타
@@ -83,6 +85,8 @@ pub fn compare_games(
     target_dna: &crate::aim_dna::AimDnaProfile,
     ref_game_movement_ratio: f64,
     target_game_movement_ratio: f64,
+    reference_game_id: i64,
+    sens_diff_cm360: f64,
 ) -> CrossGameComparison {
     let ref_pairs = ref_dna.to_feature_pairs();
     let target_pairs = target_dna.to_feature_pairs();
@@ -110,6 +114,7 @@ pub fn compare_games(
         &deltas,
         ref_game_movement_ratio,
         target_game_movement_ratio,
+        sens_diff_cm360,
     );
 
     // 전체 갭 크기 (절대 델타의 가중 평균)
@@ -128,12 +133,13 @@ pub fn compare_games(
     CrossGameComparison {
         ref_profile_id: ref_dna.profile_id,
         target_profile_id: target_dna.profile_id,
-        reference_game_id: 0,
+        reference_game_id,
         deltas,
         causes,
         overall_gap,
         improvement_plan: plan,
         predicted_days: timeline.total_days,
+        timeline,
     }
 }
 
@@ -155,6 +161,7 @@ fn classify_gap_causes(
     deltas: &[FeatureDelta],
     _ref_movement: f64,
     target_movement: f64,
+    sens_diff_cm360: f64,
 ) -> Vec<GapCause> {
     let mut causes = Vec::new();
 
@@ -163,9 +170,9 @@ fn classify_gap_causes(
         deltas.iter().find(|d| d.feature == name)
     };
 
-    // 1. sens_mismatch — 오버슈트 차이 크고 감도 관련 변화
+    // 1. sens_mismatch — 오버슈트 차이 크고 cm/360 차이 > 3
     if let Some(overshoot) = get_delta("overshoot_avg") {
-        if overshoot.delta_pct.abs() > 50.0 {
+        if overshoot.delta_pct.abs() > 50.0 && sens_diff_cm360 > 3.0 {
             causes.push(GapCause {
                 cause_type: "sens_mismatch".into(),
                 description: "감도 변환값이 실제 최적과 다를 수 있습니다".into(),
@@ -358,6 +365,75 @@ pub fn predict_timeline(
     }
 }
 
+/// Cross-game 갭 원인 → 훈련 처방 변환
+/// 각 갭 원인별 적절한 시나리오와 파라미터를 매핑
+pub fn generate_crossgame_prescriptions(
+    comparison: &CrossGameComparison,
+) -> Vec<crate::training::TrainingPrescription> {
+    let mut prescriptions = Vec::new();
+
+    for cause in &comparison.causes {
+        let (scenario_type, params, description) = match cause.cause_type.as_str() {
+            "sens_mismatch" => (
+                "static_flick",
+                serde_json::json!({
+                    "focus": "precision_stop",
+                    "angle_range": [10, 60],
+                    "target_size_deg": 1.5,
+                }),
+                "감도 불일치 교정: 정밀 정지 플릭 훈련",
+            ),
+            "movement_unadapted" => (
+                "horizontal_tracking",
+                serde_json::json!({
+                    "speed_range": [30, 120],
+                    "direction_changes": 8,
+                }),
+                "무빙 적응: 수평 트래킹 + 에어리얼 트래킹",
+            ),
+            "style_mismatch" => (
+                "counter_strafe_flick",
+                serde_json::json!({
+                    "strafe_speed": 60,
+                    "angle_range": [15, 45],
+                }),
+                "스타일 전환: 무빙 사격 패턴 적응 훈련",
+            ),
+            "transition_narrowed" => (
+                "multi_flick",
+                serde_json::json!({
+                    "angle_range": [60, 150],
+                    "target_count": 20,
+                }),
+                "전환 영역 확장: 넓은 각도 멀티 플릭 훈련",
+            ),
+            "vertical_weakness_exposed" => (
+                "aerial_tracking",
+                serde_json::json!({
+                    "vertical_emphasis": true,
+                    "speed_range": [20, 80],
+                }),
+                "수직 약점 보완: 에어리얼 트래킹 집중 훈련",
+            ),
+            _ => continue,
+        };
+
+        prescriptions.push(crate::training::TrainingPrescription {
+            weakness: cause.cause_type.clone(),
+            scenario_type: scenario_type.to_string(),
+            scenario_params: params,
+            priority: cause.severity,
+            estimated_min: 10.0,
+            source_type: "cross_game".to_string(),
+            description: description.to_string(),
+        });
+    }
+
+    // 우선순위 내림차순 정렬
+    prescriptions.sort_by(|a, b| b.priority.partial_cmp(&a.priority).unwrap_or(std::cmp::Ordering::Equal));
+    prescriptions
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -371,7 +447,7 @@ mod tests {
             tracking_mad: Some(2.0),
             ..AimDnaProfile::empty(1, 1)
         };
-        let comparison = compare_games(&dna, &dna, 0.3, 0.3);
+        let comparison = compare_games(&dna, &dna, 0.3, 0.3, 1, 0.0);
         // 동일 값 → 델타 0
         for delta in &comparison.deltas {
             assert!(delta.delta_pct.abs() < 1e-6);
@@ -391,7 +467,7 @@ mod tests {
             tracking_mad: Some(1.8),
             ..AimDnaProfile::empty(2, 2)
         };
-        let comparison = compare_games(&ref_dna, &target_dna, 0.3, 0.3);
+        let comparison = compare_games(&ref_dna, &target_dna, 0.3, 0.3, 1, 5.0);
         assert!(comparison.causes.iter().any(|c| c.cause_type == "sens_mismatch"));
     }
 

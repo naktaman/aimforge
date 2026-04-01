@@ -20,3 +20,6 @@ Thumbs.db
 # Tauri
 src-tauri/WixTools/
 src-tauri/NSIS/
+
+# Claude session data
+.claude/

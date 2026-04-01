@@ -31,6 +31,8 @@ pub struct ComparatorEngine {
     pub profile_id: i64,
     /// 줌 프로파일 ID
     pub zoom_profile_id: i64,
+    /// 방식별 배율 목록 (6개)
+    multipliers: Vec<f64>,
 }
 
 /// 개별 트라이얼 데이터
@@ -74,6 +76,8 @@ pub struct ComparatorTrialFeedback {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MethodScore {
     pub method: String,
+    /// 해당 방식에 사용된 배율
+    pub multiplier_used: f64,
     pub steady_mean: f64,
     pub correction_mean: f64,
     pub zoomout_mean: f64,
@@ -106,6 +110,7 @@ impl ComparatorEngine {
         profile_id: i64,
         zoom_profile_id: i64,
         repetitions: usize,
+        multipliers: Vec<f64>,
     ) -> Self {
         let trial_order = generate_balanced_order(METHODS.len(), repetitions);
         let results = vec![Vec::new(); METHODS.len()];
@@ -117,6 +122,7 @@ impl ComparatorEngine {
             current_trial: 0,
             profile_id,
             zoom_profile_id,
+            multipliers,
         }
     }
 
@@ -174,6 +180,7 @@ impl ComparatorEngine {
                 if n == 0.0 {
                     return MethodScore {
                         method: method.to_string(),
+                        multiplier_used: self.multipliers.get(i).copied().unwrap_or(0.0),
                         steady_mean: 0.0,
                         correction_mean: 0.0,
                         zoomout_mean: 0.0,
@@ -203,6 +210,7 @@ impl ComparatorEngine {
 
                 MethodScore {
                     method: method.to_string(),
+                    multiplier_used: self.multipliers.get(i).copied().unwrap_or(0.0),
                     steady_mean,
                     correction_mean,
                     zoomout_mean,
@@ -217,7 +225,8 @@ impl ComparatorEngine {
             .collect();
 
         // 합성 점수로 정렬 (높은 순)
-        method_scores.sort_by(|a, b| b.composite_mean.partial_cmp(&a.composite_mean).unwrap());
+        // NaN 방어: partial_cmp 실패 시 Equal 처리
+        method_scores.sort_by(|a, b| b.composite_mean.partial_cmp(&a.composite_mean).unwrap_or(std::cmp::Ordering::Equal));
 
         // 순위 부여
         for (rank, ms) in method_scores.iter_mut().enumerate() {
@@ -439,8 +448,8 @@ mod tests {
     /// 비교기 E2E 테스트
     #[test]
     fn test_comparator_e2e() {
-        let mut engine = ComparatorEngine::new(1, 1, 3);
         let multipliers = vec![1.0, 1.1, 1.2, 1.3, 0.9, 0.85];
+        let mut engine = ComparatorEngine::new(1, 1, 3, multipliers.clone());
 
         // 18 트라이얼 제출
         let mut trial_count = 0;

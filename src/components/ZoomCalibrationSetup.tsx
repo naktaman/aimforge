@@ -32,7 +32,9 @@ export function ZoomCalibrationSetup({ onStart, onBack }: ZoomCalibrationSetupPr
     (async () => {
       try {
         const profiles = await invoke<ZoomProfile[]>('get_zoom_profiles', {
-          gameId: 1, // TODO: 실제 game_id 매핑
+          // NOTE: game_id는 DB games 테이블 PK — 현재 줌 프로파일은 DB 시드 기반
+          // 게임 프리셋(String ID)과 DB games(integer ID) 매핑은 시드 인프라 구축 후 연동 예정
+          gameId: 1,
         });
         setAvailableProfiles(profiles);
 

@@ -4,6 +4,7 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useToastStore } from '../stores/toastStore';
 
 /** 디스플레이 모드 */
 type DisplayMode = 'windowed' | 'borderless' | 'fullscreen';
@@ -48,6 +49,7 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps) {
         });
       } catch (e) {
         console.warn('[DisplaySettings] 설정 로드 실패:', e);
+        useToastStore.getState().addToast('디스플레이 설정 로드 실패', 'warning');
       }
     })();
   }, []);
@@ -58,6 +60,7 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps) {
       await invoke('save_user_setting', { key, value });
     } catch (e) {
       console.warn('[DisplaySettings] 설정 저장 실패:', key, e);
+      useToastStore.getState().addToast('설정 저장 실패', 'warning');
     }
   }, []);
 

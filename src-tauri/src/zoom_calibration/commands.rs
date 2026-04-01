@@ -179,7 +179,7 @@ pub fn finalize_zoom_calibration(
     for rr in &result.ratio_results {
         db.insert_zoom_calibration(
             engine.profile_id,
-            0, // zoom_profile_id — 이후 매핑 필요
+            rr.zoom_profile_id,
             rr.optimal_multiplier,
             Some(rr.steady_score),
             Some(rr.correction_score),
@@ -198,7 +198,7 @@ pub fn finalize_zoom_calibration(
         engine.profile_id,
         result.k_fit.k_value,
         Some(result.k_fit.k_variance),
-        &serde_json::to_string(&result.k_fit.data_points).unwrap_or_default(),
+        &serde_json::to_string(&result.k_fit.data_points).map_err(|e| e.to_string())?,
     )
     .map_err(|e| e.to_string())?;
 
@@ -243,7 +243,7 @@ pub fn start_comparator(
     state: State<'_, AppState>,
     params: StartComparatorParams,
 ) -> Result<(), String> {
-    let engine = ComparatorEngine::new(params.profile_id, params.zoom_profile_id, 3);
+    let engine = ComparatorEngine::new(params.profile_id, params.zoom_profile_id, 3, params.multipliers.clone());
     let mut comp = state.comparator.lock().map_err(|e| e.to_string())?;
     *comp = Some(engine);
     Ok(())
@@ -306,7 +306,7 @@ pub fn finalize_comparator(
             engine.profile_id,
             engine.zoom_profile_id,
             &ms.method,
-            0.0, // multiplier_used — 이후 매핑
+            ms.multiplier_used,
             Some(ms.steady_mean),
             Some(ms.correction_mean),
             Some(ms.zoomout_mean),

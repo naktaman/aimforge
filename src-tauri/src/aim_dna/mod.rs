@@ -5,6 +5,7 @@
 pub mod commands;
 
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 /// 배터리 실행 후 프론트엔드에서 전달하는 시나리오별 메트릭
 #[derive(Debug, Clone, Deserialize)]
@@ -36,7 +37,7 @@ pub struct ScenarioScores {
 }
 
 /// Flick 시나리오 개별 타겟 메트릭
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FlickTargetMetric {
     pub ttt: f64,
     pub overshoot: f64,
@@ -83,6 +84,23 @@ pub struct ZoomMetric {
     pub under_correction_ratio: f64,
 }
 
+// ── 피처별 최소 데이터 요구량 상수 ──
+const MIN_DIRECTION_BIAS_SHOTS: usize = 50;
+const MIN_PHASE_LAG_SAMPLES: usize = 3;
+const MIN_FITTS_HITS: usize = 40;
+const MIN_MOTOR_TRANSITION_SHOTS: usize = 100;
+const MIN_VH_RATIO_SHOTS: usize = 50;
+const MIN_OVERSHOOT_SHOTS: usize = 20;
+const MIN_TRACKING_SAMPLES: usize = 3;
+
+/// 피처별 데이터 충족 상태
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FeatureSufficiency {
+    pub sufficient: bool,
+    pub current_count: usize,
+    pub required_count: usize,
+}
+
 /// 완성된 Aim DNA 프로파일 (26개 피처 + type_label)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AimDnaProfile {
@@ -111,6 +129,9 @@ pub struct AimDnaProfile {
     pub motor_transition_angle: Option<f64>,
     pub adaptation_rate: Option<f64>,
     pub type_label: Option<String>,
+    /// 피처별 데이터 충족 상태 (DB에는 저장하지 않음, 계산 시점에만 사용)
+    #[serde(default)]
+    pub data_sufficiency: HashMap<String, FeatureSufficiency>,
 }
 
 impl AimDnaProfile {
@@ -142,6 +163,7 @@ impl AimDnaProfile {
             motor_transition_angle: None,
             adaptation_rate: None,
             type_label: None,
+            data_sufficiency: HashMap::new(),
         }
     }
 
@@ -181,18 +203,68 @@ impl AimDnaProfile {
     }
 }
 
+/// 데이터 충족 상태 기록 헬퍼
+fn record_sufficiency(
+    map: &mut HashMap<String, FeatureSufficiency>,
+    name: &str,
+    current: usize,
+    required: usize,
+) {
+    map.insert(name.to_string(), FeatureSufficiency {
+        sufficient: current >= required,
+        current_count: current,
+        required_count: required,
+    });
+}
+
 /// 배터리 메트릭으로부터 전체 Aim DNA 프로파일 계산
 pub fn compute_aim_dna(input: &BatteryMetricsInput) -> AimDnaProfile {
     let mut dna = AimDnaProfile::empty(input.profile_id, input.session_id);
 
-    // ── Flick 계열 피처 추출 ──
+    // ── Flick 계열 피처 추출 (데이터 충족 검사 포함) ──
     let flick_targets = parse_flick_metrics(input);
+    let flick_count = flick_targets.len();
+
     if !flick_targets.is_empty() {
-        compute_flick_features(&flick_targets, &mut dna);
+        // 기본 피처 (항상 계산)
+        compute_basic_flick_features(&flick_targets, &mut dna);
+
+        // direction_bias — 최소 50샷 필요
+        record_sufficiency(&mut dna.data_sufficiency, "direction_bias", flick_count, MIN_DIRECTION_BIAS_SHOTS);
+        if flick_count >= MIN_DIRECTION_BIAS_SHOTS {
+            compute_direction_bias(&flick_targets, &mut dna);
+        }
+
+        // v_h_ratio — 최소 50샷 필요
+        record_sufficiency(&mut dna.data_sufficiency, "v_h_ratio", flick_count, MIN_VH_RATIO_SHOTS);
+        if flick_count >= MIN_VH_RATIO_SHOTS {
+            compute_vh_ratio(&flick_targets, &mut dna);
+        }
+
+        // motor_transition_angle — 최소 100샷 필요
+        record_sufficiency(&mut dna.data_sufficiency, "motor_transition_angle", flick_count, MIN_MOTOR_TRANSITION_SHOTS);
+
+        // fitts — 최소 40샷 필요
+        record_sufficiency(&mut dna.data_sufficiency, "fitts", flick_count, MIN_FITTS_HITS);
+        if flick_count >= MIN_FITTS_HITS {
+            compute_fitts_law(&flick_targets, &mut dna);
+        }
+
+        // effective_range, motor_features, sens_overshoot (기존 임계값 사용)
+        compute_effective_range(&flick_targets, &mut dna);
+        compute_motor_features(&flick_targets, &mut dna);
+        compute_sens_overshoot(&flick_targets, &mut dna);
+
+        // overshoot 충족 기록
+        record_sufficiency(&mut dna.data_sufficiency, "overshoot_avg", flick_count, MIN_OVERSHOOT_SHOTS);
     }
 
     // ── Tracking 계열 피처 추출 ──
     let tracking_data = parse_tracking_metrics(input);
+    let tracking_count = tracking_data.len();
+    record_sufficiency(&mut dna.data_sufficiency, "tracking", tracking_count, MIN_TRACKING_SAMPLES);
+    record_sufficiency(&mut dna.data_sufficiency, "phase_lag", tracking_count, MIN_PHASE_LAG_SAMPLES);
+
     if !tracking_data.is_empty() {
         compute_tracking_features(&tracking_data, &mut dna);
     }
@@ -243,16 +315,15 @@ fn parse_micro_flick_metrics(input: &BatteryMetricsInput) -> Option<MicroFlickMe
         .and_then(|s| serde_json::from_str::<MicroFlickMetric>(s).ok())
 }
 
-/// Flick 계열 피처 계산
-fn compute_flick_features(targets: &[FlickTargetMetric], dna: &mut AimDnaProfile) {
+/// Flick 기본 피처 계산 (threshold 불필요 — 데이터만 있으면 계산)
+fn compute_basic_flick_features(targets: &[FlickTargetMetric], dna: &mut AimDnaProfile) {
     let n = targets.len() as f64;
     if n == 0.0 { return; }
 
     // 평균 오버슈트
     dna.overshoot_avg = Some(targets.iter().map(|t| t.overshoot).sum::<f64>() / n);
 
-    // 피크 속도 추정 (path_efficiency 역수 기반 — 빠른 이동일수록 높음)
-    // TTT가 짧고 angle이 클수록 = 높은 속도
+    // 피크 속도 추정 — TTT가 짧고 angle이 클수록 높은 속도
     let peak_vel: f64 = targets.iter()
         .filter(|t| t.ttt > 0.0)
         .map(|t| (t.angle_bucket as f64).to_radians() / (t.ttt / 1000.0))
@@ -266,24 +337,6 @@ fn compute_flick_features(targets: &[FlickTargetMetric], dna: &mut AimDnaProfile
     let pre_fire_count = targets.iter().filter(|t| t.click_type == "PreFire").count() as f64;
     dna.pre_aim_ratio = Some(pre_aim_count / n);
     dna.pre_fire_ratio = Some(pre_fire_count / n);
-
-    // 방향 편향 — 8방향 히트율 분산
-    compute_direction_bias(targets, dna);
-
-    // Effective range — hit rate > 0.6인 최대 angle bucket
-    compute_effective_range(targets, dna);
-
-    // Motor 분석
-    compute_motor_features(targets, dna);
-
-    // V/H 비율 — 수직/수평 방향 히트율 비교
-    compute_vh_ratio(targets, dna);
-
-    // Fitts' Law 피팅
-    compute_fitts_law(targets, dna);
-
-    // 감도 귀인 오버슈트 (이동 거리와 오버슈트 상관)
-    compute_sens_overshoot(targets, dna);
 }
 
 /// 방향 편향 계산 — 8방향 히트율의 균일도
@@ -540,6 +593,168 @@ fn classify_type(dna: &AimDnaProfile, scores: &ScenarioScores) -> String {
     "hybrid".to_string()
 }
 
+// ── DNA 시계열 추세 분석 ──
+
+/// DNA 추세 분석 결과
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DnaTrendResult {
+    pub profile_id: i64,
+    /// 재교정 추천 여부 (10% 이상 변화 피처 존재 시 true)
+    pub recalibration_recommended: bool,
+    /// 변화 감지된 피처 목록
+    pub changed_features: Vec<FeatureTrendChange>,
+    /// 안정 피처 수
+    pub stable_feature_count: usize,
+    /// 분석에 사용된 세션 수
+    pub sessions_analyzed: usize,
+}
+
+/// 피처별 추세 변화
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FeatureTrendChange {
+    pub feature: String,
+    pub prior_avg: f64,
+    pub recent_avg: f64,
+    pub change_pct: f64,
+    /// "improved" | "degraded" | "stable"
+    pub direction: String,
+}
+
+/// "낮을수록 좋은" 피처 목록 (감소 = 개선)
+const LOWER_IS_BETTER: &[&str] = &[
+    "overshoot_avg", "tracking_mad", "phase_lag", "fatigue_decay", "direction_bias",
+];
+
+/// DNA 시계열 추세 분석 — 최근 5세션 vs 이전 5세션 비교
+/// 10% 이상 변화 감지 시 재교정 추천
+pub fn analyze_dna_trend(
+    profile_id: i64,
+    history: &[(String, f64, String)],  // (feature_name, value, measured_at)
+) -> DnaTrendResult {
+    // 피처별로 그룹화
+    let mut by_feature: HashMap<String, Vec<(f64, String)>> = HashMap::new();
+    for (name, val, date) in history {
+        by_feature.entry(name.clone()).or_default().push((*val, date.clone()));
+    }
+
+    let mut changed_features = Vec::new();
+    let mut stable_count = 0usize;
+    let mut total_sessions = 0usize;
+
+    for (feature, mut entries) in by_feature {
+        // measured_at 내림차순 정렬
+        entries.sort_by(|a, b| b.1.cmp(&a.1));
+
+        // 최소 6개 이상의 데이터 포인트 필요 (최근 3 + 이전 3)
+        if entries.len() < 6 {
+            continue;
+        }
+
+        total_sessions = total_sessions.max(entries.len());
+
+        // 최근 5세션 평균
+        let recent_count = entries.len().min(5);
+        let recent_avg = entries[..recent_count].iter().map(|(v, _)| v).sum::<f64>() / recent_count as f64;
+
+        // 이전 5세션 평균 (6~10번째)
+        let prior_start = recent_count;
+        let prior_end = (prior_start + 5).min(entries.len());
+        if prior_end <= prior_start { continue; }
+        let prior_count = prior_end - prior_start;
+        let prior_avg = entries[prior_start..prior_end].iter().map(|(v, _)| v).sum::<f64>() / prior_count as f64;
+
+        // 변화율 계산
+        let change_pct = if prior_avg.abs() > 1e-6 {
+            (recent_avg - prior_avg) / prior_avg.abs() * 100.0
+        } else {
+            0.0
+        };
+
+        // 방향 결정
+        let is_lower_better = LOWER_IS_BETTER.contains(&feature.as_str());
+        let direction = if change_pct.abs() < 10.0 {
+            "stable"
+        } else if (is_lower_better && change_pct < 0.0) || (!is_lower_better && change_pct > 0.0) {
+            "improved"
+        } else {
+            "degraded"
+        };
+
+        if direction == "stable" {
+            stable_count += 1;
+        } else {
+            changed_features.push(FeatureTrendChange {
+                feature,
+                prior_avg,
+                recent_avg,
+                change_pct,
+                direction: direction.to_string(),
+            });
+        }
+    }
+
+    // 변화율 절대값 내림차순 정렬
+    changed_features.sort_by(|a, b| b.change_pct.abs().partial_cmp(&a.change_pct.abs()).unwrap_or(std::cmp::Ordering::Equal));
+
+    let recalibration_recommended = changed_features.iter().any(|f| f.change_pct.abs() >= 10.0);
+
+    DnaTrendResult {
+        profile_id,
+        recalibration_recommended,
+        changed_features,
+        stable_feature_count: stable_count,
+        sessions_analyzed: total_sessions,
+    }
+}
+
+// ── Reference Game 자동 감지 ──
+
+/// 레퍼런스 게임 감지 결과
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReferenceGameResult {
+    pub reference_profile_id: Option<i64>,
+    /// (profile_id, composite_score) 목록
+    pub scores: Vec<(i64, f64)>,
+}
+
+/// 레퍼런스 게임 자동 감지 — 프로파일별 composite_score 기반
+/// composite = accuracy×0.3 + consistency×0.25 + range×0.25 + smoothness×0.2
+pub fn detect_reference_game(
+    profile_dnas: &[(i64, AimDnaProfile)],
+) -> ReferenceGameResult {
+    if profile_dnas.is_empty() {
+        return ReferenceGameResult { reference_profile_id: None, scores: Vec::new() };
+    }
+
+    let mut scores = Vec::new();
+
+    for (pid, dna) in profile_dnas {
+        // accuracy = 3영역 정확도 평균
+        let accs: Vec<f64> = [dna.finger_accuracy, dna.wrist_accuracy, dna.arm_accuracy]
+            .iter().filter_map(|a| *a).collect();
+        let accuracy = if accs.is_empty() { 0.0 } else { accs.iter().sum::<f64>() / accs.len() as f64 };
+
+        // consistency = 1 - direction_bias (bias 낮을수록 일관성 높음)
+        let consistency = 1.0 - dna.direction_bias.unwrap_or(1.0);
+
+        // range = effective_range / 180 (0~1 정규화)
+        let range = dna.effective_range.unwrap_or(0.0) / 180.0;
+
+        // smoothness 정규화 (0~100 → 0~1)
+        let smoothness_norm = (dna.smoothness.unwrap_or(0.0) / 100.0).min(1.0);
+
+        let composite = accuracy * 0.30 + consistency * 0.25 + range * 0.25 + smoothness_norm * 0.20;
+        scores.push((*pid, composite));
+    }
+
+    // 최고 점수 프로파일
+    let reference_profile_id = scores.iter()
+        .max_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal))
+        .map(|(pid, _)| *pid);
+
+    ReferenceGameResult { reference_profile_id, scores }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -590,7 +805,13 @@ mod tests {
         ];
 
         let mut dna = AimDnaProfile::empty(1, 1);
-        compute_flick_features(&targets, &mut dna);
+        compute_basic_flick_features(&targets, &mut dna);
+        compute_direction_bias(&targets, &mut dna);
+        compute_effective_range(&targets, &mut dna);
+        compute_motor_features(&targets, &mut dna);
+        compute_vh_ratio(&targets, &mut dna);
+        compute_fitts_law(&targets, &mut dna);
+        compute_sens_overshoot(&targets, &mut dna);
 
         // 평균 오버슈트
         let expected_overshoot = (0.1 + 0.2 + 0.05) / 3.0;
@@ -688,5 +909,44 @@ mod tests {
         assert_eq!(pairs.len(), 2);
         assert!(pairs.iter().any(|(k, _)| k == "overshoot_avg"));
         assert!(pairs.iter().any(|(k, _)| k == "wrist_arm_ratio"));
+    }
+
+    /// 데이터 부족 시 threshold 미달 피처는 None + sufficiency false
+    #[test]
+    fn test_data_sufficiency_below_threshold() {
+        // 10개 flick 타겟만 제공 (direction_bias 50, v_h_ratio 50, fitts 40 미달)
+        let targets: Vec<FlickTargetMetric> = (0..10).map(|i| FlickTargetMetric {
+            ttt: 300.0, overshoot: 0.1, correction_count: 1, settle_time: 50.0,
+            path_efficiency: 0.8, hit: true, angle_bucket: 30,
+            direction: "right".into(), motor_region: "wrist".into(),
+            click_type: if i % 2 == 0 { "PreAim" } else { "Flick" }.into(),
+        }).collect();
+        let metrics_json = serde_json::to_string(&targets).unwrap();
+
+        let input = BatteryMetricsInput {
+            profile_id: 1, session_id: 1,
+            flick_metrics: Some(metrics_json),
+            tracking_metrics: None, circular_metrics: None, stochastic_metrics: None,
+            counter_strafe_metrics: None, micro_flick_metrics: None, zoom_metrics: None,
+            scenario_scores: ScenarioScores {
+                flick: Some(70.0), tracking: None, circular_tracking: None,
+                stochastic_tracking: None, counter_strafe_flick: None,
+                micro_flick: None, zoom_composite: None,
+            },
+        };
+        let dna = compute_aim_dna(&input);
+
+        // direction_bias는 계산되지 않아야 함
+        assert!(dna.direction_bias.is_none(), "10샷으로는 direction_bias 불가");
+        assert!(!dna.data_sufficiency["direction_bias"].sufficient);
+        assert_eq!(dna.data_sufficiency["direction_bias"].current_count, 10);
+        assert_eq!(dna.data_sufficiency["direction_bias"].required_count, 50);
+
+        // v_h_ratio도 계산되지 않아야 함
+        assert!(dna.v_h_ratio.is_none(), "10샷으로는 v_h_ratio 불가");
+        assert!(!dna.data_sufficiency["v_h_ratio"].sufficient);
+
+        // 기본 피처(overshoot_avg 등)는 계산되어야 함
+        assert!(dna.overshoot_avg.is_some(), "기본 피처는 항상 계산");
     }
 }

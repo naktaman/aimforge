@@ -1,11 +1,14 @@
 /**
  * Aim DNA 결과 화면
  * D3.js 레이더 차트 (5축) + 상세 분류표 + type_label 배지
+ * + 데이터 충족도 표시 + 추세 배너 + 크로스게임 비교 진입
  */
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { useAimDnaStore } from '../stores/aimDnaStore';
-import type { AimDnaProfile, RadarAxis } from '../utils/types';
+import { useEngineStore } from '../stores/engineStore';
+import { computeRadarAxes } from '../utils/radarUtils';
+import type { AimDnaProfile, RadarAxis, FeatureSufficiency } from '../utils/types';
 
 interface Props {
   onBack: () => void;
@@ -20,45 +23,12 @@ const TYPE_DESCRIPTIONS: Record<string, string> = {
   'hybrid': '하이브리드 — 균형 잡힌 멀티 스타일',
 };
 
-/** Aim DNA 프로파일 → 5축 레이더 데이터 (0~100 정규화) */
-function computeRadarAxes(dna: AimDnaProfile): RadarAxis[] {
-  // Flick Power: peak_velocity(0~2000°/s) + effective_range(0~180°) 평균
-  const velNorm = Math.min((dna.flick_peak_velocity ?? 0) / 2000 * 100, 100);
-  const rangeNorm = Math.min((dna.effective_range ?? 0) / 180 * 100, 100);
-  const flickPower = (velNorm + rangeNorm) / 2;
-
-  // Tracking Precision: MAD 역수(0.3→0, 0→100) + velocity_match(0~1→0~100)
-  const madNorm = Math.max(0, 100 - (dna.tracking_mad ?? 0.3) * 333);
-  const vmNorm = (dna.velocity_match ?? 0) * 100;
-  const trackingPrecision = (madNorm + vmNorm) / 2;
-
-  // Motor Control: 영역별 정확도 균형 + wrist_arm_ratio 적절성
-  const fAcc = (dna.finger_accuracy ?? 0) * 100;
-  const wAcc = (dna.wrist_accuracy ?? 0) * 100;
-  const aAcc = (dna.arm_accuracy ?? 0) * 100;
-  const avgAcc = (fAcc + wAcc + aAcc) / 3;
-  // wrist_arm_ratio 0.5에 가까울수록 균형 → 보너스
-  const balanceBonus = (1 - Math.abs((dna.wrist_arm_ratio ?? 0.5) - 0.5) * 2) * 20;
-  const motorControl = Math.min(avgAcc + balanceBonus, 100);
-
-  // Speed: fitts_b 역수 (낮을수록 빠름, 50~300 범위 가정)
-  const fittsB = dna.fitts_b ?? 200;
-  const speedNorm = Math.max(0, Math.min(100, (300 - fittsB) / 250 * 100));
-
-  // Consistency: direction_bias 역수 + v_h_ratio→1 근접도 + fatigue 역수
-  const biasNorm = (1 - (dna.direction_bias ?? 0)) * 100;
-  const vhNorm = Math.max(0, 100 - Math.abs((dna.v_h_ratio ?? 1) - 1) * 100);
-  const fatigueNorm = Math.max(0, 100 - Math.abs(dna.fatigue_decay ?? 0) * 200);
-  const consistency = (biasNorm + vhNorm + fatigueNorm) / 3;
-
-  return [
-    { label: 'Flick Power', key: 'flick_power', value: flickPower },
-    { label: 'Tracking', key: 'tracking_precision', value: trackingPrecision },
-    { label: 'Motor Control', key: 'motor_control', value: motorControl },
-    { label: 'Speed', key: 'speed', value: speedNorm },
-    { label: 'Consistency', key: 'consistency', value: consistency },
-  ];
-}
+/** 추세 방향 한글 */
+const DIRECTION_LABELS: Record<string, string> = {
+  improved: '개선',
+  degraded: '하락',
+  stable: '안정',
+};
 
 /** D3 레이더 차트 */
 function RadarChart({ axes }: { axes: RadarAxis[] }) {
@@ -75,7 +45,7 @@ function RadarChart({ axes }: { axes: RadarAxis[] }) {
     const cx = width / 2;
     const cy = height / 2;
     const maxR = 140;
-    const levels = 5; // 동심원 수
+    const levels = 5;
     const n = axes.length;
     const angleSlice = (2 * Math.PI) / n;
 
@@ -113,7 +83,6 @@ function RadarChart({ axes }: { axes: RadarAxis[] }) {
       return [r * Math.cos(angle), r * Math.sin(angle)] as [number, number];
     });
 
-    // 채워진 영역
     g.append('polygon')
       .attr('points', points.map(p => p.join(',')).join(' '))
       .attr('fill', '#e94560')
@@ -121,14 +90,13 @@ function RadarChart({ axes }: { axes: RadarAxis[] }) {
       .attr('stroke', '#e94560')
       .attr('stroke-width', 2);
 
-    // 데이터 포인트
+    // 데이터 포인트 + 라벨
     points.forEach((p, i) => {
       g.append('circle')
         .attr('cx', p[0]).attr('cy', p[1])
         .attr('r', 4)
         .attr('fill', '#e94560');
 
-      // 값 라벨
       const angle = angleSlice * i - Math.PI / 2;
       const labelR = maxR + 25;
       g.append('text')
@@ -140,7 +108,6 @@ function RadarChart({ axes }: { axes: RadarAxis[] }) {
         .attr('font-size', '12px')
         .text(`${axes[i].label}`);
 
-      // 점수 값
       g.append('text')
         .attr('x', labelR * Math.cos(angle))
         .attr('y', labelR * Math.sin(angle) + 14)
@@ -155,18 +122,28 @@ function RadarChart({ axes }: { axes: RadarAxis[] }) {
   return <svg ref={svgRef} className="radar-chart" />;
 }
 
-/** 상세 피처 카드 */
-function FeatureCard({ title, items }: { title: string; items: { label: string; value: string }[] }) {
+/** 상세 피처 카드 — 데이터 부족 표시 포함 */
+function FeatureCard({ title, items }: {
+  title: string;
+  items: { label: string; value: string; sufficiency?: FeatureSufficiency }[];
+}) {
   return (
     <div className="feature-card">
       <h4>{title}</h4>
       <div className="feature-list">
-        {items.map(({ label, value }) => (
-          <div key={label} className="feature-row">
-            <span className="feature-label">{label}</span>
-            <span className="feature-value">{value}</span>
-          </div>
-        ))}
+        {items.map(({ label, value, sufficiency }) => {
+          const insufficient = sufficiency && !sufficiency.sufficient;
+          return (
+            <div key={label} className={`feature-row ${insufficient ? 'insufficient' : ''}`}>
+              <span className="feature-label">{label}</span>
+              <span className="feature-value">
+                {insufficient
+                  ? `데이터 부족 (${sufficiency!.current_count}/${sufficiency!.required_count})`
+                  : value}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -178,8 +155,20 @@ const fmt = (v: number | null, decimals = 2, suffix = '') =>
 
 const pct = (v: number | null) => fmt(v !== null ? v * 100 : null, 1, '%');
 
+/** 데이터 충족도 조회 헬퍼 */
+const getSuff = (dna: AimDnaProfile, key: string): FeatureSufficiency | undefined =>
+  dna.data_sufficiency?.[key];
+
 export function AimDnaResult({ onBack }: Props) {
-  const { currentDna } = useAimDnaStore();
+  const { currentDna, trend, loadTrend } = useAimDnaStore();
+  const { setScreen } = useEngineStore();
+
+  // 추세 분석 로드
+  useEffect(() => {
+    if (currentDna) {
+      loadTrend(currentDna.profile_id);
+    }
+  }, [currentDna?.profile_id]);
 
   if (!currentDna) {
     return (
@@ -197,6 +186,24 @@ export function AimDnaResult({ onBack }: Props) {
       <div className="aim-dna-result">
         <h2>Aim DNA</h2>
 
+        {/* 재교정 추천 배너 */}
+        {trend?.recalibration_recommended && (
+          <div className="trend-banner" style={{
+            background: '#3d3520', border: '1px solid #f5a623', borderRadius: 8,
+            padding: '12px 16px', marginBottom: 16,
+          }}>
+            <strong style={{ color: '#f5a623' }}>DNA 변화 감지 — 재교정을 추천합니다</strong>
+            <div style={{ marginTop: 8, fontSize: 13, color: '#ccc' }}>
+              {trend.changed_features.slice(0, 5).map(f => (
+                <span key={f.feature} style={{ marginRight: 12 }}>
+                  {f.feature}: {f.change_pct > 0 ? '+' : ''}{f.change_pct.toFixed(1)}%
+                  ({DIRECTION_LABELS[f.direction] ?? f.direction})
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* type_label 배지 */}
         {currentDna.type_label && (
           <div className="type-badge">
@@ -210,25 +217,25 @@ export function AimDnaResult({ onBack }: Props) {
         {/* 레이더 차트 */}
         <RadarChart axes={axes} />
 
-        {/* 상세 분류표 */}
+        {/* 상세 분류표 — 데이터 부족 표시 포함 */}
         <div className="feature-cards">
           <FeatureCard
             title="Flick 역학"
             items={[
               { label: 'Peak Velocity', value: fmt(currentDna.flick_peak_velocity, 0, '°/s') },
-              { label: 'Avg Overshoot', value: fmt(currentDna.overshoot_avg, 3, ' rad') },
+              { label: 'Avg Overshoot', value: fmt(currentDna.overshoot_avg, 3, ' rad'), sufficiency: getSuff(currentDna, 'overshoot_avg') },
               { label: 'Effective Range', value: fmt(currentDna.effective_range, 0, '°') },
-              { label: 'Direction Bias', value: fmt(currentDna.direction_bias, 3) },
+              { label: 'Direction Bias', value: fmt(currentDna.direction_bias, 3), sufficiency: getSuff(currentDna, 'direction_bias') },
               { label: 'Pre-Aim Ratio', value: pct(currentDna.pre_aim_ratio) },
               { label: 'Pre-Fire Ratio', value: pct(currentDna.pre_fire_ratio) },
-              { label: 'V/H Ratio', value: fmt(currentDna.v_h_ratio) },
+              { label: 'V/H Ratio', value: fmt(currentDna.v_h_ratio), sufficiency: getSuff(currentDna, 'v_h_ratio') },
             ]}
           />
           <FeatureCard
             title="Tracking 역학"
             items={[
-              { label: 'MAD', value: fmt(currentDna.tracking_mad, 4, ' rad') },
-              { label: 'Phase Lag', value: fmt(currentDna.phase_lag, 1, ' ms') },
+              { label: 'MAD', value: fmt(currentDna.tracking_mad, 4, ' rad'), sufficiency: getSuff(currentDna, 'tracking') },
+              { label: 'Phase Lag', value: fmt(currentDna.phase_lag, 1, ' ms'), sufficiency: getSuff(currentDna, 'phase_lag') },
               { label: 'Smoothness', value: fmt(currentDna.smoothness, 1) },
               { label: 'Velocity Match', value: pct(currentDna.velocity_match) },
             ]}
@@ -240,14 +247,14 @@ export function AimDnaResult({ onBack }: Props) {
               { label: 'Finger Accuracy', value: pct(currentDna.finger_accuracy) },
               { label: 'Wrist Accuracy', value: pct(currentDna.wrist_accuracy) },
               { label: 'Arm Accuracy', value: pct(currentDna.arm_accuracy) },
-              { label: 'Transition Angle', value: fmt(currentDna.motor_transition_angle, 0, '°') },
+              { label: 'Transition Angle', value: fmt(currentDna.motor_transition_angle, 0, '°'), sufficiency: getSuff(currentDna, 'motor_transition_angle') },
             ]}
           />
           <FeatureCard
             title="시간 역학"
             items={[
-              { label: "Fitts' a (intercept)", value: fmt(currentDna.fitts_a, 1, ' ms') },
-              { label: "Fitts' b (slope)", value: fmt(currentDna.fitts_b, 1, ' ms/bit') },
+              { label: "Fitts' a (intercept)", value: fmt(currentDna.fitts_a, 1, ' ms'), sufficiency: getSuff(currentDna, 'fitts') },
+              { label: "Fitts' b (slope)", value: fmt(currentDna.fitts_b, 1, ' ms/bit'), sufficiency: getSuff(currentDna, 'fitts') },
               { label: 'Fatigue Decay', value: fmt(currentDna.fatigue_decay, 3) },
               { label: 'Adaptation Rate', value: fmt(currentDna.adaptation_rate, 3) },
               { label: 'Sens Overshoot Corr', value: fmt(currentDna.sens_attributed_overshoot, 3) },
@@ -256,6 +263,9 @@ export function AimDnaResult({ onBack }: Props) {
         </div>
 
         <div className="result-actions">
+          <button className="btn-primary" onClick={() => setScreen('cross-game-comparison')}>
+            크로스게임 비교
+          </button>
           <button className="btn-secondary" onClick={onBack}>돌아가기</button>
         </div>
       </div>

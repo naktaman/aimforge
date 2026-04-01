@@ -5,6 +5,9 @@
 
 use std::collections::HashMap;
 
+/// 부동소수점 0 비교용 엡실론 (near-zero 방어)
+const EPSILON: f64 = 1e-10;
+
 /// raw delta를 센티미터로 변환
 /// DPI = dots per inch, 1 inch = 2.54 cm
 /// cm = counts / dpi * 2.54
@@ -17,7 +20,7 @@ pub fn raw_to_cm(dx: i32, dy: i32, dpi: u32) -> (f64, f64) {
 /// cm_per_360: 360도 회전에 필요한 마우스 이동 거리 (cm)
 /// degrees = cm / cm_per_360 * 360
 pub fn cm_to_degrees(cm: f64, cm_per_360: f64) -> f64 {
-    if cm_per_360 == 0.0 {
+    if cm_per_360.abs() < EPSILON {
         return 0.0;
     }
     cm / cm_per_360 * 360.0
@@ -27,7 +30,7 @@ pub fn cm_to_degrees(cm: f64, cm_per_360: f64) -> f64 {
 /// 공식: cm/360 = (360 / (sens * yaw * dpi)) * 2.54
 /// yaw: 게임별 yaw 상수 (degrees per count at sens=1, dpi=1)
 pub fn game_sens_to_cm360(sens: f64, dpi: u32, yaw: f64) -> f64 {
-    if sens == 0.0 || yaw == 0.0 || dpi == 0 {
+    if sens.abs() < EPSILON || yaw.abs() < EPSILON || dpi == 0 {
         return 0.0;
     }
     // 360도 회전에 필요한 counts = 360 / (sens * yaw)
@@ -39,7 +42,7 @@ pub fn game_sens_to_cm360(sens: f64, dpi: u32, yaw: f64) -> f64 {
 /// cm/360 → 게임 감도 역변환
 /// sens = (360 * 2.54) / (cm360 * yaw * dpi)
 pub fn cm360_to_sens(cm360: f64, dpi: u32, yaw: f64) -> f64 {
-    if cm360 == 0.0 || yaw == 0.0 || dpi == 0 {
+    if cm360.abs() < EPSILON || yaw.abs() < EPSILON || dpi == 0 {
         return 0.0;
     }
     (360.0 * 2.54) / (cm360 * yaw * dpi as f64)
@@ -69,7 +72,7 @@ pub fn zoom_multiplier(fov_hipfire: f64, fov_scope: f64, k: f64) -> f64 {
     let hip_rad = fov_hipfire.to_radians() / 2.0;
     let scope_rad = fov_scope.to_radians() / 2.0;
 
-    if scope_rad.tan() == 0.0 {
+    if scope_rad.tan().abs() < EPSILON {
         return 1.0;
     }
 
@@ -96,7 +99,7 @@ pub fn mdm_multiplier(src_fov_h: f64, dst_fov_h: f64, mdm_pct: f64) -> f64 {
 
 /// Viewspeed H(수평) 배율 — FOV 각도 직접 비율
 pub fn viewspeed_h_multiplier(src_fov_h: f64, dst_fov_h: f64) -> f64 {
-    if src_fov_h == 0.0 {
+    if src_fov_h.abs() < EPSILON {
         return 1.0;
     }
     dst_fov_h / src_fov_h
@@ -106,7 +109,7 @@ pub fn viewspeed_h_multiplier(src_fov_h: f64, dst_fov_h: f64) -> f64 {
 pub fn viewspeed_v_multiplier(src_fov_h: f64, dst_fov_h: f64, aspect_ratio: f64) -> f64 {
     let src_vfov = hfov_to_vfov(src_fov_h, aspect_ratio);
     let dst_vfov = hfov_to_vfov(dst_fov_h, aspect_ratio);
-    if src_vfov == 0.0 {
+    if src_vfov.abs() < EPSILON {
         return 1.0;
     }
     dst_vfov / src_vfov

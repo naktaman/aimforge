@@ -413,6 +413,7 @@ impl Database {
                 motor_transition_angle: row.get(22)?,
                 adaptation_rate: row.get(23)?,
                 type_label: row.get(24)?,
+                data_sufficiency: std::collections::HashMap::new(),
             })
         })?;
         match rows.next() {
@@ -450,6 +451,66 @@ impl Database {
             })
         })?;
         rows.collect()
+    }
+
+    // ── 레퍼런스 게임 + 크로스게임 헬퍼 ──
+
+    /// 레퍼런스 게임 설정 — 기존 해제 후 새 프로파일에 설정
+    pub fn set_reference_game(&self, profile_id: i64) -> Result<()> {
+        self.conn.execute(
+            "UPDATE profiles SET is_reference_game = 0 WHERE is_reference_game = 1",
+            [],
+        )?;
+        self.conn.execute(
+            "UPDATE profiles SET is_reference_game = 1 WHERE id = ?1",
+            rusqlite::params![profile_id],
+        )?;
+        Ok(())
+    }
+
+    /// 레퍼런스 게임 프로파일 ID 조회
+    pub fn get_reference_game_profile_id(&self) -> Result<Option<i64>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id FROM profiles WHERE is_reference_game = 1 LIMIT 1"
+        )?;
+        let mut rows = stmt.query_map([], |row| row.get::<_, i64>(0))?;
+        match rows.next() {
+            Some(Ok(id)) => Ok(Some(id)),
+            Some(Err(e)) => Err(e),
+            None => Ok(None),
+        }
+    }
+
+    /// 모든 프로파일의 최신 DNA 일괄 조회 (레퍼런스 감지용)
+    pub fn get_all_profiles_latest_dna(&self) -> Result<Vec<(i64, crate::aim_dna::AimDnaProfile)>> {
+        // aim_dna 테이블에서 distinct profile_id 조회
+        let mut stmt = self.conn.prepare(
+            "SELECT DISTINCT profile_id FROM aim_dna"
+        )?;
+        let pids: Vec<i64> = stmt.query_map([], |row| row.get(0))?
+            .filter_map(|r| r.ok())
+            .collect();
+
+        let mut results = Vec::new();
+        for pid in pids {
+            if let Ok(Some(dna)) = self.get_latest_aim_dna(pid) {
+                results.push((pid, dna));
+            }
+        }
+        Ok(results)
+    }
+
+    /// 프로파일의 현재 cm/360 조회
+    pub fn get_profile_cm360(&self, profile_id: i64) -> Result<Option<f64>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT current_cm360 FROM profiles WHERE id = ?1"
+        )?;
+        let mut rows = stmt.query_map(rusqlite::params![profile_id], |row| row.get::<_, Option<f64>>(0))?;
+        match rows.next() {
+            Some(Ok(val)) => Ok(val),
+            Some(Err(e)) => Err(e),
+            None => Ok(None),
+        }
     }
 
     // ── 세션 히스토리 CRUD ──
@@ -517,6 +578,18 @@ impl Database {
         })?.collect::<Result<Vec<_>>>()?;
 
         Ok(crate::aim_dna::commands::SessionDetail { session, trials })
+    }
+
+    /// 트라이얼의 궤적+클릭 JSON 로드 (궤적 분석용)
+    pub fn get_trial_trajectory_data(
+        &self,
+        trial_id: i64,
+    ) -> Result<(String, String, f64)> {
+        self.conn.query_row(
+            "SELECT mouse_trajectory, click_events, cm360_tested FROM trials WHERE id = ?1",
+            rusqlite::params![trial_id],
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+        )
     }
 
     // ── Training 처방 CRUD ──
@@ -588,6 +661,43 @@ impl Database {
             rusqlite::params![comparison_id, week_number, metrics, gap_reduction_pct],
         )?;
         Ok(self.conn.last_insert_rowid())
+    }
+
+    /// 크로스게임 비교 히스토리 조회 (프로파일 관련)
+    pub fn get_crossgame_history(
+        &self,
+        profile_id: i64,
+        limit: i64,
+    ) -> Result<Vec<crate::crossgame::commands::CrossGameComparisonSummary>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, profile_a_id, profile_b_id, \
+             CAST(COALESCE( \
+               (SELECT AVG(ABS(json_each.value)) FROM json_each(deltas, '$') AS json_each \
+                WHERE json_extract(json_each.value, '$.delta_pct') IS NOT NULL), 0) AS REAL) as overall_gap, \
+             predicted_days, created_at \
+             FROM crossgame_comparisons \
+             WHERE profile_a_id = ?1 OR profile_b_id = ?1 \
+             ORDER BY created_at DESC LIMIT ?2"
+        ).or_else(|_| {
+            // JSON 함수 미지원 시 fallback (overall_gap = predicted_days 기반 추정)
+            self.conn.prepare(
+                "SELECT id, profile_a_id, profile_b_id, predicted_days, predicted_days, created_at \
+                 FROM crossgame_comparisons \
+                 WHERE profile_a_id = ?1 OR profile_b_id = ?1 \
+                 ORDER BY created_at DESC LIMIT ?2"
+            )
+        })?;
+        let rows = stmt.query_map(rusqlite::params![profile_id, limit], |row| {
+            Ok(crate::crossgame::commands::CrossGameComparisonSummary {
+                id: row.get(0)?,
+                profile_a_id: row.get(1)?,
+                profile_b_id: row.get(2)?,
+                overall_gap: row.get(3)?,
+                predicted_days: row.get(4)?,
+                created_at: row.get(5)?,
+            })
+        })?;
+        rows.collect()
     }
 
     // ── Training Stage 결과 CRUD ──
@@ -1044,11 +1154,525 @@ impl Database {
         Ok(())
     }
 
+    /// 두 루틴 스텝의 순서를 교환 (UNIQUE 제약 우회: 트랜잭션 + 임시 음수 order)
+    pub fn swap_routine_step_order(&self, step_id_a: i64, step_id_b: i64) -> Result<()> {
+        // 두 스텝의 현재 order 조회
+        let order_a: i64 = self.conn.query_row(
+            "SELECT step_order FROM routine_steps WHERE id = ?1",
+            rusqlite::params![step_id_a],
+            |row| row.get(0),
+        )?;
+        let order_b: i64 = self.conn.query_row(
+            "SELECT step_order FROM routine_steps WHERE id = ?1",
+            rusqlite::params![step_id_b],
+            |row| row.get(0),
+        )?;
+
+        // 트랜잭션 내에서 교환 (임시 -9999로 UNIQUE 충돌 방지)
+        let tx = self.conn.unchecked_transaction()?;
+        tx.execute(
+            "UPDATE routine_steps SET step_order = -9999 WHERE id = ?1",
+            rusqlite::params![step_id_a],
+        )?;
+        tx.execute(
+            "UPDATE routine_steps SET step_order = ?1 WHERE id = ?2",
+            rusqlite::params![order_a, step_id_b],
+        )?;
+        tx.execute(
+            "UPDATE routine_steps SET step_order = ?1 WHERE id = ?2",
+            rusqlite::params![order_b, step_id_a],
+        )?;
+        tx.commit()?;
+        Ok(())
+    }
+
     /// DB 파일 경로 반환 (내보내기용)
     pub fn get_db_path(&self) -> Result<String> {
         let path: String = self.conn.query_row("PRAGMA database_list", [], |row| row.get(2))?;
         Ok(path)
     }
+
+    // ── Readiness Score CRUD ──
+
+    /// Readiness Score 저장
+    pub fn insert_readiness_score(
+        &self,
+        profile_id: i64,
+        score: f64,
+        baseline_delta: &str,
+        daily_advice: Option<&str>,
+    ) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO readiness_scores (profile_id, score, baseline_delta, daily_advice) \
+             VALUES (?1, ?2, ?3, ?4)",
+            rusqlite::params![profile_id, score, baseline_delta, daily_advice],
+        )?;
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    /// Readiness Score 히스토리 조회
+    pub fn get_readiness_scores(&self, profile_id: i64, limit: i64) -> Result<Vec<ReadinessScoreRow>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, profile_id, score, baseline_delta, daily_advice, measured_at \
+             FROM readiness_scores WHERE profile_id = ?1 \
+             ORDER BY measured_at DESC LIMIT ?2"
+        )?;
+        let rows = stmt.query_map(rusqlite::params![profile_id, limit], |row| {
+            Ok(ReadinessScoreRow {
+                id: row.get(0)?,
+                profile_id: row.get(1)?,
+                score: row.get(2)?,
+                baseline_delta: row.get(3)?,
+                daily_advice: row.get(4)?,
+                measured_at: row.get(5)?,
+            })
+        })?;
+        rows.collect()
+    }
+
+    /// 최신 Readiness Score 조회
+    pub fn get_latest_readiness(&self, profile_id: i64) -> Result<Option<ReadinessScoreRow>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, profile_id, score, baseline_delta, daily_advice, measured_at \
+             FROM readiness_scores WHERE profile_id = ?1 \
+             ORDER BY measured_at DESC LIMIT 1"
+        )?;
+        let mut rows = stmt.query_map(rusqlite::params![profile_id], |row| {
+            Ok(ReadinessScoreRow {
+                id: row.get(0)?,
+                profile_id: row.get(1)?,
+                score: row.get(2)?,
+                baseline_delta: row.get(3)?,
+                daily_advice: row.get(4)?,
+                measured_at: row.get(5)?,
+            })
+        })?;
+        match rows.next() {
+            Some(Ok(row)) => Ok(Some(row)),
+            Some(Err(e)) => Err(e),
+            None => Ok(None),
+        }
+    }
+
+    // ── Style Transition CRUD ──
+
+    /// 스타일 전환 생성
+    pub fn insert_style_transition(
+        &self,
+        profile_id: i64,
+        from_type: &str,
+        to_type: &str,
+        target_sens_range: &str,
+    ) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO style_transitions (profile_id, from_type, to_type, target_sens_range) \
+             VALUES (?1, ?2, ?3, ?4)",
+            rusqlite::params![profile_id, from_type, to_type, target_sens_range],
+        )?;
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    /// 활성 스타일 전환 조회 (completed_at IS NULL)
+    pub fn get_active_style_transition(&self, profile_id: i64) -> Result<Option<StyleTransitionRow>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, profile_id, from_type, to_type, target_sens_range, started_at, \
+             current_phase, plateau_detected, completed_at \
+             FROM style_transitions WHERE profile_id = ?1 AND completed_at IS NULL \
+             ORDER BY started_at DESC LIMIT 1"
+        )?;
+        let mut rows = stmt.query_map(rusqlite::params![profile_id], |row| {
+            Ok(StyleTransitionRow {
+                id: row.get(0)?,
+                profile_id: row.get(1)?,
+                from_type: row.get(2)?,
+                to_type: row.get(3)?,
+                target_sens_range: row.get(4)?,
+                started_at: row.get(5)?,
+                current_phase: row.get(6)?,
+                plateau_detected: row.get(7)?,
+                completed_at: row.get(8)?,
+            })
+        })?;
+        match rows.next() {
+            Some(Ok(row)) => Ok(Some(row)),
+            Some(Err(e)) => Err(e),
+            None => Ok(None),
+        }
+    }
+
+    /// 스타일 전환 페이즈 업데이트
+    pub fn update_style_transition_phase(&self, id: i64, current_phase: &str) -> Result<()> {
+        self.conn.execute(
+            "UPDATE style_transitions SET current_phase = ?2 WHERE id = ?1",
+            rusqlite::params![id, current_phase],
+        )?;
+        Ok(())
+    }
+
+    /// 스타일 전환 완료 처리
+    pub fn complete_style_transition(&self, id: i64) -> Result<()> {
+        self.conn.execute(
+            "UPDATE style_transitions SET completed_at = datetime('now') WHERE id = ?1",
+            rusqlite::params![id],
+        )?;
+        Ok(())
+    }
+
+    /// 플래토 감지 마킹
+    pub fn mark_plateau_detected(&self, id: i64) -> Result<()> {
+        self.conn.execute(
+            "UPDATE style_transitions SET plateau_detected = 1 WHERE id = ?1",
+            rusqlite::params![id],
+        )?;
+        Ok(())
+    }
+
+    // ── Movement Profile CRUD ──────────────────────────────
+
+    /// 무브먼트 프로필 저장
+    pub fn insert_movement_profile(
+        &self,
+        game_id: i64,
+        name: &str,
+        max_speed: f64,
+        stop_time: f64,
+        accel_type: &str,
+        air_control: f64,
+        cs_bonus: f64,
+        is_custom: bool,
+    ) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO movement_profiles (game_id, name, max_speed, stop_time, accel_type, air_control, cs_bonus, is_custom) \
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            rusqlite::params![game_id, name, max_speed, stop_time, accel_type, air_control, cs_bonus, is_custom as i32],
+        )?;
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    /// 게임별 무브먼트 프로필 조회
+    pub fn get_movement_profiles(&self, game_id: i64) -> Result<Vec<MovementProfileRow>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, game_id, name, max_speed, stop_time, accel_type, air_control, cs_bonus, is_custom \
+             FROM movement_profiles WHERE game_id = ?1 ORDER BY is_custom ASC, id ASC"
+        )?;
+        let rows = stmt.query_map(rusqlite::params![game_id], |row| {
+            Ok(MovementProfileRow {
+                id: row.get(0)?,
+                game_id: row.get(1)?,
+                name: row.get(2)?,
+                max_speed: row.get(3)?,
+                stop_time: row.get(4)?,
+                accel_type: row.get(5)?,
+                air_control: row.get(6)?,
+                cs_bonus: row.get(7)?,
+                is_custom: row.get::<_, i32>(8)? != 0,
+            })
+        })?;
+        rows.collect()
+    }
+
+    /// 무브먼트 프로필 단건 조회
+    pub fn get_movement_profile(&self, id: i64) -> Result<Option<MovementProfileRow>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, game_id, name, max_speed, stop_time, accel_type, air_control, cs_bonus, is_custom \
+             FROM movement_profiles WHERE id = ?1"
+        )?;
+        let mut rows = stmt.query_map(rusqlite::params![id], |row| {
+            Ok(MovementProfileRow {
+                id: row.get(0)?,
+                game_id: row.get(1)?,
+                name: row.get(2)?,
+                max_speed: row.get(3)?,
+                stop_time: row.get(4)?,
+                accel_type: row.get(5)?,
+                air_control: row.get(6)?,
+                cs_bonus: row.get(7)?,
+                is_custom: row.get::<_, i32>(8)? != 0,
+            })
+        })?;
+        match rows.next() {
+            Some(row) => Ok(Some(row?)),
+            None => Ok(None),
+        }
+    }
+
+    /// 무브먼트 프로필 수정
+    pub fn update_movement_profile(
+        &self,
+        id: i64,
+        name: &str,
+        max_speed: f64,
+        stop_time: f64,
+        accel_type: &str,
+        air_control: f64,
+        cs_bonus: f64,
+    ) -> Result<()> {
+        self.conn.execute(
+            "UPDATE movement_profiles SET name = ?2, max_speed = ?3, stop_time = ?4, \
+             accel_type = ?5, air_control = ?6, cs_bonus = ?7 WHERE id = ?1",
+            rusqlite::params![id, name, max_speed, stop_time, accel_type, air_control, cs_bonus],
+        )?;
+        Ok(())
+    }
+
+    /// 무브먼트 프로필 삭제
+    pub fn delete_movement_profile(&self, id: i64) -> Result<()> {
+        self.conn.execute("DELETE FROM movement_profiles WHERE id = ?1", rusqlite::params![id])?;
+        Ok(())
+    }
+
+    // ── Recoil Pattern CRUD ──────────────────────────────────
+
+    /// 반동 패턴 목록 조회 (game_id 필터 옵션)
+    pub fn get_recoil_patterns(&self, game_id: Option<i64>) -> Result<Vec<RecoilPatternRow>> {
+        let map_row = |row: &rusqlite::Row| -> rusqlite::Result<RecoilPatternRow> {
+            Ok(RecoilPatternRow {
+                id: row.get(0)?, game_id: row.get(1)?, weapon_name: row.get(2)?,
+                pattern_points: row.get(3)?, randomness: row.get(4)?,
+                vertical: row.get(5)?, horizontal: row.get(6)?,
+                rpm: row.get(7)?, is_custom: row.get::<_, i32>(8)? != 0,
+            })
+        };
+        if let Some(gid) = game_id {
+            let mut stmt = self.conn.prepare(
+                "SELECT id, game_id, weapon_name, pattern_points, randomness, vertical, horizontal, rpm, is_custom \
+                 FROM recoil_patterns WHERE game_id = ?1 ORDER BY is_custom ASC, id ASC"
+            )?;
+            let rows = stmt.query_map(rusqlite::params![gid], map_row)?;
+            rows.collect()
+        } else {
+            let mut stmt = self.conn.prepare(
+                "SELECT id, game_id, weapon_name, pattern_points, randomness, vertical, horizontal, rpm, is_custom \
+                 FROM recoil_patterns ORDER BY game_id ASC, is_custom ASC, id ASC"
+            )?;
+            let rows = stmt.query_map([], map_row)?;
+            rows.collect()
+        }
+    }
+
+    /// 반동 패턴 저장 (커스텀, is_custom=1)
+    pub fn insert_recoil_pattern(
+        &self, game_id: i64, weapon_name: &str, pattern_points: &str,
+        randomness: f64, vertical: f64, horizontal: f64, rpm: i64,
+    ) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO recoil_patterns (game_id, weapon_name, pattern_points, randomness, vertical, horizontal, rpm, is_custom) \
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 1)",
+            rusqlite::params![game_id, weapon_name, pattern_points, randomness, vertical, horizontal, rpm],
+        )?;
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    /// 반동 패턴 수정
+    pub fn update_recoil_pattern(
+        &self, id: i64, weapon_name: &str, pattern_points: &str,
+        randomness: f64, vertical: f64, horizontal: f64, rpm: i64,
+    ) -> Result<()> {
+        self.conn.execute(
+            "UPDATE recoil_patterns SET weapon_name = ?2, pattern_points = ?3, \
+             randomness = ?4, vertical = ?5, horizontal = ?6, rpm = ?7 WHERE id = ?1",
+            rusqlite::params![id, weapon_name, pattern_points, randomness, vertical, horizontal, rpm],
+        )?;
+        Ok(())
+    }
+
+    /// 반동 패턴 삭제 (커스텀만)
+    pub fn delete_recoil_pattern(&self, id: i64) -> Result<()> {
+        self.conn.execute(
+            "DELETE FROM recoil_patterns WHERE id = ?1 AND is_custom = 1",
+            rusqlite::params![id],
+        )?;
+        Ok(())
+    }
+
+    // ── FOV Profile CRUD ──────────────────────────────────
+
+    /// FOV 테스트 결과 저장
+    pub fn insert_fov_profile(
+        &self,
+        profile_id: i64,
+        fov_tested: f64,
+        scenario_type: &str,
+        score: f64,
+        peripheral_score: Option<f64>,
+        center_score: Option<f64>,
+    ) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO fov_profiles (profile_id, fov_tested, scenario_type, score, peripheral_score, center_score) \
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            rusqlite::params![profile_id, fov_tested, scenario_type, score, peripheral_score, center_score],
+        )?;
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    /// FOV 테스트 결과 조회 (프로필별)
+    pub fn get_fov_profiles(&self, profile_id: i64) -> Result<Vec<FovProfileRow>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, profile_id, fov_tested, scenario_type, score, peripheral_score, center_score, created_at \
+             FROM fov_profiles WHERE profile_id = ?1 ORDER BY fov_tested ASC, created_at ASC"
+        )?;
+        let rows = stmt.query_map(rusqlite::params![profile_id], |row| {
+            Ok(FovProfileRow {
+                id: row.get(0)?,
+                profile_id: row.get(1)?,
+                fov_tested: row.get(2)?,
+                scenario_type: row.get(3)?,
+                score: row.get(4)?,
+                peripheral_score: row.get(5)?,
+                center_score: row.get(6)?,
+                created_at: row.get(7)?,
+            })
+        })?;
+        rows.collect()
+    }
+
+    /// FOV 테스트 결과 삭제 (프로필별 전체)
+    pub fn delete_fov_profiles(&self, profile_id: i64) -> Result<()> {
+        self.conn.execute(
+            "DELETE FROM fov_profiles WHERE profile_id = ?1",
+            rusqlite::params![profile_id],
+        )?;
+        Ok(())
+    }
+
+    // ── Hardware Combo CRUD ──────────────────────────────
+
+    /// 하드웨어 콤보 등록
+    pub fn insert_hardware_combo(
+        &self,
+        mouse_model: &str,
+        dpi: i64,
+        verified_dpi: Option<i64>,
+        polling_rate: Option<i64>,
+        mousepad_model: Option<&str>,
+    ) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO hardware_combos (mouse_model, dpi, verified_dpi, polling_rate, mousepad_model) \
+             VALUES (?1, ?2, ?3, ?4, ?5)",
+            rusqlite::params![mouse_model, dpi, verified_dpi, polling_rate, mousepad_model],
+        )?;
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    /// 전체 하드웨어 콤보 조회
+    pub fn get_hardware_combos(&self) -> Result<Vec<HardwareComboRow>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, mouse_model, dpi, verified_dpi, polling_rate, mousepad_model, created_at \
+             FROM hardware_combos ORDER BY created_at DESC"
+        )?;
+        let rows = stmt.query_map([], |row| {
+            Ok(HardwareComboRow {
+                id: row.get(0)?,
+                mouse_model: row.get(1)?,
+                dpi: row.get(2)?,
+                verified_dpi: row.get(3)?,
+                polling_rate: row.get(4)?,
+                mousepad_model: row.get(5)?,
+                created_at: row.get(6)?,
+            })
+        })?;
+        rows.collect()
+    }
+
+    /// 하드웨어 콤보 단건 조회
+    pub fn get_hardware_combo(&self, id: i64) -> Result<Option<HardwareComboRow>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, mouse_model, dpi, verified_dpi, polling_rate, mousepad_model, created_at \
+             FROM hardware_combos WHERE id = ?1"
+        )?;
+        let mut rows = stmt.query_map(rusqlite::params![id], |row| {
+            Ok(HardwareComboRow {
+                id: row.get(0)?,
+                mouse_model: row.get(1)?,
+                dpi: row.get(2)?,
+                verified_dpi: row.get(3)?,
+                polling_rate: row.get(4)?,
+                mousepad_model: row.get(5)?,
+                created_at: row.get(6)?,
+            })
+        })?;
+        match rows.next() {
+            Some(row) => Ok(Some(row?)),
+            None => Ok(None),
+        }
+    }
+
+    /// 하드웨어 콤보 수정
+    pub fn update_hardware_combo(
+        &self,
+        id: i64,
+        mouse_model: &str,
+        dpi: i64,
+        verified_dpi: Option<i64>,
+        polling_rate: Option<i64>,
+        mousepad_model: Option<&str>,
+    ) -> Result<()> {
+        self.conn.execute(
+            "UPDATE hardware_combos SET mouse_model = ?2, dpi = ?3, verified_dpi = ?4, \
+             polling_rate = ?5, mousepad_model = ?6 WHERE id = ?1",
+            rusqlite::params![id, mouse_model, dpi, verified_dpi, polling_rate, mousepad_model],
+        )?;
+        Ok(())
+    }
+
+    /// 하드웨어 콤보 삭제
+    pub fn delete_hardware_combo(&self, id: i64) -> Result<()> {
+        self.conn.execute("DELETE FROM hardware_combos WHERE id = ?1", rusqlite::params![id])?;
+        Ok(())
+    }
+}
+
+/// 무브먼트 프로필 행
+#[derive(Debug, Clone, Serialize)]
+pub struct MovementProfileRow {
+    pub id: i64,
+    pub game_id: i64,
+    pub name: String,
+    pub max_speed: f64,
+    pub stop_time: f64,
+    pub accel_type: String,
+    pub air_control: f64,
+    pub cs_bonus: f64,
+    pub is_custom: bool,
+}
+
+/// 반동 패턴 행
+#[derive(Debug, Clone, Serialize)]
+pub struct RecoilPatternRow {
+    pub id: i64,
+    pub game_id: i64,
+    pub weapon_name: String,
+    pub pattern_points: String,
+    pub randomness: f64,
+    pub vertical: f64,
+    pub horizontal: f64,
+    pub rpm: i64,
+    pub is_custom: bool,
+}
+
+/// FOV 프로필 행
+#[derive(Debug, Clone, Serialize)]
+pub struct FovProfileRow {
+    pub id: i64,
+    pub profile_id: i64,
+    pub fov_tested: f64,
+    pub scenario_type: String,
+    pub score: f64,
+    pub peripheral_score: Option<f64>,
+    pub center_score: Option<f64>,
+    pub created_at: String,
+}
+
+/// 하드웨어 콤보 행
+#[derive(Debug, Clone, Serialize)]
+pub struct HardwareComboRow {
+    pub id: i64,
+    pub mouse_model: String,
+    pub dpi: i64,
+    pub verified_dpi: Option<i64>,
+    pub polling_rate: Option<i64>,
+    pub mousepad_model: Option<String>,
+    pub created_at: String,
 }
 
 /// 크래시 로그 행
@@ -1127,6 +1751,31 @@ pub struct RoutineStepRow {
     pub stage_type: String,
     pub duration_ms: i64,
     pub config_json: String,
+}
+
+/// Readiness Score 행 — 매일 2분 마이크로 테스트 결과
+#[derive(Debug, Serialize)]
+pub struct ReadinessScoreRow {
+    pub id: i64,
+    pub profile_id: i64,
+    pub score: f64,
+    pub baseline_delta: String,
+    pub daily_advice: Option<String>,
+    pub measured_at: String,
+}
+
+/// 스타일 전환 행 — 에임 스타일 전환 추적
+#[derive(Debug, Serialize)]
+pub struct StyleTransitionRow {
+    pub id: i64,
+    pub profile_id: i64,
+    pub from_type: String,
+    pub to_type: String,
+    pub target_sens_range: String,
+    pub started_at: String,
+    pub current_phase: String,
+    pub plateau_detected: bool,
+    pub completed_at: Option<String>,
 }
 
 const SCHEMA_SQL: &str = r#"

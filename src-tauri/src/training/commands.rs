@@ -60,7 +60,8 @@ pub fn generate_training_prescriptions(
             &p.source_type,
             &p.weakness,
             &p.scenario_type,
-            &serde_json::to_string(&p.scenario_params).unwrap_or_default(),
+            // 직렬화 실패 시 에러 전파 — 빈 문자열 저장 방지
+            &serde_json::to_string(&p.scenario_params).map_err(|e| e.to_string())?,
             p.priority,
             Some(p.estimated_min),
         )
@@ -135,7 +136,8 @@ pub fn submit_stage_result(
             result.avg_undershoot_deg,
             result.tracking_mad,
             &result.raw_metrics,
-            &serde_json::to_string(&result.difficulty).unwrap_or_default(),
+            // 난이도 직렬화 실패 시 에러 전파
+            &serde_json::to_string(&result.difficulty).map_err(|e| e.to_string())?,
         )
         .map_err(|e| e.to_string())?;
 
@@ -144,6 +146,20 @@ pub fn submit_stage_result(
     if !features.is_empty() {
         db.insert_aim_dna_history_batch(result.profile_id, &features)
             .map_err(|e| e.to_string())?;
+    }
+
+    // 일별 통계 + 스킬 진행도 자동 집계
+    let today = chrono::Local::now().format("%Y-%m-%d").to_string();
+    let time_ms: i64 = serde_json::from_str::<serde_json::Value>(&result.raw_metrics)
+        .ok()
+        .and_then(|v| v.get("total_time_ms").and_then(|t| t.as_i64()))
+        .unwrap_or(0);
+    // 보조 집계 — 메인 결과 저장 이후이므로 경고만 출력
+    if let Err(e) = db.upsert_daily_stat(result.profile_id, &today, &result.stage_type, result.score, result.accuracy, time_ms) {
+        log::warn!("일별 통계 업데이트 실패: {}", e);
+    }
+    if let Err(e) = db.upsert_skill_progress(result.profile_id, &result.stage_type, result.score, time_ms) {
+        log::warn!("스킬 진행도 업데이트 실패: {}", e);
     }
 
     Ok(serde_json::json!({
@@ -188,4 +204,182 @@ pub fn get_stage_results(
         params.stage_type.as_deref(),
     )
     .map_err(|e| e.to_string())
+}
+
+// ═══════════════════════════════════════════════════
+// Readiness Score 커맨드
+// ═══════════════════════════════════════════════════
+
+/// Readiness Score 계산 + DB 저장
+#[tauri::command]
+pub fn calculate_readiness_score(
+    state: State<AppState>,
+    params: super::readiness::ReadinessInput,
+) -> Result<super::readiness::ReadinessResult, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+
+    // baseline DNA 로드
+    let dna = db
+        .get_latest_aim_dna(params.profile_id)
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| "Aim DNA 데이터가 없습니다. 먼저 배터리를 실행하세요.".to_string())?;
+
+    let baseline = super::readiness::extract_baseline(&dna);
+    let result = super::readiness::calculate_readiness(&params, &baseline);
+
+    // DB 저장
+    let delta_json = serde_json::to_string(&result.baseline_delta).map_err(|e| e.to_string())?;
+    db.insert_readiness_score(
+        params.profile_id,
+        result.score,
+        &delta_json,
+        Some(&result.daily_advice),
+    )
+    .map_err(|e| e.to_string())?;
+
+    Ok(result)
+}
+
+/// Readiness 히스토리 조회 파라미터
+#[derive(Deserialize)]
+pub struct GetReadinessHistoryParams {
+    pub profile_id: i64,
+    pub limit: Option<i64>,
+}
+
+/// Readiness Score 히스토리 조회
+#[tauri::command]
+pub fn get_readiness_history(
+    state: State<AppState>,
+    params: GetReadinessHistoryParams,
+) -> Result<Vec<crate::db::ReadinessScoreRow>, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.get_readiness_scores(params.profile_id, params.limit.unwrap_or(30))
+        .map_err(|e| e.to_string())
+}
+
+// ═══════════════════════════════════════════════════
+// Style Transition 커맨드
+// ═══════════════════════════════════════════════════
+
+/// 스타일 전환 시작 파라미터
+#[derive(Deserialize)]
+pub struct StartStyleTransitionParams {
+    pub profile_id: i64,
+    pub from_type: String,
+    pub to_type: String,
+    pub target_sens_range: String,
+}
+
+/// 스타일 전환 시작 — DB에 전환 레코드 생성
+#[tauri::command]
+pub fn start_style_transition(
+    state: State<AppState>,
+    params: StartStyleTransitionParams,
+) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+
+    // 기존 활성 전환이 있으면 완료 처리
+    if let Ok(Some(existing)) = db.get_active_style_transition(params.profile_id) {
+        // 기존 전환 완료 실패 시 새 전환 생성 차단 (데이터 무결성)
+        db.complete_style_transition(existing.id)
+            .map_err(|e| format!("기존 스타일 전환 완료 처리 실패: {}", e))?;
+    }
+
+    let id = db
+        .insert_style_transition(
+            params.profile_id,
+            &params.from_type,
+            &params.to_type,
+            &params.target_sens_range,
+        )
+        .map_err(|e| e.to_string())?;
+
+    Ok(serde_json::json!({ "transition_id": id }))
+}
+
+/// 스타일 전환 상태 조회 파라미터
+#[derive(Deserialize)]
+pub struct GetStyleTransitionParams {
+    pub profile_id: i64,
+}
+
+/// 스타일 전환 상태 조회 + 현재 DNA 대비 수렴도 평가
+#[tauri::command]
+pub fn get_style_transition_status(
+    state: State<AppState>,
+    params: GetStyleTransitionParams,
+) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+
+    let transition = db
+        .get_active_style_transition(params.profile_id)
+        .map_err(|e| e.to_string())?;
+
+    match transition {
+        Some(t) => {
+            // 현재 DNA 로드하여 수렴도 평가
+            let progress = if let Ok(Some(dna)) = db.get_latest_aim_dna(params.profile_id) {
+                Some(super::style_transition::evaluate_transition_progress(
+                    &dna,
+                    &t.to_type,
+                    &t.current_phase,
+                    0,
+                ))
+            } else {
+                None
+            };
+
+            // Phase 갱신 (진행된 경우)
+            if let Some(ref p) = progress {
+                if p.phase != t.current_phase {
+                    db.update_style_transition_phase(t.id, &p.phase).ok();
+                }
+            }
+
+            Ok(serde_json::json!({
+                "transition": t,
+                "progress": progress,
+            }))
+        }
+        None => Ok(serde_json::json!({
+            "transition": null,
+            "progress": null,
+        })),
+    }
+}
+
+/// 스타일 전환 업데이트 (수동 Phase 진행 또는 완료)
+#[derive(Deserialize)]
+pub struct UpdateStyleTransitionParams {
+    pub profile_id: i64,
+    pub action: String, // "complete" | "detect_plateau"
+}
+
+/// 스타일 전환 업데이트
+#[tauri::command]
+pub fn update_style_transition(
+    state: State<AppState>,
+    params: UpdateStyleTransitionParams,
+) -> Result<serde_json::Value, String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+
+    let transition = db
+        .get_active_style_transition(params.profile_id)
+        .map_err(|e| e.to_string())?
+        .ok_or("활성 스타일 전환이 없습니다.")?;
+
+    match params.action.as_str() {
+        "complete" => {
+            db.complete_style_transition(transition.id)
+                .map_err(|e| e.to_string())?;
+            Ok(serde_json::json!({ "status": "completed" }))
+        }
+        "detect_plateau" => {
+            db.mark_plateau_detected(transition.id)
+                .map_err(|e| e.to_string())?;
+            Ok(serde_json::json!({ "status": "plateau_marked" }))
+        }
+        _ => Err("알 수 없는 액션입니다. 'complete' 또는 'detect_plateau'를 사용하세요.".into()),
+    }
 }

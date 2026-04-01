@@ -164,7 +164,8 @@ pub fn detect_bimodal(
     }
 
     // 점수 기준 정렬 (높은 순)
-    peaks.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
+    // NaN 방어: partial_cmp 실패 시 Equal 처리
+    peaks.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
 
     // primary 표시
     if !peaks.is_empty() {

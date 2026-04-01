@@ -339,6 +339,20 @@ pub fn remove_routine_step(
     Ok(())
 }
 
+/// 루틴 스텝 순서 교환
+#[tauri::command]
+pub fn swap_routine_step_order(
+    state: State<AppState>,
+    step_id_a: i64,
+    step_id_b: i64,
+    routine_id: i64,
+) -> Result<(), String> {
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    db.swap_routine_step_order(step_id_a, step_id_b).map_err(|e| e.to_string())?;
+    db.update_routine_duration(routine_id).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 /// DB 내보내기 — DB 파일 경로 반환
 #[tauri::command]
 pub fn export_database(

@@ -1,0 +1,62 @@
+{
+  "app.title": "AimForge",
+  "app.subtitle": "FPS 에임 캘리브레이션 & 훈련",
+  "app.version": "v0.1.0",
+
+  "tab.training": "Training",
+  "tab.quickPlay": "Quick Play",
+  "tab.crosshair": "Crosshair",
+  "tab.tools": "Tools",
+
+  "nav.display": "디스플레이",
+  "nav.gameProfile": "게임 프로필",
+  "nav.routines": "루틴",
+  "nav.recoilEditor": "반동 편집기",
+  "nav.conversion": "감도 변환",
+
+  "tool.quickCal": "Quick Calibration",
+  "tool.zoomCal": "Zoom Calibration",
+  "tool.history": "히스토리",
+  "tool.prescription": "훈련 처방",
+  "tool.progressDashboard": "진행 대시보드",
+  "tool.trajectory": "궤적 분석",
+  "tool.styleTransition": "스타일 전환",
+  "tool.movementEditor": "무브먼트 에디터",
+  "tool.fovComparison": "FOV 비교",
+  "tool.hardwareCompare": "하드웨어 비교",
+  "tool.dualLandscape": "듀얼 랜드스케이프",
+
+  "common.back": "돌아가기",
+  "common.start": "시작",
+  "common.next": "다음",
+  "common.prev": "이전",
+  "common.save": "저장",
+  "common.cancel": "취소",
+  "common.delete": "삭제",
+  "common.close": "닫기",
+  "common.copy": "복사",
+  "common.export": "내보내기",
+  "common.import": "가져오기",
+
+  "settings.dpi": "DPI",
+  "settings.sensitivity": "감도",
+  "settings.game": "게임",
+
+  "onboarding.welcome": "AimForge",
+  "onboarding.welcomeDesc": "FPS 에임 캘리브레이션 & 훈련 도구에 오신 것을 환영합니다.",
+  "onboarding.getStarted": "시작하기",
+  "onboarding.mouseSetup": "마우스 설정",
+  "onboarding.mouseSetupDesc": "현재 사용 중인 마우스 DPI를 입력하세요.",
+  "onboarding.gameSelect": "주 게임 선택",
+  "onboarding.gameSelectDesc": "가장 많이 플레이하는 게임을 선택하세요.",
+  "onboarding.sensSetup": "감도 설정",
+  "onboarding.done": "준비 완료!",
+  "onboarding.uiMode": "UI 모드",
+  "onboarding.simpleDesc": "Simple: 핵심 기능만 표시 / Advanced: 모든 기능 표시",
+
+  "mode.simple": "Simple",
+  "mode.advanced": "Advanced",
+
+  "theme.light": "라이트 모드",
+  "theme.dark": "다크 모드"
+}

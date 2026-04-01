@@ -401,6 +401,48 @@ export interface AimDnaProfile {
   motor_transition_angle: number | null;
   adaptation_rate: number | null;
   type_label: string | null;
+  data_sufficiency?: Record<string, FeatureSufficiency>;
+}
+
+/** 피처별 데이터 충족 상태 */
+export interface FeatureSufficiency {
+  sufficient: boolean;
+  current_count: number;
+  required_count: number;
+}
+
+/** DNA 추세 분석 결과 */
+export interface DnaTrendResult {
+  profile_id: number;
+  recalibration_recommended: boolean;
+  changed_features: FeatureTrendChange[];
+  stable_feature_count: number;
+  sessions_analyzed: number;
+}
+
+/** 피처별 추세 변화 */
+export interface FeatureTrendChange {
+  feature: string;
+  prior_avg: number;
+  recent_avg: number;
+  change_pct: number;
+  direction: string;
+}
+
+/** 레퍼런스 게임 감지 결과 */
+export interface ReferenceGameResult {
+  reference_profile_id: number | null;
+  scores: Array<[number, number]>;
+}
+
+/** 크로스게임 비교 히스토리 요약 */
+export interface CrossGameComparisonSummary {
+  id: number;
+  profile_a_id: number;
+  profile_b_id: number;
+  overall_gap: number;
+  predicted_days: number;
+  created_at: string;
 }
 
 /** Aim DNA 히스토리 항목 */
@@ -665,17 +707,17 @@ export interface BenchmarkPreset {
 /** 피처별 델타 */
 export interface FeatureDelta {
   feature: string;
-  refValue: number;
-  targetValue: number;
-  deltaPct: number;
+  ref_value: number;
+  target_value: number;
+  delta_pct: number;
   severity: string;
 }
 
 /** 갭 원인 */
 export interface GapCause {
-  causeType: string;
+  cause_type: string;
   description: string;
-  contributingFeatures: string[];
+  contributing_features: string[];
   severity: number;
 }
 
@@ -683,28 +725,30 @@ export interface GapCause {
 export interface ImprovementPhase {
   phase: number;
   name: string;
-  durationWeeks: string;
+  duration_weeks: string;
   actions: string[];
-  targetMetrics: string[];
+  target_metrics: string[];
   scenarios: string[];
 }
 
 /** 크로스게임 비교 결과 */
 export interface CrossGameComparison {
-  refProfileId: number;
-  targetProfileId: number;
+  ref_profile_id: number;
+  target_profile_id: number;
+  reference_game_id: number;
   deltas: FeatureDelta[];
   causes: GapCause[];
-  overallGap: number;
-  improvementPlan: { phases: ImprovementPhase[] };
-  predictedDays: number;
+  overall_gap: number;
+  improvement_plan: { phases: ImprovementPhase[] };
+  predicted_days: number;
+  timeline: TimelinePrediction;
 }
 
 /** 타임라인 예측 */
 export interface TimelinePrediction {
-  totalDays: number;
-  bottleneckFeature: string;
-  perFeature: Array<{ feature: string; gapPct: number; estimatedDays: number }>;
+  total_days: number;
+  bottleneck_feature: string;
+  per_feature: Array<{ feature: string; gap_pct: number; estimated_days: number }>;
   disclaimer: string;
 }
 
@@ -817,3 +861,265 @@ export const CROSSHAIR_PRESETS: CrosshairPreset[] = [
     },
   },
 ];
+
+// ========== Training Prescription (Day 18) ==========
+
+/** 훈련 처방 항목 */
+export interface TrainingPrescription {
+  weakness: string;
+  scenario_type: string;
+  scenario_params: Record<string, unknown>;
+  priority: number;
+  estimated_min: number;
+  source_type: 'single_game' | 'cross_game';
+  description: string;
+}
+
+// ========== Game Readiness Score (Day 18) ==========
+
+/** Readiness 측정 입력 */
+export interface ReadinessInput {
+  profile_id: number;
+  flick_accuracy: number;
+  flick_avg_ttt_ms: number;
+  flick_avg_overshoot: number;
+  tracking_mad: number;
+  tracking_velocity_match: number;
+}
+
+/** Readiness 결과 */
+export interface ReadinessResult {
+  score: number;
+  baseline_delta: BaselineDelta;
+  daily_advice: string;
+  category: 'peak' | 'ready' | 'moderate' | 'rest';
+}
+
+/** Baseline 대비 변화율 */
+export interface BaselineDelta {
+  flick_accuracy_pct: number;
+  ttt_pct: number;
+  overshoot_pct: number;
+  tracking_mad_pct: number;
+  velocity_match_pct: number;
+}
+
+/** Readiness Score DB 행 */
+export interface ReadinessScoreRow {
+  id: number;
+  profile_id: number;
+  score: number;
+  baseline_delta: string;
+  daily_advice: string | null;
+  measured_at: string;
+}
+
+// ========== Trajectory Analysis (Day 18) ==========
+
+/** 클릭 벡터 — 궤적 분석 결과 */
+export interface ClickVector {
+  dx_deg: number;
+  dy_deg: number;
+  magnitude_deg: number;
+  duration_ms: number;
+  peak_velocity: number;
+  end_velocity: number;
+  overshoot: boolean;
+  motor_region: 'finger' | 'wrist' | 'arm';
+  hit: boolean;
+}
+
+/** GMM 단일 클러스터 */
+export interface GmmCluster {
+  mean: number;
+  std_dev: number;
+  weight: number;
+  sample_count: number;
+}
+
+/** GMM 2-컴포넌트 결과 */
+export interface GmmClusterResult {
+  cluster_a: GmmCluster;
+  cluster_b: GmmCluster;
+  separation_score: number;
+  bimodal_detected: boolean;
+}
+
+/** 감도 진단 */
+export interface SensDiagnosis {
+  current_behavior: 'overshoot_dominant' | 'undershoot_dominant' | 'balanced' | 'insufficient_data';
+  consistency_score: number;
+  recommended_adjustment: number;
+  confidence: number;
+  details: string;
+}
+
+/** 궤적 분석 통합 결과 */
+export interface TrajectoryAnalysisResult {
+  click_vectors: ClickVector[];
+  gmm: GmmClusterResult | null;
+  diagnosis: SensDiagnosis;
+  total_clicks: number;
+}
+
+// ========== Style Transition (Day 18) ==========
+
+/** 스타일 전환 DB 행 */
+export interface StyleTransitionRow {
+  id: number;
+  profile_id: number;
+  from_type: string;
+  to_type: string;
+  target_sens_range: string;
+  started_at: string;
+  current_phase: 'initial' | 'adaptation' | 'consolidation' | 'mastery';
+  plateau_detected: boolean;
+  completed_at: string | null;
+}
+
+/** 피처 수렴 상태 */
+export interface FeatureConvergence {
+  feature_name: string;
+  convergence_pct: number;
+  target_direction: 'up' | 'down';
+}
+
+/** 전환 진행 상태 */
+export interface TransitionProgress {
+  phase: string;
+  convergence_pct: number;
+  key_features_status: FeatureConvergence[];
+  plateau_detected: boolean;
+  estimated_days_remaining: number;
+}
+
+// ========== Progress Dashboard (Day 18) ==========
+
+/** 일별 통계 행 */
+export interface DailyStatRow {
+  id: number;
+  profile_id: number;
+  stat_date: string;
+  scenario_type: string;
+  avg_score: number;
+  max_score: number;
+  sessions_count: number;
+  total_trials: number;
+  total_time_ms: number;
+  avg_accuracy: number;
+}
+
+/** 스킬 진행도 행 */
+export interface SkillProgressRow {
+  id: number;
+  profile_id: number;
+  stage_type: string;
+  rolling_avg_score: number;
+  best_score: number;
+  total_sessions: number;
+  total_time_ms: number;
+  last_updated: string;
+}
+
+// ========== Movement System (Day 20) ==========
+
+/** 무브먼트 프리셋 — 게임별 이동 물리 파라미터 */
+export interface MovementPreset {
+  game_id: string;
+  name: string;
+  max_speed: number;
+  stop_time: number;
+  accel_type: string;
+  air_control: number;
+  cs_bonus: number;
+}
+
+/** 무브먼트 프로필 DB 행 */
+export interface MovementProfileRow {
+  id: number;
+  game_id: number;
+  name: string;
+  max_speed: number;
+  stop_time: number;
+  accel_type: string;
+  air_control: number;
+  cs_bonus: number;
+  is_custom: boolean;
+}
+
+/** 가중 감도 추천 결과 */
+export interface WeightedRecommendation {
+  static_optimal: number;
+  moving_optimal: number;
+  movement_ratio: number;
+  final_cm360: number;
+  delta_from_static: number;
+  direction: string;
+}
+
+// ========== FOV Profile (Day 20) ==========
+
+/** FOV 테스트 결과 DB 행 */
+export interface FovProfileRow {
+  id: number;
+  profile_id: number;
+  fov_tested: number;
+  scenario_type: string;
+  score: number;
+  peripheral_score: number | null;
+  center_score: number | null;
+  created_at: string;
+}
+
+/** FOV별 비교 결과 */
+export interface FovComparison {
+  fov: number;
+  avg_peripheral: number;
+  avg_center: number;
+  composite: number;
+  peripheral_delta_pct: number;
+  center_delta_pct: number;
+}
+
+/** FOV 추천 결과 */
+export interface FovRecommendation {
+  recommended_fov: number;
+  reason: string;
+  comparisons: FovComparison[];
+  baseline_fov: number;
+}
+
+// ========== Hardware Comparison (Day 20) ==========
+
+/** 하드웨어 콤보 DB 행 */
+export interface HardwareComboRow {
+  id: number;
+  mouse_model: string;
+  dpi: number;
+  verified_dpi: number | null;
+  polling_rate: number | null;
+  mousepad_model: string | null;
+  created_at: string;
+}
+
+/** DNA 피처 델타 (하드웨어 간) */
+export interface DnaFeatureDelta {
+  feature: string;
+  value_a: number;
+  value_b: number;
+  delta_pct: number;
+  status: 'improved' | 'degraded' | 'unchanged';
+}
+
+/** 하드웨어 비교 결과 */
+export interface HardwareComparison {
+  combo_a: HardwareComboRow;
+  combo_b: HardwareComboRow;
+  optimal_shift: number;
+  shift_pct: number;
+  shift_description: string;
+  dna_deltas: DnaFeatureDelta[];
+  improved_count: number;
+  degraded_count: number;
+  summary: string;
+}
