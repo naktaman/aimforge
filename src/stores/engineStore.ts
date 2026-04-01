@@ -26,6 +26,17 @@ export type AppScreen =
   | 'recoil-editor'
   | 'conversion-selector';
 
+/** 반동(리코일) 프리셋 */
+export type RecoilPreset = 'none' | 'light' | 'heavy' | 'shotgun';
+
+/** 반동 프리셋 설정값 (deg/shot) */
+export const RECOIL_PRESETS: Record<RecoilPreset, { verticalDeg: number; horizontalSpreadDeg: number; recoveryRate: number; label: string }> = {
+  none:    { verticalDeg: 0,    horizontalSpreadDeg: 0,    recoveryRate: 0,   label: 'OFF (순수 에임)' },
+  light:   { verticalDeg: 0.4,  horizontalSpreadDeg: 0.15, recoveryRate: 0.8, label: '경량 (권총/SMG)' },
+  heavy:   { verticalDeg: 0.8,  horizontalSpreadDeg: 0.3,  recoveryRate: 0.5, label: '중량 (라이플/LMG)' },
+  shotgun: { verticalDeg: 2.0,  horizontalSpreadDeg: 1.0,  recoveryRate: 0.3, label: '산탄 (샷건)' },
+};
+
 interface EngineState {
   /** 현재 화면 */
   currentScreen: AppScreen;
@@ -40,15 +51,22 @@ interface EngineState {
   /** 퍼포먼스 데이터 (1초마다 갱신) */
   perfData: PerfData | null;
 
+  /** 반동(리코일) 활성화 여부 */
+  recoilEnabled: boolean;
+  /** 반동 프리셋 */
+  recoilPreset: RecoilPreset;
+
   /** 화면 전환 */
   setScreen: (screen: AppScreen) => void;
   setEngineReady: (ready: boolean) => void;
   setPointerLocked: (locked: boolean) => void;
   setFps: (fps: number) => void;
-  /** 퍼포먼스 오버레이 토글 */
   togglePerfOverlay: () => void;
-  /** 퍼포먼스 데이터 업데이트 */
   setPerfData: (data: PerfData) => void;
+  /** 반동 토글 */
+  toggleRecoil: () => void;
+  /** 반동 프리셋 변경 */
+  setRecoilPreset: (preset: RecoilPreset) => void;
 }
 
 export const useEngineStore = create<EngineState>((set) => ({
@@ -58,6 +76,8 @@ export const useEngineStore = create<EngineState>((set) => ({
   fps: 0,
   perfOverlayVisible: false,
   perfData: null,
+  recoilEnabled: false,
+  recoilPreset: 'light',
 
   setScreen: (currentScreen) => set({ currentScreen }),
   setEngineReady: (engineReady) => set({ engineReady }),
@@ -65,4 +85,6 @@ export const useEngineStore = create<EngineState>((set) => ({
   setFps: (fps) => set({ fps }),
   togglePerfOverlay: () => set((s) => ({ perfOverlayVisible: !s.perfOverlayVisible })),
   setPerfData: (perfData) => set({ perfData }),
+  toggleRecoil: () => set((s) => ({ recoilEnabled: !s.recoilEnabled })),
+  setRecoilPreset: (recoilPreset) => set({ recoilPreset, recoilEnabled: recoilPreset !== 'none' }),
 }));

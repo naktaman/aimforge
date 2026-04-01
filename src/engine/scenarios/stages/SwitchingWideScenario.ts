@@ -183,7 +183,9 @@ export class SwitchingWideScenario extends Scenario {
     this.lastKillTime = performance.now();
     this.lastKilledPosition = null;
 
-    // 타겟 위치 — 넓게 분산
+    // 타겟 위치 — 카메라 기준 넓게 분산
+    const camera = this.engine.getCamera();
+    const cameraPos = camera.position.clone();
     const totalArc = minSep + Math.random() * (maxSep - minSep);
     const startAzimuth = Math.random() * Math.PI * 2;
 
@@ -191,11 +193,15 @@ export class SwitchingWideScenario extends Scenario {
       const azimuth = startAzimuth + (i / (targetsPerWave - 1 || 1)) * totalArc * DEG2RAD;
       const elevation = (Math.random() - 0.5) * 25 * DEG2RAD;
 
-      const x = Math.sin(azimuth) * this.distance;
-      const y = 1.6 + Math.sin(elevation) * this.distance * 0.3;
-      const z = -Math.cos(azimuth) * this.distance;
+      // 카메라 로컬 공간에서 방향 계산
+      const localDir = new THREE.Vector3(
+        Math.sin(azimuth),
+        Math.sin(elevation) * 0.3,
+        -Math.cos(azimuth),
+      ).normalize();
+      const worldDir = localDir.applyQuaternion(camera.quaternion);
+      const pos = cameraPos.clone().addScaledVector(worldDir, this.distance);
 
-      const pos = new THREE.Vector3(x, y, z);
       const target = this.targetManager.spawnTarget(
         pos.clone(),
         {

@@ -59,6 +59,53 @@ export class AudioManager {
     osc.stop(ctx.currentTime + 0.12);
   }
 
+  /** 총기 발사음 — 공격적인 클릭/팝 (단발) */
+  playGunshot(): void {
+    if (!this.enabled) return;
+    const ctx = this.ensureContext();
+
+    // 노이즈 버스트로 총기음 생성 (화이트 노이즈 + 엔벨로프)
+    const bufferSize = ctx.sampleRate * 0.08; // 80ms
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.15));
+    }
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+
+    // 로우패스 필터 — 총기 특성
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(3000, ctx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(500, ctx.currentTime + 0.06);
+
+    // 베이스 펀치 (저주파 충격감)
+    const bass = ctx.createOscillator();
+    bass.type = 'sine';
+    bass.frequency.setValueAtTime(80, ctx.currentTime);
+    bass.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 0.05);
+    const bassGain = ctx.createGain();
+    bassGain.gain.setValueAtTime(0.5, ctx.currentTime);
+    bassGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
+
+    // 메인 게인
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.35, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+
+    noise.connect(filter);
+    filter.connect(gain);
+    bass.connect(bassGain);
+    bassGain.connect(ctx.destination);
+    gain.connect(ctx.destination);
+
+    noise.start(ctx.currentTime);
+    bass.start(ctx.currentTime);
+    bass.stop(ctx.currentTime + 0.06);
+  }
+
   /** 타겟 출현 사운드 — subtle click/pop */
   playSpawn(): void {
     if (!this.enabled) return;

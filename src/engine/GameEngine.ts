@@ -62,6 +62,13 @@ export class GameEngine {
   // === 콜백 ===
   private onFpsUpdate: ((fps: number) => void) | null = null;
   private onPointerLockStateChange: ((locked: boolean) => void) | null = null;
+  private onShoot: ((hit: boolean) => void) | null = null;
+
+  // === 반동(리코일) ===
+  private recoilVerticalDeg = 0;
+  private recoilHorizontalSpreadDeg = 0;
+  private recoilRecoveryRate = 0;
+  private recoilAccumulated = 0; // 누적 반동 (recovery용)
 
   // === 퍼포먼스 측정 (Phase 5) ===
   private frameTimeMs = 0;
@@ -248,6 +255,38 @@ export class GameEngine {
     this.onPointerLockStateChange = cb;
   }
 
+  /** 사격 이벤트 콜백 (hit 여부 전달) */
+  setOnShoot(cb: (hit: boolean) => void): void {
+    this.onShoot = cb;
+  }
+
+  /** 반동 파라미터 설정 */
+  setRecoil(verticalDeg: number, horizontalSpreadDeg: number, recoveryRate: number): void {
+    this.recoilVerticalDeg = verticalDeg;
+    this.recoilHorizontalSpreadDeg = horizontalSpreadDeg;
+    this.recoilRecoveryRate = recoveryRate;
+    this.recoilAccumulated = 0;
+  }
+
+  /** 반동 적용 — 카메라를 위로 밀어올림 + 좌우 랜덤 흔들림 */
+  private applyRecoil(): void {
+    if (this.recoilVerticalDeg <= 0) return;
+    const vDeg = this.recoilVerticalDeg * (0.8 + Math.random() * 0.4);
+    const hDeg = (Math.random() - 0.5) * 2 * this.recoilHorizontalSpreadDeg;
+    this.pitch += vDeg * DEG2RAD;
+    this.yaw += hDeg * DEG2RAD;
+    this.recoilAccumulated += vDeg;
+
+    // pitch clamp
+    const maxPitch = 89 * DEG2RAD;
+    this.pitch = Math.max(-maxPitch, Math.min(maxPitch, this.pitch));
+
+    // quaternion 갱신
+    const qYaw = new THREE.Quaternion().setFromAxisAngle(UP, this.yaw);
+    const qPitch = new THREE.Quaternion().setFromAxisAngle(RIGHT, this.pitch);
+    this.camera.quaternion.copy(qYaw).multiply(qPitch);
+  }
+
   /** 리소스 정리 — 모든 Three.js 리소스 명시적 해제 */
   dispose(): void {
     this.stop();
@@ -351,7 +390,15 @@ export class GameEngine {
         if (batch.button_events.length > 0 && this.activeScenario) {
           for (const evt of batch.button_events) {
             if (evt.button === 'Left') {
+              // 히트 판정 전 시나리오에 클릭 전달
+              const hitBefore = this.targetManager
+                ? this.targetManager.checkHit(this.camera.position, this.getCameraForward())
+                : null;
               this.activeScenario.onClick();
+              // 사격 피드백 콜백
+              this.onShoot?.(hitBefore?.hit ?? false);
+              // 반동 적용
+              this.applyRecoil();
             }
           }
         }
@@ -363,6 +410,18 @@ export class GameEngine {
       }
       // 다음 프레임용 배치를 비동기로 가져옴 (렌더 블로킹 없음)
       this.prefetchMouseBatch();
+    }
+
+    // 반동 자연 회복 (recoilRecoveryRate > 0이면 점진적으로 원위치)
+    if (this.recoilAccumulated > 0 && this.recoilRecoveryRate > 0) {
+      const recoveryDeg = this.recoilAccumulated * this.recoilRecoveryRate * deltaTime;
+      this.pitch -= recoveryDeg * DEG2RAD;
+      this.recoilAccumulated = Math.max(0, this.recoilAccumulated - recoveryDeg);
+      const maxPitch = 89 * DEG2RAD;
+      this.pitch = Math.max(-maxPitch, Math.min(maxPitch, this.pitch));
+      const qYaw = new THREE.Quaternion().setFromAxisAngle(UP, this.yaw);
+      const qPitch = new THREE.Quaternion().setFromAxisAngle(RIGHT, this.pitch);
+      this.camera.quaternion.copy(qYaw).multiply(qPitch);
     }
 
     // 시나리오 업데이트
