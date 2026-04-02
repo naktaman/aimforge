@@ -14,10 +14,11 @@ import { AimDnaSensitivitySelector } from './AimDnaSensitivitySelector';
 import { AimDnaGripGuide } from './AimDnaGripGuide';
 import { AimDnaPostureGuide } from './AimDnaPostureGuide';
 import { AimDnaInsights } from './AimDnaInsights';
+import { AimDnaHistory } from './AimDnaHistory';
 import type { GearSelection } from './AimDnaSensitivitySelector';
 
 /** 탭 목록 */
-type DnaTab = 'overview' | 'gear' | 'grip' | 'posture' | 'insights';
+type DnaTab = 'overview' | 'gear' | 'grip' | 'posture' | 'insights' | 'history';
 
 interface Props {
   onBack: () => void;
@@ -208,6 +209,7 @@ export function AimDnaResult({ onBack }: Props) {
             { id: 'grip',      label: '그립 가이드' },
             { id: 'posture',   label: '자세 가이드' },
             { id: 'insights',  label: '인사이트' },
+            { id: 'history',   label: '히스토리' },
           ] as { id: DnaTab; label: string }[]).map(t => (
             <button
               key={t.id}
@@ -325,6 +327,11 @@ export function AimDnaResult({ onBack }: Props) {
         {/* 인사이트 탭 */}
         {tab === 'insights' && (
           <AimDnaInsights dna={currentDna} gear={gear} />
+        )}
+
+        {/* 히스토리 탭 */}
+        {tab === 'history' && (
+          <AimDnaHistory profileId={currentDna.profile_id} />
         )}
 
         {/* 하단 공통 액션 */}

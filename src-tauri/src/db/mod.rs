@@ -452,6 +452,104 @@ impl Database {
         rows.collect()
     }
 
+    // ── DNA 스냅샷 + 변경점 이벤트 ──
+
+    /// DNA 스냅샷 저장 — 매 DNA 측정마다 5축 점수 보존
+    pub fn insert_dna_snapshot(
+        &self,
+        profile_id: i64,
+        aim_dna_id: i64,
+        flick_power: f64,
+        tracking_precision: f64,
+        motor_control: f64,
+        speed: f64,
+        consistency: f64,
+        type_label: Option<&str>,
+        cm360: Option<f64>,
+    ) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO aim_dna_snapshots \
+             (profile_id, aim_dna_id, flick_power, tracking_precision, motor_control, speed, consistency, type_label, cm360_sensitivity) \
+             VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)",
+            rusqlite::params![profile_id, aim_dna_id, flick_power, tracking_precision, motor_control, speed, consistency, type_label, cm360],
+        )?;
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    /// DNA 스냅샷 목록 조회 — 최근 N회 (오래된 순 정렬)
+    pub fn get_dna_snapshots(
+        &self,
+        profile_id: i64,
+        limit: i64,
+    ) -> Result<Vec<crate::aim_dna::commands::DnaSnapshot>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, profile_id, aim_dna_id, flick_power, tracking_precision, motor_control, speed, consistency, type_label, cm360_sensitivity, measured_at \
+             FROM aim_dna_snapshots WHERE profile_id = ?1 \
+             ORDER BY measured_at DESC LIMIT ?2"
+        )?;
+        let rows = stmt.query_map(rusqlite::params![profile_id, limit], |row| {
+            Ok(crate::aim_dna::commands::DnaSnapshot {
+                id: row.get(0)?,
+                profile_id: row.get(1)?,
+                aim_dna_id: row.get(2)?,
+                flick_power: row.get(3)?,
+                tracking_precision: row.get(4)?,
+                motor_control: row.get(5)?,
+                speed: row.get(6)?,
+                consistency: row.get(7)?,
+                type_label: row.get(8)?,
+                cm360_sensitivity: row.get(9)?,
+                measured_at: row.get(10)?,
+            })
+        })?;
+        let mut snapshots: Vec<_> = rows.collect::<Result<Vec<_>>>()?;
+        // 오래된 순으로 정렬 (차트 시계열용)
+        snapshots.reverse();
+        Ok(snapshots)
+    }
+
+    /// 변경점 이벤트 저장 — 기어/감도/그립/자세 변경 시
+    pub fn insert_change_event(
+        &self,
+        profile_id: i64,
+        change_type: &str,
+        before_value: Option<&str>,
+        after_value: &str,
+        description: &str,
+    ) -> Result<i64> {
+        self.conn.execute(
+            "INSERT INTO aim_dna_change_events (profile_id, change_type, before_value, after_value, description) \
+             VALUES (?1,?2,?3,?4,?5)",
+            rusqlite::params![profile_id, change_type, before_value, after_value, description],
+        )?;
+        Ok(self.conn.last_insert_rowid())
+    }
+
+    /// 변경점 이벤트 목록 조회 — 최근 N회
+    pub fn get_change_events(
+        &self,
+        profile_id: i64,
+        limit: i64,
+    ) -> Result<Vec<crate::aim_dna::commands::DnaChangeEvent>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id, profile_id, change_type, before_value, after_value, description, occurred_at \
+             FROM aim_dna_change_events WHERE profile_id = ?1 \
+             ORDER BY occurred_at DESC LIMIT ?2"
+        )?;
+        let rows = stmt.query_map(rusqlite::params![profile_id, limit], |row| {
+            Ok(crate::aim_dna::commands::DnaChangeEvent {
+                id: row.get(0)?,
+                profile_id: row.get(1)?,
+                change_type: row.get(2)?,
+                before_value: row.get(3)?,
+                after_value: row.get(4)?,
+                description: row.get(5)?,
+                occurred_at: row.get(6)?,
+            })
+        })?;
+        rows.collect()
+    }
+
     // ── 레퍼런스 게임 + 크로스게임 헬퍼 ──
 
     /// 레퍼런스 게임 설정 — 기존 해제 후 새 프로파일에 설정
@@ -2315,8 +2413,38 @@ CREATE TABLE IF NOT EXISTS routine_steps (
     UNIQUE(routine_id, step_order)
 );
 
+-- DNA 시계열 스냅샷 — 매 DNA 측정마다 5축 점수 저장
+CREATE TABLE IF NOT EXISTS aim_dna_snapshots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_id INTEGER NOT NULL REFERENCES profiles(id),
+    aim_dna_id INTEGER NOT NULL REFERENCES aim_dna(id),
+    -- 5축 레이더 점수 (0~100 정규화)
+    flick_power REAL NOT NULL DEFAULT 0,
+    tracking_precision REAL NOT NULL DEFAULT 0,
+    motor_control REAL NOT NULL DEFAULT 0,
+    speed REAL NOT NULL DEFAULT 0,
+    consistency REAL NOT NULL DEFAULT 0,
+    -- 측정 당시 컨텍스트
+    type_label TEXT,
+    cm360_sensitivity REAL,
+    measured_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- DNA 타임라인 변경점 이벤트 — 기어/감도/그립/자세 변경 마킹
+CREATE TABLE IF NOT EXISTS aim_dna_change_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    profile_id INTEGER NOT NULL REFERENCES profiles(id),
+    change_type TEXT NOT NULL, -- 'gear' | 'sensitivity' | 'grip' | 'posture'
+    before_value TEXT,         -- 변경 전 값 (JSON 문자열)
+    after_value TEXT NOT NULL, -- 변경 후 값 (JSON 문자열)
+    description TEXT NOT NULL DEFAULT '',
+    occurred_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- 빠른 조회 인덱스
 CREATE INDEX IF NOT EXISTS idx_stage_results_profile_type ON stage_results(profile_id, stage_type, created_at);
 CREATE INDEX IF NOT EXISTS idx_sessions_profile_started ON sessions(profile_id, started_at);
 CREATE INDEX IF NOT EXISTS idx_trials_session ON trials(session_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_dna_snapshots_profile ON aim_dna_snapshots(profile_id, measured_at);
+CREATE INDEX IF NOT EXISTS idx_change_events_profile ON aim_dna_change_events(profile_id, occurred_at);
 "#;

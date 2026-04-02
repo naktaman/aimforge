@@ -745,6 +745,51 @@ pub fn detect_reference_game(
     ReferenceGameResult { reference_profile_id, scores }
 }
 
+// ── 레이더 5축 점수 계산 (스냅샷 저장용) ─────────────────────────────────────
+
+/// 5축 레이더 점수 — TypeScript radarUtils.ts 와 동일한 공식
+pub struct RadarAxes {
+    pub flick_power: f64,
+    pub tracking_precision: f64,
+    pub motor_control: f64,
+    pub speed: f64,
+    pub consistency: f64,
+}
+
+/// AimDnaProfile → 5축 레이더 점수 (0~100 정규화)
+/// TypeScript computeRadarAxes()와 동일 로직 — 두 환경에서 일관성 유지
+pub fn compute_radar_axes(dna: &AimDnaProfile) -> RadarAxes {
+    // Flick Power: peak_velocity(0~2000°/s) + effective_range(0~180°) 평균
+    let vel_norm = (dna.flick_peak_velocity.unwrap_or(0.0) / 2000.0 * 100.0).min(100.0);
+    let range_norm = (dna.effective_range.unwrap_or(0.0) / 180.0 * 100.0).min(100.0);
+    let flick_power = (vel_norm + range_norm) / 2.0;
+
+    // Tracking Precision: MAD 역수 + velocity_match
+    let mad_norm = (100.0 - dna.tracking_mad.unwrap_or(0.3) * 333.0).max(0.0);
+    let vm_norm = dna.velocity_match.unwrap_or(0.0) * 100.0;
+    let tracking_precision = (mad_norm + vm_norm) / 2.0;
+
+    // Motor Control: 3영역 정확도 평균 + wrist_arm_ratio 균형 보너스
+    let f_acc = dna.finger_accuracy.unwrap_or(0.0) * 100.0;
+    let w_acc = dna.wrist_accuracy.unwrap_or(0.0) * 100.0;
+    let a_acc = dna.arm_accuracy.unwrap_or(0.0) * 100.0;
+    let avg_acc = (f_acc + w_acc + a_acc) / 3.0;
+    let balance_bonus = (1.0 - (dna.wrist_arm_ratio.unwrap_or(0.5) - 0.5).abs() * 2.0) * 20.0;
+    let motor_control = (avg_acc + balance_bonus).min(100.0);
+
+    // Speed: fitts_b 역수 (낮을수록 빠름)
+    let fitts_b = dna.fitts_b.unwrap_or(200.0);
+    let speed = ((300.0 - fitts_b) / 250.0 * 100.0).max(0.0).min(100.0);
+
+    // Consistency: direction_bias 역수 + v_h_ratio→1 근접도 + fatigue 역수
+    let bias_norm = (1.0 - dna.direction_bias.unwrap_or(0.0)) * 100.0;
+    let vh_norm = (100.0 - (dna.v_h_ratio.unwrap_or(1.0) - 1.0).abs() * 100.0).max(0.0);
+    let fatigue_norm = (100.0 - dna.fatigue_decay.unwrap_or(0.0).abs() * 200.0).max(0.0);
+    let consistency = (bias_norm + vh_norm + fatigue_norm) / 3.0;
+
+    RadarAxes { flick_power, tracking_precision, motor_control, speed, consistency }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,6 +1,6 @@
 # AimForge 구현 진행 현황
 
-> 마지막 업데이트: 2026-04-02 (v1 피드백 이후 기능 확장 완료)
+> 마지막 업데이트: 2026-04-02 (DNA 히스토리 + 히트박스 3구역 통합)
 
 ---
 
@@ -152,6 +152,23 @@
 - 수정 파일: aim_dna/mod.rs, db/mod.rs, training/style_transition.rs, types.ts, AimDnaResult.tsx, HardwareCompare.tsx
 - `calibration::ScreeningData::adaptation_rate`, `crossgame::adaptation_rate`는 다른 컨텍스트로 유지
 
+### 히트박스 3구역 확장 ✅ (2026-04-02) [claude/sweet-cartwright → master]
+- `HumanoidTarget.ts`: 히트존 2구역(head/body) → 3구역(head/upper_body/lower_body)
+- `TargetManager.ts`: HumanoidTarget 생성 로직 3구역 반영
+- `FlickScenario.ts`, `CounterStrafeFlickScenario.ts`: 3구역 히트 판정 업데이트
+- `types.ts`: HitZone 타입 확장
+
+### DNA 히스토리 + 전후 비교 시스템 ✅ (2026-04-02)
+- **Rust DB**: `aim_dna_snapshots` 테이블 — 매 DNA 측정마다 5축 점수 자동 저장
+- **Rust DB**: `aim_dna_change_events` 테이블 — 기어/감도/그립/자세 변경점 태깅
+- **Rust 헬퍼**: `compute_radar_axes()` — TS `radarUtils.ts`와 동일 공식 (Rust/TS 일관성)
+- **compute_aim_dna_cmd 자동화**: 배터리 완료 → 스냅샷 자동 저장
+- **IPC 5개**: `get_dna_snapshots_cmd`, `save_change_event_cmd`, `get_change_events_cmd`, `compare_snapshots_cmd`, `detect_stagnation_cmd`
+- **types.ts**: `DnaSnapshot`, `DnaChangeEvent`, `AxisDelta`, `SnapshotComparison`, `StagnationResult` 타입 추가
+- **aimDnaStore.ts**: `snapshots/changeEvents/comparison/stagnation` 상태 + 5개 액션 추가
+- **AimDnaHistory.tsx**: 타임라인 D3 라인차트 + 변경점 수직 마커 + 스냅샷 비교 + 레이더 오버레이 + 정체기 배너
+- **AimDnaResult.tsx**: `history` 탭 추가 (총 6탭)
+
 ### 기어 DB + 그립/자세 가이드 + 인사이트 엔진 ✅ (2026-04-02)
 - `src/data/gearDatabase.json`: 마우스 51개 / 마우스패드 35개 실데이터
 - `AimDnaSensitivitySelector.tsx`: 자동완성 검색 기어 선택기 (gearDatabase.json 연동)
@@ -174,3 +191,5 @@
 | npm build | 성공 (1,347 kB) |
 | CSS | 95 kB |
 | 타입 에러 | 0 |
+
+> 빌드 시점: 2026-04-02 (DNA 히스토리 + 히트박스 3구역 통합 후)

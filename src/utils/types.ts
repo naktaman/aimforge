@@ -1131,3 +1131,57 @@ export interface HardwareComparison {
   degraded_count: number;
   summary: string;
 }
+
+// ========== DNA 히스토리 / 변경점 이벤트 ==========
+
+/** DNA 시계열 스냅샷 — 매 측정마다 5축 레이더 점수 저장 */
+export interface DnaSnapshot {
+  id: number;
+  profile_id: number;
+  aim_dna_id: number;
+  flick_power: number;
+  tracking_precision: number;
+  motor_control: number;
+  speed: number;
+  consistency: number;
+  type_label: string | null;
+  cm360_sensitivity: number | null;
+  measured_at: string;
+}
+
+/** 변경점 이벤트 — 기어/감도/그립/자세 변경 시 기록 */
+export interface DnaChangeEvent {
+  id: number;
+  profile_id: number;
+  change_type: 'gear' | 'sensitivity' | 'grip' | 'posture';
+  before_value: string | null;
+  after_value: string;
+  description: string;
+  occurred_at: string;
+}
+
+/** 단일 축 변화 */
+export interface AxisDelta {
+  axis: string;
+  before_val: number;
+  after_val: number;
+  delta_abs: number;
+  delta_pct: number;
+  direction: 'improved' | 'degraded' | 'stable';
+}
+
+/** 두 스냅샷 비교 결과 */
+export interface SnapshotComparison {
+  before: DnaSnapshot;
+  after: DnaSnapshot;
+  deltas: AxisDelta[];
+  insights: string[];
+}
+
+/** 정체기 감지 결과 */
+export interface StagnationResult {
+  profile_id: number;
+  stagnant_axes: string[];
+  is_stagnant: boolean;
+  suggestions: string[];
+}

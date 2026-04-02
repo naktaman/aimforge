@@ -115,6 +115,12 @@ pub fn run() {
             aim_dna::commands::get_session_detail,
             aim_dna::commands::get_dna_trend_cmd,
             aim_dna::commands::detect_reference_game_cmd,
+            // DNA 히스토리 + 변경점 이벤트
+            aim_dna::commands::get_dna_snapshots_cmd,
+            aim_dna::commands::save_change_event_cmd,
+            aim_dna::commands::get_change_events_cmd,
+            aim_dna::commands::compare_snapshots_cmd,
+            aim_dna::commands::detect_stagnation_cmd,
             training::commands::generate_training_prescriptions,
             training::commands::get_stage_recommendations,
             training::commands::get_benchmark_preset_list,
