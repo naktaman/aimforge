@@ -257,13 +257,29 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  animation: hitmarker-anim 0.25s ease-out forwards;
 }
 
-@keyframes hitmarker-anim {
-  0% { opacity: 1; transform: translate(-50%, -50%) scale(0.7); }
-  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+/* 바디 히트: 흰색, 표준 크기 */
+.hitmarker-body {
+  animation: hitmarker-body-anim 0.133s ease-out forwards;
+}
+
+@keyframes hitmarker-body-anim {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+  40% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* 헤드샷 히트: 빨간색, 더 큰 확장폭 + 밝은 glow */
+.hitmarker-headshot {
+  animation: hitmarker-headshot-anim 0.133s ease-out forwards;
+  filter: drop-shadow(0 0 4px rgba(255, 68, 68, 0.8));
+}
+
+@keyframes hitmarker-headshot-anim {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+  35% { opacity: 1; transform: translate(-50%, -50%) scale(1.5); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
 }
 
 /* 미스 마커 — 작은 원 */
@@ -278,6 +294,104 @@ body {
 @keyframes miss-anim {
   0% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.5); }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(1.3); }
+}
+
+/* === 스코어 팝업 === */
+.score-popup-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  z-index: 31;
+}
+
+.score-popup {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-weight: 800;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+  animation: score-float 0.6s ease-out forwards;
+  white-space: nowrap;
+}
+
+.score-popup-body {
+  font-size: 16px;
+  color: #ffffff;
+}
+
+.score-popup-headshot {
+  font-size: 20px;
+  color: #FF4444;
+  filter: drop-shadow(0 0 6px rgba(255, 68, 68, 0.6));
+}
+
+@keyframes score-float {
+  0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-30px); }
+}
+
+/* === 콤보 카운터 === */
+.combo-overlay {
+  position: fixed;
+  top: 35%;
+  right: 40px;
+  pointer-events: none;
+  z-index: 31;
+}
+
+.combo-counter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  animation: combo-pulse 0.15s ease-out;
+}
+
+.combo-number {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 36px;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  line-height: 1;
+}
+
+.combo-label {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* ON FIRE 상태 — 콤보 5+ */
+.combo-on-fire .combo-number {
+  color: #FF6B35;
+  text-shadow: 0 0 12px rgba(255, 107, 53, 0.8), 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+.combo-fire-text {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  color: #FF4444;
+  letter-spacing: 3px;
+  text-shadow: 0 0 8px rgba(255, 68, 68, 0.6);
+  animation: fire-glow 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes combo-pulse {
+  0% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+@keyframes fire-glow {
+  0% { opacity: 0.8; }
+  100% { opacity: 1; text-shadow: 0 0 14px rgba(255, 68, 68, 0.9); }
 }
 
 /* === 반동 설정 === */
