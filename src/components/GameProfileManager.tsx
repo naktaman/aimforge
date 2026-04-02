@@ -3,6 +3,7 @@
  */
 import { useEffect, useState, useCallback } from 'react';
 import { useGameProfileStore, type GameProfile } from '../stores/gameProfileStore';
+import { useTranslation } from '../i18n';
 
 interface GameProfileManagerProps {
   onBack: () => void;
@@ -13,6 +14,7 @@ const EMPTY_FORM = { gameName: '', dpi: 800, sensitivity: 1.0, fov: 103, scopeMu
 
 export function GameProfileManager({ onBack }: GameProfileManagerProps) {
   const { profiles, loading, loadProfiles, createProfile, updateProfile, deleteProfile, setActive } = useGameProfileStore();
+  const { t } = useTranslation();
   const [editing, setEditing] = useState<number | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
   const [showForm, setShowForm] = useState(false);
@@ -59,49 +61,49 @@ export function GameProfileManager({ onBack }: GameProfileManagerProps) {
   return (
     <div className="game-profiles">
       <div className="section-header">
-        <h2>게임 프로필</h2>
+        <h2>{t('profile.title')}</h2>
         <div>
-          <button className="btn-primary btn-sm" onClick={handleNew}>+ 새 프로필</button>
-          <button className="btn-secondary btn-sm" onClick={onBack} style={{ marginLeft: 8 }}>돌아가기</button>
+          <button className="btn-primary btn-sm" onClick={handleNew}>+ {t('profile.addNew')}</button>
+          <button className="btn-secondary btn-sm" onClick={onBack} style={{ marginLeft: 8 }}>{t('common.back')}</button>
         </div>
       </div>
 
-      {loading && <p className="text-secondary">로딩 중...</p>}
+      {loading && <p className="text-secondary">{t('common.loading')}</p>}
 
       {/* 프로필 목록 */}
       <div className="profile-list">
         {profiles.map(p => (
           <div key={p.id} className={`profile-card ${p.isActive ? 'active' : ''}`}>
             <div className="profile-info">
-              <h3>{p.gameName} {p.isActive && <span className="badge-active">활성</span>}</h3>
+              <h3>{p.gameName} {p.isActive && <span className="badge-active">Active</span>}</h3>
               <div className="profile-stats">
                 <span>DPI: {p.dpi}</span>
-                <span>감도: {p.sensitivity}</span>
+                <span>{t('settings.sensitivity')}: {p.sensitivity}</span>
                 <span>FOV: {p.fov}</span>
-                <span>스코프 배율: {p.scopeMultiplier}x</span>
+                <span>Scope: {p.scopeMultiplier}x</span>
               </div>
             </div>
             <div className="profile-actions">
               {!p.isActive && (
-                <button className="btn-sm btn-primary" onClick={() => setActive(p.id)}>활성화</button>
+                <button className="btn-sm btn-primary" onClick={() => setActive(p.id)}>{t('common.apply')}</button>
               )}
-              <button className="btn-sm btn-secondary" onClick={() => handleEdit(p)}>수정</button>
-              <button className="btn-sm btn-danger" onClick={() => handleDelete(p.id)}>삭제</button>
+              <button className="btn-sm btn-secondary" onClick={() => handleEdit(p)}>{t('profile.editProfile')}</button>
+              <button className="btn-sm btn-danger" onClick={() => handleDelete(p.id)}>{t('common.delete')}</button>
             </div>
           </div>
         ))}
         {profiles.length === 0 && !loading && (
-          <p className="text-secondary">등록된 프로필이 없습니다. 새 프로필을 추가하세요.</p>
+          <p className="text-secondary">{t('profile.noProfiles')}</p>
         )}
       </div>
 
       {/* 생성/수정 폼 */}
       {showForm && (
         <div className="profile-form">
-          <h3>{editing !== null ? '프로필 수정' : '새 프로필'}</h3>
+          <h3>{editing !== null ? t('profile.editProfile') : t('profile.addNew')}</h3>
           <div className="form-grid">
             <label>
-              게임 이름
+              {t('settings.game')}
               <input
                 type="text"
                 value={form.gameName}
@@ -118,7 +120,7 @@ export function GameProfileManager({ onBack }: GameProfileManagerProps) {
               />
             </label>
             <label>
-              감도
+              {t('settings.sensitivity')}
               <input
                 type="number"
                 step="0.01"
@@ -136,7 +138,7 @@ export function GameProfileManager({ onBack }: GameProfileManagerProps) {
               />
             </label>
             <label>
-              스코프 감도 배율
+              Scope Multiplier
               <input
                 type="number"
                 step="0.01"
@@ -146,8 +148,8 @@ export function GameProfileManager({ onBack }: GameProfileManagerProps) {
             </label>
           </div>
           <div className="form-actions">
-            <button className="btn-primary" onClick={handleSave}>저장</button>
-            <button className="btn-secondary" onClick={() => setShowForm(false)}>취소</button>
+            <button className="btn-primary" onClick={handleSave}>{t('common.save')}</button>
+            <button className="btn-secondary" onClick={() => setShowForm(false)}>{t('common.cancel')}</button>
           </div>
         </div>
       )}

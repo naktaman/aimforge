@@ -2,6 +2,7 @@
  * 변환 방식 비교 결과 화면
  * 6가지 방식 비교 테이블 + AI 추천 배지 + 효과 크기
  */
+import { useTranslation } from '../i18n';
 import type { ComparatorResult as ComparatorResultType } from '../stores/zoomCalibrationStore';
 
 interface ComparatorResultProps {
@@ -10,13 +11,13 @@ interface ComparatorResultProps {
   onSave?: () => void;
 }
 
-/** 효과 크기 해석 */
-function effectSizeLabel(d: number | null): string {
-  if (d === null) return '-';
-  if (d < 0.2) return '무시';
-  if (d < 0.5) return '소';
-  if (d < 0.8) return '중';
-  return '대';
+/** 효과 크기 해석 — i18n 키 반환 */
+function effectSizeLabelKey(d: number | null): string {
+  if (d === null) return '';
+  if (d < 0.2) return 'comparator.effectIgnore';
+  if (d < 0.5) return 'comparator.effectSmall';
+  if (d < 0.8) return 'comparator.effectMedium';
+  return 'comparator.effectLarge';
 }
 
 /** p-value 유의성 표시 */
@@ -28,22 +29,31 @@ function significanceMarker(p: number | null): string {
 }
 
 export function ComparatorResult({ result, onBack, onSave }: ComparatorResultProps) {
+  const { t } = useTranslation();
+
+  /** 효과 크기 텍스트 변환 */
+  const effectSizeLabel = (d: number | null): string => {
+    if (d === null) return '-';
+    const key = effectSizeLabelKey(d);
+    return key ? t(key) : '-';
+  };
+
   return (
     <div className="comparator-result">
-      <h2>변환 방식 비교 결과</h2>
+      <h2>{t('comparator.title')}</h2>
       <p className="summary">{result.summary}</p>
 
       {/* 결과 테이블 */}
       <table className="comparator-table">
         <thead>
           <tr>
-            <th>순위</th>
-            <th>방식</th>
+            <th>#</th>
+            <th>Method</th>
             <th>Steady</th>
             <th>Correction</th>
             <th>Zoomout</th>
-            <th>합성</th>
-            <th>효과 크기</th>
+            <th>Composite</th>
+            <th>Effect Size</th>
             <th>p-value</th>
           </tr>
         </thead>
@@ -62,7 +72,7 @@ export function ComparatorResult({ result, onBack, onSave }: ComparatorResultPro
                 {ms.compositeMean.toFixed(1)}
                 <span className="std"> ±{ms.compositeStd.toFixed(1)}</span>
               </td>
-              <td className={`effect-size ${effectSizeLabel(ms.effectSize)}`}>
+              <td className={`effect-size ${effectSizeLabelKey(ms.effectSize)}`}>
                 {ms.effectSize !== null ? ms.effectSize.toFixed(2) : '-'}
                 <span className="effect-label"> ({effectSizeLabel(ms.effectSize)})</span>
               </td>
@@ -77,7 +87,7 @@ export function ComparatorResult({ result, onBack, onSave }: ComparatorResultPro
 
       {/* 범례 */}
       <div className="comparator-legend">
-        <span>★ AI 추천</span>
+        <span>★ AI {t('conv.recommended')}</span>
         <span>* p &lt; 0.05</span>
         <span>** p &lt; 0.01</span>
       </div>
@@ -85,11 +95,11 @@ export function ComparatorResult({ result, onBack, onSave }: ComparatorResultPro
       {/* 버튼 */}
       <div className="comparator-actions">
         <button className="btn-secondary" onClick={onBack}>
-          돌아가기
+          {t('common.back')}
         </button>
         {onSave && (
           <button className="btn-primary" onClick={onSave}>
-            결과 저장
+            {t('comparator.saveResult')}
           </button>
         )}
       </div>

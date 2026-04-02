@@ -6,6 +6,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
+import { useTranslation } from '../i18n';
 import { useAimDnaStore } from '../stores/aimDnaStore';
 import { useEngineStore } from '../stores/engineStore';
 import { computeRadarAxes } from '../utils/radarUtils';
@@ -24,20 +25,20 @@ interface Props {
   onBack: () => void;
 }
 
-/** type_label 한글 설명 */
-const TYPE_DESCRIPTIONS: Record<string, string> = {
-  'wrist-flicker': '손목 중심 플릭 — 빠른 반응, 근거리 정확도 높음',
-  'arm-tracker': '팔 중심 트래커 — 넓은 범위 추적에 강함',
-  'precision': '정밀형 — 사전 조준 후 클릭, 오버슈트 최소',
-  'reactive': '반응형 — 빠른 사격, Pre-Fire 비율 높음',
-  'hybrid': '하이브리드 — 균형 잡힌 멀티 스타일',
+/** type_label i18n 키 매핑 */
+const TYPE_DESC_KEYS: Record<string, string> = {
+  'wrist-flicker': 'dna.typeDesc.wrist-flicker',
+  'arm-tracker': 'dna.typeDesc.arm-tracker',
+  'precision': 'dna.typeDesc.precision',
+  'reactive': 'dna.typeDesc.reactive',
+  'hybrid': 'dna.typeDesc.hybrid',
 };
 
-/** 추세 방향 한글 */
-const DIRECTION_LABELS: Record<string, string> = {
-  improved: '개선',
-  degraded: '하락',
-  stable: '안정',
+/** 추세 방향 i18n 키 매핑 */
+const DIRECTION_KEYS: Record<string, string> = {
+  improved: 'dna.improved',
+  degraded: 'dna.degraded',
+  stable: 'dna.stable',
 };
 
 /** D3 레이더 차트 */
@@ -133,9 +134,10 @@ function RadarChart({ axes }: { axes: RadarAxis[] }) {
 }
 
 /** 상세 피처 카드 — 데이터 부족 표시 포함 */
-function FeatureCard({ title, items }: {
+function FeatureCard({ title, items, dataMissingLabel }: {
   title: string;
   items: { label: string; value: string; sufficiency?: FeatureSufficiency }[];
+  dataMissingLabel: string;
 }) {
   return (
     <div className="feature-card">
@@ -148,7 +150,7 @@ function FeatureCard({ title, items }: {
               <span className="feature-label">{label}</span>
               <span className="feature-value">
                 {insufficient
-                  ? `데이터 부족 (${sufficiency!.currentCount}/${sufficiency!.requiredCount})`
+                  ? `${dataMissingLabel} (${sufficiency!.currentCount}/${sufficiency!.requiredCount})`
                   : value}
               </span>
             </div>
@@ -170,6 +172,7 @@ const getSuff = (dna: AimDnaProfile, key: string): FeatureSufficiency | undefine
   dna.dataSufficiency?.[key];
 
 export function AimDnaResult({ onBack }: Props) {
+  const { t } = useTranslation();
   const { currentDna, trend, loadTrend } = useAimDnaStore();
   const { setScreen } = useEngineStore();
 
@@ -188,8 +191,8 @@ export function AimDnaResult({ onBack }: Props) {
   if (!currentDna) {
     return (
       <main className="app-main">
-        <p>Aim DNA 데이터 없음</p>
-        <button className="btn-secondary" onClick={onBack}>돌아가기</button>
+        <p>{t('dna.noData')}</p>
+        <button className="btn-secondary" onClick={onBack}>{t('common.back')}</button>
       </main>
     );
   }
@@ -204,19 +207,19 @@ export function AimDnaResult({ onBack }: Props) {
         {/* 탭 네비게이션 */}
         <div className="dna-tabs">
           {([
-            { id: 'overview',  label: '분석 결과' },
-            { id: 'gear',      label: '기어 선택' },
-            { id: 'grip',      label: '그립 가이드' },
-            { id: 'posture',   label: '자세 가이드' },
-            { id: 'insights',  label: '인사이트' },
-            { id: 'history',   label: '히스토리' },
-          ] as { id: DnaTab; label: string }[]).map(t => (
+            { id: 'overview',  labelKey: 'dna.analysisResult' },
+            { id: 'gear',      labelKey: 'dna.gearSelect' },
+            { id: 'grip',      labelKey: 'dna.gripGuide' },
+            { id: 'posture',   labelKey: 'dna.postureGuide' },
+            { id: 'insights',  labelKey: 'dna.insights' },
+            { id: 'history',   labelKey: 'dna.historyTab' },
+          ] as { id: DnaTab; labelKey: string }[]).map(item => (
             <button
-              key={t.id}
-              className={`dna-tab ${tab === t.id ? 'active' : ''}`}
-              onClick={() => setTab(t.id)}
+              key={item.id}
+              className={`dna-tab ${tab === item.id ? 'active' : ''}`}
+              onClick={() => setTab(item.id)}
             >
-              {t.label}
+              {t(item.labelKey)}
             </button>
           ))}
         </div>
@@ -232,12 +235,12 @@ export function AimDnaResult({ onBack }: Props) {
                 background: '#3d3520', border: '1px solid #f5a623', borderRadius: 8,
                 padding: '12px 16px', marginBottom: 16,
               }}>
-                <strong style={{ color: '#f5a623' }}>DNA 변화 감지 — 재교정을 추천합니다</strong>
+                <strong style={{ color: '#f5a623' }}>{t('dna.recalibrationNotice')}</strong>
                 <div style={{ marginTop: 8, fontSize: 13, color: '#ccc' }}>
                   {trend.changedFeatures.slice(0, 5).map(f => (
                     <span key={f.feature} style={{ marginRight: 12 }}>
                       {f.feature}: {f.changePct > 0 ? '+' : ''}{f.changePct.toFixed(1)}%
-                      ({DIRECTION_LABELS[f.direction] ?? f.direction})
+                      ({t(DIRECTION_KEYS[f.direction] ?? f.direction)})
                     </span>
                   ))}
                 </div>
@@ -249,7 +252,7 @@ export function AimDnaResult({ onBack }: Props) {
               <div className="type-badge">
                 <span className="type-name">{currentDna.typeLabel}</span>
                 <span className="type-desc">
-                  {TYPE_DESCRIPTIONS[currentDna.typeLabel] ?? ''}
+                  {TYPE_DESC_KEYS[currentDna.typeLabel] ? t(TYPE_DESC_KEYS[currentDna.typeLabel]) : ''}
                 </span>
               </div>
             )}
@@ -260,7 +263,8 @@ export function AimDnaResult({ onBack }: Props) {
             {/* 상세 분류표 — 데이터 부족 표시 포함 */}
             <div className="feature-cards">
               <FeatureCard
-                title="Flick 역학"
+                title={t('dna.flickDynamics')}
+                dataMissingLabel={t('dna.dataMissing')}
                 items={[
                   { label: 'Peak Velocity', value: fmt(currentDna.flickPeakVelocity, 0, '°/s') },
                   { label: 'Avg Overshoot', value: fmt(currentDna.overshootAvg, 3, ' rad'), sufficiency: getSuff(currentDna, 'overshoot_avg') },
@@ -272,7 +276,8 @@ export function AimDnaResult({ onBack }: Props) {
                 ]}
               />
               <FeatureCard
-                title="Tracking 역학"
+                title={t('dna.trackingDynamics')}
+                dataMissingLabel={t('dna.dataMissing')}
                 items={[
                   { label: 'MAD', value: fmt(currentDna.trackingMad, 4, ' rad'), sufficiency: getSuff(currentDna, 'tracking') },
                   { label: 'Phase Lag', value: fmt(currentDna.phaseLag, 1, ' ms'), sufficiency: getSuff(currentDna, 'phase_lag') },
@@ -281,7 +286,8 @@ export function AimDnaResult({ onBack }: Props) {
                 ]}
               />
               <FeatureCard
-                title="Motor 시스템"
+                title={t('dna.motorSystem')}
+                dataMissingLabel={t('dna.dataMissing')}
                 items={[
                   { label: 'Wrist/Arm Ratio', value: fmt(currentDna.wristArmRatio) },
                   { label: 'Finger Accuracy', value: pct(currentDna.fingerAccuracy) },
@@ -291,7 +297,8 @@ export function AimDnaResult({ onBack }: Props) {
                 ]}
               />
               <FeatureCard
-                title="시간 역학"
+                title={t('dna.timeDynamics')}
+                dataMissingLabel={t('dna.dataMissing')}
                 items={[
                   { label: "Fitts' a (intercept)", value: fmt(currentDna.fittsA, 1, ' ms'), sufficiency: getSuff(currentDna, 'fitts') },
                   { label: "Fitts' b (slope)", value: fmt(currentDna.fittsB, 1, ' ms/bit'), sufficiency: getSuff(currentDna, 'fitts') },
@@ -303,7 +310,7 @@ export function AimDnaResult({ onBack }: Props) {
 
             <div className="result-actions">
               <button className="btn-primary" onClick={() => setScreen('cross-game-comparison')}>
-                크로스게임 비교
+                {t('dna.crossGameCompare')}
               </button>
             </div>
           </>
@@ -336,7 +343,7 @@ export function AimDnaResult({ onBack }: Props) {
 
         {/* 하단 공통 액션 */}
         <div className="result-actions" style={{ marginTop: 24 }}>
-          <button className="btn-secondary" onClick={onBack}>돌아가기</button>
+          <button className="btn-secondary" onClick={onBack}>{t('common.back')}</button>
         </div>
       </div>
     </main>

@@ -3,6 +3,7 @@
  * 환영 메시지 + 가치 제안 → "Get Started" → ProfileWizard 연결
  */
 import { motion } from 'motion/react';
+import { useTranslation } from '../../i18n';
 import { ElementTransition } from '../transitions/ElementTransition';
 
 interface WelcomeScreenProps {
@@ -10,26 +11,15 @@ interface WelcomeScreenProps {
   onGetStarted: () => void;
 }
 
-/** 가치 제안 항목 */
+/** 가치 제안 항목 — i18n 키 사용 */
 const VALUE_PROPS = [
-  {
-    icon: '🎯',
-    title: 'AI 감도 최적화',
-    desc: 'Bayesian Optimization으로 당신만의 완벽한 감도를 찾아드립니다',
-  },
-  {
-    icon: '🧬',
-    title: 'Aim DNA 분석',
-    desc: '8가지 에임 요소를 측정하여 강점과 약점을 정밀 분석합니다',
-  },
-  {
-    icon: '🎮',
-    title: '크로스게임 변환',
-    desc: '50+ 게임 간 감도를 정확하게 변환합니다',
-  },
+  { icon: '🎯', titleKey: 'welcome.aiOptTitle', descKey: 'welcome.aiOptDesc' },
+  { icon: '🧬', titleKey: 'welcome.dnaTitle', descKey: 'welcome.dnaDesc' },
+  { icon: '🎮', titleKey: 'welcome.crossGameTitle', descKey: 'welcome.crossGameDesc' },
 ] as const;
 
 export function WelcomeScreen({ onGetStarted }: WelcomeScreenProps) {
+  const { t } = useTranslation();
   return (
     <div className="welcome-screen">
       <div className="welcome-card">
@@ -42,19 +32,19 @@ export function WelcomeScreen({ onGetStarted }: WelcomeScreenProps) {
 
         <ElementTransition index={1}>
           <p className="welcome-subtitle">
-            과학적 에임 교정 & 훈련 도구
+            {t('welcome.subtitle')}
           </p>
         </ElementTransition>
 
         {/* 가치 제안 카드 */}
         <div className="welcome-features">
           {VALUE_PROPS.map((prop, i) => (
-            <ElementTransition key={prop.title} index={i + 2} stagger={0.08}>
+            <ElementTransition key={prop.titleKey} index={i + 2} stagger={0.08}>
               <div className="welcome-feature-card">
                 <span className="welcome-feature-icon">{prop.icon}</span>
                 <div>
-                  <h3 className="welcome-feature-title">{prop.title}</h3>
-                  <p className="welcome-feature-desc">{prop.desc}</p>
+                  <h3 className="welcome-feature-title">{t(prop.titleKey)}</h3>
+                  <p className="welcome-feature-desc">{t(prop.descKey)}</p>
                 </div>
               </div>
             </ElementTransition>
@@ -69,7 +59,7 @@ export function WelcomeScreen({ onGetStarted }: WelcomeScreenProps) {
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
           >
-            시작하기
+            {t('onboarding.getStarted')}
           </motion.button>
         </ElementTransition>
       </div>

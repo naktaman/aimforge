@@ -5,6 +5,7 @@
 import { useRef, useEffect } from 'react';
 import * as d3 from 'd3';
 import type { ReadinessResult } from '../utils/types';
+import { useTranslation } from '../i18n';
 
 interface Props {
   result: ReadinessResult | null;
@@ -20,15 +21,17 @@ const CATEGORY_COLORS: Record<string, string> = {
   rest: '#e94560',
 };
 
-const CATEGORY_LABELS: Record<string, string> = {
-  peak: '최상',
-  ready: '양호',
-  moderate: '보통',
-  rest: '휴식 권장',
+/** 카테고리별 i18n 키 */
+const CATEGORY_LABEL_KEYS: Record<string, string> = {
+  peak: 'readiness.peak',
+  ready: 'readiness.good',
+  moderate: 'readiness.moderate',
+  rest: 'readiness.restAdvised',
 };
 
 export default function ReadinessWidget({ result, onMeasure }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!svgRef.current) return;
@@ -91,9 +94,9 @@ export default function ReadinessWidget({ result, onMeasure }: Props) {
         .attr('y', 5)
         .attr('fill', '#aaa')
         .attr('font-size', 12)
-        .text(CATEGORY_LABELS[result.category] || '');
+        .text(CATEGORY_LABEL_KEYS[result.category] ? t(CATEGORY_LABEL_KEYS[result.category]) : '');
     }
-  }, [result]);
+  }, [result, t]);
 
   return (
     <div style={{ textAlign: 'center' }}>
@@ -112,7 +115,7 @@ export default function ReadinessWidget({ result, onMeasure }: Props) {
             fontSize: 13, fontWeight: 500, marginTop: 8,
           }}
         >
-          2분 측정하기
+          {t('readiness.measure')}
         </button>
       )}
     </div>

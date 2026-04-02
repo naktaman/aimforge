@@ -3,6 +3,7 @@
  * 스크리닝/캘리브레이션 진행도 + GP 곡선 시각화
  */
 import { useCalibrationStore } from '../stores/calibrationStore';
+import { useTranslation } from '../i18n';
 import { PerformanceLandscape } from './PerformanceLandscape';
 
 interface CalibrationProgressProps {
@@ -22,9 +23,10 @@ export function CalibrationProgress({ onCancel }: CalibrationProgressProps) {
     observations,
     fatigueStopped,
   } = useCalibrationStore();
+  const { t } = useTranslation();
 
-  /** 스테이지 한글 표시 */
-  const stageLabel = stage === 'screening' ? 'DNA 스크리닝' : '감도 탐색';
+  /** 스테이지 라벨 */
+  const stageLabel = stage === 'screening' ? t('cal.screening') : t('cal.sensSearch');
 
   /** 진행률 계산 */
   const progress = stage === 'screening' && screeningProgress
@@ -33,7 +35,7 @@ export function CalibrationProgress({ onCancel }: CalibrationProgressProps) {
 
   return (
     <div className="calibration-progress">
-      <h2>캘리브레이션 진행 중</h2>
+      <h2>{t('cal.inProgress')}</h2>
 
       {/* 스테이지 뱃지 */}
       <div className="stage-badge">
@@ -53,15 +55,15 @@ export function CalibrationProgress({ onCancel }: CalibrationProgressProps) {
         </div>
         <div className="progress-label">
           {stage === 'screening' && screeningProgress
-            ? `${screeningProgress.current} / ${screeningProgress.target} 트라이얼`
-            : `${iteration} / ${maxIterations} 반복`}
+            ? `${screeningProgress.current} / ${screeningProgress.target} ${t('cal.trials')}`
+            : `${iteration} / ${maxIterations} ${t('cal.iterations')}`}
         </div>
       </div>
 
       {/* 현재 최적 */}
       {currentBest && (
         <div className="current-best">
-          <h3>현재 최적</h3>
+          <h3>{t('cal.currentBest')}</h3>
           <div className="best-value">
             <span className="big-number">{currentBest.cm360.toFixed(1)}</span>
             <span className="unit">cm/360</span>
@@ -87,19 +89,17 @@ export function CalibrationProgress({ onCancel }: CalibrationProgressProps) {
       {/* 피로 경고 */}
       {fatigueStopped && (
         <div className="fatigue-warning">
-          피로 감지됨 — 휴식을 권장합니다
+          {t('cal.fatigueWarning')}
         </div>
       )}
 
       {/* 안내 메시지 */}
       <div className="progress-hint">
-        {stage === 'screening'
-          ? '현재 감도로 시나리오를 수행하세요. 자동으로 다음 단계로 넘어갑니다.'
-          : 'AI가 제안하는 감도로 시나리오를 수행하세요. 수렴 시 자동 종료됩니다.'}
+        {stage === 'screening' ? t('cal.screeningHint') : t('cal.calHint')}
       </div>
 
       <button className="btn-secondary" onClick={onCancel}>
-        취소
+        {t('common.cancel')}
       </button>
     </div>
   );

@@ -4,9 +4,11 @@
  */
 import { useEffect, useCallback } from 'react';
 import { useAuthStore } from '../stores/authStore';
+import { useTranslation } from '../i18n';
 
 export function SteamLogin() {
   const { isLoggedIn, isOnline, user, loading, checkOnline, logout } = useAuthStore();
+  const { t } = useTranslation();
 
   /** 앱 시작 시 서버 연결 확인 */
   useEffect(() => { checkOnline(); }, [checkOnline]);
@@ -22,7 +24,7 @@ export function SteamLogin() {
     return (
       <div className="steam-login offline">
         <span className="status-dot offline" />
-        <span>오프라인 모드</span>
+        <span>{t('steam.offline')}</span>
       </div>
     );
   }
@@ -33,7 +35,7 @@ export function SteamLogin() {
         <span className="status-dot online" />
         {user.avatarUrl && <img src={user.avatarUrl} alt="" className="avatar" />}
         <span>{user.displayName}</span>
-        <button className="btn-sm btn-secondary" onClick={logout}>로그아웃</button>
+        <button className="btn-sm btn-secondary" onClick={logout}>{t('steam.logout')}</button>
       </div>
     );
   }
@@ -42,7 +44,7 @@ export function SteamLogin() {
     <div className="steam-login">
       <span className="status-dot online" />
       <button className="btn-sm btn-primary" onClick={handleLogin} disabled={loading}>
-        {loading ? '로그인 중...' : 'Steam 로그인'}
+        {loading ? t('steam.loggingIn') : t('steam.login')}
       </button>
     </div>
   );

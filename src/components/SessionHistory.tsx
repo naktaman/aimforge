@@ -4,6 +4,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useTranslation } from '../i18n';
 import type { SessionSummary, SessionDetail } from '../utils/types';
 
 interface Props {
@@ -15,6 +16,7 @@ export function SessionHistory({ onBack }: Props) {
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [detail, setDetail] = useState<SessionDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const { t, locale } = useTranslation();
 
   // 세션 목록 로드
   useEffect(() => {
@@ -54,7 +56,7 @@ export function SessionHistory({ onBack }: Props) {
   const formatDate = (iso: string) => {
     try {
       const d = new Date(iso + 'Z');
-      return d.toLocaleDateString('ko-KR', {
+      return d.toLocaleDateString(locale === 'ko' ? 'ko-KR' : 'en-US', {
         month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
       });
     } catch {
@@ -65,20 +67,20 @@ export function SessionHistory({ onBack }: Props) {
   return (
     <main className="app-main">
       <div className="session-history">
-        <h2>세션 히스토리</h2>
+        <h2>{t('tool.history')}</h2>
 
         {loading ? (
-          <p>로딩 중...</p>
+          <p>{t('common.loading')}</p>
         ) : sessions.length === 0 ? (
-          <p>세션 기록이 없습니다.</p>
+          <p>{t('history.empty')}</p>
         ) : (
           <table className="history-table">
             <thead>
               <tr>
-                <th>날짜</th>
-                <th>타입</th>
-                <th>모드</th>
-                <th>트라이얼</th>
+                <th>{t('history.date')}</th>
+                <th>{t('history.type')}</th>
+                <th>{t('history.mode')}</th>
+                <th>{t('history.trials')}</th>
                 <th>FPS</th>
               </tr>
             </thead>
@@ -102,7 +104,7 @@ export function SessionHistory({ onBack }: Props) {
                       <td colSpan={5}>
                         <div className="trial-list">
                           {detail.trials.length === 0 ? (
-                            <p>트라이얼 없음</p>
+                            <p>{t('history.noTrials')}</p>
                           ) : (
                             detail.trials.map((t) => (
                               <div key={t.id} className="trial-item">
@@ -123,7 +125,7 @@ export function SessionHistory({ onBack }: Props) {
         )}
 
         <div className="result-actions">
-          <button className="btn-secondary" onClick={onBack}>돌아가기</button>
+          <button className="btn-secondary" onClick={onBack}>{t('common.back')}</button>
         </div>
       </div>
     </main>

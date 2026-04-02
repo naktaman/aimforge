@@ -3,27 +3,29 @@
  * 추천 감도, 유의성, 이봉 감지, DNA 요약
  */
 import { useCalibrationStore } from '../stores/calibrationStore';
+import { useTranslation } from '../i18n';
 
 interface CalibrationResultProps {
   onBack: () => void;
   onApply: (cm360: number) => void;
 }
 
-/** 유의성 라벨 한글 매핑 */
+/** 유의성 라벨 — i18n 키 매핑 */
 const SIGNIFICANCE_LABELS = {
-  Recommend: { text: '변경 추천', color: '#4ade80', desc: '유의미한 개선이 예상됩니다' },
-  Marginal: { text: '약간 개선', color: '#facc15', desc: '약간 나을 수 있지만 큰 차이 없습니다' },
-  Keep: { text: '현재 유지', color: '#60a5fa', desc: '현재 감도가 이미 최적 근처입니다' },
+  Recommend: { textKey: 'cal.sigRecommend', color: '#4ade80', descKey: 'cal.sigRecommendDesc' },
+  Marginal: { textKey: 'cal.sigMarginal', color: '#facc15', descKey: 'cal.sigMarginalDesc' },
+  Keep: { textKey: 'cal.sigKeep', color: '#60a5fa', descKey: 'cal.sigKeepDesc' },
 };
 
 export function CalibrationResult({ onBack, onApply }: CalibrationResultProps) {
   const { result } = useCalibrationStore();
+  const { t } = useTranslation();
 
   if (!result) {
     return (
       <div className="calibration-result">
-        <p>결과 데이터가 없습니다</p>
-        <button className="btn-secondary" onClick={onBack}>뒤로</button>
+        <p>{t('cal.noData')}</p>
+        <button className="btn-secondary" onClick={onBack}>{t('common.back')}</button>
       </div>
     );
   }
@@ -33,22 +35,22 @@ export function CalibrationResult({ onBack, onApply }: CalibrationResultProps) {
 
   return (
     <div className="calibration-result">
-      <h2>캘리브레이션 결과</h2>
+      <h2>{t('cal.resultTitle')}</h2>
 
       {/* 추천 감도 */}
       <div className="result-recommendation">
         <div className="result-card primary">
-          <span className="card-label">추천 감도</span>
+          <span className="card-label">{t('cal.recommended')}</span>
           <span className="big-number">{result.recommendedCm360.toFixed(1)}</span>
           <span className="unit">cm/360</span>
         </div>
         <div className="result-card secondary">
-          <span className="card-label">현재 감도</span>
+          <span className="card-label">{t('cal.currentSens')}</span>
           <span className="medium-number">{result.currentCm360.toFixed(1)}</span>
           <span className="unit">cm/360</span>
         </div>
         <div className="result-card delta">
-          <span className="card-label">변화량</span>
+          <span className="card-label">{t('cal.delta')}</span>
           <span className="medium-number">
             {delta > 0 ? '+' : ''}{delta.toFixed(1)}
           </span>
@@ -58,10 +60,10 @@ export function CalibrationResult({ onBack, onApply }: CalibrationResultProps) {
 
       {/* 유의성 판정 */}
       <div className="significance-section">
-        <h3>변경 유의성</h3>
+        <h3>{t('cal.significance')}</h3>
         <div className="significance-badge" style={{ borderColor: sig.color }}>
-          <span className="sig-label" style={{ color: sig.color }}>{sig.text}</span>
-          <span className="sig-desc">{sig.desc}</span>
+          <span className="sig-label" style={{ color: sig.color }}>{t(sig.textKey)}</span>
+          <span className="sig-desc">{t(sig.descKey)}</span>
           <span className="sig-detail">
             z-score: {result.significance.zScore.toFixed(2)}, p-value: {result.significance.pValue.toFixed(3)}
           </span>
@@ -71,12 +73,12 @@ export function CalibrationResult({ onBack, onApply }: CalibrationResultProps) {
       {/* 이봉 감지 */}
       {result.bimodalDetected && (
         <div className="bimodal-section">
-          <h3>이봉 감지</h3>
-          <p>두 개의 최적 영역이 발견되었습니다:</p>
+          <h3>{t('cal.bimodal')}</h3>
+          <p>{t('cal.bimodalDesc')}</p>
           <div className="peaks-list">
             {result.peaks.map((peak, i) => (
               <div key={i} className={`peak-item ${peak.isPrimary ? 'primary' : ''}`}>
-                <span>{peak.isPrimary ? '주 피크' : '부 피크'}</span>
+                <span>{peak.isPrimary ? t('cal.primaryPeak') : t('cal.secondaryPeak')}</span>
                 <span className="peak-value">{peak.cm360.toFixed(1)} cm/360</span>
                 <span className="peak-score">score: {peak.score.toFixed(3)}</span>
               </div>
@@ -88,24 +90,24 @@ export function CalibrationResult({ onBack, onApply }: CalibrationResultProps) {
       {/* DNA 요약 (있으면) */}
       {result.partialDna && (
         <div className="dna-section">
-          <h3>Aim DNA 요약</h3>
+          <h3>{t('cal.dnaSummary')}</h3>
           <div className="dna-grid">
-            <DnaStat label="손목/팔 비율" value={result.partialDna.wristArmRatio} format="percent" />
-            <DnaStat label="평균 오버슈트" value={result.partialDna.avgOvershoot} format="decimal" />
-            <DnaStat label="Pre-aim 비율" value={result.partialDna.preAimRatio} format="percent" />
-            <DnaStat label="방향 편향" value={result.partialDna.directionBias} format="decimal" />
+            <DnaStat label={t('dna.wristArmRatio')} value={result.partialDna.wristArmRatio} format="percent" />
+            <DnaStat label={t('dna.avgOvershoot')} value={result.partialDna.avgOvershoot} format="decimal" />
+            <DnaStat label={t('dna.preAimRatio')} value={result.partialDna.preAimRatio} format="percent" />
+            <DnaStat label={t('dna.directionBias')} value={result.partialDna.directionBias} format="decimal" />
             {result.partialDna.trackingSmoothness !== null && (
-              <DnaStat label="트래킹 부드러움" value={result.partialDna.trackingSmoothness} format="decimal" />
+              <DnaStat label={t('dna.trackingSmoothness')} value={result.partialDna.trackingSmoothness} format="decimal" />
             )}
           </div>
           {result.adaptationRate !== null && (
             <div className="adaptation-rate">
-              적응 속도: {(result.adaptationRate * 100).toFixed(1)}%
+              {t('cal.adaptationRate')}: {(result.adaptationRate * 100).toFixed(1)}%
               {result.adaptationRate > 0.1
-                ? ' (빠른 적응 — 감도 변경에 유연)'
+                ? ` (${t('cal.fastAdapt')})`
                 : result.adaptationRate < -0.05
-                  ? ' (피로 경향)'
-                  : ' (보통)'}
+                  ? ` (${t('cal.fatigueTrend')})`
+                  : ` (${t('cal.normal')})`}
             </div>
           )}
         </div>
@@ -113,25 +115,24 @@ export function CalibrationResult({ onBack, onApply }: CalibrationResultProps) {
 
       {/* 적응 편향 고지 */}
       <div className="bias-notice">
-        최적 감도는 테스트 환경 기반 추정값입니다. 실제 게임에서 1~2주 적응 후
-        재측정을 권장합니다.
+        {t('cal.biasNotice')}
       </div>
 
       {/* 통계 */}
       <div className="result-stats">
-        총 {result.totalIterations}회 반복 | 관측점 {result.observations.length}개
+        {t('cal.totalIterations').replace('{n}', String(result.totalIterations))} | {t('cal.observationCount').replace('{n}', String(result.observations.length))}
       </div>
 
       {/* 버튼 */}
       <div className="result-actions">
         <button className="btn-secondary" onClick={onBack}>
-          뒤로
+          {t('common.back')}
         </button>
         <button
           className="btn-primary"
           onClick={() => onApply(result.recommendedCm360)}
         >
-          감도 적용
+          {t('cal.applySens')}
         </button>
       </div>
     </div>

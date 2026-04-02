@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { useProgressStore } from '../stores/progressStore';
 import { useTrainingStore } from '../stores/trainingStore';
+import { useTranslation } from '../i18n';
 import ReadinessWidget from './ReadinessWidget';
 import type { AimDnaHistoryEntry, SkillProgressRow } from '../utils/types';
 
@@ -14,25 +15,25 @@ interface Props {
   profileId: number;
 }
 
-/** DNA 시계열에 표시할 핵심 6피처 */
+/** DNA 시계열에 표시할 핵심 6피처 — i18n 키 기반 */
 const KEY_FEATURES = [
-  { key: 'flick_peak_velocity', label: '플릭 속도', unit: '°/s' },
-  { key: 'tracking_mad', label: '트래킹 MAD', unit: '°', invert: true },
-  { key: 'overshoot_avg', label: '오버슈팅', unit: '°', invert: true },
-  { key: 'smoothness', label: '스무드니스', unit: '' },
-  { key: 'direction_bias', label: '방향 편향', unit: '', invert: true },
-  { key: 'effective_range', label: '유효 사거리', unit: '°' },
+  { key: 'flick_peak_velocity', labelKey: 'progress.flickSpeed', unit: '°/s' },
+  { key: 'tracking_mad', labelKey: 'progress.trackingMad', unit: '°', invert: true },
+  { key: 'overshoot_avg', labelKey: 'progress.overshoot', unit: '°', invert: true },
+  { key: 'smoothness', labelKey: 'progress.smoothness', unit: '' },
+  { key: 'direction_bias', labelKey: 'progress.dirBias', unit: '', invert: true },
+  { key: 'effective_range', labelKey: 'progress.effectiveRange', unit: '°' },
 ] as const;
 
-/** 시간 범위 옵션 */
+/** 시간 범위 옵션 — i18n 키 기반 */
 const TIME_RANGES = [
-  { key: '7d', label: '7일', days: 7 },
-  { key: '30d', label: '30일', days: 30 },
-  { key: '90d', label: '90일', days: 90 },
+  { key: '7d', labelKey: 'progress.7d', days: 7 },
+  { key: '30d', labelKey: 'progress.30d', days: 30 },
+  { key: '90d', labelKey: 'progress.90d', days: 90 },
 ] as const;
 
 /** DNA 시계열 D3 라인차트 — D3 렌더링 내부 색상은 인라인 유지 */
-function DnaLineChart({ data, label, unit }: { data: AimDnaHistoryEntry[]; label: string; unit: string }) {
+function DnaLineChart({ data, label, unit, noDataLabel }: { data: AimDnaHistoryEntry[]; label: string; unit: string; noDataLabel: string }) {
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -117,7 +118,7 @@ function DnaLineChart({ data, label, unit }: { data: AimDnaHistoryEntry[]; label
 
   // 데이터 없을 때 빈 상태
   if (data.length === 0) {
-    return <div className="chart-empty">데이터 없음</div>;
+    return <div className="chart-empty">{noDataLabel}</div>;
   }
 
   return <svg ref={svgRef} className="chart-svg" />;
@@ -132,6 +133,7 @@ function skillBarClass(pct: number): string {
 
 /** 스킬 진행 카드 */
 function SkillCard({ skill }: { skill: SkillProgressRow }) {
+  const { t } = useTranslation();
   const pct = Math.min(100, skill.rollingAvgScore);
   return (
     <div className="glass-card--compact">
@@ -142,9 +144,9 @@ function SkillCard({ skill }: { skill: SkillProgressRow }) {
         <div className={skillBarClass(pct)} style={{ width: `${pct}%` }} />
       </div>
       <div className="skill-card__meta text-sm text-muted">
-        <span>평균 {skill.rollingAvgScore.toFixed(1)}</span>
-        <span>최고 {skill.bestScore.toFixed(1)}</span>
-        <span>{skill.totalSessions}회</span>
+        <span>{t('common.average')} {skill.rollingAvgScore.toFixed(1)}</span>
+        <span>{t('progress.best')} {skill.bestScore.toFixed(1)}</span>
+        <span>{skill.totalSessions} {t('progress.sessions')}</span>
       </div>
     </div>
   );
@@ -161,6 +163,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
 }
 
 export default function ProgressDashboard({ onBack, profileId }: Props) {
+  const { t } = useTranslation();
   const { dailyStats, skillProgress, dnaTimeSeries, loadDailyStats, loadSkillProgress, loadDnaTimeSeries } = useProgressStore();
   const { readiness, loadReadinessHistory } = useTrainingStore();
   const [selectedFeature, setSelectedFeature] = useState<string>(KEY_FEATURES[0].key);
@@ -183,20 +186,20 @@ export default function ProgressDashboard({ onBack, profileId }: Props) {
     <div className="page page--wide">
       {/* 헤더 */}
       <div className="page-header">
-        <button onClick={onBack} className="btn btn--ghost btn--sm">← 뒤로</button>
-        <h2>진행 대시보드</h2>
+        <button onClick={onBack} className="btn btn--ghost btn--sm">← {t('common.back')}</button>
+        <h2>{t('progress.title')}</h2>
       </div>
 
       {/* 상단: Readiness + 요약 통계 */}
       <div className="progress-top">
         <div className="glass-card progress-top__readiness">
-          <h3>오늘의 컨디션</h3>
+          <h3>{t('progress.todayCondition')}</h3>
           <ReadinessWidget result={readiness} />
         </div>
         <div className="progress-top__stats">
-          <StatCard label="총 세션" value={`${totalSessions}회`} />
-          <StatCard label="총 연습 시간" value={`${totalTimeMin.toFixed(0)}분`} />
-          <StatCard label="평균 점수" value={
+          <StatCard label={t('progress.totalSessions')} value={`${totalSessions} ${t('progress.sessions')}`} />
+          <StatCard label={t('progress.totalTime')} value={`${totalTimeMin.toFixed(0)} ${t('prescription.min')}`} />
+          <StatCard label={t('progress.avgScore')} value={
             dailyStats.length > 0
               ? `${(dailyStats.reduce((a, s) => a + s.avgScore, 0) / dailyStats.length).toFixed(1)}`
               : '-'
@@ -207,7 +210,7 @@ export default function ProgressDashboard({ onBack, profileId }: Props) {
       {/* DNA 시계열 차트 */}
       <div className="glass-card page-section">
         <div className="chart-section__header">
-          <h3>DNA 변화 추이</h3>
+          <h3>{t('progress.dnaChangeTrend')}</h3>
           <div className="tab-group">
             {TIME_RANGES.map(r => (
               <button
@@ -215,7 +218,7 @@ export default function ProgressDashboard({ onBack, profileId }: Props) {
                 onClick={() => setTimeRange(r.key as typeof timeRange)}
                 className={`tab-item${timeRange === r.key ? ' active' : ''}`}
               >
-                {r.label}
+                {t(r.labelKey)}
               </button>
             ))}
           </div>
@@ -229,24 +232,25 @@ export default function ProgressDashboard({ onBack, profileId }: Props) {
               onClick={() => setSelectedFeature(f.key)}
               className={`feature-tab${selectedFeature === f.key ? ' active' : ''}`}
             >
-              {f.label}
+              {t(f.labelKey)}
             </button>
           ))}
         </div>
 
         <DnaLineChart
           data={dnaTimeSeries}
-          label={KEY_FEATURES.find(f => f.key === selectedFeature)?.label ?? ''}
+          label={t(KEY_FEATURES.find(f => f.key === selectedFeature)?.labelKey ?? '')}
           unit={KEY_FEATURES.find(f => f.key === selectedFeature)?.unit ?? ''}
+          noDataLabel={t('common.noData')}
         />
       </div>
 
       {/* 스킬 진행도 그리드 */}
       <div className="page-section">
-        <h3 className="page-section__title">스킬 진행도</h3>
+        <h3 className="page-section__title">{t('progress.skillProgress')}</h3>
         {skillProgress.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state__text">아직 훈련 데이터가 없습니다.</div>
+            <div className="empty-state__text">{t('progress.noTrainingData')}</div>
           </div>
         ) : (
           <div className="skill-grid">

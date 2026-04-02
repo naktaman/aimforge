@@ -87,6 +87,7 @@ import {
 } from './engine/scenarios/stages';
 import type { GameEngine } from './engine/GameEngine';
 import type { ScenarioType, StageType } from './utils/types';
+import { useTranslation } from './i18n';
 
 /** 전역 사운드 엔진 (AudioManager 대체 — 히트/헤드샷/콤보/UI 사운드 통합) */
 const soundEngine = new SoundEngine();
@@ -94,7 +95,8 @@ const soundEngine = new SoundEngine();
 function App() {
   const { currentScreen, setScreen, fps, pointerLocked } = useEngineStore();
   const { variants: pageVariants } = usePageTransition(currentScreen);
-  const { mode, theme, onboardingCompleted, loaded: uiLoaded, toggleTheme, toggleMode, loadFromDb } = useUiStore();
+  const { mode, theme, locale, onboardingCompleted, loaded: uiLoaded, toggleTheme, toggleMode, setLocale, loadFromDb } = useUiStore();
+  const { t } = useTranslation();
 
   /** 앱 시작 시 UI 설정 로드 + 테마 적용 */
   useEffect(() => { loadFromDb(); }, [loadFromDb]);
@@ -1025,7 +1027,7 @@ function App() {
               <h1>AimForge</h1>
               <span className="version">v0.1.0</span>
             </div>
-            <p className="subtitle">FPS 감도 최적화 & 에임 트레이너</p>
+            <p className="subtitle">{t('app.subtitle')}</p>
             <div className="header-right">
               <div className="header-controls">
                 {/* 모드 토글 */}
@@ -1034,9 +1036,18 @@ function App() {
                   <button className={mode === 'advanced' ? 'active' : ''} onClick={() => mode !== 'advanced' && toggleMode()}>Advanced</button>
                 </div>
                 {/* 테마 토글 */}
-                <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? '라이트 모드' : '다크 모드'}>
+                <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? t('theme.light') : t('theme.dark')}>
                   {theme === 'dark' ? '\u2600' : '\u263E'}
                 </button>
+                {/* 언어 전환 */}
+                <select
+                  className="lang-select"
+                  value={locale}
+                  onChange={(e) => setLocale(e.target.value as 'ko' | 'en')}
+                >
+                  <option value="ko">한국어</option>
+                  <option value="en">English</option>
+                </select>
                 <SteamLogin />
               </div>
             </div>
@@ -1044,18 +1055,18 @@ function App() {
           <main className="app-main">
             {/* 부가 메뉴 — 감도/게임 프로필은 감도 탭으로 이동됨 */}
             <div className="quick-nav">
-              <button className="btn-secondary btn-sm" onClick={() => setScreen('display-settings')}>디스플레이</button>
+              <button className="btn-secondary btn-sm" onClick={() => setScreen('display-settings')}>{t('nav.display')}</button>
               {mode === 'advanced' && (
-                <button className="btn-secondary btn-sm" onClick={() => setScreen('routines')}>루틴</button>
+                <button className="btn-secondary btn-sm" onClick={() => setScreen('routines')}>{t('nav.routines')}</button>
               )}
               {mode === 'advanced' && (
-                <button className="btn-secondary btn-sm" onClick={() => setScreen('recoil-editor')}>반동 편집기</button>
+                <button className="btn-secondary btn-sm" onClick={() => setScreen('recoil-editor')}>{t('nav.recoilEditor')}</button>
               )}
-              <button className="btn-secondary btn-sm" onClick={() => setScreen('conversion-selector')}>감도 변환</button>
+              <button className="btn-secondary btn-sm" onClick={() => setScreen('conversion-selector')}>{t('nav.conversion')}</button>
               <button className="btn-primary btn-sm" onClick={() => {
                 useProfileWizardStore.getState().startWizard();
                 setScreen('profile-wizard');
-              }}>프로파일 생성</button>
+              }}>Profile</button>
             </div>
             <ScenarioSelect
               onStart={handleStart}

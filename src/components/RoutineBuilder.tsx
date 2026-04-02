@@ -4,6 +4,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRoutineStore, type RoutineStep } from '../stores/routineStore';
 import type { ScenarioType } from '../utils/types';
+import { useTranslation } from '../i18n';
 
 /** 추가 가능한 시나리오 목록 */
 const AVAILABLE_SCENARIOS: { type: ScenarioType; name: string; defaultDuration: number }[] = [
@@ -44,6 +45,7 @@ interface RoutineBuilderProps {
 
 export function RoutineBuilder({ routineId, routineName, onBack, onPlay }: RoutineBuilderProps) {
   const { currentSteps, loadSteps, addStep, removeStep, swapStepOrder } = useRoutineStore();
+  const { t } = useTranslation();
   const [selectedScenario, setSelectedScenario] = useState<ScenarioType>('flick');
   const [stepDuration, setStepDuration] = useState(60);
 
@@ -86,14 +88,14 @@ export function RoutineBuilder({ routineId, routineName, onBack, onPlay }: Routi
         <h2>루틴: {routineName}</h2>
         <div>
           <button className="btn-primary btn-sm" onClick={() => onPlay(routineId)} disabled={currentSteps.length === 0}>
-            실행
+            {t('common.run')}
           </button>
-          <button className="btn-secondary btn-sm" onClick={onBack} style={{ marginLeft: 8 }}>돌아가기</button>
+          <button className="btn-secondary btn-sm" onClick={onBack} style={{ marginLeft: 8 }}>{t('common.back')}</button>
         </div>
       </div>
 
       <div className="routine-total">
-        총 {currentSteps.length}개 스텝 | {Math.floor(totalSec / 60)}분 {totalSec % 60}초
+        {t('common.total')} {currentSteps.length} {t('routine.totalSteps')} | {Math.floor(totalSec / 60)}:{String(totalSec % 60).padStart(2, '0')}
       </div>
 
       {/* 시간 배분 시각화 바 */}
@@ -112,7 +114,7 @@ export function RoutineBuilder({ routineId, routineName, onBack, onPlay }: Routi
                 onClick={() => handleMoveUp(idx)}
                 disabled={idx === 0}
                 style={{ padding: '1px 6px', fontSize: 11, opacity: idx === 0 ? 0.3 : 1 }}
-                title="위로 이동"
+                title={t('routine.moveUp')}
               >
                 ▲
               </button>
@@ -121,7 +123,7 @@ export function RoutineBuilder({ routineId, routineName, onBack, onPlay }: Routi
                 onClick={() => handleMoveDown(idx)}
                 disabled={idx === currentSteps.length - 1}
                 style={{ padding: '1px 6px', fontSize: 11, opacity: idx === currentSteps.length - 1 ? 0.3 : 1 }}
-                title="아래로 이동"
+                title={t('routine.moveDown')}
               >
                 ▼
               </button>
@@ -133,8 +135,8 @@ export function RoutineBuilder({ routineId, routineName, onBack, onPlay }: Routi
             >
               {SCENARIO_LABELS[step.scenarioType] ?? step.scenarioType}
             </span>
-            <span className="step-duration">{step.durationSec}초</span>
-            <button className="btn-sm btn-danger" onClick={() => handleRemove(step)}>삭제</button>
+            <span className="step-duration">{step.durationSec}{t('routine.sec')}</span>
+            <button className="btn-sm btn-danger" onClick={() => handleRemove(step)}>{t('common.delete')}</button>
           </div>
         ))}
       </div>
@@ -152,7 +154,7 @@ export function RoutineBuilder({ routineId, routineName, onBack, onPlay }: Routi
           ))}
         </select>
         <label>
-          시간(초)
+          {t('routine.timeSec')}
           <input
             type="number"
             min={10}
@@ -161,7 +163,7 @@ export function RoutineBuilder({ routineId, routineName, onBack, onPlay }: Routi
             onChange={(e) => setStepDuration(parseInt(e.target.value, 10) || 30)}
           />
         </label>
-        <button className="btn-primary btn-sm" onClick={handleAdd}>+ 스텝 추가</button>
+        <button className="btn-primary btn-sm" onClick={handleAdd}>{t('routine.addStep')}</button>
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useUiStore, type AppMode } from '../stores/uiStore';
+import { useTranslation } from '../i18n';
 import { gameSensToCm360 } from '../utils/physics';
 import type { GamePreset } from '../utils/types';
 
@@ -21,6 +22,7 @@ export function Onboarding() {
 
   const settingsStore = useSettingsStore();
   const uiStore = useUiStore();
+  const { t } = useTranslation();
 
   /** 게임 목록 로드 */
   useEffect(() => {
@@ -70,13 +72,13 @@ export function Onboarding() {
         {/* Step 0: 환영 */}
         {step === 0 && (
           <>
-            <h2>AimForge</h2>
-            <p>FPS 에임 캘리브레이션 & 훈련 도구에 오신 것을 환영합니다.</p>
+            <h2>{t('onboarding.welcome')}</h2>
+            <p>{t('onboarding.welcomeDesc')}</p>
             <p style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-              빠른 설정을 완료하면 바로 시작할 수 있습니다.
+              {t('onboarding.quickSetupHint')}
             </p>
             <div className="onboarding-actions">
-              <button className="btn-primary" onClick={next}>시작하기</button>
+              <button className="btn-primary" onClick={next}>{t('onboarding.getStarted')}</button>
             </div>
           </>
         )}
@@ -84,8 +86,8 @@ export function Onboarding() {
         {/* Step 1: DPI */}
         {step === 1 && (
           <>
-            <h2>마우스 설정</h2>
-            <p>현재 사용 중인 마우스 DPI를 입력하세요.</p>
+            <h2>{t('onboarding.mouseSetup')}</h2>
+            <p>{t('onboarding.mouseSetupDesc')}</p>
             <div className="onboarding-field">
               <label>DPI</label>
               <input
@@ -97,8 +99,8 @@ export function Onboarding() {
               />
             </div>
             <div className="onboarding-actions">
-              <button className="btn-secondary" onClick={prev}>이전</button>
-              <button className="btn-primary" onClick={next}>다음</button>
+              <button className="btn-secondary" onClick={prev}>{t('common.prev')}</button>
+              <button className="btn-primary" onClick={next}>{t('common.next')}</button>
             </div>
           </>
         )}
@@ -106,8 +108,8 @@ export function Onboarding() {
         {/* Step 2: 게임 선택 */}
         {step === 2 && (
           <>
-            <h2>주 게임 선택</h2>
-            <p>가장 많이 플레이하는 게임을 선택하세요.</p>
+            <h2>{t('onboarding.gameSelect')}</h2>
+            <p>{t('onboarding.gameSelectDesc')}</p>
             <div className="game-grid">
               {games.map((g) => (
                 <div
@@ -120,8 +122,8 @@ export function Onboarding() {
               ))}
             </div>
             <div className="onboarding-actions">
-              <button className="btn-secondary" onClick={prev}>이전</button>
-              <button className="btn-primary" onClick={next} disabled={!selectedGame}>다음</button>
+              <button className="btn-secondary" onClick={prev}>{t('common.prev')}</button>
+              <button className="btn-primary" onClick={next} disabled={!selectedGame}>{t('common.next')}</button>
             </div>
           </>
         )}
@@ -129,10 +131,10 @@ export function Onboarding() {
         {/* Step 3: 감도 */}
         {step === 3 && (
           <>
-            <h2>감도 설정</h2>
-            <p>{selectedGame?.name}에서 사용하는 감도를 입력하세요.</p>
+            <h2>{t('onboarding.sensSetup')}</h2>
+            <p>{t('onboarding.sensSetupDesc').replace('{game}', selectedGame?.name ?? '')}</p>
             <div className="onboarding-field">
-              <label>감도 (In-game Sensitivity)</label>
+              <label>{t('onboarding.sensLabel')}</label>
               <input
                 type="number"
                 step="0.01"
@@ -148,8 +150,8 @@ export function Onboarding() {
               )}
             </div>
             <div className="onboarding-actions">
-              <button className="btn-secondary" onClick={prev}>이전</button>
-              <button className="btn-primary" onClick={next}>다음</button>
+              <button className="btn-secondary" onClick={prev}>{t('common.prev')}</button>
+              <button className="btn-primary" onClick={next}>{t('common.next')}</button>
             </div>
           </>
         )}
@@ -157,17 +159,17 @@ export function Onboarding() {
         {/* Step 4: 완료 + 모드 선택 */}
         {step === 4 && (
           <>
-            <h2>준비 완료!</h2>
+            <h2>{t('onboarding.done')}</h2>
             <dl className="onboarding-summary">
               <dt>DPI</dt>
               <dd>{dpi}</dd>
-              <dt>게임</dt>
-              <dd>{selectedGame?.name ?? '미선택'}</dd>
-              <dt>감도</dt>
+              <dt>{t('settings.game')}</dt>
+              <dd>{selectedGame?.name ?? t('onboarding.notSelected')}</dd>
+              <dt>{t('settings.sensitivity')}</dt>
               <dd>{sensitivity} {cm360 ? `(${cm360.toFixed(1)} cm/360)` : ''}</dd>
             </dl>
             <div className="onboarding-field">
-              <label>UI 모드</label>
+              <label>{t('onboarding.uiMode')}</label>
               <div className="mode-pill" style={{ justifyContent: 'center', marginTop: 8 }}>
                 <button
                   className={mode === 'simple' ? 'active' : ''}
@@ -183,12 +185,12 @@ export function Onboarding() {
                 </button>
               </div>
               <p style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 6 }}>
-                Simple: 핵심 기능만 표시 / Advanced: 모든 기능 표시
+                {t('onboarding.simpleDesc')}
               </p>
             </div>
             <div className="onboarding-actions">
-              <button className="btn-secondary" onClick={prev}>이전</button>
-              <button className="btn-primary" onClick={handleComplete}>시작</button>
+              <button className="btn-secondary" onClick={prev}>{t('common.prev')}</button>
+              <button className="btn-primary" onClick={handleComplete}>{t('common.start')}</button>
             </div>
           </>
         )}

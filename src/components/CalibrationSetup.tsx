@@ -4,6 +4,7 @@
  */
 import { useState } from 'react';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useTranslation } from '../i18n';
 import type { CalibrationMode, ConvergenceLevel } from '../stores/calibrationStore';
 
 interface CalibrationSetupProps {
@@ -11,61 +12,41 @@ interface CalibrationSetupProps {
   onBack: () => void;
 }
 
-/** 모드 설명 */
-const MODE_INFO: Record<CalibrationMode, { label: string; desc: string }> = {
-  explore: {
-    label: 'Explore',
-    desc: '넓은 범위에서 최적 감도를 탐색합니다. 현재 감도 ±15 cm/360 범위.',
-  },
-  refine: {
-    label: 'Refine',
-    desc: '현재 감도 근처 미세 조정. ±5~10% 범위. 머슬메모리를 보존합니다.',
-  },
-  fixed: {
-    label: 'Fixed',
-    desc: '감도를 변경하지 않고 Aim DNA만 수집합니다.',
-  },
+/** 모드 설명 — descKey는 i18n 키 */
+const MODE_INFO: Record<CalibrationMode, { label: string; descKey: string }> = {
+  explore: { label: 'Explore', descKey: 'cal.exploreDesc' },
+  refine: { label: 'Refine', descKey: 'cal.refineDesc' },
+  fixed: { label: 'Fixed', descKey: 'cal.fixedDesc' },
 };
 
-/** 수렴 레벨 설명 */
-const CONVERGENCE_INFO: Record<ConvergenceLevel, { label: string; desc: string; iterations: string }> = {
-  quick: {
-    label: 'Quick',
-    desc: '빠른 수렴. 기본값.',
-    iterations: '~15회',
-  },
-  deep: {
-    label: 'Deep',
-    desc: '더 정밀한 탐색. 미세한 차이도 감지.',
-    iterations: '~25회',
-  },
-  obsessive: {
-    label: 'Obsessive',
-    desc: '극도로 정밀한 탐색. 최대 반복.',
-    iterations: '~40회',
-  },
+/** 수렴 레벨 설명 — descKey는 i18n 키 */
+const CONVERGENCE_INFO: Record<ConvergenceLevel, { label: string; descKey: string; iterKey: string }> = {
+  quick: { label: 'Quick', descKey: 'cal.quickDesc', iterKey: 'cal.quickIter' },
+  deep: { label: 'Deep', descKey: 'cal.deepDesc', iterKey: 'cal.deepIter' },
+  obsessive: { label: 'Obsessive', descKey: 'cal.obsessiveDesc', iterKey: 'cal.obsessiveIter' },
 };
 
 export function CalibrationSetup({ onStart, onBack }: CalibrationSetupProps) {
   const [selectedMode, setSelectedMode] = useState<CalibrationMode>('explore');
   const [convergence, setConvergence] = useState<ConvergenceLevel>('quick');
   const { cmPer360, selectedGame, sensitivity, dpi } = useSettingsStore();
+  const { t } = useTranslation();
 
   return (
     <div className="calibration-setup">
-      <h2>Quick Calibration</h2>
+      <h2>{t('tool.quickCal')}</h2>
       <p className="setup-subtitle">
-        GP Bayesian Optimization으로 최적 감도를 찾습니다
+        {t('cal.subtitle')}
       </p>
 
       {/* 현재 설정 요약 */}
       <div className="setup-summary">
         <div className="summary-row">
-          <span className="summary-label">게임</span>
-          <span className="summary-value">{selectedGame?.name ?? '미선택'}</span>
+          <span className="summary-label">{t('settings.game')}</span>
+          <span className="summary-value">{selectedGame?.name ?? t('onboarding.notSelected')}</span>
         </div>
         <div className="summary-row">
-          <span className="summary-label">현재 감도</span>
+          <span className="summary-label">{t('cal.currentSens')}</span>
           <span className="summary-value">{sensitivity.toFixed(2)}</span>
         </div>
         <div className="summary-row">
@@ -80,7 +61,7 @@ export function CalibrationSetup({ onStart, onBack }: CalibrationSetupProps) {
 
       {/* 모드 선택 */}
       <div className="mode-selector">
-        <h3>캘리브레이션 모드</h3>
+        <h3>{t('cal.modeTitle')}</h3>
         {(Object.keys(MODE_INFO) as CalibrationMode[]).map((mode) => (
           <button
             key={mode}
@@ -88,14 +69,14 @@ export function CalibrationSetup({ onStart, onBack }: CalibrationSetupProps) {
             onClick={() => setSelectedMode(mode)}
           >
             <span className="mode-label">{MODE_INFO[mode].label}</span>
-            <span className="mode-desc">{MODE_INFO[mode].desc}</span>
+            <span className="mode-desc">{t(MODE_INFO[mode].descKey)}</span>
           </button>
         ))}
       </div>
 
       {/* 수렴 모드 선택 */}
       <div className="mode-selector convergence-selector">
-        <h3>수렴 모드</h3>
+        <h3>{t('cal.convergenceTitle')}</h3>
         {(Object.keys(CONVERGENCE_INFO) as ConvergenceLevel[]).map((level) => (
           <button
             key={level}
@@ -104,34 +85,30 @@ export function CalibrationSetup({ onStart, onBack }: CalibrationSetupProps) {
           >
             <span className="mode-label">
               {CONVERGENCE_INFO[level].label}
-              <span className="iteration-badge">{CONVERGENCE_INFO[level].iterations}</span>
+              <span className="iteration-badge">{t(CONVERGENCE_INFO[level].iterKey)}</span>
             </span>
-            <span className="mode-desc">{CONVERGENCE_INFO[level].desc}</span>
+            <span className="mode-desc">{t(CONVERGENCE_INFO[level].descKey)}</span>
           </button>
         ))}
       </div>
 
       {/* 안내 */}
       <div className="setup-info">
-        <p>
-          1단계: DNA 스크리닝 (~20회, ~3분) — 현재 감도로 워밍업 겸 기본 프로파일 수집
-        </p>
-        <p>
-          2단계: 캘리브레이션 — AI가 다양한 감도를 제안하며 최적점 탐색
-        </p>
+        <p>{t('cal.step1Info')}</p>
+        <p>{t('cal.step2Info')}</p>
       </div>
 
       {/* 버튼 */}
       <div className="setup-actions">
         <button className="btn-secondary" onClick={onBack}>
-          뒤로
+          {t('common.back')}
         </button>
         <button
           className="btn-primary"
           onClick={() => onStart(selectedMode, convergence)}
           disabled={!selectedGame}
         >
-          시작
+          {t('common.start')}
         </button>
       </div>
     </div>

@@ -5,6 +5,7 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { useTranslation } from '../i18n';
 import { safeInvoke } from '../utils/ipc';
 import {
   useProfileWizardStore,
@@ -31,19 +32,20 @@ interface ProfileWizardProps {
   onStartTraining: (stageType: StageType) => void;
 }
 
-/** 단계 한글 레이블 */
-const STEP_LABELS: Record<WizardStep, string> = {
-  'welcome': '환영',
-  'game-settings': '게임 세팅',
-  'hardware': '하드웨어',
-  'calibration': '캘리브레이션',
-  'full-assessment': '전체 점검',
-  'analysis': '결과 분석',
-  'retest': '재테스트',
-  'complete': '완료',
+/** 단계 i18n 키 매핑 */
+const STEP_LABEL_KEYS: Record<WizardStep, string> = {
+  'welcome': 'wizard.welcome',
+  'game-settings': 'wizard.gameSettings',
+  'hardware': 'wizard.hardware',
+  'calibration': 'wizard.calibration',
+  'full-assessment': 'wizard.assessment',
+  'analysis': 'wizard.analysis',
+  'retest': 'wizard.retest',
+  'complete': 'wizard.complete',
 };
 
 export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: ProfileWizardProps) {
+  const { t } = useTranslation();
   const store = useProfileWizardStore();
   const settingsStore = useSettingsStore();
   const calibrationStore = useCalibrationStore();
@@ -199,7 +201,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
       <div className="pw-progress-bar">
         <div className="pw-progress-fill" style={{ width: `${progressPercent}%` }} />
         <span className="pw-progress-label">
-          Step {store.currentStepIndex + 1}/{WIZARD_STEPS.length} — {STEP_LABELS[store.currentStep]}
+          Step {store.currentStepIndex + 1}/{WIZARD_STEPS.length} — {t(STEP_LABEL_KEYS[store.currentStep])}
         </span>
       </div>
 
@@ -209,7 +211,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
           <div
             key={step}
             className={`pw-step-dot ${i === store.currentStepIndex ? 'active' : ''} ${i < store.currentStepIndex ? 'done' : ''}`}
-            title={STEP_LABELS[step]}
+            title={t(STEP_LABEL_KEYS[step])}
           />
         ))}
       </div>
@@ -218,34 +220,34 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
         {/* ============ Step 1: Welcome ============ */}
         {store.currentStep === 'welcome' && (
           <div className="pw-step">
-            <h2>에임 프로파일 생성</h2>
+            <h2>{t('wizard.createProfile')}</h2>
             <p className="pw-description">
-              전체 에임 점검을 수행하고, GP Bayesian Optimization으로 최적 감도를 찾아드립니다.
+              {t('wizard.profileDesc')}
             </p>
             <div className="pw-flow-preview">
               <div className="pw-flow-item">
                 <span className="pw-flow-num">1</span>
-                <span>게임 & 감도 입력</span>
+                <span>{t('wizard.step1')}</span>
               </div>
               <div className="pw-flow-item">
                 <span className="pw-flow-num">2</span>
-                <span>하드웨어 확인</span>
+                <span>{t('wizard.step2')}</span>
               </div>
               <div className="pw-flow-item">
                 <span className="pw-flow-num">3</span>
-                <span>감도 캘리브레이션</span>
+                <span>{t('wizard.step3')}</span>
               </div>
               <div className="pw-flow-item">
                 <span className="pw-flow-num">4</span>
-                <span>8종 시나리오 전체 점검</span>
+                <span>{t('wizard.step4')}</span>
               </div>
               <div className="pw-flow-item">
                 <span className="pw-flow-num">5</span>
-                <span>Aim DNA 분석 + 감도 최적화</span>
+                <span>{t('wizard.step5')}</span>
               </div>
             </div>
             <p className="pw-note">
-              약 15~20분이 소요됩니다. 중간에 나가도 진행 상태가 저장됩니다.
+              {t('wizard.timeEstimate')}
             </p>
           </div>
         )}
@@ -253,14 +255,14 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
         {/* ============ Step 2: 게임 세팅 ============ */}
         {store.currentStep === 'game-settings' && (
           <div className="pw-step">
-            <h2>주력 게임 선택</h2>
-            <p className="pw-description">가장 많이 플레이하는 게임을 선택하고 현재 감도를 입력하세요.</p>
+            <h2>{t('wizard.selectMainGame')}</h2>
+            <p className="pw-description">{t('wizard.selectMainGameDesc')}</p>
 
             {/* 게임 검색 */}
             <input
               type="text"
               className="input-field"
-              placeholder="게임 이름으로 검색..."
+              placeholder={t('wizard.searchGame')}
               value={gameSearch}
               onChange={e => setGameSearch(e.target.value)}
               style={{ marginBottom: 12, maxWidth: 400 }}
@@ -282,9 +284,9 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
             {/* 게임별 전용 감도 필드 */}
             {store.selectedGame && (
               <div className="pw-sens-form">
-                <h3>{store.selectedGame.name} 감도 설정</h3>
+                <h3>{store.selectedGame.name} {t('wizard.sensSettings')}</h3>
                 {(GAME_SENS_FIELDS[store.selectedGame.name] ?? [
-                  { key: 'sensitivity', label: '감도', min: 0.01, max: 100, step: 0.01, defaultValue: 1.0 },
+                  { key: 'sensitivity', label: t('settings.sensitivity'), min: 0.01, max: 100, step: 0.01, defaultValue: 1.0 },
                 ]).map(field => (
                   <div key={field.key} className="pw-field">
                     <label>{field.label}</label>
@@ -316,12 +318,12 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
         {/* ============ Step 3: 하드웨어 ============ */}
         {store.currentStep === 'hardware' && (
           <div className="pw-step">
-            <h2>하드웨어 설정</h2>
-            <p className="pw-description">마우스와 모니터 정보를 확인하세요.</p>
+            <h2>{t('wizard.hardwareSettings')}</h2>
+            <p className="pw-description">{t('wizard.hardwareDesc')}</p>
 
             <div className="pw-hardware-grid">
               <div className="pw-field">
-                <label>마우스 DPI</label>
+                <label>{t('wizard.mouseDpi')}</label>
                 <input
                   type="number"
                   min={100}
@@ -332,7 +334,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                 />
               </div>
               <div className="pw-field">
-                <label>모니터 해상도 (가로)</label>
+                <label>{t('wizard.monitorWidth')}</label>
                 <input
                   type="number"
                   min={800}
@@ -347,7 +349,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                 />
               </div>
               <div className="pw-field">
-                <label>모니터 해상도 (세로)</label>
+                <label>{t('wizard.monitorHeight')}</label>
                 <input
                   type="number"
                   min={600}
@@ -362,7 +364,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                 />
               </div>
               <div className="pw-field">
-                <label>주사율 (Hz)</label>
+                <label>{t('wizard.refreshRate')}</label>
                 <select
                   value={store.refreshRate}
                   onChange={e => store.setHardware(
@@ -388,9 +390,9 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
         {/* ============ Step 4: 캘리브레이션 ============ */}
         {store.currentStep === 'calibration' && (
           <div className="pw-step">
-            <h2>감도 캘리브레이션</h2>
+            <h2>{t('wizard.sensCalibration')}</h2>
             <p className="pw-description">
-              GP Bayesian Optimization으로 최적 감도를 탐색합니다.
+              {t('wizard.sensCalDesc')}
             </p>
             {store.calibratedCm360 ? (
               <div className="pw-calibration-done">
@@ -398,13 +400,13 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                   <span className="pw-result-value">{store.calibratedCm360.toFixed(1)}</span>
                   <span className="pw-result-unit">cm/360</span>
                 </div>
-                <p>캘리브레이션 완료! 다음 단계로 진행하세요.</p>
+                <p>{t('wizard.calDone')}</p>
               </div>
             ) : (
               <div className="pw-calibration-start">
-                <p>아직 캘리브레이션을 수행하지 않았습니다.</p>
+                <p>{t('wizard.notCalibrated')}</p>
                 <button className="btn-primary" onClick={onStartCalibration}>
-                  캘리브레이션 시작
+                  {t('wizard.startCal')}
                 </button>
                 <button
                   className="btn-secondary"
@@ -414,7 +416,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                     store.setCalibrationResult(settingsStore.cmPer360);
                   }}
                 >
-                  건너뛰기 (현재 감도 사용)
+                  {t('wizard.skipCal')}
                 </button>
               </div>
             )}
@@ -424,9 +426,9 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
         {/* ============ Step 5: 전체 점검 ============ */}
         {store.currentStep === 'full-assessment' && (
           <div className="pw-step">
-            <h2>전체 에임 점검</h2>
+            <h2>{t('wizard.fullAssessment')}</h2>
             <p className="pw-description">
-              8종 시나리오를 순서대로 수행합니다. 각 시나리오 완료 후 자동으로 다음으로 넘어갑니다.
+              {t('wizard.fullAssessmentDesc')}
             </p>
 
             {/* 시나리오 목록 */}
@@ -446,10 +448,10 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                       <span className="pw-assessment-desc">{info?.description ?? ''}</span>
                     </div>
                     {result && (
-                      <span className="pw-assessment-score">{result.score.toFixed(0)}점</span>
+                      <span className="pw-assessment-score">{result.score.toFixed(0)}pts</span>
                     )}
                     {isCurrent && !result && (
-                      <span className="pw-assessment-badge">진행 중</span>
+                      <span className="pw-assessment-badge">{t('common.inProgress')}</span>
                     )}
                   </div>
                 );
@@ -459,7 +461,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
             {/* 점검 컨트롤 */}
             {!store.assessmentRunning && store.assessmentResults.length === 0 && (
               <button className="btn-primary" onClick={handleStartAssessment}>
-                점검 시작
+                {t('wizard.startAssessment')}
               </button>
             )}
 
@@ -472,7 +474,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                   className="btn-primary"
                   onClick={() => onStartTraining(currentAssessmentStage)}
                 >
-                  시나리오 시작
+                  {t('wizard.startScenario')}
                 </button>
               </div>
             )}
@@ -480,7 +482,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
             {/* 전체 완료 */}
             {!store.assessmentRunning && store.assessmentResults.length >= ASSESSMENT_STAGES.length && (
               <div className="pw-assessment-done">
-                <p>전체 점검이 완료되었습니다! 다음 단계에서 결과를 분석합니다.</p>
+                <p>{t('wizard.assessmentDone')}</p>
               </div>
             )}
           </div>
@@ -489,28 +491,28 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
         {/* ============ Step 6: 결과 분석 ============ */}
         {store.currentStep === 'analysis' && (
           <div className="pw-step">
-            <h2>Aim DNA 분석</h2>
+            <h2>{t('wizard.dnaAnalysis')}</h2>
             <p className="pw-description">
-              전체 점검 결과를 바탕으로 에임 특성을 분석합니다.
+              {t('wizard.dnaAnalysisDesc')}
             </p>
 
             {!store.aimDna ? (
               <div className="pw-analysis-start">
                 <button className="btn-primary" onClick={handleAnalyze}>
-                  분석 시작
+                  {t('wizard.startAnalysis')}
                 </button>
               </div>
             ) : (
               <div className="pw-analysis-result">
                 {/* 레이더 차트 간소화 — 5축 점수 표시 */}
                 <div className="pw-radar-summary">
-                  <h3>에임 특성 요약</h3>
+                  <h3>{t('wizard.aimSummary')}</h3>
                   {store.aimDna.typeLabel && (
                     <div className="pw-type-badge">{store.aimDna.typeLabel}</div>
                   )}
                   <div className="pw-radar-grid">
                     <div className="pw-radar-axis">
-                      <span className="pw-radar-label">플릭 속도</span>
+                      <span className="pw-radar-label">{t('wizard.flickSpeed')}</span>
                       <div className="pw-radar-bar">
                         <div
                           className="pw-radar-fill"
@@ -519,7 +521,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                       </div>
                     </div>
                     <div className="pw-radar-axis">
-                      <span className="pw-radar-label">트래킹 정확도</span>
+                      <span className="pw-radar-label">{t('wizard.trackingAccuracy')}</span>
                       <div className="pw-radar-bar">
                         <div
                           className="pw-radar-fill"
@@ -528,7 +530,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                       </div>
                     </div>
                     <div className="pw-radar-axis">
-                      <span className="pw-radar-label">매끄러움</span>
+                      <span className="pw-radar-label">{t('wizard.smoothnessLabel')}</span>
                       <div className="pw-radar-bar">
                         <div
                           className="pw-radar-fill"
@@ -537,7 +539,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                       </div>
                     </div>
                     <div className="pw-radar-axis">
-                      <span className="pw-radar-label">오버슈트 억제</span>
+                      <span className="pw-radar-label">{t('wizard.overshootSuppression')}</span>
                       <div className="pw-radar-bar">
                         <div
                           className="pw-radar-fill"
@@ -546,7 +548,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                       </div>
                     </div>
                     <div className="pw-radar-axis">
-                      <span className="pw-radar-label">속도 매칭</span>
+                      <span className="pw-radar-label">{t('wizard.velocityMatching')}</span>
                       <div className="pw-radar-bar">
                         <div
                           className="pw-radar-fill"
@@ -560,7 +562,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                 {/* 감도 제안 */}
                 {store.suggestedCm360 && (
                   <div className="pw-sens-suggestion">
-                    <h3>감도 제안</h3>
+                    <h3>{t('wizard.sensSuggestion')}</h3>
                     <div className="pw-result-badge">
                       <span className="pw-result-value">{store.suggestedCm360.toFixed(1)}</span>
                       <span className="pw-result-unit">cm/360</span>
@@ -570,7 +572,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
 
                 {/* 점검 점수 요약 */}
                 <div className="pw-scores-summary">
-                  <h3>시나리오별 점수</h3>
+                  <h3>{t('wizard.scenarioScores')}</h3>
                   <div className="pw-scores-grid">
                     {store.assessmentResults.map(r => (
                       <div key={r.stageType} className="pw-score-item">
@@ -592,16 +594,16 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
         {/* ============ Step 7: 재테스트 ============ */}
         {store.currentStep === 'retest' && (
           <div className="pw-step">
-            <h2>약한 영역 재테스트</h2>
+            <h2>{t('wizard.weakRetest')}</h2>
             <p className="pw-description">
-              조정된 감도로 약한 영역만 재테스트하여 성능 변화를 확인합니다.
+              {t('wizard.weakRetestDesc')}
             </p>
 
             {store.weakStages.length === 0 ? (
               <div className="pw-retest-start">
-                <p>약한 영역을 분석 중입니다...</p>
+                <p>{t('wizard.analyzingWeak')}</p>
                 <button className="btn-primary" onClick={handleStartRetest}>
-                  약한 영역 판별 + 재테스트
+                  {t('wizard.identifyWeak')}
                 </button>
                 <button
                   className="btn-secondary"
@@ -613,12 +615,12 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                     store.goToStep('complete');
                   }}
                 >
-                  건너뛰기
+                  {t('common.skip')}
                 </button>
               </div>
             ) : (
               <div className="pw-retest-progress">
-                <p>재테스트 라운드 {store.retestRound} — {store.weakStages.length}개 영역</p>
+                <p>{t('style.retestRound')} {store.retestRound} — {store.weakStages.length} {t('style.areas')}</p>
                 <div className="pw-assessment-list">
                   {store.weakStages.map((stage, i) => {
                     const result = store.retestResults.find(r => r.stageType === stage);
@@ -635,14 +637,14 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                           </span>
                         </div>
                         {result && (
-                          <span className="pw-assessment-score">{result.score.toFixed(0)}점</span>
+                          <span className="pw-assessment-score">{result.score.toFixed(0)}pts</span>
                         )}
                         {isCurrent && (
                           <button
                             className="btn-primary btn-sm"
                             onClick={() => onStartTraining(stage)}
                           >
-                            시작
+                            {t('common.start')}
                           </button>
                         )}
                       </div>
@@ -652,7 +654,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
 
                 {store.retestResults.length >= store.weakStages.length && (
                   <div className="pw-retest-done">
-                    <p>재테스트 완료!</p>
+                    <p>{t('wizard.retestDone')}</p>
                     <button
                       className="btn-primary"
                       onClick={() => {
@@ -661,14 +663,14 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                         store.goToStep('complete');
                       }}
                     >
-                      결과 확인
+                      {t('wizard.viewResult')}
                     </button>
                     <button
                       className="btn-secondary"
                       style={{ marginLeft: 8 }}
                       onClick={handleStartRetest}
                     >
-                      한 번 더 테스트
+                      {t('wizard.oneMoreTest')}
                     </button>
                   </div>
                 )}
@@ -680,7 +682,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
         {/* ============ Step 8: 완료 ============ */}
         {store.currentStep === 'complete' && (
           <div className="pw-step">
-            <h2>프로파일 완성!</h2>
+            <h2>{t('wizard.profileComplete')}</h2>
 
             {/* 최종 감도 */}
             <div className="pw-final-result">
@@ -697,11 +699,11 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
 
             {/* 게임별 감도 변환 */}
             <div className="pw-conversions">
-              <h3>게임별 감도 변환</h3>
+              <h3>{t('wizard.gameConversions')}</h3>
               <div className="pw-conversion-table">
                 <div className="pw-conversion-header">
-                  <span>게임</span>
-                  <span>변환 감도</span>
+                  <span>{t('wizard.game')}</span>
+                  <span>{t('wizard.convertedSens')}</span>
                 </div>
                 {store.sensConversions.map(c => (
                   <div key={c.gameName} className="pw-conversion-row">
@@ -717,7 +719,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                 await handleComplete();
                 onClose();
               }}>
-                프로파일 저장 & 완료
+                {t('wizard.saveAndComplete')}
               </button>
             </div>
           </div>
@@ -737,14 +739,14 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
               }
             }}
           >
-            {store.currentStepIndex === 0 ? '취소' : '이전'}
+            {store.currentStepIndex === 0 ? t('common.cancel') : t('common.prev')}
           </button>
           <button
             className="btn-primary"
             onClick={handleNext}
             disabled={!canNext()}
           >
-            {store.currentStep === 'analysis' ? '재테스트로' : '다음'}
+            {store.currentStep === 'analysis' ? t('wizard.toRetest') : t('common.next')}
           </button>
         </div>
       )}

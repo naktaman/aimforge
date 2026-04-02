@@ -6,6 +6,7 @@ import { useEffect, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useZoomCalibrationStore, type ZoomProfile } from '../stores/zoomCalibrationStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useTranslation } from '../i18n';
 
 interface ZoomCalibrationSetupProps {
   onStart: () => void;
@@ -25,6 +26,7 @@ export function ZoomCalibrationSetup({ onStart, onBack }: ZoomCalibrationSetupPr
   } = useZoomCalibrationStore();
 
   const { selectedGame } = useSettingsStore();
+  const { t } = useTranslation();
 
   // 게임 변경 시 줌 프로파일 로드
   useEffect(() => {
@@ -71,14 +73,14 @@ export function ZoomCalibrationSetup({ onStart, onBack }: ZoomCalibrationSetupPr
 
   return (
     <div className="zoom-calibration-setup">
-      <h2>줌 캘리브레이션</h2>
-      <p className="subtitle">스코프별 최적 배율을 GP Bayesian Optimization으로 탐색합니다</p>
+      <h2>{t('zoom.title')}</h2>
+      <p className="subtitle">{t('zoom.subtitle')}</p>
 
       {/* 스코프 선택 */}
       <section className="scope-selection">
-        <h3>스코프 선택 (최소 2개)</h3>
+        <h3>{t('zoom.scopeSelect')}</h3>
         {availableProfiles.length === 0 ? (
-          <p className="no-data">줌 프로파일 없음 — 게임을 선택하세요</p>
+          <p className="no-data">{t('zoom.noProfile')}</p>
         ) : (
           <div className="scope-list">
             {availableProfiles.map((p, i) => (
@@ -104,7 +106,7 @@ export function ZoomCalibrationSetup({ onStart, onBack }: ZoomCalibrationSetupPr
 
       {/* 수렴 모드 */}
       <section className="convergence-mode">
-        <h3>탐색 깊이</h3>
+        <h3>{t('zoom.searchDepth')}</h3>
         <div className="mode-options">
           {(['quick', 'deep', 'obsessive'] as const).map((mode) => (
             <label
@@ -123,9 +125,9 @@ export function ZoomCalibrationSetup({ onStart, onBack }: ZoomCalibrationSetupPr
                   {mode === 'quick' ? 'Quick' : mode === 'deep' ? 'Deep' : 'Obsessive'}
                 </strong>
                 <span className="mode-desc">
-                  {mode === 'quick' && '빠른 탐색 (~6 트라이얼/비율)'}
-                  {mode === 'deep' && '정밀 탐색 (~12 트라이얼/비율)'}
-                  {mode === 'obsessive' && '완전 탐색 (~20 트라이얼/비율)'}
+                  {mode === 'quick' && t('zoom.quickSearch')}
+                  {mode === 'deep' && t('zoom.deepSearch')}
+                  {mode === 'obsessive' && t('zoom.obsessiveSearch')}
                 </span>
               </div>
             </label>
@@ -136,14 +138,14 @@ export function ZoomCalibrationSetup({ onStart, onBack }: ZoomCalibrationSetupPr
       {/* 버튼 */}
       <div className="setup-actions">
         <button className="btn-secondary" onClick={onBack}>
-          돌아가기
+          {t('common.back')}
         </button>
         <button
           className="btn-primary"
           onClick={onStart}
           disabled={!canStart}
         >
-          캘리브레이션 시작 ({selectedProfileIds.length}개 비율)
+          {t('zoom.startCal')} ({selectedProfileIds.length})
         </button>
       </div>
     </div>

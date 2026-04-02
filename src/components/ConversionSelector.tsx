@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { safeInvoke } from '../utils/ipc';
 import { useToastStore } from '../stores/toastStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useTranslation } from '../i18n';
 import { BackButton } from './BackButton';
 import { LoadingSpinner } from './LoadingSpinner';
 
@@ -47,14 +48,14 @@ interface SnappedSensitivity {
   recommendedCm360: number;
 }
 
-/** 6가지 변환 방식 표시 이름 + 설명 */
-const METHODS: Record<string, { label: string; desc: string }> = {
-  'MDM_0': { label: 'MDM 0%', desc: '순수 FOV 탄젠트 비율 (택티컬 FPS 추천)' },
-  'MDM_56.25': { label: 'MDM 56.25%', desc: '중간 균형 (BR 추천)' },
-  'MDM_75': { label: 'MDM 75%', desc: '경쟁전 표준' },
-  'MDM_100': { label: 'MDM 100%', desc: 'FOV 무관 동일 감도' },
-  'Viewspeed_H': { label: 'Viewspeed H', desc: '수평 FOV 비율 (아레나 추천)' },
-  'Viewspeed_V': { label: 'Viewspeed V', desc: '수직 FOV 비율' },
+/** 6가지 변환 방식 표시 이름 + 설명 i18n 키 */
+const METHODS: Record<string, { label: string; descKey: string }> = {
+  'MDM_0': { label: 'MDM 0%', descKey: 'conv.mdm0' },
+  'MDM_56.25': { label: 'MDM 56.25%', descKey: 'conv.mdm56' },
+  'MDM_75': { label: 'MDM 75%', descKey: 'conv.mdm75' },
+  'MDM_100': { label: 'MDM 100%', descKey: 'conv.mdm100' },
+  'Viewspeed_H': { label: 'Viewspeed H', descKey: 'conv.viewspeedH' },
+  'Viewspeed_V': { label: 'Viewspeed V', descKey: 'conv.viewspeedV' },
 };
 
 /** 게임 카테고리별 추천 방식 결정 */
@@ -70,6 +71,7 @@ function getRecommended(srcId: string, dstId: string): string {
 }
 
 export default function ConversionSelector({ onBack }: { onBack: () => void }) {
+  const { t } = useTranslation();
   const { dpi } = useSettingsStore();
   const [games, setGames] = useState<GamePreset[]>([]);
   const [srcGame, setSrcGame] = useState('cs2');
@@ -130,7 +132,7 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
   /** 클립보드에 감도 값 복사 */
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    useToastStore.getState().addToast('복사 완료', 'success', 1500);
+    useToastStore.getState().addToast(t('common.copied'), 'success', 1500);
   };
 
   const recommended = result ? getRecommended(srcGame, dstGame) : '';
@@ -140,17 +142,17 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
       {/* 헤더: 뒤로가기 + 제목 */}
       <div className="page-header">
         <BackButton onBack={onBack} />
-        <h2>감도 변환기</h2>
+        <h2>{t('conv.sensConverter')}</h2>
       </div>
 
       {/* 입력 영역: 소스/대상 게임 선택 + 감도 입력 + 변환 버튼 */}
       <div className="conversion-controls">
         <label className="form-label">
-          소스 게임
+          {t('conv.sourceGame')}
           <input
             type="text"
             className="input-field"
-            placeholder="검색..."
+            placeholder={t('common.search')}
             value={srcSearch}
             onChange={e => setSrcSearch(e.target.value)}
             style={{ marginBottom: 4, fontSize: 12 }}
@@ -164,16 +166,16 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
           </select>
         </label>
 
-        <button className="btn btn--ghost btn--icon" onClick={swap} title="소스/대상 스왑">
+        <button className="btn btn--ghost btn--icon" onClick={swap} title={`${t('conv.sourceGame')}/${t('conv.destGame')}`}>
           ⇄
         </button>
 
         <label className="form-label">
-          대상 게임
+          {t('conv.destGame')}
           <input
             type="text"
             className="input-field"
-            placeholder="검색..."
+            placeholder={t('common.search')}
             value={dstSearch}
             onChange={e => setDstSearch(e.target.value)}
             style={{ marginBottom: 4, fontSize: 12 }}
@@ -188,7 +190,7 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
         </label>
 
         <label className="form-label">
-          소스 감도
+          {t('conv.sourceSens')}
           <input
             className="input-field"
             value={sens}
@@ -205,27 +207,27 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
           onClick={convert}
           disabled={loading}
         >
-          {loading ? '계산 중...' : '변환'}
+          {loading ? t('conv.converting') : t('conv.convert')}
         </button>
       </div>
 
-      {loading && <LoadingSpinner label="변환 계산 중..." />}
+      {loading && <LoadingSpinner label={t('conv.converting')} />}
 
       {/* 결과 테이블: 6가지 방식의 변환 결과 표시 */}
       {result && !loading && (
         <>
           <div className="conversion-fov-info">
-            {result.srcGame} → {result.dstGame} | 소스 cm/360: {result.srcCm360.toFixed(2)} | FOV: {result.srcFovH.toFixed(1)}° → {result.dstFovH.toFixed(1)}°
+            {result.srcGame} → {result.dstGame} | cm/360: {result.srcCm360.toFixed(2)} | FOV: {result.srcFovH.toFixed(1)}° → {result.dstFovH.toFixed(1)}°
           </div>
 
           <table className="conversion-table">
             <thead>
               <tr>
-                <th>방식</th>
+                <th>{t('conv.method')}</th>
                 <th>cm/360</th>
-                <th>감도</th>
-                <th>배율</th>
-                <th>설명</th>
+                <th>Sensitivity</th>
+                <th>{t('conv.multiplier')}</th>
+                <th>{t('common.description')}</th>
                 <th></th>
               </tr>
             </thead>
@@ -242,18 +244,18 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
                   >
                     <td>
                       {meta.label}
-                      {isRec && <span className="badge badge--accent" style={{ marginLeft: 6 }}>추천</span>}
+                      {isRec && <span className="badge badge--accent" style={{ marginLeft: 6 }}>{t('conv.recommended')}</span>}
                     </td>
                     <td>{r.cm360.toFixed(2)}</td>
                     <td className="font-semibold">{r.sens.toFixed(4)}</td>
                     <td>×{r.multiplier.toFixed(4)}</td>
-                    <td className="text-sm text-muted">{meta.desc}</td>
+                    <td className="text-sm text-muted">{t(meta.descKey)}</td>
                     <td>
                       <button
                         className="btn btn--ghost btn--sm"
                         onClick={() => copyToClipboard(r.sens.toFixed(4))}
                       >
-                        복사
+                        {t('common.copy')}
                       </button>
                     </td>
                   </tr>
@@ -265,10 +267,10 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
           {/* 감도 스냅 결과: 추천 방식 기준 floor/ceil/추천 감도 */}
           {snap && (
             <div className="conversion-results" style={{ marginTop: 16 }}>
-              <h3 className="page-section__title">감도 스냅 (추천 방식 기준)</h3>
+              <h3 className="page-section__title">{t('conv.sensSnap')}</h3>
               <div style={{ display: 'flex', gap: 24 }}>
                 <div>
-                  <div className="stat-label">추천 감도</div>
+                  <div className="stat-label">{t('conv.recommendedSens')}</div>
                   <div className="stat-value stat-value--success">{snap.recommendedSens.toFixed(4)}</div>
                   <div className="snap-indicator">{snap.recommendedCm360.toFixed(2)} cm/360</div>
                 </div>
@@ -288,7 +290,7 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
                 onClick={() => copyToClipboard(snap.recommendedSens.toFixed(4))}
                 style={{ marginTop: 10 }}
               >
-                추천 감도 복사
+                {t('conv.copyRecommended')}
               </button>
             </div>
           )}

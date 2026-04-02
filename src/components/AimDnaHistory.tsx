@@ -6,6 +6,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
+import { useTranslation } from '../i18n';
 import { useAimDnaStore } from '../stores/aimDnaStore';
 import type { DnaSnapshot, DnaChangeEvent, SnapshotComparison } from '../utils/types';
 
@@ -33,11 +34,12 @@ const AXIS_KEYS: AxisKey[] = [
   'flickPower', 'trackingPrecision', 'motorControl', 'speed', 'consistency',
 ];
 
-const CHANGE_TYPE_LABELS: Record<string, string> = {
-  gear:        '🎮 기어',
-  sensitivity: '🎯 감도',
-  grip:        '✋ 그립',
-  posture:     '🪑 자세',
+/** 변경 유형 i18n 키 + 이모지 매핑 */
+const CHANGE_TYPE_KEYS: Record<string, { emoji: string; key: string }> = {
+  gear:        { emoji: '🎮', key: 'dnaHistory.gear' },
+  sensitivity: { emoji: '🎯', key: 'dnaHistory.sensitivity' },
+  grip:        { emoji: '✋', key: 'dnaHistory.grip' },
+  posture:     { emoji: '🪑', key: 'dnaHistory.posture' },
 };
 
 // ── 타임라인 차트 ──────────────────────────────────────────────────────────────
@@ -47,9 +49,11 @@ interface TimelineChartProps {
   changeEvents: DnaChangeEvent[];
   selectedIds: [number | null, number | null];
   onSelectSnapshot: (id: number) => void;
+  /** 변경 유형별 번역된 라벨 */
+  changeTypeLabels: Record<string, string>;
 }
 
-function TimelineChart({ snapshots, changeEvents, selectedIds, onSelectSnapshot }: TimelineChartProps) {
+function TimelineChart({ snapshots, changeEvents, selectedIds, onSelectSnapshot, changeTypeLabels }: TimelineChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -143,9 +147,9 @@ function TimelineChart({ snapshots, changeEvents, selectedIds, onSelectSnapshot 
         .attr('y', 12)
         .attr('fill', '#f5a623')
         .attr('font-size', '10px')
-        .text(CHANGE_TYPE_LABELS[ev.changeType] ?? ev.changeType);
+        .text(changeTypeLabels[ev.changeType] ?? ev.changeType);
     });
-  }, [snapshots, changeEvents, selectedIds]);
+  }, [snapshots, changeEvents, selectedIds, changeTypeLabels]);
 
   return <svg ref={svgRef} />;
 }
@@ -252,10 +256,16 @@ interface Props {
 }
 
 export function AimDnaHistory({ profileId }: Props) {
+  const { t } = useTranslation();
   const {
     snapshots, changeEvents, comparison, stagnation,
     loadSnapshots, loadChangeEvents, compareSnapshots, detectStagnation,
   } = useAimDnaStore();
+
+  /** 변경 유형 라벨 — D3 등 비-React 렌더에 전달용 */
+  const changeTypeLabels: Record<string, string> = Object.fromEntries(
+    Object.entries(CHANGE_TYPE_KEYS).map(([k, v]) => [k, `${v.emoji} ${t(v.key)}`])
+  );
 
   /** 비교 선택된 두 스냅샷 ID */
   const [selectedIds, setSelectedIds] = useState<[number | null, number | null]>([null, null]);
@@ -308,7 +318,7 @@ export function AimDnaHistory({ profileId }: Props) {
           borderRadius: 8, padding: '12px 16px', marginBottom: 16,
         }}>
           <strong style={{ color: '#f5a623' }}>
-            정체기 감지 — {stagnation.stagnantAxes.join(', ')} 축이 5회 연속 변화 미미
+            {t('dnaHistory.stagnation').replace('{axes}', stagnation.stagnantAxes.join(', '))}
           </strong>
           <ul style={{ margin: '8px 0 0', paddingLeft: 20, fontSize: 13, color: '#ccc' }}>
             {stagnation.suggestions.map((s, i) => <li key={i}>{s}</li>)}
@@ -319,15 +329,15 @@ export function AimDnaHistory({ profileId }: Props) {
       {/* 타임라인 차트 */}
       <div className="history-section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <h3 style={{ margin: 0, fontSize: 15, color: '#ccc' }}>5축 성장 타임라인</h3>
+          <h3 style={{ margin: 0, fontSize: 15, color: '#ccc' }}>{t('dnaHistory.growthTimeline')}</h3>
           <div style={{ fontSize: 12, color: '#666' }}>
-            차트 점 클릭으로 비교할 스냅샷 선택 (2개)
+            {t('dnaHistory.selectSnapshots')}
           </div>
         </div>
 
         {snapshots.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 0', color: '#555' }}>
-            아직 DNA 측정 데이터가 없습니다.<br />배터리를 완료하면 히스토리가 쌓입니다.
+            {t('dnaHistory.noData')}
           </div>
         ) : (
           <TimelineChart
@@ -335,6 +345,7 @@ export function AimDnaHistory({ profileId }: Props) {
             changeEvents={changeEvents}
             selectedIds={selectedIds}
             onSelectSnapshot={handleSelectSnapshot}
+            changeTypeLabels={changeTypeLabels}
           />
         )}
 
@@ -349,7 +360,7 @@ export function AimDnaHistory({ profileId }: Props) {
             ))}
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }}>
               <div style={{ width: 16, height: 3, background: '#f5a623', borderRadius: 2, borderTop: '2px dashed #f5a623' }} />
-              <span style={{ color: '#f5a623' }}>변경점</span>
+              <span style={{ color: '#f5a623' }}>{t('dnaHistory.changePoint')}</span>
             </div>
           </div>
         )}
@@ -364,17 +375,17 @@ export function AimDnaHistory({ profileId }: Props) {
             onClick={handleCompare}
             style={{ opacity: canCompare ? 1 : 0.4 }}
           >
-            선택한 두 스냅샷 비교
+            {t('dnaHistory.compareSnapshots')}
           </button>
           {canCompare && (
             <span style={{ fontSize: 13, color: '#888' }}>
-              스냅샷 #{selectedIds[0]} vs #{selectedIds[1]}
+              {t('dnaHistory.snapshotVs')} #{selectedIds[0]} vs #{selectedIds[1]}
             </span>
           )}
           {compareMode && (
             <button className="btn-secondary" style={{ fontSize: 12, padding: '4px 12px' }}
               onClick={() => { setCompareMode(false); setSelectedIds([null, null]); }}>
-              비교 초기화
+              {t('dnaHistory.resetCompare')}
             </button>
           )}
         </div>
@@ -386,7 +397,7 @@ export function AimDnaHistory({ profileId }: Props) {
           background: '#141414', border: '1px solid #2a2a2a',
           borderRadius: 10, padding: 20, marginTop: 8,
         }}>
-          <h3 style={{ marginTop: 0, fontSize: 15, color: '#ccc' }}>전후 비교 결과</h3>
+          <h3 style={{ marginTop: 0, fontSize: 15, color: '#ccc' }}>{t('dnaHistory.compareResult')}</h3>
 
           <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'flex-start' }}>
             {/* 레이더 오버레이 */}
@@ -395,11 +406,11 @@ export function AimDnaHistory({ profileId }: Props) {
               <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 8, fontSize: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                   <div style={{ width: 12, height: 12, background: '#74b9ff', borderRadius: 2, opacity: 0.6 }} />
-                  <span style={{ color: '#74b9ff' }}>이전</span>
+                  <span style={{ color: '#74b9ff' }}>{t('dnaHistory.before')}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                   <div style={{ width: 12, height: 12, background: '#e94560', borderRadius: 2, opacity: 0.6 }} />
-                  <span style={{ color: '#e94560' }}>이후</span>
+                  <span style={{ color: '#e94560' }}>{t('dnaHistory.after')}</span>
                 </div>
               </div>
             </div>
@@ -409,7 +420,7 @@ export function AimDnaHistory({ profileId }: Props) {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr>
-                    {['축', '이전', '이후', '변화 (%)'].map(h => (
+                    {[t('dnaHistory.axis'), t('dnaHistory.before'), t('dnaHistory.after'), t('dnaHistory.changePct')].map(h => (
                       <th key={h} style={{ textAlign: 'left', padding: '4px 8px', color: '#666', fontWeight: 'normal', borderBottom: '1px solid #222' }}>{h}</th>
                     ))}
                   </tr>
@@ -436,7 +447,7 @@ export function AimDnaHistory({ profileId }: Props) {
 
           {/* 자동 인사이트 */}
           <div style={{ marginTop: 16 }}>
-            <div style={{ fontSize: 13, color: '#888', marginBottom: 6 }}>자동 분석</div>
+            <div style={{ fontSize: 13, color: '#888', marginBottom: 6 }}>{t('dnaHistory.autoAnalysis')}</div>
             <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#ccc' }}>
               {comparison.insights.map((msg, i) => <li key={i}>{msg}</li>)}
             </ul>
@@ -447,7 +458,7 @@ export function AimDnaHistory({ profileId }: Props) {
       {/* 변경점 이벤트 목록 */}
       {changeEvents.length > 0 && (
         <div className="change-events-section" style={{ marginTop: 24 }}>
-          <h3 style={{ fontSize: 15, color: '#ccc', marginBottom: 8 }}>변경점 이벤트 기록</h3>
+          <h3 style={{ fontSize: 15, color: '#ccc', marginBottom: 8 }}>{t('dnaHistory.changeEventLog')}</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {changeEvents.slice(0, 10).map(ev => (
               <div key={ev.id} style={{
@@ -456,7 +467,7 @@ export function AimDnaHistory({ profileId }: Props) {
                 display: 'flex', gap: 12, alignItems: 'flex-start',
               }}>
                 <span style={{ color: '#f5a623', whiteSpace: 'nowrap' }}>
-                  {CHANGE_TYPE_LABELS[ev.changeType] ?? ev.changeType}
+                  {changeTypeLabels[ev.changeType] ?? ev.changeType}
                 </span>
                 <span style={{ color: '#888', whiteSpace: 'nowrap' }}>
                   {new Date(ev.occurredAt).toLocaleDateString('ko-KR')}
