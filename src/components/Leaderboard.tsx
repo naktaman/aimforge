@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '../utils/apiClient';
 import { useAuthStore } from '../stores/authStore';
+import { useTranslation } from '../i18n';
 
 /** 리더보드 항목 */
 interface LeaderboardEntry {
@@ -29,6 +30,7 @@ interface LeaderboardProps {
 
 export function Leaderboard({ onBack }: LeaderboardProps) {
   const { isOnline } = useAuthStore();
+  const { t } = useTranslation();
   const [stageType, setStageType] = useState('flick');
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(false);
@@ -54,12 +56,12 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
   return (
     <div className="leaderboard">
       <div className="section-header">
-        <h2>리더보드</h2>
-        <button className="btn-secondary" onClick={onBack}>돌아가기</button>
+        <h2>{t('leaderboard.title')}</h2>
+        <button className="btn-secondary" onClick={onBack}>{t('common.back')}</button>
       </div>
 
       {!isOnline && (
-        <p className="text-secondary">서버에 연결되지 않았습니다. 리더보드는 온라인 모드에서만 사용 가능합니다.</p>
+        <p className="text-secondary">{t('leaderboard.offlineMsg')}</p>
       )}
 
       {/* 스테이지 선택 */}
@@ -75,16 +77,16 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
         ))}
       </div>
 
-      {loading && <p className="text-secondary">로딩 중...</p>}
+      {loading && <p className="text-secondary">{t('common.loading')}</p>}
 
       {/* 순위 테이블 */}
       <table className="leaderboard-table">
         <thead>
           <tr>
             <th>#</th>
-            <th>플레이어</th>
-            <th>점수</th>
-            <th>날짜</th>
+            <th>{t('leaderboard.player')}</th>
+            <th>{t('leaderboard.score')}</th>
+            <th>{t('leaderboard.date')}</th>
           </tr>
         </thead>
         <tbody>
@@ -97,7 +99,7 @@ export function Leaderboard({ onBack }: LeaderboardProps) {
             </tr>
           ))}
           {entries.length === 0 && !loading && isOnline && (
-            <tr><td colSpan={4} className="text-secondary">데이터가 없습니다.</td></tr>
+            <tr><td colSpan={4} className="text-secondary">{t('leaderboard.empty')}</td></tr>
           )}
         </tbody>
       </table>

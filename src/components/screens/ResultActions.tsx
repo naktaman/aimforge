@@ -4,6 +4,7 @@
  */
 import { useEffect } from 'react';
 import { motion } from 'motion/react';
+import { useTranslation } from '../../i18n';
 
 interface ResultActionsProps {
   onRetry: () => void;
@@ -11,6 +12,7 @@ interface ResultActionsProps {
 }
 
 export function ResultActions({ onRetry, onMainMenu }: ResultActionsProps) {
+  const { t } = useTranslation();
   /** 키보드 단축키: Space=다시하기, Esc=메인메뉴 */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -34,11 +36,11 @@ export function ResultActions({ onRetry, onMainMenu }: ResultActionsProps) {
       transition={{ duration: 0.4, delay: 3.0, ease: 'easeOut' }}
     >
       <button className="result-actions__retry" onClick={onRetry}>
-        다시 하기
+        {t('result.retry')}
         <span className="result-actions__hint">Space</span>
       </button>
       <button className="result-actions__menu" onClick={onMainMenu}>
-        메인 메뉴
+        {t('result.mainMenu')}
         <span className="result-actions__hint">Esc</span>
       </button>
     </motion.div>

@@ -4,6 +4,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useTrainingStore } from '../stores/trainingStore';
+import { useTranslation } from '../i18n';
 
 interface Props {
   onBack: () => void;
@@ -12,23 +13,23 @@ interface Props {
   profileId: number;
 }
 
-/** 약점 한국어 라벨 */
-const WEAKNESS_LABELS: Record<string, string> = {
-  overshoot: '오버슈팅',
-  direction_bias: '방향 편향',
-  tracking_mad: '트래킹 정밀도',
-  phase_lag: '페이즈 래그',
-  smoothness: '스무드니스',
-  v_h_ratio: '수직 약점',
-  motor_transition: '운동체계 전환',
-  effective_range: '유효 사거리',
-  finger_accuracy: '근접 정밀도',
-  fatigue: '피로 저항',
-  sens_mismatch: '감도 불일치',
-  movement_unadapted: '무빙 미적응',
-  style_mismatch: '스타일 불일치',
-  transition_narrowed: '전환점 축소',
-  vertical_weakness_exposed: '수직 약점 노출',
+/** 약점 i18n 키 매핑 */
+const WEAKNESS_KEYS: Record<string, string> = {
+  overshoot: 'prescription.overshoot',
+  direction_bias: 'prescription.directionBias',
+  tracking_mad: 'prescription.trackingPrecision',
+  phase_lag: 'prescription.phaseLag',
+  smoothness: 'prescription.smoothness',
+  v_h_ratio: 'prescription.verticalWeakness',
+  motor_transition: 'prescription.motorTransition',
+  effective_range: 'prescription.effectiveRange',
+  finger_accuracy: 'prescription.fingerAccuracy',
+  fatigue: 'prescription.fatigue',
+  sens_mismatch: 'prescription.sensMismatch',
+  movement_unadapted: 'prescription.movementUnadapted',
+  style_mismatch: 'prescription.styleMismatch',
+  transition_narrowed: 'prescription.transitionNarrowed',
+  vertical_weakness_exposed: 'prescription.verticalExposed',
 };
 
 /** 우선순위 구간별 CSS modifier 반환 */
@@ -39,6 +40,7 @@ function priorityModifier(priority: number): string {
 }
 
 export default function TrainingPrescription({ onBack, onTrainingStart, profileId }: Props) {
+  const { t } = useTranslation();
   const { prescriptions, isLoading, loadPrescriptions, selectPrescription } = useTrainingStore();
   const [sourceFilter, setSourceFilter] = useState<'all' | 'single_game' | 'cross_game'>('all');
 
@@ -56,8 +58,8 @@ export default function TrainingPrescription({ onBack, onTrainingStart, profileI
     <div className="page">
       {/* 헤더 */}
       <div className="page-header">
-        <button className="btn btn--ghost btn--sm" onClick={onBack}>← 뒤로</button>
-        <h2>훈련 처방</h2>
+        <button className="btn btn--ghost btn--sm" onClick={onBack}>← {t('common.back')}</button>
+        <h2>{t('prescription.title')}</h2>
       </div>
 
       {/* 소스 필터 탭 + 새로고침 버튼 */}
@@ -69,7 +71,7 @@ export default function TrainingPrescription({ onBack, onTrainingStart, profileI
               className={`tab-item${sourceFilter === tab ? ' active' : ''}`}
               onClick={() => setSourceFilter(tab)}
             >
-              {tab === 'all' ? '전체' : tab === 'single_game' ? '단일 게임' : '크로스게임'}
+              {tab === 'all' ? t('common.all') : tab === 'single_game' ? t('prescription.singleGame') : t('prescription.crossGame')}
             </button>
           ))}
         </div>
@@ -78,7 +80,7 @@ export default function TrainingPrescription({ onBack, onTrainingStart, profileI
           onClick={() => loadPrescriptions(profileId)}
           disabled={isLoading}
         >
-          {isLoading ? '분석 중...' : '처방 새로고침'}
+          {isLoading ? t('prescription.refreshing') : t('prescription.refreshBtn')}
         </button>
       </div>
 
@@ -86,7 +88,7 @@ export default function TrainingPrescription({ onBack, onTrainingStart, profileI
       {filtered.length === 0 && !isLoading && (
         <div className="empty-state">
           <p className="empty-state__text">
-            처방 데이터가 없습니다. 먼저 Aim DNA 배터리를 실행하세요.
+            {t('prescription.noData')}
           </p>
         </div>
       )}
@@ -104,15 +106,15 @@ export default function TrainingPrescription({ onBack, onTrainingStart, profileI
             <div className="prescription-body">
               <div className="prescription-tags">
                 <span className={`badge ${p.sourceType === 'cross_game' ? 'badge--accent' : 'badge--info'}`}>
-                  {p.sourceType === 'cross_game' ? '크로스게임' : '단일 게임'}
+                  {p.sourceType === 'cross_game' ? t('prescription.crossGame') : t('prescription.singleGame')}
                 </span>
                 <span className="badge badge--danger">
-                  {WEAKNESS_LABELS[p.weakness] || p.weakness}
+                  {WEAKNESS_KEYS[p.weakness] ? t(WEAKNESS_KEYS[p.weakness]) : p.weakness}
                 </span>
               </div>
               <div className="text-base font-semibold">{p.description}</div>
               <div className="prescription-meta">
-                시나리오: {p.scenarioType} · 예상 {p.estimatedMin}분
+                {t('prescription.scenario')}: {p.scenarioType} · {t('prescription.estimated')} {p.estimatedMin} {t('prescription.min')}
               </div>
             </div>
 
@@ -124,7 +126,7 @@ export default function TrainingPrescription({ onBack, onTrainingStart, profileI
                 onTrainingStart(p.scenarioType, p.scenarioParams);
               }}
             >
-              시작
+              {t('common.start')}
             </button>
           </div>
         ))}

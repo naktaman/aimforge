@@ -4,26 +4,27 @@
  */
 import { useState, useEffect } from 'react';
 import { useTrainingStore } from '../stores/trainingStore';
+import { useTranslation } from '../i18n';
 
 interface Props {
   onBack: () => void;
   profileId: number;
 }
 
-/** Phase 단계 정의 */
+/** Phase 단계 정의 — i18n 키 기반 */
 const PHASES = [
-  { key: 'initial', label: '초기', icon: '1' },
-  { key: 'adaptation', label: '적응', icon: '2' },
-  { key: 'consolidation', label: '안정화', icon: '3' },
-  { key: 'mastery', label: '숙달', icon: '4' },
+  { key: 'initial', labelKey: 'style.initial', icon: '1' },
+  { key: 'adaptation', labelKey: 'style.adaptation', icon: '2' },
+  { key: 'consolidation', labelKey: 'style.consolidation', icon: '3' },
+  { key: 'mastery', labelKey: 'style.mastery', icon: '4' },
 ] as const;
 
-/** 스타일 타입 옵션 */
+/** 스타일 타입 옵션 — i18n 키 기반 */
 const STYLE_TYPES = [
-  { value: 'wrist-flicker', label: '손목 플리커' },
-  { value: 'arm-tracker', label: '팔 트래커' },
-  { value: 'hybrid', label: '하이브리드' },
-  { value: 'precision', label: '정밀 사수' },
+  { value: 'wrist-flicker', labelKey: 'style.wristFlicker' },
+  { value: 'arm-tracker', labelKey: 'style.armTracker' },
+  { value: 'hybrid', labelKey: 'style.hybrid' },
+  { value: 'precision', labelKey: 'style.precision' },
 ] as const;
 
 /** 수렴 퍼센트 기준으로 피처 바 색상 클래스 반환 */
@@ -34,6 +35,7 @@ function featureFillClass(pct: number): string {
 }
 
 export default function StyleTransition({ onBack, profileId }: Props) {
+  const { t } = useTranslation();
   const {
     styleTransition, transitionProgress,
     loadStyleTransition, startStyleTransition, updateStyleTransition,
@@ -67,8 +69,8 @@ export default function StyleTransition({ onBack, profileId }: Props) {
     <div className="page page--narrow">
       {/* 헤더 */}
       <div className="page-header">
-        <button onClick={onBack} className="btn btn--ghost btn--sm">← 뒤로</button>
-        <h2>스타일 전환</h2>
+        <button onClick={onBack} className="btn btn--ghost btn--sm">← {t('common.back')}</button>
+        <h2>{t('style.title')}</h2>
       </div>
 
       {styleTransition && transitionProgress ? (
@@ -77,11 +79,15 @@ export default function StyleTransition({ onBack, profileId }: Props) {
           <div className="glass-card page-section">
             <div className="st-direction">
               <span className="st-direction__from">
-                {STYLE_TYPES.find(s => s.value === styleTransition.fromType)?.label || styleTransition.fromType}
+                {STYLE_TYPES.find(s => s.value === styleTransition.fromType)
+                  ? t(STYLE_TYPES.find(s => s.value === styleTransition.fromType)!.labelKey)
+                  : styleTransition.fromType}
               </span>
               <span className="st-direction__arrow">→</span>
               <span className="st-direction__to">
-                {STYLE_TYPES.find(s => s.value === styleTransition.toType)?.label || styleTransition.toType}
+                {STYLE_TYPES.find(s => s.value === styleTransition.toType)
+                  ? t(STYLE_TYPES.find(s => s.value === styleTransition.toType)!.labelKey)
+                  : styleTransition.toType}
               </span>
             </div>
           </div>
@@ -98,7 +104,7 @@ export default function StyleTransition({ onBack, profileId }: Props) {
                     <div className="st-phase__circle">
                       {isDone ? '✓' : phase.icon}
                     </div>
-                    <div className="st-phase__label">{phase.label}</div>
+                    <div className="st-phase__label">{t(phase.labelKey)}</div>
                   </div>
                 );
               })}
@@ -108,7 +114,7 @@ export default function StyleTransition({ onBack, profileId }: Props) {
           {/* 전체 수렴도 프로그레스 바 */}
           <div className="glass-card page-section">
             <div className="st-progress-header">
-              <span className="text-sm">전체 수렴도</span>
+              <span className="text-sm">{t('style.overallConvergence')}</span>
               <span className="font-bold" style={{ color: 'var(--info)' }}>
                 {transitionProgress.convergencePct.toFixed(1)}%
               </span>
@@ -122,14 +128,14 @@ export default function StyleTransition({ onBack, profileId }: Props) {
 
             {transitionProgress.estimatedDaysRemaining > 0 && (
               <div className="st-remaining">
-                예상 잔여: ~{Math.ceil(transitionProgress.estimatedDaysRemaining)}일
+                {t('style.estimatedRemaining')}: ~{Math.ceil(transitionProgress.estimatedDaysRemaining)} {t('style.days')}
               </div>
             )}
           </div>
 
           {/* 핵심 피처별 수렴 바 */}
           <div className="glass-card page-section">
-            <h3 className="page-section__title">핵심 피처 수렴</h3>
+            <h3 className="page-section__title">{t('style.keyFeatureConvergence')}</h3>
             {transitionProgress.keyFeaturesStatus.map(f => (
               <div key={f.featureName} className="st-feature">
                 <div className="st-feature__header">
@@ -151,55 +157,55 @@ export default function StyleTransition({ onBack, profileId }: Props) {
           {/* 플래토(정체) 경고 메시지 */}
           {transitionProgress.plateauDetected && (
             <div className="st-plateau-warning">
-              플래토 감지: 수렴 속도가 정체되고 있습니다. 훈련 방법 변경을 고려하세요.
+              {t('style.plateauWarning')}
             </div>
           )}
 
           {/* 전환 완료 버튼 */}
           <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
             <button onClick={handleComplete} className="btn btn--success btn--sm">
-              전환 완료
+              {t('style.completeTransition')}
             </button>
           </div>
         </>
       ) : (
         /* 새 전환 시작 폼 */
         <div className="glass-card">
-          <h3 className="page-section__title">새 스타일 전환 시작</h3>
+          <h3 className="page-section__title">{t('style.newTransition')}</h3>
 
           <div className="st-form">
             <div className="form-group">
-              <label className="form-label">현재 스타일 (From)</label>
+              <label className="form-label">{t('style.currentStyle')}</label>
               <select
                 value={fromType}
                 onChange={e => setFromType(e.target.value)}
                 className="select-field"
               >
-                {STYLE_TYPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                {STYLE_TYPES.map(s => <option key={s.value} value={s.value}>{t(s.labelKey)}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">목표 스타일 (To)</label>
+              <label className="form-label">{t('style.targetStyle')}</label>
               <select
                 value={toType}
                 onChange={e => setToType(e.target.value)}
                 className="select-field"
               >
-                {STYLE_TYPES.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+                {STYLE_TYPES.map(s => <option key={s.value} value={s.value}>{t(s.labelKey)}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label className="form-label">목표 감도 범위 (cm/360)</label>
+              <label className="form-label">{t('style.targetSensRange')}</label>
               <input
                 type="text"
                 value={sensRange}
                 onChange={e => setSensRange(e.target.value)}
-                placeholder="예: 25-35"
+                placeholder="e.g. 25-35"
                 className="input-field"
               />
             </div>
             <button onClick={handleStart} className="btn btn--primary">
-              전환 시작
+              {t('style.startTransition')}
             </button>
           </div>
         </div>

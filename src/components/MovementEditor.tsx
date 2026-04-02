@@ -4,6 +4,7 @@
  * + JSON 내보내기/가져오기 + 벽 도달 캘리브레이션 + 가중 추천
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from '../i18n';
 import { useMovementStore } from '../stores/movementStore';
 
 interface Props {
@@ -11,14 +12,15 @@ interface Props {
   profileId: number;
 }
 
-/** 가속 타입 한국어 라벨 */
-const ACCEL_LABELS: Record<string, string> = {
-  instant: '즉시 정지',
-  linear: '선형 감속',
-  velocity_based: '속도 비례',
+/** 가속 타입 i18n 키 매핑 */
+const ACCEL_LABEL_KEYS: Record<string, string> = {
+  instant: 'movement.accelInstant',
+  linear: 'movement.accelLinear',
+  velocity_based: 'movement.accelVelocity',
 };
 
 export default function MovementEditor({ onBack }: Props) {
+  const { t } = useTranslation();
   const {
     presets, recommendation, loadPresets, calculateRecommendation,
     exportProfile, importProfile, calibrateMaxSpeed,
@@ -110,12 +112,12 @@ export default function MovementEditor({ onBack }: Props) {
         setAccelType(preset.accelType);
         setAirControl(preset.airControl);
         setCsBonus(preset.csBonus);
-        setImportMsg(`"${preset.name}" 가져오기 성공`);
+        setImportMsg(`"${preset.name}" ${t('movement.importSuccess')}`);
       } else {
-        setImportMsg('가져오기 실패: 잘못된 파일 형식');
+        setImportMsg(t('movement.importFailed'));
       }
     } catch {
-      setImportMsg('파일 읽기 실패');
+      setImportMsg(t('movement.fileFailed'));
     }
     setTimeout(() => setImportMsg(null), 4000);
     // 같은 파일 다시 선택 가능하도록 리셋
@@ -129,9 +131,9 @@ export default function MovementEditor({ onBack }: Props) {
     const result = await calibrateMaxSpeed(preset.gameId, calDistance, calTime);
     if (result) {
       setMaxSpeed(result.calculatedMaxSpeed);
-      setCalResult(`계산된 max_speed: ${result.calculatedMaxSpeed} u/s (거리: ${result.distanceUsed})`);
+      setCalResult(`max_speed: ${result.calculatedMaxSpeed} u/s (${t('movement.calDistance')} ${result.distanceUsed})`);
     } else {
-      setCalResult('캘리브레이션 실패');
+      setCalResult(t('movement.calFailed'));
     }
     setTimeout(() => setCalResult(null), 5000);
   };
@@ -140,14 +142,14 @@ export default function MovementEditor({ onBack }: Props) {
     <div className="page">
       {/* 페이지 헤더 */}
       <div className="page-header">
-        <h2>무브먼트 에디터</h2>
-        <button className="btn btn--ghost btn--sm" onClick={onBack}>← 돌아가기</button>
+        <h2>{t('movement.title')}</h2>
+        <button className="btn btn--ghost btn--sm" onClick={onBack}>← {t('common.back')}</button>
       </div>
 
       {/* 게임 프리셋 선택 + Export/Import */}
       <div className="movement-editor__toolbar">
         <div className="form-group">
-          <label className="form-label font-semibold">게임 프리셋: </label>
+          <label className="form-label font-semibold">{t('movement.gamePreset')}: </label>
           <select
             className="select-field"
             value={selectedIdx}
@@ -160,10 +162,10 @@ export default function MovementEditor({ onBack }: Props) {
         </div>
         <div className="movement-editor__actions">
           <button className="btn btn--secondary btn--sm" onClick={handleExport}>
-            JSON 내보내기
+            {t('movement.jsonExport')}
           </button>
           <button className="btn btn--secondary btn--sm" onClick={() => fileInputRef.current?.click()}>
-            JSON 가져오기
+            {t('movement.jsonImport')}
           </button>
           <input
             ref={fileInputRef}
@@ -178,11 +180,11 @@ export default function MovementEditor({ onBack }: Props) {
       {/* Export/Import 알림 */}
       {exportPath && (
         <div className="movement-editor__status-msg movement-editor__status-msg--success">
-          저장 완료: {exportPath}
+          {t('movement.savedComplete')}: {exportPath}
         </div>
       )}
       {importMsg && (
-        <div className={`movement-editor__status-msg ${importMsg.includes('실패') ? 'movement-editor__status-msg--error' : 'movement-editor__status-msg--success'}`}>
+        <div className={`movement-editor__status-msg ${(importMsg === t('movement.importFailed') || importMsg === t('movement.fileFailed')) ? 'movement-editor__status-msg--error' : 'movement-editor__status-msg--success'}`}>
           {importMsg}
         </div>
       )}
@@ -191,25 +193,25 @@ export default function MovementEditor({ onBack }: Props) {
       <div className="movement-editor__columns page-section">
         {/* 슬라이더 영역 */}
         <div className="glass-card movement-editor__sliders">
-          <h3>이동 물리 파라미터</h3>
+          <h3>{t('movement.physicsParams')}</h3>
 
-          <SliderRow label="최대 속도" value={maxSpeed} min={100} max={600} step={10}
+          <SliderRow label={t('movement.maxSpeed')} value={maxSpeed} min={100} max={600} step={10}
             unit="u/s" onChange={setMaxSpeed} />
-          <SliderRow label="정지 시간" value={stopTime} min={0.01} max={0.3} step={0.01}
-            unit="초" onChange={setStopTime} />
+          <SliderRow label={t('movement.stopTime')} value={stopTime} min={0.01} max={0.3} step={0.01}
+            unit="s" onChange={setStopTime} />
 
           <div className="slider-row">
-            <label className="form-label">가속 타입: </label>
+            <label className="form-label">{t('movement.accelType')}: </label>
             <select className="select-field" value={accelType} onChange={(e) => setAccelType(e.target.value)}>
-              {Object.entries(ACCEL_LABELS).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
+              {Object.entries(ACCEL_LABEL_KEYS).map(([k, key]) => (
+                <option key={k} value={k}>{t(key)}</option>
               ))}
             </select>
           </div>
 
-          <SliderRow label="공중 제어" value={airControl} min={0} max={1} step={0.05}
+          <SliderRow label={t('movement.airControl')} value={airControl} min={0} max={1} step={0.05}
             unit="" onChange={setAirControl} />
-          <SliderRow label="카운터스트레이프 보너스" value={csBonus} min={0.5} max={1.2} step={0.05}
+          <SliderRow label={t('movement.csBonus')} value={csBonus} min={0.5} max={1.2} step={0.05}
             unit="x" onChange={setCsBonus} />
         </div>
 
@@ -225,29 +227,29 @@ export default function MovementEditor({ onBack }: Props) {
 
       {/* 캘리브레이션 가이드 */}
       <div className="glass-card movement-editor__section">
-        <h3>실측 캘리브레이션 가이드</h3>
+        <h3>{t('movement.calGuide')}</h3>
         <div className="movement-editor__guide-steps text-muted">
-          <p>1. 게임에서 벽 근처의 알려진 거리 위치에 서세요</p>
-          <p>2. 이동키를 눌러 벽까지 도달하는 시간을 측정하세요</p>
-          <p>3. 아래에 거리와 시간을 입력하면 자동으로 계산됩니다</p>
+          <p>{t('movement.calStep1')}</p>
+          <p>{t('movement.calStep2')}</p>
+          <p>{t('movement.calStep3')}</p>
         </div>
         <div className="movement-editor__cal-row">
           <label className="form-label">
-            거리 (game units):
+            {t('movement.calDistance')}
             <input className="input-field" type="number" min={1} value={calDistance}
               onChange={(e) => setCalDistance(Number(e.target.value))} />
           </label>
           <label className="form-label">
-            측정 시간 (초):
+            {t('movement.calTime')}
             <input className="input-field" type="number" min={0.01} step={0.01} value={calTime}
               onChange={(e) => setCalTime(Number(e.target.value))} />
           </label>
           <button className="btn btn--primary btn--sm" onClick={handleCalibrate}>
-            자동 계산
+            {t('movement.autoCalc')}
           </button>
         </div>
         {calResult && (
-          <div className={`movement-editor__status-msg ${calResult.includes('실패') ? 'movement-editor__status-msg--error' : 'movement-editor__status-msg--success'}`}>
+          <div className={`movement-editor__status-msg ${calResult === t('movement.calFailed') ? 'movement-editor__status-msg--error' : 'movement-editor__status-msg--success'}`}>
             {calResult}
           </div>
         )}
@@ -255,19 +257,19 @@ export default function MovementEditor({ onBack }: Props) {
 
       {/* 가중 추천 계산 */}
       <div className="glass-card movement-editor__section">
-        <h3>가중 감도 추천</h3>
+        <h3>{t('movement.weightedSensRec')}</h3>
         <div className="movement-editor__rec-row">
           <label className="form-label">
-            정적 최적 cm/360:
+            {t('movement.staticOptCm')}
             <input className="input-field" type="number" value={staticOpt}
               onChange={(e) => setStaticOpt(Number(e.target.value))} />
           </label>
           <label className="form-label">
-            무빙 최적 cm/360:
+            {t('movement.movingOptCm')}
             <input className="input-field" type="number" value={movingOpt}
               onChange={(e) => setMovingOpt(Number(e.target.value))} />
           </label>
-          <button className="btn btn--primary btn--sm" onClick={handleCalcRecommendation}>계산</button>
+          <button className="btn btn--primary btn--sm" onClick={handleCalcRecommendation}>{t('common.calculate')}</button>
         </div>
 
         {recommendation && (
@@ -276,8 +278,8 @@ export default function MovementEditor({ onBack }: Props) {
               {recommendation.finalCm360.toFixed(1)} cm/360
             </div>
             <div className="movement-editor__rec-detail text-muted">
-              정적 {recommendation.staticOptimal.toFixed(1)} × 무빙 {recommendation.movingOptimal.toFixed(1)}
-              {' '}(비율 {(recommendation.movementRatio * 100).toFixed(0)}%)
+              {t('landscape.static')} {recommendation.staticOptimal.toFixed(1)} × {t('landscape.moving')} {recommendation.movingOptimal.toFixed(1)}
+              {' '}({(recommendation.movementRatio * 100).toFixed(0)}%)
             </div>
             <div className="movement-editor__rec-direction">
               {recommendation.direction}
@@ -288,16 +290,16 @@ export default function MovementEditor({ onBack }: Props) {
 
       {/* 프리셋 비교 테이블 */}
       <div className="glass-card">
-        <h3>게임별 프리셋 비교</h3>
+        <h3>{t('movement.presetCompare')}</h3>
         <table className="data-table">
           <thead>
             <tr>
-              <th>게임</th>
-              <th>속도</th>
-              <th>정지</th>
-              <th>가속</th>
-              <th>공중</th>
-              <th>CS보너스</th>
+              <th>{t('settings.game')}</th>
+              <th>{t('movement.speed')}</th>
+              <th>{t('movement.stop')}</th>
+              <th>{t('movement.accel')}</th>
+              <th>{t('movement.air')}</th>
+              <th>{t('movement.csBonus')}</th>
             </tr>
           </thead>
           <tbody>
@@ -311,7 +313,7 @@ export default function MovementEditor({ onBack }: Props) {
                 <td>{p.name}</td>
                 <td>{p.maxSpeed}</td>
                 <td>{p.stopTime}s</td>
-                <td>{ACCEL_LABELS[p.accelType] ?? p.accelType}</td>
+                <td>{ACCEL_LABEL_KEYS[p.accelType] ? t(ACCEL_LABEL_KEYS[p.accelType]) : p.accelType}</td>
                 <td>{p.airControl}</td>
                 <td>{p.csBonus}x</td>
               </tr>
@@ -331,6 +333,7 @@ function MovementPreviewPanel({ maxSpeed, stopTime, accelType, airControl, csBon
   airControl: number;
   csBonus: number;
 }) {
+  const { t } = useTranslation();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
 
@@ -424,9 +427,10 @@ function MovementPreviewPanel({ maxSpeed, stopTime, accelType, airControl, csBon
       // 레이블
       ctx.fillStyle = '#aaa';
       ctx.font = '10px monospace';
-      ctx.fillText(`속도: ${maxSpeed} u/s`, 10, 34);
-      ctx.fillText(`정지: ${stopTime}s`, 10, 46);
-      ctx.fillText(`${ACCEL_LABELS[accelType] ?? accelType}`, 10, 58);
+      ctx.fillText(`${t('movement.speed')}: ${maxSpeed} u/s`, 10, 34);
+      ctx.fillText(`${t('movement.stop')}: ${stopTime}s`, 10, 46);
+      const accelKey = ACCEL_LABEL_KEYS[accelType];
+      ctx.fillText(`${accelKey ? t(accelKey) : accelType}`, 10, 58);
 
       // 공중 제어 바
       const airY = 70;
@@ -435,23 +439,23 @@ function MovementPreviewPanel({ maxSpeed, stopTime, accelType, airControl, csBon
       ctx.fillStyle = '#c084fc';
       ctx.fillRect(10, airY, 80 * airControl, 6);
       ctx.fillStyle = '#aaa';
-      ctx.fillText(`공중: ${(airControl * 100).toFixed(0)}%`, 95, airY + 6);
+      ctx.fillText(`${t('movement.air')}: ${(airControl * 100).toFixed(0)}%`, 95, airY + 6);
 
       // CS 보너스 뱃지
       const badgeColor = csBonus < 0.9 ? '#4ade80' : csBonus > 1.0 ? '#e94560' : '#666';
       ctx.fillStyle = badgeColor;
-      ctx.fillText(`CS보너스: ${csBonus}x`, 10, airY + 20);
+      ctx.fillText(`${t('movement.csBonus')}: ${csBonus}x`, 10, airY + 20);
 
       animRef.current = requestAnimationFrame(draw);
     };
 
     animRef.current = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(animRef.current);
-  }, [maxSpeed, stopTime, accelType, airControl, csBonus]);
+  }, [maxSpeed, stopTime, accelType, airControl, csBonus, t]);
 
   return (
     <div className="movement-preview">
-      <div className="movement-preview__label">라이브 프리뷰</div>
+      <div className="movement-preview__label">{t('movement.livePreview')}</div>
       <canvas ref={canvasRef} width={244} height={120} />
     </div>
   );

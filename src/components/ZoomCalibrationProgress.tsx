@@ -3,16 +3,17 @@
  * 비율별 진행 스테퍼 + 페이즈 표시 + GP 차트
  */
 import { useZoomCalibrationStore } from '../stores/zoomCalibrationStore';
+import { useTranslation } from '../i18n';
 
 interface ZoomCalibrationProgressProps {
   onCancel: () => void;
 }
 
-/** 페이즈 한글 이름 */
-const PHASE_LABELS: Record<string, string> = {
-  steady: 'A: 줌 에이밍',
-  correction: 'B: 전환 보정',
-  zoomout: 'C: 복귀 재획득',
+/** 페이즈 i18n 키 */
+const PHASE_LABEL_KEYS: Record<string, string> = {
+  steady: 'zoom.phaseA',
+  correction: 'zoom.phaseB',
+  zoomout: 'zoom.phaseC',
 };
 
 /** 페이즈 색상 */
@@ -29,12 +30,13 @@ export function ZoomCalibrationProgress({ onCancel }: ZoomCalibrationProgressPro
     currentPhase,
     ratioStatuses,
   } = useZoomCalibrationStore();
+  const { t } = useTranslation();
 
   const currentStatus = ratioStatuses[currentRatioIndex];
 
   return (
     <div className="zoom-calibration-progress">
-      <h2>줌 캘리브레이션 진행 중</h2>
+      <h2>{t('zoom.inProgress')}</h2>
 
       {/* 비율별 진행 스테퍼 */}
       <div className="ratio-stepper">
@@ -74,7 +76,7 @@ export function ZoomCalibrationProgress({ onCancel }: ZoomCalibrationProgressPro
                   color: currentPhase === phase ? PHASE_COLORS[phase] : '#666',
                 }}
               >
-                {PHASE_LABELS[phase]}
+                {t(PHASE_LABEL_KEYS[phase])}
               </span>
             ))}
           </div>
@@ -82,7 +84,7 @@ export function ZoomCalibrationProgress({ onCancel }: ZoomCalibrationProgressPro
           {/* 현재 최적 */}
           {currentStatus.bestMultiplier !== null && (
             <div className="current-best">
-              <span className="best-label">현재 최적 배율:</span>
+              <span className="best-label">{t('zoom.currentBestMultiplier')}</span>
               <span className="best-value">{currentStatus.bestMultiplier.toFixed(3)}</span>
               <span className="best-score">score: {currentStatus.bestScore?.toFixed(3)}</span>
             </div>
@@ -99,12 +101,12 @@ export function ZoomCalibrationProgress({ onCancel }: ZoomCalibrationProgressPro
           />
         </div>
         <span className="progress-text">
-          {currentRatioIndex} / {totalRatios} 비율 완료
+          {currentRatioIndex} / {totalRatios} {t('zoom.ratiosComplete')}
         </span>
       </div>
 
       <button className="btn-secondary" onClick={onCancel}>
-        취소
+        {t('common.cancel')}
       </button>
     </div>
   );

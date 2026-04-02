@@ -47,16 +47,16 @@ export class ErrorBoundary extends Component<Props, State> {
 
       return (
         <div className="error-boundary">
-          <h2>오류가 발생했습니다</h2>
+          <h2>An error occurred</h2>
           <p className="error-message">{this.state.error?.message}</p>
           {this.state.errorInfo && (
             <details className="error-details">
-              <summary>상세 정보</summary>
+              <summary>Details</summary>
               <pre>{this.state.errorInfo.componentStack}</pre>
             </details>
           )}
           <button className="btn-primary" onClick={this.handleReset}>
-            다시 시도
+            Retry
           </button>
         </div>
       );

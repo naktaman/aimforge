@@ -6,6 +6,7 @@ import { useCallback, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useBatteryStore } from '../stores/batteryStore';
 import { useAimDnaStore } from '../stores/aimDnaStore';
+import { useTranslation } from '../i18n';
 import type { AimDnaProfile, ScenarioType } from '../utils/types';
 
 /** 시나리오 한글 라벨 */
@@ -26,6 +27,7 @@ interface Props {
 
 export function BatteryResult({ onBack, onViewDna }: Props) {
   const { batteryResult, scenarioRawMetrics, sessionId } = useBatteryStore();
+  const { t } = useTranslation();
   const { setCurrentDna } = useAimDnaStore();
   const [computing, setComputing] = useState(false);
 
@@ -85,12 +87,12 @@ export function BatteryResult({ onBack, onViewDna }: Props) {
   return (
     <main className="app-main">
       <div className="battery-result">
-        <h2>Battery 결과</h2>
+        <h2>{t('battery.complete')}</h2>
 
         {/* 종합 점수 */}
         <div className="composite-score">
           <span className="score-value">{batteryResult.weightedComposite.toFixed(1)}</span>
-          <span className="score-label">종합 점수 ({batteryResult.preset})</span>
+          <span className="score-label">{t('battery.overallScore')} ({batteryResult.preset})</span>
         </div>
 
         {/* 시나리오별 점수 바 */}
@@ -117,14 +119,14 @@ export function BatteryResult({ onBack, onViewDna }: Props) {
         {/* 액션 버튼 */}
         <div className="result-actions">
           <button className="btn-secondary" onClick={onBack}>
-            돌아가기
+            {t('common.back')}
           </button>
           <button
             className="btn-primary"
             onClick={handleComputeDna}
             disabled={computing}
           >
-            {computing ? '분석 중...' : 'Aim DNA 분석'}
+            {computing ? t('common.loading') : 'Aim DNA'}
           </button>
         </div>
       </div>

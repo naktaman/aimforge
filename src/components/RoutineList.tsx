@@ -3,6 +3,7 @@
  */
 import { useEffect, useState, useCallback } from 'react';
 import { useRoutineStore } from '../stores/routineStore';
+import { useTranslation } from '../i18n';
 
 interface RoutineListProps {
   onBack: () => void;
@@ -12,6 +13,7 @@ interface RoutineListProps {
 
 export function RoutineList({ onBack, onEdit, onPlay }: RoutineListProps) {
   const { routines, loading, loadRoutines, createRoutine, deleteRoutine } = useRoutineStore();
+  const { t } = useTranslation();
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
   const [newDesc, setNewDesc] = useState('');
@@ -40,14 +42,14 @@ export function RoutineList({ onBack, onEdit, onPlay }: RoutineListProps) {
   return (
     <div className="routine-list-page">
       <div className="section-header">
-        <h2>커스텀 루틴</h2>
+        <h2>{t('routine.customRoutine')}</h2>
         <div>
-          <button className="btn-primary btn-sm" onClick={() => setShowCreate(true)}>+ 새 루틴</button>
-          <button className="btn-secondary btn-sm" onClick={onBack} style={{ marginLeft: 8 }}>돌아가기</button>
+          <button className="btn-primary btn-sm" onClick={() => setShowCreate(true)}>+ {t('routine.newRoutine')}</button>
+          <button className="btn-secondary btn-sm" onClick={onBack} style={{ marginLeft: 8 }}>{t('common.back')}</button>
         </div>
       </div>
 
-      {loading && <p className="text-secondary">로딩 중...</p>}
+      {loading && <p className="text-secondary">{t('common.loading')}</p>}
 
       {/* 루틴 카드 목록 */}
       <div className="routine-cards">
@@ -59,32 +61,32 @@ export function RoutineList({ onBack, onEdit, onPlay }: RoutineListProps) {
               <span className="routine-duration">{formatTime(r.totalDurationSec)}</span>
             </div>
             <div className="routine-actions">
-              <button className="btn-primary btn-sm" onClick={() => onPlay(r.id)}>실행</button>
-              <button className="btn-secondary btn-sm" onClick={() => onEdit(r.id, r.name)}>편집</button>
-              <button className="btn-danger btn-sm" onClick={() => deleteRoutine(r.id)}>삭제</button>
+              <button className="btn-primary btn-sm" onClick={() => onPlay(r.id)}>{t('common.run')}</button>
+              <button className="btn-secondary btn-sm" onClick={() => onEdit(r.id, r.name)}>{t('common.edit')}</button>
+              <button className="btn-danger btn-sm" onClick={() => deleteRoutine(r.id)}>{t('common.delete')}</button>
             </div>
           </div>
         ))}
         {routines.length === 0 && !loading && (
-          <p className="text-secondary">등록된 루틴이 없습니다.</p>
+          <p className="text-secondary">{t('routine.noRoutines')}</p>
         )}
       </div>
 
       {/* 생성 폼 */}
       {showCreate && (
         <div className="routine-create-form">
-          <h3>새 루틴</h3>
+          <h3>{t('routine.newRoutine')}</h3>
           <label>
-            이름
-            <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="예: 워밍업 루틴" />
+            {t('common.name')}
+            <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={t('routine.namePlaceholder')} />
           </label>
           <label>
-            설명 (선택)
-            <input type="text" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder="간단한 설명" />
+            {t('routine.descOptional')}
+            <input type="text" value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder={t('routine.descPlaceholder')} />
           </label>
           <div className="form-actions">
-            <button className="btn-primary" onClick={handleCreate}>생성</button>
-            <button className="btn-secondary" onClick={() => setShowCreate(false)}>취소</button>
+            <button className="btn-primary" onClick={handleCreate}>{t('common.create')}</button>
+            <button className="btn-secondary" onClick={() => setShowCreate(false)}>{t('common.cancel')}</button>
           </div>
         </div>
       )}

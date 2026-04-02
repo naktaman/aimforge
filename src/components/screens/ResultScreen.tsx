@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useGameMetricsStore, type GameMetrics } from '../../hooks/useGameMetrics';
 import { useSessionStore } from '../../stores/sessionStore';
+import { useTranslation } from '../../i18n';
 import { ResultGrade, getGrade } from './ResultGrade';
 import { ResultStats } from './ResultStats';
 import { ResultActions } from './ResultActions';
@@ -104,6 +105,7 @@ interface ResultScreenProps {
 
 export function ResultScreen({ onRetry, onMainMenu, onGradeReveal, onPBFanfare }: ResultScreenProps) {
   const { scenarioType } = useSessionStore();
+  const { t } = useTranslation();
 
   /** 게임 종료 시점의 메트릭 스냅샷 (마운트 시 1회 캡처) */
   const metricsRef = useRef<GameMetrics | null>(null);
@@ -142,21 +144,21 @@ export function ResultScreen({ onRetry, onMainMenu, onGradeReveal, onPBFanfare }
   /** 통계 항목 구성 */
   const stats = useMemo(() => {
     const items = [
-      { label: '정확도', value: `${(metrics.accuracy * 100).toFixed(1)}%`, ratio: metrics.accuracy },
-      { label: '히트 / 샷', value: `${metrics.hits} / ${metrics.shots}` },
+      { label: t('result.accuracy'), value: `${(metrics.accuracy * 100).toFixed(1)}%`, ratio: metrics.accuracy },
+      { label: t('result.hitsShots'), value: `${metrics.hits} / ${metrics.shots}` },
     ];
     // 헤드샷 비율 (humanoid 모드에서만 의미 있음)
     if (metrics.headshots > 0) {
       const hsRatio = metrics.hits > 0 ? metrics.headshots / metrics.hits : 0;
-      items.push({ label: '헤드샷 비율', value: `${(hsRatio * 100).toFixed(1)}%`, ratio: hsRatio });
+      items.push({ label: t('result.hsRatio'), value: `${(hsRatio * 100).toFixed(1)}%`, ratio: hsRatio });
     }
     if (metrics.lastReactionTime > 0) {
-      items.push({ label: '평균 반응시간', value: `${metrics.lastReactionTime.toFixed(0)}ms` });
+      items.push({ label: t('result.avgReaction'), value: `${metrics.lastReactionTime.toFixed(0)}ms` });
     }
     if (metrics.comboCount > 0) {
-      items.push({ label: '최고 콤보', value: `${metrics.comboCount}` });
+      items.push({ label: t('result.maxCombo'), value: `${metrics.comboCount}` });
     }
-    items.push({ label: '킬 수', value: `${metrics.kills}` });
+    items.push({ label: t('result.kills'), value: `${metrics.kills}` });
     return items;
   }, [metrics]);
 

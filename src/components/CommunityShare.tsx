@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { apiClient } from '../utils/apiClient';
 import { useAuthStore } from '../stores/authStore';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useTranslation } from '../i18n';
 
 /** 공유 콘텐츠 항목 */
 interface SharedItem {
@@ -26,6 +27,7 @@ interface CommunityShareProps {
 }
 
 export function CommunityShare({ onBack }: CommunityShareProps) {
+  const { t } = useTranslation();
   const { isOnline } = useAuthStore();
   const [items, setItems] = useState<SharedItem[]>([]);
   const [filter, setFilter] = useState<ContentFilter>('all');
@@ -62,9 +64,9 @@ export function CommunityShare({ onBack }: CommunityShareProps) {
       const success = useSettingsStore.getState().importCrosshairCode(importCode);
       if (success) {
         setImportCode('');
-        alert('크로스헤어를 적용했습니다!');
+        alert(t('share.crosshairApplied'));
       } else {
-        alert('유효하지 않은 코드입니다.');
+        alert(t('share.invalidCode'));
       }
       return;
     }
@@ -77,9 +79,9 @@ export function CommunityShare({ onBack }: CommunityShareProps) {
         const config = result.data as Record<string, unknown>;
         useSettingsStore.getState().setCrosshair(config);
         setImportCode('');
-        alert('크로스헤어를 적용했습니다!');
+        alert(t('share.crosshairApplied'));
       } else {
-        alert('코드를 찾을 수 없습니다.');
+        alert(t('share.codeNotFound'));
       }
     }
   }, [importCode, isOnline]);
@@ -92,19 +94,19 @@ export function CommunityShare({ onBack }: CommunityShareProps) {
       data: crosshair,
     });
     if (result) {
-      alert(`공유 코드: ${result.shareCode}`);
+      alert(`${t('share.shareCode')}: ${result.shareCode}`);
     }
   }, [isOnline]);
 
   return (
     <div className="community-share">
       <div className="section-header">
-        <h2>커뮤니티</h2>
-        <button className="btn-secondary" onClick={onBack}>돌아가기</button>
+        <h2>{t('share.title')}</h2>
+        <button className="btn-secondary" onClick={onBack}>{t('common.back')}</button>
       </div>
 
       {!isOnline && (
-        <p className="text-secondary">서버에 연결되지 않았습니다. 커뮤니티 기능은 온라인 모드에서만 사용 가능합니다.</p>
+        <p className="text-secondary">{t('share.offlineMsg')}</p>
       )}
 
       {/* 코드 가져오기 */}
@@ -113,30 +115,30 @@ export function CommunityShare({ onBack }: CommunityShareProps) {
           type="text"
           value={importCode}
           onChange={(e) => setImportCode(e.target.value)}
-          placeholder="공유 코드 또는 AIM- 크로스헤어 코드"
+          placeholder={t('share.codePlaceholder')}
         />
-        <button className="btn-primary btn-sm" onClick={handleImport}>가져오기</button>
+        <button className="btn-primary btn-sm" onClick={handleImport}>{t('common.import')}</button>
         {isOnline && (
           <button className="btn-secondary btn-sm" onClick={handleShareMyCrosshair}>
-            내 크로스헤어 공유
+            {t('share.shareMyCrosshair')}
           </button>
         )}
       </div>
 
       {/* 필터 */}
       <div className="share-filter">
-        <button className={`btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setFilter('all')}>전체</button>
-        <button className={`btn-sm ${filter === 'crosshair' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setFilter('crosshair')}>크로스헤어</button>
-        <button className={`btn-sm ${filter === 'routine' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setFilter('routine')}>루틴</button>
+        <button className={`btn-sm ${filter === 'all' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setFilter('all')}>{t('common.all')}</button>
+        <button className={`btn-sm ${filter === 'crosshair' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setFilter('crosshair')}>{t('share.crosshairLabel')}</button>
+        <button className={`btn-sm ${filter === 'routine' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setFilter('routine')}>{t('share.routineLabel')}</button>
       </div>
 
-      {loading && <p className="text-secondary">로딩 중...</p>}
+      {loading && <p className="text-secondary">{t('common.loading')}</p>}
 
       {/* 공유 아이템 그리드 */}
       <div className="share-grid">
         {filtered.map(item => (
           <div key={item.id} className="share-card">
-            <div className="share-type-badge">{item.contentType === 'crosshair' ? '크로스헤어' : '루틴'}</div>
+            <div className="share-type-badge">{item.contentType === 'crosshair' ? t('share.crosshairLabel') : t('share.routineLabel')}</div>
             <div className="share-code">{item.shareCode}</div>
             <div className="share-author">by {item.authorName}</div>
             <div className="share-stats">

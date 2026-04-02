@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CountdownTransition } from './transitions';
 import { useBatteryStore } from '../stores/batteryStore';
+import { useTranslation } from '../i18n';
 import type { ScenarioType } from '../utils/types';
 
 /** 시나리오 타입 → 한글 이름 */
@@ -35,6 +36,7 @@ interface Props {
 
 export function BatteryProgress({ onLaunchScenario, onCancel, onComplete }: Props) {
   const { battery, preset, completedScores, currentScenarioType } = useBatteryStore();
+  const { t } = useTranslation();
   const [countdown, setCountdown] = useState<number | null>(null);
   const hasLaunched = useRef(false);
 
@@ -110,7 +112,7 @@ export function BatteryProgress({ onLaunchScenario, onCancel, onComplete }: Prop
         {countdown !== null && countdown > 0 && (
           <div className="countdown-overlay">
             <div className="countdown-text">
-              {SCENARIO_LABELS[currentScenarioType ?? ''] ?? '다음 시나리오'}
+              {SCENARIO_LABELS[currentScenarioType ?? ''] ?? t('battery.scenario')}
             </div>
             <CountdownTransition count={countdown} />
           </div>
@@ -137,7 +139,7 @@ export function BatteryProgress({ onLaunchScenario, onCancel, onComplete }: Prop
         {/* 액션 버튼 */}
         <div className="battery-actions">
           <button className="btn-secondary" onClick={onCancel}>
-            취소
+            {t('common.cancel')}
           </button>
         </div>
       </div>

@@ -5,34 +5,35 @@
 import { useState, useEffect } from 'react';
 import { useHardwareStore } from '../stores/hardwareStore';
 import { BackButton } from './BackButton';
+import { useTranslation } from '../i18n';
 
 interface Props {
   onBack: () => void;
 }
 
-/** 피처 한국어 라벨 맵 */
-const FEATURE_LABELS: Record<string, string> = {
-  flick_peak_velocity: '플릭 최고 속도',
-  overshoot_avg: '오버슈팅',
-  direction_bias: '방향 편향',
-  effective_range: '유효 사거리',
-  tracking_mad: '트래킹 MAD',
-  phase_lag: '페이즈 래그',
-  smoothness: '스무드니스',
-  velocity_match: '속도 매칭',
-  micro_freq: '마이크로 보정',
-  wrist_arm_ratio: '손목/팔 비율',
-  fitts_a: 'Fitts 절편',
-  fitts_b: 'Fitts 기울기',
-  fatigue_decay: '피로 감쇄',
-  pre_aim_ratio: '프리에임 비율',
-  pre_fire_ratio: '프리파이어 비율',
-  sens_attributed_overshoot: '감도 기인 오버슈팅',
-  v_h_ratio: '수직/수평 비율',
-  finger_accuracy: '손가락 정확도',
-  wrist_accuracy: '손목 정확도',
-  arm_accuracy: '팔 정확도',
-  motor_transition_angle: '운동체계 전환각',
+/** 피처 i18n 키 맵 */
+const FEATURE_KEYS: Record<string, string> = {
+  flick_peak_velocity: 'hardware.feature.flick_peak_velocity',
+  overshoot_avg: 'hardware.feature.overshoot_avg',
+  direction_bias: 'hardware.feature.direction_bias',
+  effective_range: 'hardware.feature.effective_range',
+  tracking_mad: 'hardware.feature.tracking_mad',
+  phase_lag: 'hardware.feature.phase_lag',
+  smoothness: 'hardware.feature.smoothness',
+  velocity_match: 'hardware.feature.velocity_match',
+  micro_freq: 'hardware.feature.micro_freq',
+  wrist_arm_ratio: 'hardware.feature.wrist_arm_ratio',
+  fitts_a: 'hardware.feature.fitts_a',
+  fitts_b: 'hardware.feature.fitts_b',
+  fatigue_decay: 'hardware.feature.fatigue_decay',
+  pre_aim_ratio: 'hardware.feature.pre_aim_ratio',
+  pre_fire_ratio: 'hardware.feature.pre_fire_ratio',
+  sens_attributed_overshoot: 'hardware.feature.sens_attributed_overshoot',
+  v_h_ratio: 'hardware.feature.v_h_ratio',
+  finger_accuracy: 'hardware.feature.finger_accuracy',
+  wrist_accuracy: 'hardware.feature.wrist_accuracy',
+  arm_accuracy: 'hardware.feature.arm_accuracy',
+  motor_transition_angle: 'hardware.feature.motor_transition_angle',
 };
 
 /** 상태에 따른 뱃지 클래스 반환 */
@@ -53,16 +54,17 @@ function statusTextClass(status: string): string {
   }
 }
 
-/** 상태 한국어 라벨 */
-function statusLabel(status: string): string {
+/** 상태 라벨 — i18n 키 기반 */
+function statusLabelKey(status: string): string {
   switch (status) {
-    case 'improved': return '개선';
-    case 'degraded': return '악화';
-    default: return '-';
+    case 'improved': return 'hardware.improved';
+    case 'degraded': return 'hardware.degraded';
+    default: return '';
   }
 }
 
 export default function HardwareCompare({ onBack }: Props) {
+  const { t } = useTranslation();
   const { combos, comparison, isLoading, loadCombos, compare } = useHardwareStore();
   const [profileA, setProfileA] = useState<number>(1);
   const [profileB, setProfileB] = useState<number>(2);
@@ -82,17 +84,17 @@ export default function HardwareCompare({ onBack }: Props) {
       {/* 헤더: 제목 + 뒤로가기 */}
       <div className="page-header">
         <BackButton onBack={onBack} />
-        <h2>하드웨어 비교</h2>
+        <h2>{t('hardware.title')}</h2>
       </div>
 
       {/* 비교 대상 선택 섹션 */}
       <div className="page-section">
         <div className="glass-card">
-          <h3 className="page-section__title">비교 대상 선택</h3>
+          <h3 className="page-section__title">{t('hardware.selectComparison')}</h3>
           <div className="hw-compare__controls">
             {/* 프로필 A 입력 */}
             <div className="form-group">
-              <label className="form-label">프로필 A (ID)</label>
+              <label className="form-label">{t('hardware.profileA')}</label>
               <input
                 className="input-field hw-compare__id-input"
                 type="number"
@@ -102,7 +104,7 @@ export default function HardwareCompare({ onBack }: Props) {
             </div>
             {/* 프로필 B 입력 */}
             <div className="form-group">
-              <label className="form-label">프로필 B (ID)</label>
+              <label className="form-label">{t('hardware.profileB')}</label>
               <input
                 className="input-field hw-compare__id-input"
                 type="number"
@@ -116,7 +118,7 @@ export default function HardwareCompare({ onBack }: Props) {
               onClick={handleCompare}
               disabled={isLoading}
             >
-              {isLoading ? '비교 중...' : '비교 실행'}
+              {isLoading ? t('hardware.comparing') : t('hardware.runCompare')}
             </button>
           </div>
 
@@ -124,12 +126,12 @@ export default function HardwareCompare({ onBack }: Props) {
           {combos.length > 0 && (
             <div className="hw-compare__combo-list">
               <h4 className="text-sm font-semibold">
-                등록된 하드웨어 ({combos.length}개)
+                {t('hardware.registeredHardware')} ({combos.length})
               </h4>
               <div className="hw-compare__combo-chips">
                 {combos.map((c) => (
                   <span key={c.id} className="glass-card--compact hw-compare__chip">
-                    {c.mouseModel} / {c.mousepadModel ?? '미지정'} / {c.dpi} DPI
+                    {c.mouseModel} / {c.mousepadModel ?? t('hardware.unassigned')} / {c.dpi} DPI
                   </span>
                 ))}
               </div>
@@ -144,7 +146,7 @@ export default function HardwareCompare({ onBack }: Props) {
           {/* cm/360 이동 요약 카드 */}
           <div className="page-section">
             <div className="glass-card glass-card--glow hw-compare__shift-card">
-              <div className="stat-label">최적 cm/360 이동</div>
+              <div className="stat-label">{t('hardware.optimalShift')}</div>
               <div className="stat-value stat-value--big">
                 {comparison.optimalShift > 0 ? '+' : ''}{comparison.optimalShift.toFixed(1)} cm
                 <span className="stat-unit">
@@ -159,20 +161,20 @@ export default function HardwareCompare({ onBack }: Props) {
           <div className="page-section">
             <div className="glass-card">
               <h3 className="page-section__title">
-                DNA 피처 비교
+                {t('hardware.dnaFeatureCompare')}
                 {' '}
                 <span className="text-sm text-muted">
-                  개선 {comparison.improvedCount} / 악화 {comparison.degradedCount}
+                  {t('hardware.improved')} {comparison.improvedCount} / {t('hardware.degraded')} {comparison.degradedCount}
                 </span>
               </h3>
               <table className="data-table">
                 <thead>
                   <tr>
-                    <th>피처</th>
+                    <th>{t('hardware.feature')}</th>
                     <th>A</th>
                     <th>B</th>
-                    <th>변화율</th>
-                    <th>상태</th>
+                    <th>{t('hardware.changePct')}</th>
+                    <th>{t('hardware.status')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -181,7 +183,7 @@ export default function HardwareCompare({ onBack }: Props) {
                     .sort((a, b) => Math.abs(b.deltaPct) - Math.abs(a.deltaPct))
                     .map((d) => (
                       <tr key={d.feature}>
-                        <td>{FEATURE_LABELS[d.feature] ?? d.feature}</td>
+                        <td>{FEATURE_KEYS[d.feature] ? t(FEATURE_KEYS[d.feature]) : d.feature}</td>
                         <td className="text-mono">{d.valueA.toFixed(2)}</td>
                         <td className="text-mono">{d.valueB.toFixed(2)}</td>
                         <td className={statusTextClass(d.status)}>
@@ -189,7 +191,7 @@ export default function HardwareCompare({ onBack }: Props) {
                         </td>
                         <td>
                           <span className={statusBadgeClass(d.status)}>
-                            {statusLabel(d.status)}
+                            {statusLabelKey(d.status) ? t(statusLabelKey(d.status)) : '-'}
                           </span>
                         </td>
                       </tr>

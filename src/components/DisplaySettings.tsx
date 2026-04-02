@@ -5,6 +5,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useToastStore } from '../stores/toastStore';
+import { useTranslation } from '../i18n';
 
 /** 디스플레이 모드 */
 type DisplayMode = 'windowed' | 'borderless' | 'fullscreen';
@@ -34,6 +35,7 @@ interface DisplaySettingsProps {
 export function DisplaySettings({ onBack }: DisplaySettingsProps) {
   const [settings, setSettings] = useState<DisplaySettingsState>(DEFAULT_SETTINGS);
   const [saved, setSaved] = useState(false);
+  const { t } = useTranslation();
 
   /** 저장된 설정 로드 */
   useEffect(() => {
@@ -79,34 +81,34 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps) {
   return (
     <div className="display-settings">
       <div className="section-header">
-        <h2>디스플레이 설정</h2>
-        <button className="btn-secondary" onClick={onBack}>돌아가기</button>
+        <h2>{t('display.title')}</h2>
+        <button className="btn-secondary" onClick={onBack}>{t('common.back')}</button>
       </div>
 
       <div className="settings-grid">
         {/* 디스플레이 모드 */}
         <div className="setting-row">
-          <label>디스플레이 모드</label>
+          <label>{t('display.mode')}</label>
           <select
             value={settings.displayMode}
             onChange={(e) => setSettings(s => ({ ...s, displayMode: e.target.value as DisplayMode }))}
           >
-            <option value="windowed">창 모드</option>
-            <option value="borderless">전체 창 (보더리스)</option>
-            <option value="fullscreen">전체 화면</option>
+            <option value="windowed">{t('display.windowed')}</option>
+            <option value="borderless">{t('display.borderless')}</option>
+            <option value="fullscreen">{t('display.fullscreen')}</option>
           </select>
         </div>
 
         {/* 타겟 리프레시 레이트 */}
         <div className="setting-row">
-          <label>프레임 제한</label>
+          <label>{t('display.fpsLimit')}</label>
           <select
             value={settings.targetRefreshRate}
             onChange={(e) => setSettings(s => ({ ...s, targetRefreshRate: parseInt(e.target.value, 10) }))}
           >
             {REFRESH_RATES.map(rate => (
               <option key={rate} value={rate}>
-                {rate === 0 ? '무제한' : `${rate} FPS`}
+                {rate === 0 ? t('display.unlimited') : `${rate} FPS`}
               </option>
             ))}
           </select>
@@ -114,7 +116,7 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps) {
 
         {/* VSync */}
         <div className="setting-row">
-          <label>수직 동기화 (VSync)</label>
+          <label>{t('display.vsync')}</label>
           <div className="toggle-switch">
             <input
               type="checkbox"
@@ -127,13 +129,13 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps) {
             </label>
           </div>
           <span className="setting-hint">
-            에임 훈련 시 OFF 권장 (입력 지연 최소화)
+            {t('display.vsyncHint')}
           </span>
         </div>
 
         {/* 렌더 스케일 */}
         <div className="setting-row">
-          <label>렌더 스케일: {settings.renderScale}%</label>
+          <label>{t('display.renderScale')}: {settings.renderScale}%</label>
           <input
             type="range"
             min={50}
@@ -147,7 +149,7 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps) {
 
       <div className="settings-actions">
         <button className="btn-primary" onClick={handleSave}>
-          {saved ? '저장됨!' : '설정 저장'}
+          {saved ? t('common.saved') : t('common.saveSettings')}
         </button>
       </div>
     </div>

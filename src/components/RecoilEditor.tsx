@@ -4,6 +4,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { WEAPON_PRESETS } from '../engine/WeaponSystem';
+import { useTranslation } from '../i18n';
 import { safeInvoke } from '../utils/ipc';
 import { useToastStore } from '../stores/toastStore';
 import { BackButton } from './BackButton';
@@ -61,6 +62,7 @@ function toSvg(dx: number, dy: number): [number, number] {
 }
 
 export default function RecoilEditor({ onBack }: { onBack: () => void }) {
+  const { t } = useTranslation();
   const [patterns, setPatterns] = useState<PatternItem[]>([]);
   const [selected, setSelected] = useState<PatternItem | null>(null);
   const [loading, setLoading] = useState(true);
@@ -177,7 +179,7 @@ export default function RecoilEditor({ onBack }: { onBack: () => void }) {
         randomness: editRandomness, vertical: editVertical, horizontal: editHorizontal, rpm: editRpm,
       }});
     }
-    useToastStore.getState().addToast('패턴 저장 완료', 'success');
+    useToastStore.getState().addToast(t('recoil.patternSaved'), 'success');
     loadPatterns();
   };
 
@@ -185,7 +187,7 @@ export default function RecoilEditor({ onBack }: { onBack: () => void }) {
   const handleDelete = async () => {
     if (!selected?.dbId) return;
     await safeInvoke('delete_recoil_pattern', { params: { id: selected.dbId } });
-    useToastStore.getState().addToast('패턴 삭제 완료', 'info');
+    useToastStore.getState().addToast(t('recoil.patternDeleted'), 'info');
     setSelected(null);
     loadPatterns();
   };
@@ -227,19 +229,19 @@ export default function RecoilEditor({ onBack }: { onBack: () => void }) {
   // 정리
   useEffect(() => () => stopSpray(), []);
 
-  if (loading) return <LoadingSpinner label="패턴 로딩 중..." />;
+  if (loading) return <LoadingSpinner label={t('recoil.patternLoading')} />;
 
   return (
     <div className="page page--wide">
       <div className="page-header">
         <BackButton onBack={onBack} />
-        <h2>반동 패턴 편집기</h2>
+        <h2>{t('recoil.title')}</h2>
       </div>
 
       <div className="recoil-layout">
         {/* 좌측: 패턴 목록 */}
         <div className="recoil-sidebar">
-          <button className="btn btn--primary btn--full btn--sm" onClick={createNew}>+ 새 패턴</button>
+          <button className="btn btn--primary btn--full btn--sm" onClick={createNew}>{t('recoil.newPattern')}</button>
           <div className="recoil-sidebar__list">
             {patterns.map((p) => (
               <button
@@ -249,7 +251,7 @@ export default function RecoilEditor({ onBack }: { onBack: () => void }) {
               >
                 <div>{p.name}</div>
                 <div className="recoil-pattern-btn__meta">
-                  {p.points.length}pts | {p.rpm} RPM {p.isCustom ? '(커스텀)' : ''}
+                  {p.points.length}pts | {p.rpm} RPM {p.isCustom ? t('recoil.custom') : ''}
                 </div>
               </button>
             ))}
@@ -310,13 +312,13 @@ export default function RecoilEditor({ onBack }: { onBack: () => void }) {
               </svg>
 
               <div className="recoil-spray-actions">
-                <button className="btn btn--primary btn--sm" onClick={startSpray}>스프레이 미리보기</button>
-                <button className="btn btn--secondary btn--sm" onClick={stopSpray}>초기화</button>
+                <button className="btn btn--primary btn--sm" onClick={startSpray}>{t('recoil.sprayPreview')}</button>
+                <button className="btn btn--secondary btn--sm" onClick={stopSpray}>{t('recoil.resetView')}</button>
               </div>
             </>
           ) : (
             <div className="recoil-empty">
-              좌측에서 패턴을 선택하거나 새 패턴을 만드세요
+              {t('recoil.selectOrCreate')}
             </div>
           )}
         </div>
@@ -325,7 +327,7 @@ export default function RecoilEditor({ onBack }: { onBack: () => void }) {
         {(selected || editPoints.length > 0) && (
           <div className="recoil-controls">
             <div className="form-group">
-              <label className="form-label">이름</label>
+              <label className="form-label">{t('common.name')}</label>
               <input
                 className="input-field"
                 value={editName} onChange={(e) => setEditName(e.target.value)}
@@ -337,29 +339,29 @@ export default function RecoilEditor({ onBack }: { onBack: () => void }) {
                 onChange={(e) => setEditRpm(+e.target.value)} />
             </div>
             <div className="form-group">
-              <label className="form-label">랜덤 스프레드: {editRandomness.toFixed(2)}</label>
+              <label className="form-label">{t('recoil.randomSpread')}: {editRandomness.toFixed(2)}</label>
               <input type="range" min={0} max={1} step={0.05} value={editRandomness}
                 onChange={(e) => setEditRandomness(+e.target.value)} />
             </div>
             <div className="form-group">
-              <label className="form-label">수직 스케일: {editVertical.toFixed(2)}</label>
+              <label className="form-label">{t('recoil.verticalScale')}: {editVertical.toFixed(2)}</label>
               <input type="range" min={0} max={2} step={0.1} value={editVertical}
                 onChange={(e) => setEditVertical(+e.target.value)} />
             </div>
             <div className="form-group">
-              <label className="form-label">수평 스케일: {editHorizontal.toFixed(2)}</label>
+              <label className="form-label">{t('recoil.horizontalScale')}: {editHorizontal.toFixed(2)}</label>
               <input type="range" min={0} max={2} step={0.1} value={editHorizontal}
                 onChange={(e) => setEditHorizontal(+e.target.value)} />
             </div>
             <p className="form-hint">
-              포인트: {editPoints.length}개<br />
-              클릭=추가, 드래그=이동, 우클릭=삭제
+              {t('recoil.points')}: {editPoints.length}<br />
+              {t('recoil.clickDragHint')}
             </p>
 
             <div className="recoil-controls__actions">
-              <button className="btn btn--success btn--sm" onClick={handleSave}>저장</button>
+              <button className="btn btn--success btn--sm" onClick={handleSave}>{t('common.save')}</button>
               {selected?.isCustom && selected?.dbId && (
-                <button className="btn btn--danger btn--sm" onClick={handleDelete}>삭제</button>
+                <button className="btn btn--danger btn--sm" onClick={handleDelete}>{t('common.delete')}</button>
               )}
             </div>
           </div>

@@ -9,18 +9,19 @@ import { useGameProfileStore, type GameProfile } from '../stores/gameProfileStor
 import { computeRadarAxes } from '../utils/radarUtils';
 import type { AimDnaProfile, RadarAxis, CrossGameComparison as ComparisonType } from '../utils/types';
 import { invoke } from '@tauri-apps/api/core';
+import { useTranslation } from '../i18n';
 
 interface Props {
   onBack: () => void;
 }
 
-/** 갭 원인 한국어 라벨 */
-const CAUSE_LABELS: Record<string, string> = {
-  sens_mismatch: '감도 불일치',
-  movement_unadapted: '무빙 미적응',
-  style_mismatch: '스타일 불일치',
-  transition_narrowed: '전환점 축소',
-  vertical_weakness_exposed: '수직 에이밍 약점',
+/** 갭 원인 i18n 키 맵 */
+const CAUSE_KEYS: Record<string, string> = {
+  sens_mismatch: 'crossGame.sensMismatch',
+  movement_unadapted: 'crossGame.movementUnadapted',
+  style_mismatch: 'crossGame.styleMismatch',
+  transition_narrowed: 'crossGame.transitionNarrowed',
+  vertical_weakness_exposed: 'crossGame.verticalWeakness',
 };
 
 /** 심각도 → 뱃지 클래스 매핑 */
@@ -121,6 +122,7 @@ function ComparisonSelector({ profiles, onCompare }: {
   profiles: GameProfile[];
   onCompare: (refId: number, targetId: number) => void;
 }) {
+  const { t } = useTranslation();
   const [refId, setRefId] = useState<number>(profiles[0]?.id ?? 0);
   const [targetId, setTargetId] = useState<number>(profiles[1]?.id ?? 0);
 
@@ -144,7 +146,7 @@ function ComparisonSelector({ profiles, onCompare }: {
         disabled={refId === targetId}
         onClick={() => onCompare(refId, targetId)}
       >
-        비교 실행
+        {t('crossGame.runCompare')}
       </button>
     </div>
   );
@@ -152,6 +154,7 @@ function ComparisonSelector({ profiles, onCompare }: {
 
 /** 비교 결과 렌더링 */
 function ComparisonResult({ comparison }: { comparison: ComparisonType }) {
+  const { t } = useTranslation();
   // DNA 프로파일 로드 (레이더용)
   const [refDna, setRefDna] = useState<AimDnaProfile | null>(null);
   const [targetDna, setTargetDna] = useState<AimDnaProfile | null>(null);
@@ -176,9 +179,9 @@ function ComparisonResult({ comparison }: { comparison: ComparisonType }) {
         <div className="stat-value stat-value--accent stat-value--big">
           {comparison.overallGap.toFixed(1)}%
         </div>
-        <div className="stat-label">전체 갭 크기</div>
+        <div className="stat-label">{t('crossGame.overallGap')}</div>
         <p className="text-sm text-muted cg-gap-summary__adapt">
-          예상 적응 기간: <strong className="text-accent">{comparison.predictedDays.toFixed(0)}일</strong>
+          {t('crossGame.estimatedAdapt')}: <strong className="text-accent">{comparison.predictedDays.toFixed(0)} {t('style.days')}</strong>
         </p>
       </div>
 
@@ -188,15 +191,15 @@ function ComparisonResult({ comparison }: { comparison: ComparisonType }) {
       )}
 
       {/* 델타 테이블 */}
-      <h3 className="page-section__title">피처별 델타</h3>
+      <h3 className="page-section__title">{t('crossGame.featureDelta')}</h3>
       <table className="data-table cg-delta-table">
         <thead>
           <tr>
-            <th>피처</th>
+            <th>{t('hardware.feature')}</th>
             <th className="text-right">Ref</th>
             <th className="text-right">Target</th>
             <th className="text-right">Delta</th>
-            <th className="text-center">심각도</th>
+            <th className="text-center">{t('crossGame.severity')}</th>
           </tr>
         </thead>
         <tbody>
@@ -221,16 +224,16 @@ function ComparisonResult({ comparison }: { comparison: ComparisonType }) {
       {/* 갭 원인 카드 */}
       {comparison.causes.length > 0 && (
         <div className="page-section">
-          <h3 className="page-section__title">갭 원인 분석</h3>
+          <h3 className="page-section__title">{t('crossGame.gapAnalysis')}</h3>
           <div className="cg-cause-list">
             {comparison.causes.map((cause, i) => (
               <div key={i} className="glass-card glass-card--compact">
                 <div className="cg-cause-header">
                   <strong className="text-accent">
-                    {CAUSE_LABELS[cause.causeType] ?? cause.causeType}
+                    {CAUSE_KEYS[cause.causeType] ? t(CAUSE_KEYS[cause.causeType]) : cause.causeType}
                   </strong>
                   <span className="text-sm text-muted">
-                    심각도 {cause.severity.toFixed(0)}%
+                    {t('crossGame.severity')} {cause.severity.toFixed(0)}%
                   </span>
                 </div>
                 <p className="text-sm text-muted cg-cause-desc">{cause.description}</p>
@@ -247,7 +250,7 @@ function ComparisonResult({ comparison }: { comparison: ComparisonType }) {
 
       {/* 개선 타임라인 */}
       <div className="page-section">
-        <h3 className="page-section__title">개선 플랜</h3>
+        <h3 className="page-section__title">{t('crossGame.improvementPlan')}</h3>
         <div className="cg-timeline">
           {comparison.improvementPlan.phases.map(phase => (
             <div key={phase.phase} className="cg-timeline__phase">
@@ -277,7 +280,7 @@ function ComparisonResult({ comparison }: { comparison: ComparisonType }) {
       {/* 타임라인 예측 상세 */}
       {comparison.timeline && comparison.timeline.perFeature.length > 0 && (
         <div className="page-section">
-          <h3 className="page-section__title">피처별 예상 기간</h3>
+          <h3 className="page-section__title">{t('crossGame.featureEstimate')}</h3>
           <div className="cg-feature-bars">
             {comparison.timeline.perFeature
               .sort((a, b) => b.estimatedDays - a.estimatedDays)
@@ -292,7 +295,7 @@ function ComparisonResult({ comparison }: { comparison: ComparisonType }) {
                     />
                   </div>
                   <span className="cg-feature-bar__days text-sm text-muted">
-                    {ft.estimatedDays.toFixed(0)}일
+                    {ft.estimatedDays.toFixed(0)} {t('style.days')}
                   </span>
                 </div>
               ))}
@@ -308,6 +311,7 @@ function ComparisonResult({ comparison }: { comparison: ComparisonType }) {
 
 /** 크로스게임 DNA 비교 메인 컴포넌트 */
 export function CrossGameComparison({ onBack }: Props) {
+  const { t } = useTranslation();
   const { currentComparison, isComparing, compareGames } = useCrossGameStore();
   const { profiles, loadProfiles } = useGameProfileStore();
 
@@ -324,15 +328,15 @@ export function CrossGameComparison({ onBack }: Props) {
     <main className="app-main">
       <div className="page">
         <div className="page-header">
-          <h2>크로스게임 DNA 비교</h2>
+          <h2>{t('crossGame.title')}</h2>
         </div>
 
         {/* 프로파일 2개 미만 시 안내 */}
         {profiles.length < 2 ? (
           <div className="cg-empty-state">
-            <p>크로스게임 비교를 위해 2개 이상의 게임 프로파일이 필요합니다.</p>
+            <p>{t('crossGame.needProfiles')}</p>
             <p className="text-sm text-muted">
-              설정 &gt; 게임 프로파일에서 게임을 추가하고, 각각 배터리 테스트를 완료하세요.
+              {t('crossGame.addProfiles')}
             </p>
           </div>
         ) : (
@@ -341,7 +345,7 @@ export function CrossGameComparison({ onBack }: Props) {
 
             {isComparing && (
               <div className="spinner">
-                비교 분석 중...
+                {t('crossGame.comparing')}
               </div>
             )}
 
@@ -352,7 +356,7 @@ export function CrossGameComparison({ onBack }: Props) {
         )}
 
         <div className="result-actions">
-          <button className="btn btn--secondary" onClick={onBack}>돌아가기</button>
+          <button className="btn btn--secondary" onClick={onBack}>{t('common.back')}</button>
         </div>
       </div>
     </main>

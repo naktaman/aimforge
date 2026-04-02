@@ -4,6 +4,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useFovStore } from '../stores/fovStore';
+import { useTranslation } from '../i18n';
 
 interface Props {
   onBack: () => void;
@@ -19,6 +20,7 @@ const FOV_CLASS_SUFFIX: Record<number, string> = {
 };
 
 export default function FovComparison({ onBack, profileId }: Props) {
+  const { t } = useTranslation();
   const { results, recommendation, isLoading, loadResults, compare } = useFovStore();
   const [hasCompared, setHasCompared] = useState(false);
 
@@ -49,23 +51,23 @@ export default function FovComparison({ onBack, profileId }: Props) {
     <div className="page page--narrow">
       {/* 페이지 헤더: 제목 + 뒤로가기 */}
       <div className="page-header">
-        <h2>FOV 비교 분석</h2>
-        <button className="btn btn--ghost btn--sm" onClick={onBack}>← 돌아가기</button>
+        <h2>{t('fov.title')}</h2>
+        <button className="btn btn--ghost btn--sm" onClick={onBack}>← {t('common.back')}</button>
       </div>
 
       {/* 테스트 결과 테이블 섹션 */}
       <div className="glass-card page-section">
-        <h3 className="page-section__title">테스트 결과 ({results.length}건)</h3>
+        <h3 className="page-section__title">{t('fov.testResults')} ({results.length})</h3>
         {results.length === 0 ? (
           <p className="fov-comparison__empty">
-            FOV 테스트 결과가 없습니다. 동일 감도로 FOV 90/100/110/120을 각각 테스트하세요.
+            {t('fov.noResults')}
           </p>
         ) : (
           <table className="data-table">
             <thead>
               <tr>
                 <th>FOV</th>
-                <th>시나리오</th>
+                <th>{t('battery.scenario')}</th>
                 <th>Peripheral</th>
                 <th>Center</th>
                 <th>Score</th>
@@ -98,7 +100,7 @@ export default function FovComparison({ onBack, profileId }: Props) {
             onClick={handleCompare}
             disabled={isLoading}
           >
-            {isLoading ? '분석 중...' : 'FOV 비교 분석'}
+            {isLoading ? t('common.analyzing') : t('fov.fovCompareAnalysis')}
           </button>
         )}
       </div>
@@ -106,12 +108,12 @@ export default function FovComparison({ onBack, profileId }: Props) {
       {/* 비교 결과: 추천 FOV + FOV별 바 차트 */}
       {hasCompared && recommendation && (
         <div className="glass-card--glow glass-card page-section">
-          <h3 className="page-section__title">추천 결과</h3>
+          <h3 className="page-section__title">{t('fov.recommendationResult')}</h3>
 
           {/* 추천 FOV 카드 */}
           <div className="fov-recommendation">
             <div className="fov-recommendation__value">
-              추천 FOV: {recommendation.recommendedFov}°
+              {t('fov.recommendedFov')}: {recommendation.recommendedFov}°
             </div>
             <div className="fov-recommendation__reason">
               {recommendation.reason}
@@ -119,7 +121,7 @@ export default function FovComparison({ onBack, profileId }: Props) {
           </div>
 
           {/* FOV별 비교 바 */}
-          <h4>FOV별 비교</h4>
+          <h4>{t('fov.fovByComparison')}</h4>
           {recommendation.comparisons.map((comp) => {
             const isRecommended = Math.abs(comp.fov - recommendation.recommendedFov) < 0.1;
             return (
@@ -174,7 +176,7 @@ export default function FovComparison({ onBack, profileId }: Props) {
       {/* 데이터 부족 안내 */}
       {hasCompared && !recommendation && (
         <div className="glass-card empty-state">
-          분석할 FOV 데이터가 부족합니다.
+          {t('fov.insufficientData')}
         </div>
       )}
     </div>

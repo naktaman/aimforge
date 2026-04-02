@@ -7,6 +7,7 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { Crosshair } from './overlays/Crosshair';
 import type { CrosshairShape } from '../utils/types';
 import { CROSSHAIR_PRESETS } from '../utils/types';
+import { useTranslation } from '../i18n';
 
 export function CrosshairSettings() {
   const {
@@ -14,6 +15,7 @@ export function CrosshairSettings() {
     exportCrosshairCode, importCrosshairCode,
   } = useSettingsStore();
 
+  const { t } = useTranslation();
   const [shareCode, setShareCode] = useState('');
   const [importError, setImportError] = useState('');
   const [showCopied, setShowCopied] = useState(false);
@@ -35,21 +37,21 @@ export function CrosshairSettings() {
       setImportError('');
       setShareCode('');
     } else {
-      setImportError('유효하지 않은 코드입니다');
+      setImportError(t('crosshair.invalidCode'));
     }
   };
 
-  const shapes: Array<{ value: CrosshairShape; label: string }> = [
-    { value: 'cross', label: '+자형' },
-    { value: 'cross_dot', label: '+도트' },
-    { value: 't_shape', label: 'T자형' },
-    { value: 'dot', label: '도트' },
-    { value: 'circle', label: '원형' },
+  const shapes: Array<{ value: CrosshairShape; labelKey: string }> = [
+    { value: 'cross', labelKey: 'crosshair.cross' },
+    { value: 'cross_dot', labelKey: 'crosshair.crossDot' },
+    { value: 't_shape', labelKey: 'crosshair.tShape' },
+    { value: 'dot', labelKey: 'crosshair.dotShape' },
+    { value: 'circle', labelKey: 'crosshair.circle' },
   ];
 
   return (
     <div className="crosshair-settings">
-      <h3>크로스헤어 설정</h3>
+      <h3>{t('crosshair.title')}</h3>
 
       {/* 실시간 미리보기 */}
       <div className="crosshair-preview">
@@ -60,7 +62,7 @@ export function CrosshairSettings() {
 
       {/* 프리셋 */}
       <div className="crosshair-presets">
-        <label>프리셋</label>
+        <label>{t('crosshair.preset')}</label>
         <div className="preset-buttons">
           {CROSSHAIR_PRESETS.map((p) => (
             <button
@@ -76,15 +78,15 @@ export function CrosshairSettings() {
 
       {/* 형태 선택 */}
       <div className="settings-row">
-        <label>형태</label>
+        <label>{t('crosshair.shape')}</label>
         <div className="shape-selector">
-          {shapes.map(({ value, label }) => (
+          {shapes.map(({ value, labelKey }) => (
             <button
               key={value}
               className={`shape-btn ${crosshair.shape === value ? 'active' : ''}`}
               onClick={() => setCrosshair({ shape: value })}
             >
-              {label}
+              {t(labelKey)}
             </button>
           ))}
         </div>
@@ -93,7 +95,7 @@ export function CrosshairSettings() {
       {/* 크기 설정 */}
       <div className="settings-grid crosshair-grid">
         <label>
-          내부선 길이
+          {t('crosshair.innerLength')}
           <input
             type="range" min={0} max={20} step={1}
             value={crosshair.innerLength}
@@ -102,7 +104,7 @@ export function CrosshairSettings() {
           <span className="value">{crosshair.innerLength}px</span>
         </label>
         <label>
-          외부선 길이
+          {t('crosshair.outerLength')}
           <input
             type="range" min={0} max={10} step={1}
             value={crosshair.outerLength}
@@ -111,7 +113,7 @@ export function CrosshairSettings() {
           <span className="value">{crosshair.outerLength}px</span>
         </label>
         <label>
-          두께
+          {t('crosshair.thickness')}
           <input
             type="range" min={1} max={6} step={0.5}
             value={crosshair.thickness}
@@ -120,7 +122,7 @@ export function CrosshairSettings() {
           <span className="value">{crosshair.thickness}px</span>
         </label>
         <label>
-          센터 갭
+          {t('crosshair.centerGap')}
           <input
             type="range" min={0} max={15} step={1}
             value={crosshair.gap}
@@ -133,7 +135,7 @@ export function CrosshairSettings() {
       {/* 색상 */}
       <div className="settings-grid crosshair-grid">
         <label>
-          색상
+          {t('crosshair.color')}
           <input
             type="color"
             value={crosshair.color}
@@ -141,7 +143,7 @@ export function CrosshairSettings() {
           />
         </label>
         <label>
-          투명도
+          {t('crosshair.opacity')}
           <input
             type="range" min={0.1} max={1} step={0.05}
             value={crosshair.opacity}
@@ -159,12 +161,12 @@ export function CrosshairSettings() {
             checked={crosshair.outlineEnabled}
             onChange={(e) => setCrosshair({ outlineEnabled: e.target.checked })}
           />
-          아웃라인
+          {t('crosshair.outline')}
         </label>
         {crosshair.outlineEnabled && (
           <div className="settings-grid crosshair-grid inline">
             <label>
-              두께
+              {t('crosshair.thickness')}
               <input
                 type="range" min={0.5} max={3} step={0.5}
                 value={crosshair.outlineThickness}
@@ -173,7 +175,7 @@ export function CrosshairSettings() {
               <span className="value">{crosshair.outlineThickness}px</span>
             </label>
             <label>
-              색상
+              {t('crosshair.color')}
               <input
                 type="color"
                 value={crosshair.outlineColor}
@@ -192,11 +194,11 @@ export function CrosshairSettings() {
             checked={crosshair.dotEnabled}
             onChange={(e) => setCrosshair({ dotEnabled: e.target.checked })}
           />
-          센터 도트
+          {t('crosshair.dot')}
         </label>
         {crosshair.dotEnabled && (
           <label>
-            크기
+            {t('crosshair.size')}
             <input
               type="range" min={1} max={6} step={0.5}
               value={crosshair.dotSize}
@@ -215,11 +217,11 @@ export function CrosshairSettings() {
             checked={crosshair.dynamicEnabled}
             onChange={(e) => setCrosshair({ dynamicEnabled: e.target.checked })}
           />
-          다이나믹 (발사 시 벌어짐)
+          {t('crosshair.dynamicDesc')}
         </label>
         {crosshair.dynamicEnabled && (
           <label>
-            벌어짐
+            {t('crosshair.spread')}
             <input
               type="range" min={1} max={10} step={1}
               value={crosshair.dynamicSpread}
@@ -232,17 +234,17 @@ export function CrosshairSettings() {
 
       {/* Share Code */}
       <div className="crosshair-share">
-        <h4>크로스헤어 코드</h4>
+        <h4>{t('crosshair.code')}</h4>
         <div className="share-row">
           <input
             type="text"
-            placeholder="AIM-xxxxx... 코드를 입력하세요"
+            placeholder={t('crosshair.codePlaceholder')}
             value={shareCode}
             onChange={(e) => { setShareCode(e.target.value); setImportError(''); }}
           />
-          <button className="btn-secondary" onClick={handleImport}>가져오기</button>
+          <button className="btn-secondary" onClick={handleImport}>{t('common.import')}</button>
           <button className="btn-primary" onClick={handleExport}>
-            {showCopied ? '복사됨!' : '내보내기'}
+            {showCopied ? t('common.copied') : t('common.export')}
           </button>
         </div>
         {importError && <p className="error-text">{importError}</p>}

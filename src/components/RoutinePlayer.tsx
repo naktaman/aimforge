@@ -4,6 +4,7 @@
  */
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRoutineStore, type RoutineStep } from '../stores/routineStore';
+import { useTranslation } from '../i18n';
 
 interface RoutinePlayerProps {
   routineId: number;
@@ -13,6 +14,7 @@ interface RoutinePlayerProps {
 
 export function RoutinePlayer({ routineId, onComplete, onCancel }: RoutinePlayerProps) {
   const { currentSteps, loadSteps } = useRoutineStore();
+  const { t } = useTranslation();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -64,13 +66,13 @@ export function RoutinePlayer({ routineId, onComplete, onCancel }: RoutinePlayer
     }
   }, [currentIndex, totalSteps, onComplete]);
 
-  if (!step) return <p>루틴 로딩 중...</p>;
+  if (!step) return <p>{t('routine.routineLoading')}</p>;
 
   return (
     <div className="routine-player">
-      <h2>루틴 실행 중</h2>
+      <h2>{t('routine.runningRoutine')}</h2>
       <div className="player-status">
-        <span>스텝 {currentIndex + 1} / {totalSteps}</span>
+        <span>{t('routine.step')} {currentIndex + 1} / {totalSteps}</span>
         <span className="scenario-name">{step.scenarioType}</span>
       </div>
 
@@ -79,15 +81,15 @@ export function RoutinePlayer({ routineId, onComplete, onCancel }: RoutinePlayer
         <div className="player-progress-fill" style={{ width: `${progress}%` }} />
       </div>
       <div className="player-time">
-        {elapsed}초 / {step.durationSec}초
+        {elapsed}{t('routine.sec')} / {step.durationSec}{t('routine.sec')}
       </div>
 
       <div className="player-controls">
         <button className="btn-secondary" onClick={togglePause}>
-          {paused ? '재개' : '일시정지'}
+          {paused ? t('common.resume') : t('common.pause')}
         </button>
-        <button className="btn-secondary" onClick={skipStep}>건너뛰기</button>
-        <button className="btn-danger" onClick={onCancel}>중지</button>
+        <button className="btn-secondary" onClick={skipStep}>{t('common.skip')}</button>
+        <button className="btn-danger" onClick={onCancel}>{t('common.stop')}</button>
       </div>
     </div>
   );

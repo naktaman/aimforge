@@ -4,6 +4,7 @@
  * 선택한 기어 정보를 AimDnaInsights에 전달하기 위해 콜백으로 노출
  */
 import { useState, useMemo } from 'react';
+import { useTranslation } from '../i18n';
 import gearDb from '../data/gearDatabase.json';
 
 /** JSON 타입 정의 */
@@ -50,35 +51,39 @@ interface Props {
 const MICE: MouseEntry[] = gearDb.mice as MouseEntry[];
 const PADS: MousepadEntry[] = gearDb.mousepads as MousepadEntry[];
 
-/** 크기 한글 레이블 */
-const SIZE_KO: Record<string, string> = {
-  small: '소형',
-  medium: '중형',
-  large: '대형',
-  xl: 'XL',
-  xxl: 'XXL',
-  desk: '데스크매트',
+/** 크기 i18n 키 매핑 */
+const SIZE_KEYS: Record<string, string> = {
+  small: 'gear.small',
+  medium: 'gear.medium',
+  large: 'gear.large',
+  xl: 'gear.xl',
+  xxl: 'gear.xxl',
+  desk: 'gear.deskMat',
 };
 
-/** 서피스 한글 레이블 */
-const SURFACE_KO: Record<string, string> = {
-  speed: '스피드',
-  control: '컨트롤',
-  hybrid: '하이브리드',
+/** 서피스 i18n 키 매핑 */
+const SURFACE_KEYS: Record<string, string> = {
+  speed: 'gear.speed',
+  control: 'gear.control',
 };
 
-/** 형태 한글 레이블 */
-const SHAPE_KO: Record<string, string> = {
-  symmetric: '시메트릭',
-  ergonomic: '에르고노믹',
-  'semi-ergo': '세미에르고',
+/** 형태 i18n 키 매핑 */
+const SHAPE_KEYS: Record<string, string> = {
+  symmetric: 'gear.symmetric',
+  ergonomic: 'gear.ergonomic',
+  'semi-ergo': 'gear.semiErgo',
 };
 
 export function AimDnaSensitivitySelector({ value, onChange }: Props) {
+  const { t } = useTranslation();
   const [mouseQuery, setMouseQuery] = useState('');
   const [padQuery, setPadQuery] = useState('');
   const [mouseOpen, setMouseOpen] = useState(false);
   const [padOpen, setPadOpen] = useState(false);
+
+  /** 번역 헬퍼 — 키 매핑이 있으면 t(), 없으면 원본 */
+  const tKey = (map: Record<string, string>, val: string) =>
+    map[val] ? t(map[val]) : val;
 
   /** 마우스 검색 필터 — 이름/브랜드/형태 매칭 */
   const filteredMice = useMemo(() => {
@@ -122,12 +127,12 @@ export function AimDnaSensitivitySelector({ value, onChange }: Props) {
     <div className="gear-selector">
       {/* 마우스 선택 */}
       <div className="gear-field">
-        <label className="gear-label">마우스</label>
+        <label className="gear-label">{t('gear.mouse')}</label>
         <div className="gear-autocomplete">
           <input
             className="input-field"
             type="text"
-            placeholder="마우스 이름/브랜드로 검색..."
+            placeholder={t('gear.searchMouse')}
             value={mouseQuery}
             onChange={e => {
               setMouseQuery(e.target.value);
@@ -150,7 +155,7 @@ export function AimDnaSensitivitySelector({ value, onChange }: Props) {
                 >
                   <span className="gear-item-name">{m.name}</span>
                   <span className="gear-item-meta">
-                    {m.weight_g}g · {SHAPE_KO[m.shape] ?? m.shape} · {SIZE_KO[m.size] ?? m.size}
+                    {m.weight_g}g · {tKey(SHAPE_KEYS, m.shape)} · {tKey(SIZE_KEYS, m.size)}
                   </span>
                 </li>
               ))}
@@ -162,27 +167,27 @@ export function AimDnaSensitivitySelector({ value, onChange }: Props) {
         {value.mouse && (
           <div className="gear-detail-card">
             <div className="gear-detail-row">
-              <span className="gear-detail-key">무게</span>
+              <span className="gear-detail-key">{t('gear.weight')}</span>
               <span className="gear-detail-val">{value.mouse.weight_g}g</span>
             </div>
             <div className="gear-detail-row">
-              <span className="gear-detail-key">형태</span>
-              <span className="gear-detail-val">{SHAPE_KO[value.mouse.shape] ?? value.mouse.shape}</span>
+              <span className="gear-detail-key">{t('gear.shape')}</span>
+              <span className="gear-detail-val">{tKey(SHAPE_KEYS, value.mouse.shape)}</span>
             </div>
             <div className="gear-detail-row">
-              <span className="gear-detail-key">크기</span>
-              <span className="gear-detail-val">{SIZE_KO[value.mouse.size] ?? value.mouse.size}</span>
+              <span className="gear-detail-key">{t('gear.sizeLabel')}</span>
+              <span className="gear-detail-val">{tKey(SIZE_KEYS, value.mouse.size)}</span>
             </div>
             <div className="gear-detail-row">
-              <span className="gear-detail-key">연결</span>
+              <span className="gear-detail-key">{t('gear.connection')}</span>
               <span className="gear-detail-val">
-                {value.mouse.connection === 'both' ? '유무선' : value.mouse.connection === 'wireless' ? '무선' : '유선'}
+                {value.mouse.connection === 'both' ? t('gear.both') : value.mouse.connection === 'wireless' ? t('gear.wireless') : t('gear.wired')}
               </span>
             </div>
             <div className="gear-detail-row">
-              <span className="gear-detail-key">크기(mm)</span>
+              <span className="gear-detail-key">{t('gear.dimensions')}</span>
               <span className="gear-detail-val">
-                {value.mouse.length_mm}×{value.mouse.width_mm}×{value.mouse.height_mm}
+                {value.mouse.length_mm}×{value.mouse.width_mm}×{value.mouse.height_mm}mm
               </span>
             </div>
           </div>
@@ -191,12 +196,12 @@ export function AimDnaSensitivitySelector({ value, onChange }: Props) {
 
       {/* 마우스패드 선택 */}
       <div className="gear-field">
-        <label className="gear-label">마우스패드</label>
+        <label className="gear-label">{t('gear.mousepad')}</label>
         <div className="gear-autocomplete">
           <input
             className="input-field"
             type="text"
-            placeholder="패드 이름/브랜드/서피스로 검색..."
+            placeholder={t('gear.searchPad')}
             value={padQuery}
             onChange={e => {
               setPadQuery(e.target.value);
@@ -218,7 +223,7 @@ export function AimDnaSensitivitySelector({ value, onChange }: Props) {
                 >
                   <span className="gear-item-name">{p.name}</span>
                   <span className="gear-item-meta">
-                    {SURFACE_KO[p.surface] ?? p.surface} · {SIZE_KO[p.size] ?? p.size} · {p.dimensions_mm}mm
+                    {tKey(SURFACE_KEYS, p.surface)} · {tKey(SIZE_KEYS, p.size)} · {p.dimensions_mm}mm
                   </span>
                 </li>
               ))}
@@ -230,19 +235,19 @@ export function AimDnaSensitivitySelector({ value, onChange }: Props) {
         {value.mousepad && (
           <div className="gear-detail-card">
             <div className="gear-detail-row">
-              <span className="gear-detail-key">서피스</span>
-              <span className="gear-detail-val">{SURFACE_KO[value.mousepad.surface] ?? value.mousepad.surface}</span>
+              <span className="gear-detail-key">{t('gear.surface')}</span>
+              <span className="gear-detail-val">{tKey(SURFACE_KEYS, value.mousepad.surface)}</span>
             </div>
             <div className="gear-detail-row">
-              <span className="gear-detail-key">크기</span>
-              <span className="gear-detail-val">{SIZE_KO[value.mousepad.size] ?? value.mousepad.size}</span>
+              <span className="gear-detail-key">{t('gear.sizeLabel')}</span>
+              <span className="gear-detail-val">{tKey(SIZE_KEYS, value.mousepad.size)}</span>
             </div>
             <div className="gear-detail-row">
-              <span className="gear-detail-key">치수</span>
+              <span className="gear-detail-key">{t('gear.dimensions')}</span>
               <span className="gear-detail-val">{value.mousepad.dimensions_mm}mm</span>
             </div>
             <div className="gear-detail-row">
-              <span className="gear-detail-key">두께</span>
+              <span className="gear-detail-key">{t('gear.thickness')}</span>
               <span className="gear-detail-val">{value.mousepad.thickness_mm}mm</span>
             </div>
           </div>

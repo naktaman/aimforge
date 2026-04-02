@@ -8,6 +8,7 @@ import { invoke } from '@tauri-apps/api/core';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useEngineStore, RECOIL_PRESETS, type RecoilPreset, type FireMode } from '../stores/engineStore';
 import { useUiStore } from '../stores/uiStore';
+import { useTranslation } from '../i18n';
 import type { GamePreset, ScenarioType, BatteryPreset, StageType } from '../utils/types';
 import { ConversionPanel } from './ConversionPanel';
 import { CrosshairSettings } from './CrosshairSettings';
@@ -61,32 +62,32 @@ interface ScenarioSelectProps {
   onHistory?: () => void;
 }
 
-/** 9개 세분류 훈련 카탈로그 */
+/** 9개 세분류 훈련 카탈로그 — desc 키는 i18n용 */
 const TRAINING_CATALOG = [
   {
     category: 'Flick',
     icon: '///',
     items: [
-      { type: 'flick_micro' as StageType, name: 'Micro Flick', desc: '5-15° 손가락 정밀 플릭', color: '#ff6b6b' },
-      { type: 'flick_medium' as StageType, name: 'Medium Flick', desc: '30-60° 손목 플릭 (핵심)', color: '#ffa500', star: true },
-      { type: 'flick_macro' as StageType, name: 'Macro Flick', desc: '90-180° 팔 대각/턴샷', color: '#e74c3c' },
+      { type: 'flick_micro' as StageType, name: 'Micro Flick', descKey: 'training.flickMicroDesc', color: '#ff6b6b' },
+      { type: 'flick_medium' as StageType, name: 'Medium Flick', descKey: 'training.flickMediumDesc', color: '#ffa500', star: true },
+      { type: 'flick_macro' as StageType, name: 'Macro Flick', descKey: 'training.flickMacroDesc', color: '#e74c3c' },
     ],
   },
   {
     category: 'Tracking',
     icon: '~~~',
     items: [
-      { type: 'tracking_close' as StageType, name: 'Close Range', desc: '10-15m 근거리 (팔 움직임)', color: '#00b894' },
-      { type: 'tracking_mid' as StageType, name: 'Mid Range', desc: '20-30m 중거리 (손목+팔)', color: '#0984e3' },
-      { type: 'tracking_long' as StageType, name: 'Long Range', desc: '40-60m 원거리 (손목)', color: '#6c5ce7' },
+      { type: 'tracking_close' as StageType, name: 'Close Range', descKey: 'training.trackCloseDesc', color: '#00b894' },
+      { type: 'tracking_mid' as StageType, name: 'Mid Range', descKey: 'training.trackMidDesc', color: '#0984e3' },
+      { type: 'tracking_long' as StageType, name: 'Long Range', descKey: 'training.trackLongDesc', color: '#6c5ce7' },
     ],
   },
   {
     category: 'Switching',
     icon: '<->',
     items: [
-      { type: 'switching_close' as StageType, name: 'Close Multi', desc: '15-45° 근접 타겟 전환', color: '#fdcb6e' },
-      { type: 'switching_wide' as StageType, name: 'Wide Multi', desc: '60-150° 넓은 타겟 전환', color: '#e17055' },
+      { type: 'switching_close' as StageType, name: 'Close Multi', descKey: 'training.switchCloseDesc', color: '#fdcb6e' },
+      { type: 'switching_wide' as StageType, name: 'Wide Multi', descKey: 'training.switchWideDesc', color: '#e17055' },
     ],
   },
 ];
@@ -112,6 +113,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
   const [trainingSub, setTrainingSub] = useState<TrainingSub>('catalog');
   const [showCrosshair, setShowCrosshair] = useState(false);
   const { mode } = useUiStore();
+  const { t } = useTranslation();
   const { recoilEnabled, recoilPreset, toggleRecoil, setRecoilPreset, fireMode, fireRpm, setFireMode, setFireRpm } = useEngineStore();
   const {
     dpi, sensitivity, selectedGame,
@@ -188,72 +190,72 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
       case 'flick':
         return (
           <div className="settings-grid">
-            <label>타겟 크기 (°)<input type="number" value={targetSize} onChange={(e) => setTargetSize(Number(e.target.value))} min={0.5} max={10} step={0.5} /></label>
-            <label>타겟 수<input type="number" value={numTargets} onChange={(e) => setNumTargets(Number(e.target.value))} min={5} max={100} /></label>
-            <label>타임아웃 (ms)<input type="number" value={timeout} onChange={(e) => setTimeout(Number(e.target.value))} min={1000} max={10000} step={500} /></label>
-            <label>최소 각도 (°)<input type="number" value={angleMin} onChange={(e) => setAngleMin(Number(e.target.value))} min={5} max={180} /></label>
-            <label>최대 각도 (°)<input type="number" value={angleMax} onChange={(e) => setAngleMax(Number(e.target.value))} min={10} max={180} /></label>
+            <label>{t('param.targetSize')}<input type="number" value={targetSize} onChange={(e) => setTargetSize(Number(e.target.value))} min={0.5} max={10} step={0.5} /></label>
+            <label>{t('param.numTargets')}<input type="number" value={numTargets} onChange={(e) => setNumTargets(Number(e.target.value))} min={5} max={100} /></label>
+            <label>{t('param.timeout')}<input type="number" value={timeout} onChange={(e) => setTimeout(Number(e.target.value))} min={1000} max={10000} step={500} /></label>
+            <label>{t('param.minAngle')}<input type="number" value={angleMin} onChange={(e) => setAngleMin(Number(e.target.value))} min={5} max={180} /></label>
+            <label>{t('param.maxAngle')}<input type="number" value={angleMax} onChange={(e) => setAngleMax(Number(e.target.value))} min={10} max={180} /></label>
           </div>
         );
 
       case 'tracking':
         return (
           <div className="settings-grid">
-            <label>타겟 크기 (°)<input type="number" value={targetSize} onChange={(e) => setTargetSize(Number(e.target.value))} min={0.5} max={10} step={0.5} /></label>
-            <label>타겟 속도 (°/s)<input type="number" value={trackingSpeed} onChange={(e) => setTrackingSpeed(Number(e.target.value))} min={5} max={200} /></label>
-            <label>방향 전환 횟수<input type="number" value={dirChanges} onChange={(e) => setDirChanges(Number(e.target.value))} min={0} max={20} /></label>
-            <label>지속 시간 (ms)<input type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} min={5000} max={60000} step={1000} /></label>
-            <label>궤적<select value={trajectory} onChange={(e) => setTrajectory(e.target.value as 'horizontal' | 'vertical' | 'mixed')}><option value="horizontal">수평</option><option value="vertical">수직</option><option value="mixed">혼합</option></select></label>
+            <label>{t('param.targetSize')}<input type="number" value={targetSize} onChange={(e) => setTargetSize(Number(e.target.value))} min={0.5} max={10} step={0.5} /></label>
+            <label>{t('param.targetSpeed')}<input type="number" value={trackingSpeed} onChange={(e) => setTrackingSpeed(Number(e.target.value))} min={5} max={200} /></label>
+            <label>{t('param.dirChanges')}<input type="number" value={dirChanges} onChange={(e) => setDirChanges(Number(e.target.value))} min={0} max={20} /></label>
+            <label>{t('param.duration')}<input type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} min={5000} max={60000} step={1000} /></label>
+            <label>{t('param.trajectory')}<select value={trajectory} onChange={(e) => setTrajectory(e.target.value as 'horizontal' | 'vertical' | 'mixed')}><option value="horizontal">{t('param.horizontal')}</option><option value="vertical">{t('param.vertical')}</option><option value="mixed">{t('param.mixed')}</option></select></label>
           </div>
         );
 
       case 'circular_tracking':
         return (
           <div className="settings-grid">
-            <label>타겟 크기 (°)<input type="number" value={targetSize} onChange={(e) => setTargetSize(Number(e.target.value))} min={0.5} max={10} step={0.5} /></label>
-            <label>궤도 반지름 (°)<input type="number" value={orbitRadius} onChange={(e) => setOrbitRadius(Number(e.target.value))} min={3} max={30} /></label>
-            <label>궤도 속도 (°/s)<input type="number" value={orbitSpeed} onChange={(e) => setOrbitSpeed(Number(e.target.value))} min={10} max={120} /></label>
-            <label>반지름 변동<input type="number" value={radiusVar} onChange={(e) => setRadiusVar(Number(e.target.value))} min={0} max={1} step={0.1} /></label>
-            <label>속도 변동<input type="number" value={speedVar} onChange={(e) => setSpeedVar(Number(e.target.value))} min={0} max={1} step={0.1} /></label>
-            <label>거리 (m)<input type="number" value={distance} onChange={(e) => setDistance(Number(e.target.value))} min={5} max={30} /></label>
-            <label>지속 시간 (ms)<input type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} min={5000} max={60000} step={1000} /></label>
+            <label>{t('param.targetSize')}<input type="number" value={targetSize} onChange={(e) => setTargetSize(Number(e.target.value))} min={0.5} max={10} step={0.5} /></label>
+            <label>{t('param.orbitRadius')}<input type="number" value={orbitRadius} onChange={(e) => setOrbitRadius(Number(e.target.value))} min={3} max={30} /></label>
+            <label>{t('param.orbitSpeed')}<input type="number" value={orbitSpeed} onChange={(e) => setOrbitSpeed(Number(e.target.value))} min={10} max={120} /></label>
+            <label>{t('param.radiusVariation')}<input type="number" value={radiusVar} onChange={(e) => setRadiusVar(Number(e.target.value))} min={0} max={1} step={0.1} /></label>
+            <label>{t('param.speedVariation')}<input type="number" value={speedVar} onChange={(e) => setSpeedVar(Number(e.target.value))} min={0} max={1} step={0.1} /></label>
+            <label>{t('param.distance')}<input type="number" value={distance} onChange={(e) => setDistance(Number(e.target.value))} min={5} max={30} /></label>
+            <label>{t('param.duration')}<input type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} min={5000} max={60000} step={1000} /></label>
           </div>
         );
 
       case 'stochastic_tracking':
         return (
           <div className="settings-grid">
-            <label>타겟 크기 (°)<input type="number" value={targetSize} onChange={(e) => setTargetSize(Number(e.target.value))} min={0.5} max={10} step={0.5} /></label>
-            <label>노이즈 속도<input type="number" value={noiseSpeed} onChange={(e) => setNoiseSpeed(Number(e.target.value))} min={0.1} max={3} step={0.1} /></label>
-            <label>진폭 (°)<input type="number" value={amplitude} onChange={(e) => setAmplitude(Number(e.target.value))} min={3} max={30} /></label>
-            <label>거리 (m)<input type="number" value={distance} onChange={(e) => setDistance(Number(e.target.value))} min={5} max={30} /></label>
-            <label>지속 시간 (ms)<input type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} min={5000} max={60000} step={1000} /></label>
+            <label>{t('param.targetSize')}<input type="number" value={targetSize} onChange={(e) => setTargetSize(Number(e.target.value))} min={0.5} max={10} step={0.5} /></label>
+            <label>{t('param.noiseSpeed')}<input type="number" value={noiseSpeed} onChange={(e) => setNoiseSpeed(Number(e.target.value))} min={0.1} max={3} step={0.1} /></label>
+            <label>{t('param.amplitude')}<input type="number" value={amplitude} onChange={(e) => setAmplitude(Number(e.target.value))} min={3} max={30} /></label>
+            <label>{t('param.distance')}<input type="number" value={distance} onChange={(e) => setDistance(Number(e.target.value))} min={5} max={30} /></label>
+            <label>{t('param.duration')}<input type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} min={5000} max={60000} step={1000} /></label>
           </div>
         );
 
       case 'counter_strafe_flick':
         return (
           <div className="settings-grid">
-            <label>타겟 크기 (°)<input type="number" value={targetSize} onChange={(e) => setTargetSize(Number(e.target.value))} min={0.5} max={10} step={0.5} /></label>
-            <label>정지 시간 (ms)<input type="number" value={stopTime} onChange={(e) => setStopTime(Number(e.target.value))} min={50} max={500} step={10} /></label>
-            <label>스트레이프 속도 (°/s)<input type="number" value={strafeSpeed} onChange={(e) => setStrafeSpeed(Number(e.target.value))} min={10} max={100} /></label>
-            <label>타겟 수<input type="number" value={numTargets} onChange={(e) => setNumTargets(Number(e.target.value))} min={5} max={50} /></label>
-            <label>최소 각도 (°)<input type="number" value={angleMin} onChange={(e) => setAngleMin(Number(e.target.value))} min={5} max={90} /></label>
-            <label>최대 각도 (°)<input type="number" value={angleMax} onChange={(e) => setAngleMax(Number(e.target.value))} min={10} max={180} /></label>
-            <label>타임아웃 (ms)<input type="number" value={timeout} onChange={(e) => setTimeout(Number(e.target.value))} min={1000} max={10000} step={500} /></label>
+            <label>{t('param.targetSize')}<input type="number" value={targetSize} onChange={(e) => setTargetSize(Number(e.target.value))} min={0.5} max={10} step={0.5} /></label>
+            <label>{t('param.stopTime')}<input type="number" value={stopTime} onChange={(e) => setStopTime(Number(e.target.value))} min={50} max={500} step={10} /></label>
+            <label>{t('param.strafeSpeed')}<input type="number" value={strafeSpeed} onChange={(e) => setStrafeSpeed(Number(e.target.value))} min={10} max={100} /></label>
+            <label>{t('param.numTargets')}<input type="number" value={numTargets} onChange={(e) => setNumTargets(Number(e.target.value))} min={5} max={50} /></label>
+            <label>{t('param.minAngle')}<input type="number" value={angleMin} onChange={(e) => setAngleMin(Number(e.target.value))} min={5} max={90} /></label>
+            <label>{t('param.maxAngle')}<input type="number" value={angleMax} onChange={(e) => setAngleMax(Number(e.target.value))} min={10} max={180} /></label>
+            <label>{t('param.timeout')}<input type="number" value={timeout} onChange={(e) => setTimeout(Number(e.target.value))} min={1000} max={10000} step={500} /></label>
           </div>
         );
 
       case 'micro_flick':
         return (
           <div className="settings-grid">
-            <label>타겟 크기 (°)<input type="number" value={targetSize} onChange={(e) => setTargetSize(Number(e.target.value))} min={0.5} max={10} step={0.5} /></label>
-            <label>트래킹 속도 (°/s)<input type="number" value={trackingSpeed} onChange={(e) => setTrackingSpeed(Number(e.target.value))} min={5} max={100} /></label>
-            <label>인터럽트 주파수 (Hz)<input type="number" value={switchFreq} onChange={(e) => setSwitchFreq(Number(e.target.value))} min={0.1} max={2} step={0.1} /></label>
-            <label>플릭 최소 각도 (°)<input type="number" value={flickAngleMin} onChange={(e) => setFlickAngleMin(Number(e.target.value))} min={5} max={60} /></label>
-            <label>플릭 최대 각도 (°)<input type="number" value={flickAngleMax} onChange={(e) => setFlickAngleMax(Number(e.target.value))} min={10} max={120} /></label>
-            <label>거리 (m)<input type="number" value={distance} onChange={(e) => setDistance(Number(e.target.value))} min={5} max={30} /></label>
-            <label>지속 시간 (ms)<input type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} min={10000} max={120000} step={5000} /></label>
+            <label>{t('param.targetSize')}<input type="number" value={targetSize} onChange={(e) => setTargetSize(Number(e.target.value))} min={0.5} max={10} step={0.5} /></label>
+            <label>{t('param.trackingSpeed')}<input type="number" value={trackingSpeed} onChange={(e) => setTrackingSpeed(Number(e.target.value))} min={5} max={100} /></label>
+            <label>{t('param.switchFreq')}<input type="number" value={switchFreq} onChange={(e) => setSwitchFreq(Number(e.target.value))} min={0.1} max={2} step={0.1} /></label>
+            <label>{t('param.flickMinAngle')}<input type="number" value={flickAngleMin} onChange={(e) => setFlickAngleMin(Number(e.target.value))} min={5} max={60} /></label>
+            <label>{t('param.flickMaxAngle')}<input type="number" value={flickAngleMax} onChange={(e) => setFlickAngleMax(Number(e.target.value))} min={10} max={120} /></label>
+            <label>{t('param.distance')}<input type="number" value={distance} onChange={(e) => setDistance(Number(e.target.value))} min={5} max={30} /></label>
+            <label>{t('param.duration')}<input type="number" value={duration} onChange={(e) => setDuration(Number(e.target.value))} min={10000} max={120000} step={5000} /></label>
           </div>
         );
 
@@ -266,10 +268,10 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
     <div className="scenario-select">
       {/* ── 하드웨어/게임 설정 (항상 보임) ── */}
       <section className="settings-section">
-        <h3>기본 설정</h3>
+        <h3>{t('scenario.basicSettings')}</h3>
         <div className="settings-grid">
           <label>
-            게임
+            {t('settings.game')}
             <select
               value={selectedGame?.id ?? ''}
               onChange={(e) => {
@@ -277,7 +279,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
                 if (game) selectGame(game);
               }}
             >
-              <option value="">선택하세요</option>
+              <option value="">{t('common.selectPlaceholder')}</option>
               {games.map((g) => (
                 <option key={g.id} value={g.id}>{g.name}</option>
               ))}
@@ -294,7 +296,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
             />
           </label>
           <label>
-            감도
+            {t('settings.sensitivity')}
             <input
               type="number"
               value={sensitivity}
@@ -315,7 +317,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
               checked={recoilEnabled}
               onChange={toggleRecoil}
             />
-            반동 (리코일)
+            {t('scenario.recoil')}
           </label>
           {recoilEnabled && (
             <select
@@ -333,20 +335,20 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
         {/* 발사 모드 + RPM 설정 */}
         <div className="fire-mode-settings">
           <label className="toggle-label">
-            발사 모드
+            {t('scenario.fireMode')}
             <select
               className="recoil-select"
               value={fireMode}
               onChange={(e) => setFireMode(e.target.value as FireMode)}
             >
-              <option value="semi">단발 (세미)</option>
-              <option value="auto">연사 (풀오토)</option>
-              <option value="burst">점사 (3점사)</option>
+              <option value="semi">{t('scenario.fireSemi')}</option>
+              <option value="auto">{t('scenario.fireAuto')}</option>
+              <option value="burst">{t('scenario.fireBurst')}</option>
             </select>
           </label>
           {fireMode !== 'semi' && (
             <label className="toggle-label">
-              연사속도
+              {t('scenario.fireRate')}
               <input
                 type="number"
                 className="rpm-input"
@@ -365,9 +367,9 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
       {/* ── 메인 탭 네비게이션 (재설계) ── */}
       <div className="main-tabs">
         {([
-          { key: 'sensitivity' as MainTab, label: '감도 프로파일', emoji: '' },
-          { key: 'training' as MainTab, label: '훈련', emoji: '' },
-          { key: 'analysis' as MainTab, label: '분석', emoji: '' },
+          { key: 'sensitivity' as MainTab, label: t('scenario.tabSensitivity'), emoji: '' },
+          { key: 'training' as MainTab, label: t('scenario.tabTraining'), emoji: '' },
+          { key: 'analysis' as MainTab, label: t('scenario.tabAnalysis'), emoji: '' },
         ]).map(({ key, label }) => (
           <button
             key={key}
@@ -381,7 +383,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
         <button
           className={`main-tab main-tab-secondary ${showCrosshair ? 'active' : ''}`}
           onClick={() => setShowCrosshair(!showCrosshair)}
-          title="크로스헤어 설정"
+          title={t('scenario.crosshairSettings')}
         >
           +
         </button>
@@ -401,10 +403,9 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
         <section className="sensitivity-hub">
           {/* 메인 CTA — 감도 캘리브레이션 */}
           <div className="sensitivity-hero">
-            <h3>나만의 최적 감도 찾기</h3>
+            <h3>{t('scenario.findOptimalSens')}</h3>
             <p className="sensitivity-desc">
-              Bayesian Optimization으로 당신에게 딱 맞는 cm/360을 찾아드립니다.
-              여러 시나리오를 플레이하며 감도를 자동으로 조정합니다.
+              {t('scenario.findOptimalSensDesc')}
             </p>
             <div className="sensitivity-actions">
               {onCalibration && (
@@ -413,7 +414,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
                   onClick={onCalibration}
                   disabled={!selectedGame}
                 >
-                  감도 캘리브레이션 시작
+                  {t('scenario.startCalibration')}
                 </button>
               )}
               {onZoomCalibration && mode === 'advanced' && (
@@ -422,7 +423,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
                   onClick={onZoomCalibration}
                   disabled={!selectedGame}
                 >
-                  줌 감도 캘리브레이션
+                  {t('scenario.zoomCalibration')}
                 </button>
               )}
             </div>
@@ -431,30 +432,30 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
           {/* 감도 관련 도구 카드 */}
           <div className="sensitivity-tools">
             <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('game-profiles')}>
-              <span className="tool-card-title">게임 프로필</span>
-              <span className="tool-card-desc">게임별 감도, DPI, FOV 설정 관리</span>
+              <span className="tool-card-title">{t('nav.gameProfile')}</span>
+              <span className="tool-card-desc">{t('scenario.gameProfileDesc')}</span>
             </button>
             <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('conversion-selector')}>
-              <span className="tool-card-title">감도 변환기</span>
-              <span className="tool-card-desc">게임 간 감도를 cm/360 기준으로 변환</span>
+              <span className="tool-card-title">{t('nav.conversion')}</span>
+              <span className="tool-card-desc">{t('scenario.conversionDesc')}</span>
             </button>
             {mode === 'advanced' && (
               <>
                 <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('fov-comparison')}>
-                  <span className="tool-card-title">FOV 비교</span>
-                  <span className="tool-card-desc">시야각에 따른 에임 영향 분석</span>
+                  <span className="tool-card-title">{t('tool.fovComparison')}</span>
+                  <span className="tool-card-desc">{t('scenario.fovDesc')}</span>
                 </button>
                 <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('hardware-compare')}>
-                  <span className="tool-card-title">하드웨어 비교</span>
-                  <span className="tool-card-desc">마우스/패드 조합별 성능 비교</span>
+                  <span className="tool-card-title">{t('tool.hardwareCompare')}</span>
+                  <span className="tool-card-desc">{t('scenario.hardwareDesc')}</span>
                 </button>
                 <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('dual-landscape')}>
-                  <span className="tool-card-title">퍼포먼스 맵</span>
-                  <span className="tool-card-desc">정적/동적 환경 감도 최적 구간</span>
+                  <span className="tool-card-title">{t('tool.dualLandscape')}</span>
+                  <span className="tool-card-desc">{t('scenario.dualLandscapeDesc')}</span>
                 </button>
                 <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('movement-editor')}>
-                  <span className="tool-card-title">무브먼트 에디터</span>
-                  <span className="tool-card-desc">이동 물리 파라미터 조정</span>
+                  <span className="tool-card-title">{t('tool.movementEditor')}</span>
+                  <span className="tool-card-desc">{t('scenario.movementDesc')}</span>
                 </button>
               </>
             )}
@@ -473,9 +474,9 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
           {/* 훈련 서브 탭 */}
           <div className="sub-tabs">
             {([
-              { key: 'catalog' as TrainingSub, label: '시나리오 카탈로그' },
-              { key: 'custom' as TrainingSub, label: '커스텀 플레이' },
-              { key: 'battery' as TrainingSub, label: '배터리 테스트' },
+              { key: 'catalog' as TrainingSub, label: t('scenario.catalog') },
+              { key: 'custom' as TrainingSub, label: t('scenario.customPlay') },
+              { key: 'battery' as TrainingSub, label: t('scenario.batteryTest') },
             ]).map(({ key, label }) => (
               <button
                 key={key}
@@ -510,7 +511,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
                             {'star' in item && item.star && <span className="star-badge">CORE</span>}
                           </span>
                         </div>
-                        <span className="catalog-item-desc">{item.desc}</span>
+                        <span className="catalog-item-desc">{t(item.descKey)}</span>
                       </button>
                     ))}
                   </div>
@@ -522,7 +523,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
           {/* 커스텀 플레이 — 6종 시나리오 + 상세 파라미터 */}
           {trainingSub === 'custom' && (
             <section className="settings-section">
-              <h3>커스텀 시나리오</h3>
+              <h3>{t('scenario.customScenario')}</h3>
               <div className="scenario-tabs">
                 {SCENARIO_TABS.map(({ type, label }) => (
                   <button
@@ -540,7 +541,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
                 onClick={handleStart}
                 disabled={!selectedGame}
               >
-                시나리오 시작
+                {t('scenario.startScenario')}
               </button>
             </section>
           )}
@@ -548,8 +549,8 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
           {/* 배터리 테스트 — 종합 능력 측정 */}
           {trainingSub === 'battery' && (
             <section className="settings-section">
-              <h3>시나리오 배터리</h3>
-              <p className="battery-desc">여러 시나리오를 연속으로 수행하여 종합 에임 능력을 측정합니다.</p>
+              <h3>{t('scenario.battery')}</h3>
+              <p className="battery-desc">{t('scenario.batteryDesc')}</p>
               <div className="battery-presets">
                 {(['TACTICAL', 'MOVEMENT', 'BR', 'CUSTOM'] as BatteryPreset[]).map((preset) => (
                   <label key={preset} className="battery-radio">
@@ -570,7 +571,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
                   onClick={() => onBattery({ preset: batteryPreset })}
                   disabled={!selectedGame}
                 >
-                  배터리 시작 ({batteryPreset})
+                  {t('scenario.startBattery')} ({batteryPreset})
                 </button>
               )}
             </section>
@@ -585,28 +586,28 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
         <section className="analysis-hub">
           <div className="analysis-cards">
             <button className="tool-card tool-card-wide" onClick={() => useEngineStore.getState().setScreen('progress-dashboard')}>
-              <span className="tool-card-title">진행 대시보드</span>
-              <span className="tool-card-desc">일간/주간 에임 성장 추이와 준비도 확인</span>
+              <span className="tool-card-title">{t('tool.progressDashboard')}</span>
+              <span className="tool-card-desc">{t('scenario.progressDesc')}</span>
             </button>
             {onHistory && (
               <button className="tool-card tool-card-wide" onClick={onHistory}>
-                <span className="tool-card-title">세션 히스토리</span>
-                <span className="tool-card-desc">과거 훈련 기록과 상세 결과 열람</span>
+                <span className="tool-card-title">{t('tool.history')}</span>
+                <span className="tool-card-desc">{t('scenario.historyDesc')}</span>
               </button>
             )}
             {mode === 'advanced' && (
               <>
                 <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('training-prescription')}>
-                  <span className="tool-card-title">훈련 처방</span>
-                  <span className="tool-card-desc">약점 기반 맞춤 훈련 추천</span>
+                  <span className="tool-card-title">{t('tool.prescription')}</span>
+                  <span className="tool-card-desc">{t('scenario.prescriptionDesc')}</span>
                 </button>
                 <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('trajectory-analysis')}>
-                  <span className="tool-card-title">궤적 분석</span>
-                  <span className="tool-card-desc">마우스 이동 패턴과 GMM 클러스터링</span>
+                  <span className="tool-card-title">{t('tool.trajectory')}</span>
+                  <span className="tool-card-desc">{t('scenario.trajectoryDesc')}</span>
                 </button>
                 <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('style-transition')}>
-                  <span className="tool-card-title">스타일 전환</span>
-                  <span className="tool-card-desc">에임 스타일 변화 추적</span>
+                  <span className="tool-card-title">{t('tool.styleTransition')}</span>
+                  <span className="tool-card-desc">{t('scenario.styleDesc')}</span>
                 </button>
               </>
             )}

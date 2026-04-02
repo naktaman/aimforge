@@ -5,6 +5,7 @@
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useMovementStore } from '../stores/movementStore';
+import { useTranslation } from '../i18n';
 
 interface Props {
   onBack: () => void;
@@ -23,6 +24,7 @@ function generateDemoCurve(optimal: number, spread: number): [number, number][] 
 }
 
 export default function DualLandscape({ onBack }: Props) {
+  const { t } = useTranslation();
   const { recommendation, calculateRecommendation } = useMovementStore();
 
   const [staticOpt, setStaticOpt] = useState(35);
@@ -154,14 +156,14 @@ export default function DualLandscape({ onBack }: Props) {
     ctx.font = '12px sans-serif';
     ctx.fillStyle = '#38bdf8';
     ctx.fillRect(pad.left + 10, legendY - 8, 12, 3);
-    ctx.fillText('정적', pad.left + 28, legendY);
+    ctx.fillText(t('landscape.static'), pad.left + 28, legendY);
     ctx.fillStyle = '#f5a623';
     ctx.fillRect(pad.left + 80, legendY - 8, 12, 3);
-    ctx.fillText('무빙', pad.left + 98, legendY);
+    ctx.fillText(t('landscape.moving'), pad.left + 98, legendY);
     ctx.fillStyle = '#e94560';
     ctx.fillRect(pad.left + 150, legendY - 8, 12, 3);
-    ctx.fillText('가중', pad.left + 168, legendY);
-  }, [staticOpt, movingOpt, ratio, recommendation]);
+    ctx.fillText(t('landscape.weighted'), pad.left + 168, legendY);
+  }, [staticOpt, movingOpt, ratio, recommendation, t]);
 
   useEffect(() => {
     drawChart();
@@ -170,8 +172,8 @@ export default function DualLandscape({ onBack }: Props) {
   return (
     <div style={{ padding: 24, maxWidth: 900, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2>듀얼 랜드스케이프</h2>
-        <button onClick={onBack}>← 돌아가기</button>
+        <h2>{t('landscape.dualLandscape')}</h2>
+        <button onClick={onBack}>← {t('common.back')}</button>
       </div>
 
       {/* 차트 */}
@@ -181,15 +183,15 @@ export default function DualLandscape({ onBack }: Props) {
 
       {/* 컨트롤 */}
       <div style={{ background: '#1a1a2e', padding: 20, borderRadius: 8, marginBottom: 20 }}>
-        <h3 style={{ marginTop: 0 }}>파라미터 조정</h3>
+        <h3 style={{ marginTop: 0 }}>{t('landscape.paramAdjust')}</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
           <div>
-            <label>정적 최적 cm/360: {staticOpt}</label>
+            <label>{t('landscape.staticOpt')}: {staticOpt}</label>
             <input type="range" min={15} max={55} step={0.5} value={staticOpt}
               onChange={(e) => setStaticOpt(Number(e.target.value))} style={{ width: '100%' }} />
           </div>
           <div>
-            <label>무빙 최적 cm/360: {movingOpt}</label>
+            <label>{t('landscape.movingOpt')}: {movingOpt}</label>
             <input type="range" min={15} max={55} step={0.5} value={movingOpt}
               onChange={(e) => setMovingOpt(Number(e.target.value))} style={{ width: '100%' }} />
           </div>
@@ -205,15 +207,15 @@ export default function DualLandscape({ onBack }: Props) {
       {recommendation && (
         <div style={{ background: '#0f3460', padding: 16, borderRadius: 8, display: 'flex', gap: 32 }}>
           <div>
-            <div style={{ fontSize: 12, opacity: 0.7 }}>정적 최적</div>
+            <div style={{ fontSize: 12, opacity: 0.7 }}>{t('landscape.staticOpt')}</div>
             <div style={{ fontSize: 20, color: '#38bdf8' }}>{recommendation.staticOptimal.toFixed(1)}</div>
           </div>
           <div>
-            <div style={{ fontSize: 12, opacity: 0.7 }}>무빙 최적</div>
+            <div style={{ fontSize: 12, opacity: 0.7 }}>{t('landscape.movingOpt')}</div>
             <div style={{ fontSize: 20, color: '#f5a623' }}>{recommendation.movingOptimal.toFixed(1)}</div>
           </div>
           <div>
-            <div style={{ fontSize: 12, opacity: 0.7 }}>가중 추천</div>
+            <div style={{ fontSize: 12, opacity: 0.7 }}>{t('landscape.weightedRecommended')}</div>
             <div style={{ fontSize: 20, color: '#e94560', fontWeight: 'bold' }}>
               {recommendation.finalCm360.toFixed(1)} cm/360
             </div>

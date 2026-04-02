@@ -6,16 +6,17 @@
 import { useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useTranslation } from '../i18n';
 import type { GamePreset, AllMethodsConversion, ConversionMethod } from '../utils/types';
 
-/** 변환 방식 표시 순서 및 라벨 */
-const METHOD_LABELS: Array<{ key: ConversionMethod; label: string; description: string }> = [
-  { key: 'MDM_0', label: 'MDM 0%', description: '순수 FOV 비율 (기본)' },
-  { key: 'MDM_56.25', label: 'MDM 56.25%', description: '일반적 FPS 권장' },
-  { key: 'MDM_75', label: 'MDM 75%', description: '높은 모니터 거리 매칭' },
-  { key: 'MDM_100', label: 'MDM 100%', description: '동일 감도 유지' },
-  { key: 'Viewspeed_H', label: 'Viewspeed H', description: '수평 화면 속도 매칭' },
-  { key: 'Viewspeed_V', label: 'Viewspeed V', description: '수직 화면 속도 매칭' },
+/** 변환 방식 표시 순서 및 라벨 — descKey는 i18n 키 */
+const METHOD_LABELS: Array<{ key: ConversionMethod; label: string; descKey: string }> = [
+  { key: 'MDM_0', label: 'MDM 0%', descKey: 'conv.mdm0' },
+  { key: 'MDM_56.25', label: 'MDM 56.25%', descKey: 'conv.mdm56' },
+  { key: 'MDM_75', label: 'MDM 75%', descKey: 'conv.mdm75' },
+  { key: 'MDM_100', label: 'MDM 100%', descKey: 'conv.mdm100' },
+  { key: 'Viewspeed_H', label: 'Viewspeed H', descKey: 'conv.viewspeedH' },
+  { key: 'Viewspeed_V', label: 'Viewspeed V', descKey: 'conv.viewspeedV' },
 ];
 
 interface ConversionPanelProps {
@@ -25,6 +26,7 @@ interface ConversionPanelProps {
 
 export function ConversionPanel({ games }: ConversionPanelProps) {
   const { selectedGame, sensitivity, dpi } = useSettingsStore();
+  const { t } = useTranslation();
   const [targetGameId, setTargetGameId] = useState<string>('');
   const [result, setResult] = useState<AllMethodsConversion | null>(null);
   const [loading, setLoading] = useState(false);
@@ -57,12 +59,12 @@ export function ConversionPanel({ games }: ConversionPanelProps) {
 
   return (
     <section className="settings-section conversion-panel">
-      <h3>감도 변환기</h3>
+      <h3>{t('nav.conversion')}</h3>
 
       {/* 출발 게임 정보 */}
       {selectedGame && (
         <div className="conversion-source">
-          <span className="source-label">출발:</span>
+          <span className="source-label">{t('conv.from')}:</span>
           <span className="source-value">
             {selectedGame.name} — sens {sensitivity} @ {dpi} DPI
           </span>
@@ -72,7 +74,7 @@ export function ConversionPanel({ games }: ConversionPanelProps) {
       {/* 대상 게임 선택 + 변환 버튼 */}
       <div className="conversion-controls">
         <label>
-          대상 게임
+          {t('conv.targetGame')}
           <select
             value={targetGameId}
             onChange={(e) => {
@@ -80,7 +82,7 @@ export function ConversionPanel({ games }: ConversionPanelProps) {
               setResult(null);
             }}
           >
-            <option value="">선택하세요</option>
+            <option value="">{t('common.selectPlaceholder')}</option>
             {games
               .filter((g) => g.id !== selectedGame?.id)
               .map((g) => (
@@ -93,7 +95,7 @@ export function ConversionPanel({ games }: ConversionPanelProps) {
           onClick={handleConvert}
           disabled={!selectedGame || !targetGameId || loading}
         >
-          {loading ? '변환 중...' : '변환'}
+          {loading ? t('conv.converting') : t('conv.convert')}
         </button>
       </div>
 
@@ -110,10 +112,10 @@ export function ConversionPanel({ games }: ConversionPanelProps) {
           <table className="conversion-table">
             <thead>
               <tr>
-                <th>방식</th>
+                <th>{t('conv.method')}</th>
                 <th>cm/360</th>
-                <th>감도</th>
-                <th>배율</th>
+                <th>{t('settings.sensitivity')}</th>
+                <th>{t('conv.multiplier')}</th>
               </tr>
             </thead>
             <tbody>
@@ -133,7 +135,7 @@ export function ConversionPanel({ games }: ConversionPanelProps) {
 
                 return (
                   <tr key={key}>
-                    <td title={METHOD_LABELS.find((m) => m.key === key)?.description}>
+                    <td title={t(METHOD_LABELS.find((m) => m.key === key)?.descKey ?? '')}>
                       {label}
                     </td>
                     <td>{r.cm360.toFixed(2)}</td>
@@ -142,7 +144,7 @@ export function ConversionPanel({ games }: ConversionPanelProps) {
                         <span className="snapped-sens">
                           {snappedSens.toFixed(step < 1 ? Math.ceil(-Math.log10(step)) : 0)}
                           {snappedSens !== parseFloat(r.sens.toFixed(6)) && (
-                            <span className="snap-indicator" title={`이상적: ${r.sens.toFixed(4)}`}> *</span>
+                            <span className="snap-indicator" title={`${t('conv.ideal')}: ${r.sens.toFixed(4)}`}> *</span>
                           )}
                         </span>
                       ) : (
@@ -156,7 +158,7 @@ export function ConversionPanel({ games }: ConversionPanelProps) {
             </tbody>
           </table>
           <div className="conversion-note">
-            * 스냅: 게임 감도 단위({targetGame?.sensStep ?? 'N/A'})에 맞춤
+            * {t('conv.snapNote')} ({targetGame?.sensStep ?? 'N/A'})
           </div>
         </div>
       )}

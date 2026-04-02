@@ -1,10 +1,13 @@
 /**
  * 공통 뒤로가기 버튼
  */
-export function BackButton({ onBack, label = '돌아가기' }: { onBack: () => void; label?: string }) {
+import { useTranslation } from '../i18n';
+
+export function BackButton({ onBack, label }: { onBack: () => void; label?: string }) {
+  const { t } = useTranslation();
   return (
     <button className="btn btn--ghost btn--sm" onClick={onBack}>
-      {'←'} {label}
+      {'←'} {label ?? t('common.back')}
     </button>
   );
 }

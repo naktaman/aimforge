@@ -7,6 +7,7 @@
  */
 import { useSessionStore } from '../stores/sessionStore';
 import { RAD2DEG } from '../utils/physics';
+import { useTranslation } from '../i18n';
 
 interface TrialResultsProps {
   onBack: () => void;
@@ -18,6 +19,7 @@ export function TrialResults({ onBack }: TrialResultsProps) {
     lastMicroFlickResult, lastZoomResult,
     scenarioType,
   } = useSessionStore();
+  const { t } = useTranslation();
 
   /** Flick 계열 시나리오 (flick, counter_strafe_flick) */
   const isFlickType =
@@ -31,7 +33,7 @@ export function TrialResults({ onBack }: TrialResultsProps) {
 
   return (
     <div className="trial-results">
-      <h2>시나리오 결과</h2>
+      <h2>{t('result.scenarioResult')}</h2>
 
       {isFlickType && lastFlickResult && (
         <FlickResults data={lastFlickResult} />
@@ -50,7 +52,7 @@ export function TrialResults({ onBack }: TrialResultsProps) {
       )}
 
       <button className="back-button" onClick={onBack}>
-        돌아가기
+        {t('common.back')}
       </button>
     </div>
   );
@@ -58,30 +60,31 @@ export function TrialResults({ onBack }: TrialResultsProps) {
 
 function FlickResults({ data }: { data: NonNullable<ReturnType<typeof useSessionStore.getState>['lastFlickResult']> }) {
   const { overall, byAngle, byDirection, byMotor } = data;
+  const { t } = useTranslation();
 
   return (
     <>
       {/* 종합 */}
       <section className="result-section">
-        <h3>종합</h3>
+        <h3>{t('result.overall')}</h3>
         <div className="metrics-grid">
-          <MetricCard label="히트율" value={overall.hit ? '히트' : '미스'} />
-          <MetricCard label="평균 TTT" value={`${overall.ttt.toFixed(0)}ms`} />
-          <MetricCard label="평균 오버슛" value={`${(overall.overshoot * RAD2DEG).toFixed(1)}°`} />
-          <MetricCard label="보정 횟수" value={overall.correctionCount.toFixed(1)} />
-          <MetricCard label="경로 효율" value={`${(overall.pathEfficiency * 100).toFixed(0)}%`} />
+          <MetricCard label={t('result.hitRate')} value={overall.hit ? t('trial.hit') : t('trial.miss')} />
+          <MetricCard label={t('result.avgTtt')} value={`${overall.ttt.toFixed(0)}ms`} />
+          <MetricCard label={t('result.avgOvershoot')} value={`${(overall.overshoot * RAD2DEG).toFixed(1)}°`} />
+          <MetricCard label={t('result.correctionCount')} value={overall.correctionCount.toFixed(1)} />
+          <MetricCard label={t('result.pathEfficiency')} value={`${(overall.pathEfficiency * 100).toFixed(0)}%`} />
         </div>
       </section>
 
       {/* 각도별 */}
       <section className="result-section">
-        <h3>각도별</h3>
+        <h3>{t('result.byAngle')}</h3>
         <div className="breakdown-table">
           {Object.entries(byAngle).map(([angle, metrics]) => (
             <div key={angle} className="breakdown-row">
               <span className="label">{angle}°</span>
               <span>TTT: {metrics.ttt.toFixed(0)}ms</span>
-              <span>히트: {metrics.hit ? 'O' : 'X'}</span>
+              <span>{t('result.hitRate')}: {metrics.hit ? 'O' : 'X'}</span>
             </div>
           ))}
         </div>
@@ -89,13 +92,13 @@ function FlickResults({ data }: { data: NonNullable<ReturnType<typeof useSession
 
       {/* 방향별 */}
       <section className="result-section">
-        <h3>방향별</h3>
+        <h3>{t('result.byDirection')}</h3>
         <div className="breakdown-table">
           {Object.entries(byDirection).map(([dir, metrics]) => (
             <div key={dir} className="breakdown-row">
               <span className="label">{dir}</span>
               <span>TTT: {metrics.ttt.toFixed(0)}ms</span>
-              <span>오버슛: {(metrics.overshoot * RAD2DEG).toFixed(1)}°</span>
+              <span>{t('result.avgOvershoot')}: {(metrics.overshoot * RAD2DEG).toFixed(1)}°</span>
             </div>
           ))}
         </div>
@@ -103,13 +106,13 @@ function FlickResults({ data }: { data: NonNullable<ReturnType<typeof useSession
 
       {/* 운동체계별 */}
       <section className="result-section">
-        <h3>운동체계별</h3>
+        <h3>{t('result.byMotor')}</h3>
         <div className="breakdown-table">
           {Object.entries(byMotor).map(([motor, metrics]) => (
             <div key={motor} className="breakdown-row">
               <span className="label">{motor}</span>
               <span>TTT: {metrics.ttt.toFixed(0)}ms</span>
-              <span>경로효율: {(metrics.pathEfficiency * 100).toFixed(0)}%</span>
+              <span>{t('result.pathEfficiency')}: {(metrics.pathEfficiency * 100).toFixed(0)}%</span>
             </div>
           ))}
         </div>
@@ -119,15 +122,16 @@ function FlickResults({ data }: { data: NonNullable<ReturnType<typeof useSession
 }
 
 function TrackingResults({ data }: { data: NonNullable<ReturnType<typeof useSessionStore.getState>['lastTrackingResult']> }) {
+  const { t } = useTranslation();
   return (
     <section className="result-section">
-      <h3>Tracking 메트릭</h3>
+      <h3>Tracking</h3>
       <div className="metrics-grid">
         <MetricCard label="MAD" value={`${(data.mad * RAD2DEG).toFixed(2)}°`} />
-        <MetricCard label="편차 분산" value={`${(data.deviationVariance * RAD2DEG * RAD2DEG).toFixed(3)}`} />
-        <MetricCard label="Phase Lag" value={`${data.phaseLag.toFixed(0)}ms`} />
-        <MetricCard label="속도 매칭" value={`${(data.velocityMatchRatio * 100).toFixed(0)}%`} />
-        <MetricCard label="궤적 타입" value={data.trajectoryType} />
+        <MetricCard label={t('result.deviationVariance')} value={`${(data.deviationVariance * RAD2DEG * RAD2DEG).toFixed(3)}`} />
+        <MetricCard label={t('result.phaseLag')} value={`${data.phaseLag.toFixed(0)}ms`} />
+        <MetricCard label={t('result.velocityMatch')} value={`${(data.velocityMatchRatio * 100).toFixed(0)}%`} />
+        <MetricCard label={t('result.trajectoryType')} value={data.trajectoryType} />
       </div>
     </section>
   );
@@ -135,16 +139,17 @@ function TrackingResults({ data }: { data: NonNullable<ReturnType<typeof useSess
 
 /** MicroFlick 하이브리드 결과 */
 function MicroFlickResults({ data }: { data: NonNullable<ReturnType<typeof useSessionStore.getState>['lastMicroFlickResult']> }) {
+  const { t } = useTranslation();
   return (
     <section className="result-section">
-      <h3>Micro-Flick 메트릭</h3>
+      <h3>Micro-Flick</h3>
       <div className="metrics-grid">
-        <MetricCard label="트래킹 MAD" value={`${(data.trackingMad * RAD2DEG).toFixed(2)}°`} />
-        <MetricCard label="속도 매칭" value={`${(data.trackingVelocityMatch * 100).toFixed(0)}%`} />
-        <MetricCard label="플릭 히트율" value={`${(data.flickHitRate * 100).toFixed(0)}%`} />
-        <MetricCard label="평균 TTT" value={`${data.flickAvgTtt.toFixed(0)}ms`} />
-        <MetricCard label="재획득 시간" value={`${data.avgReacquireTimeMs.toFixed(0)}ms`} />
-        <MetricCard label="복합 점수" value={data.compositeScore.toFixed(1)} />
+        <MetricCard label={t('result.trackingMad')} value={`${(data.trackingMad * RAD2DEG).toFixed(2)}°`} />
+        <MetricCard label={t('result.velocityMatch')} value={`${(data.trackingVelocityMatch * 100).toFixed(0)}%`} />
+        <MetricCard label={t('result.flickHitRate')} value={`${(data.flickHitRate * 100).toFixed(0)}%`} />
+        <MetricCard label={t('result.avgTtt')} value={`${data.flickAvgTtt.toFixed(0)}ms`} />
+        <MetricCard label={t('result.reacquireTime')} value={`${data.avgReacquireTimeMs.toFixed(0)}ms`} />
+        <MetricCard label={t('result.compositeScore')} value={data.compositeScore.toFixed(1)} />
       </div>
     </section>
   );
@@ -152,16 +157,17 @@ function MicroFlickResults({ data }: { data: NonNullable<ReturnType<typeof useSe
 
 /** Zoom 3-Phase 결과 */
 function ZoomResults({ data }: { data: NonNullable<ReturnType<typeof useSessionStore.getState>['lastZoomResult']> }) {
+  const { t } = useTranslation();
   return (
     <section className="result-section">
-      <h3>Zoom 3-Phase 메트릭 ({data.zoomTier})</h3>
+      <h3>Zoom 3-Phase ({data.zoomTier})</h3>
       <div className="metrics-grid">
         <MetricCard label="Phase A (Steady)" value={data.steadyScore.toFixed(1)} />
         <MetricCard label="Phase B (Correction)" value={data.correctionScore.toFixed(1)} />
         <MetricCard label="Phase C (Reacquisition)" value={data.reacquisitionScore.toFixed(1)} />
-        <MetricCard label="복합 점수" value={data.compositeScore.toFixed(1)} />
-        <MetricCard label="과보정 비율" value={`${(data.overCorrectionRatio * 100).toFixed(0)}%`} />
-        <MetricCard label="과소보정 비율" value={`${(data.underCorrectionRatio * 100).toFixed(0)}%`} />
+        <MetricCard label={t('result.compositeScore')} value={data.compositeScore.toFixed(1)} />
+        <MetricCard label={t('result.overCorrection')} value={`${(data.overCorrectionRatio * 100).toFixed(0)}%`} />
+        <MetricCard label={t('result.underCorrection')} value={`${(data.underCorrectionRatio * 100).toFixed(0)}%`} />
       </div>
     </section>
   );
