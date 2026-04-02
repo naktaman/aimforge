@@ -152,6 +152,14 @@
 - 수정 파일: aim_dna/mod.rs, db/mod.rs, training/style_transition.rs, types.ts, AimDnaResult.tsx, HardwareCompare.tsx
 - `calibration::ScreeningData::adaptation_rate`, `crossgame::adaptation_rate`는 다른 컨텍스트로 유지
 
+### 기어 DB + 그립/자세 가이드 + 인사이트 엔진 ✅ (2026-04-02)
+- `src/data/gearDatabase.json`: 마우스 51개 / 마우스패드 35개 실데이터
+- `AimDnaSensitivitySelector.tsx`: 자동완성 검색 기어 선택기 (gearDatabase.json 연동)
+- `AimDnaGripGuide.tsx`: Palm/Claw/Fingertip/Relaxed Claw 바이오메카닉스 상세 + SVG 일러스트 + DNA 연관 지표
+- `AimDnaPostureGuide.tsx`: 고감도/중감도/저감도 자세 가이드 (피벗 포인트 / 팔꿈치 / 패드 크기 / 리프트오프)
+- `AimDnaInsights.tsx`: 기어+DNA 조합 인사이트 엔진 (달인급 80+ 전용 expert 모드 포함)
+- `AimDnaResult.tsx`: 5탭 구조 (분석결과/기어선택/그립/자세/인사이트)
+
 - ReadinessWidget, DualLandscape 등 남은 컴포넌트 인라인 스타일 정리
 - 프로파일 점검 탭에 실제 DNA 데이터 연동 (배터리 완료 → 요약 표시)
 - 사용자 테스트 피드백 반영
@@ -163,6 +171,6 @@
 | 항목 | 상태 |
 |------|------|
 | Rust tests | 147/147 통과 |
-| npm build | 성공 (1,073 kB) |
-| CSS | 56 kB |
+| npm build | 성공 (1,347 kB) |
+| CSS | 95 kB |
 | 타입 에러 | 0 |
