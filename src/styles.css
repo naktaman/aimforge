@@ -146,10 +146,10 @@ body {
   justify-content: center;
   overflow-y: auto;
   padding: 24px;
-  animation: fadeSlideIn 0.2s ease-out;
 }
 
-/* 화면 전환 애니메이션 */
+/* 화면 전환: motion 라이브러리가 처리 (AnimatePresence) */
+/* 기존 fadeSlideIn은 motion과 중복되므로 비활성화 */
 @keyframes fadeSlideIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
