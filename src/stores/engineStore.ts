@@ -69,6 +69,13 @@ interface EngineState {
   /** 타겟 타입 (구체 or 사람 모양) */
   targetType: TargetType;
 
+  /** 마스터 볼륨 (0~1) */
+  masterVolume: number;
+  /** 히트 사운드 볼륨 (0~1) */
+  hitVolume: number;
+  /** UI 사운드 볼륨 (0~1) */
+  uiVolume: number;
+
   /** 화면 전환 */
   setScreen: (screen: AppScreen) => void;
   setEngineReady: (ready: boolean) => void;
@@ -90,6 +97,12 @@ interface EngineState {
   toggleWeaponVisible: () => void;
   /** 타겟 타입 변경 */
   setTargetType: (type: TargetType) => void;
+  /** 마스터 볼륨 설정 */
+  setMasterVolume: (v: number) => void;
+  /** 히트 사운드 볼륨 설정 */
+  setHitVolume: (v: number) => void;
+  /** UI 사운드 볼륨 설정 */
+  setUIVolume: (v: number) => void;
 }
 
 export const useEngineStore = create<EngineState>((set) => ({
@@ -105,6 +118,9 @@ export const useEngineStore = create<EngineState>((set) => ({
   fireRpm: 600,
   weaponVisible: true,
   targetType: 'humanoid',
+  masterVolume: 0.7,
+  hitVolume: 0.7,
+  uiVolume: 0.7,
 
   setScreen: (currentScreen) => set({ currentScreen }),
   setEngineReady: (engineReady) => set({ engineReady }),
@@ -123,4 +139,7 @@ export const useEngineStore = create<EngineState>((set) => ({
   }),
   toggleWeaponVisible: () => set((s) => ({ weaponVisible: !s.weaponVisible })),
   setTargetType: (targetType) => set({ targetType }),
+  setMasterVolume: (v) => set({ masterVolume: Math.max(0, Math.min(1, v)) }),
+  setHitVolume: (v) => set({ hitVolume: Math.max(0, Math.min(1, v)) }),
+  setUIVolume: (v) => set({ uiVolume: Math.max(0, Math.min(1, v)) }),
 }));

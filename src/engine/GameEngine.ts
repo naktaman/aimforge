@@ -66,7 +66,7 @@ export class GameEngine {
   // === 콜백 ===
   private onFpsUpdate: ((fps: number) => void) | null = null;
   private onPointerLockStateChange: ((locked: boolean) => void) | null = null;
-  private onShoot: ((hit: boolean) => void) | null = null;
+  private onShoot: ((hit: boolean, hitResult: import('../utils/types').HitResult | null) => void) | null = null;
 
   // === 반동(리코일) ===
   private recoilVerticalDeg = 0;
@@ -285,7 +285,7 @@ export class GameEngine {
   }
 
   /** 사격 이벤트 콜백 (hit 여부 전달) */
-  setOnShoot(cb: (hit: boolean) => void): void {
+  setOnShoot(cb: (hit: boolean, hitResult: import('../utils/types').HitResult | null) => void): void {
     this.onShoot = cb;
   }
 
@@ -328,8 +328,8 @@ export class GameEngine {
       ? this.targetManager.checkHit(this.camera.position, this.getCameraForward())
       : null;
     this.activeScenario?.onClick();
-    // 사격 피드백 콜백 (오디오 + 머즐플래시 + 히트마커)
-    this.onShoot?.(hitBefore?.hit ?? false);
+    // 사격 피드백 콜백 (오디오 + 머즐플래시 + 히트마커 + 콤보)
+    this.onShoot?.(hitBefore?.hit ?? false, hitBefore ?? null);
     // 카메라 반동 적용
     this.applyRecoil();
     // 무기 모델 반동 애니메이션

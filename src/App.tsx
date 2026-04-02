@@ -50,7 +50,7 @@ import { useProfileWizardStore } from './stores/profileWizardStore';
 import { useZoomCalibrationStore } from './stores/zoomCalibrationStore';
 import { Crosshair } from './components/overlays/Crosshair';
 import { ScopeOverlay } from './components/overlays/ScopeOverlay';
-import { ShootingFeedback, triggerShootingFeedback } from './components/overlays/ShootingFeedback';
+import { ShootingFeedback, triggerShootingFeedback, getComboState } from './components/overlays/ShootingFeedback';
 import { FireModeIndicator } from './components/overlays/FireModeIndicator';
 import { TargetManager } from './engine/TargetManager';
 import { FlickScenario } from './engine/scenarios/FlickScenario';
@@ -59,7 +59,7 @@ import { CircularTrackingScenario } from './engine/scenarios/CircularTrackingSce
 import { StochasticTrackingScenario } from './engine/scenarios/StochasticTrackingScenario';
 import { CounterStrafeFlickScenario } from './engine/scenarios/CounterStrafeFlickScenario';
 import { MicroFlickScenario } from './engine/scenarios/MicroFlickScenario';
-import { AudioManager } from './engine/AudioManager';
+import { SoundEngine } from './engine/SoundEngine';
 import { RECOIL_PRESETS, type RecoilPreset } from './stores/engineStore';
 import { isPointerLocked } from './engine/PointerLock';
 import type { WeaponStyle } from './engine/WeaponViewModel';
@@ -80,8 +80,8 @@ import {
 import type { GameEngine } from './engine/GameEngine';
 import type { ScenarioType, StageType } from './utils/types';
 
-/** 전역 오디오 매니저 */
-const audioManager = new AudioManager();
+/** 전역 사운드 엔진 (AudioManager 대체 — 히트/헤드샷/콤보/UI 사운드 통합) */
+const soundEngine = new SoundEngine();
 
 function App() {
   const { currentScreen, setScreen, fps, pointerLocked } = useEngineStore();
@@ -144,12 +144,22 @@ function App() {
     targetManagerRef.current = tm;
     engine.setTargetManager(tm);
 
-    // 사격 피드백 연결: 클릭 시 총기음 + 히트마커/미스마커
-    engine.setOnShoot((hit) => {
-      audioManager.playGunshot();
-      triggerShootingFeedback(hit ? 'hit' : 'miss');
-      if (hit) audioManager.playHit();
-      else audioManager.playMiss();
+    // 사격 피드백 연결: 총기음 + 히트/헤드샷 분기 + 콤보 피치 연동
+    engine.setOnShoot((hit, hitResult) => {
+      soundEngine.playGunshot();
+      const hitZone = hitResult?.hitZone;
+      triggerShootingFeedback(hit ? 'hit' : 'miss', hitZone);
+
+      if (hit) {
+        const { pitchMultiplier } = getComboState();
+        if (hitZone === 'head') {
+          soundEngine.playHeadshotSound(pitchMultiplier);
+        } else {
+          soundEngine.playHitSound(pitchMultiplier);
+        }
+      } else {
+        soundEngine.playMissSound();
+      }
     });
 
     // 발사 모드 + 무기 표시 상태 동기화
@@ -173,7 +183,7 @@ function App() {
       endScenario();
       engine.setScenario(null);
       setScreen('results');
-      audioManager.playHit();
+      soundEngine.playEndSound();
 
       // DB 저장 (비동기, fire-and-forget)
       const sid = useSessionStore.getState().sessionId;
@@ -254,7 +264,7 @@ function App() {
           scenario.setOnComplete((results) => handleFlickComplete(engine, results, scenario));
           engine.setScenario(scenario);
           scenario.start();
-          audioManager.playSpawn();
+          soundEngine.playSpawn();
           break;
         }
 
@@ -380,7 +390,7 @@ function App() {
           scenario.setOnComplete((results) => handleFlickComplete(engine, results, scenario));
           engine.setScenario(scenario);
           scenario.start();
-          audioManager.playSpawn();
+          soundEngine.playSpawn();
           break;
         }
 
@@ -417,7 +427,7 @@ function App() {
 
           engine.setScenario(scenario);
           scenario.start();
-          audioManager.playSpawn();
+          soundEngine.playSpawn();
           break;
         }
 
@@ -502,7 +512,7 @@ function App() {
           s.setOnComplete(onTrainingComplete);
           engine.setScenario(s);
           s.start();
-          audioManager.playSpawn();
+          soundEngine.playSpawn();
           break;
         }
         case 'flick_medium': {
@@ -516,7 +526,7 @@ function App() {
           s.setOnComplete(onTrainingComplete);
           engine.setScenario(s);
           s.start();
-          audioManager.playSpawn();
+          soundEngine.playSpawn();
           break;
         }
         case 'flick_macro': {
@@ -530,7 +540,7 @@ function App() {
           s.setOnComplete(onTrainingComplete);
           engine.setScenario(s);
           s.start();
-          audioManager.playSpawn();
+          soundEngine.playSpawn();
           break;
         }
         case 'tracking_close': {
@@ -583,7 +593,7 @@ function App() {
           s.setOnComplete(onTrainingComplete);
           engine.setScenario(s);
           s.start();
-          audioManager.playSpawn();
+          soundEngine.playSpawn();
           break;
         }
         case 'switching_wide': {
@@ -597,7 +607,7 @@ function App() {
           s.setOnComplete(onTrainingComplete);
           engine.setScenario(s);
           s.start();
-          audioManager.playSpawn();
+          soundEngine.playSpawn();
           break;
         }
         default:
@@ -686,7 +696,7 @@ function App() {
           scenario.setOnComplete((results) => onFlickBatteryDone(results, scenario));
           engine.setScenario(scenario);
           scenario.start();
-          audioManager.playSpawn();
+          soundEngine.playSpawn();
           break;
         }
         case 'tracking': {
@@ -755,7 +765,7 @@ function App() {
           scenario.setOnComplete((results) => onFlickBatteryDone(results, scenario));
           engine.setScenario(scenario);
           scenario.start();
-          audioManager.playSpawn();
+          soundEngine.playSpawn();
           break;
         }
         case 'micro_flick': {
@@ -773,7 +783,7 @@ function App() {
           });
           engine.setScenario(scenario);
           scenario.start();
-          audioManager.playSpawn();
+          soundEngine.playSpawn();
           break;
         }
         default:
