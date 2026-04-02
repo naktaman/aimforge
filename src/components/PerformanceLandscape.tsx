@@ -26,7 +26,7 @@ interface Peak {
   cm360: number;
   score: number;
   variance: number;
-  is_primary: boolean;
+  isPrimary: boolean;
 }
 
 /** 시나리오 오버레이 데이터 */
@@ -231,7 +231,7 @@ export function PerformanceLandscape({
       // 다이아몬드 마커
       peakGroup.append('path')
         .attr('d', d3.symbol().type(d3.symbolDiamond).size(80)())
-        .attr('fill', (d) => d.is_primary ? '#f59e0b' : '#94a3b8')
+        .attr('fill', (d) => d.isPrimary ? '#f59e0b' : '#94a3b8')
         .attr('stroke', '#000')
         .attr('stroke-width', 1);
 
@@ -241,7 +241,7 @@ export function PerformanceLandscape({
         .attr('text-anchor', 'middle')
         .attr('fill', '#e2e8f0')
         .attr('font-size', '10px')
-        .text((d) => d.is_primary ? '주 피크' : '부 피크');
+        .text((d) => d.isPrimary ? '주 피크' : '부 피크');
     }
 
     // ──── 레이어 6: 선택 감도 수직선 ────

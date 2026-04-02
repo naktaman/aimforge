@@ -39,10 +39,10 @@ export const useCrossGameStore = create<CrossGameState>((set) => ({
     try {
       const comparison = await invoke<CrossGameComparison>('compare_game_dna', {
         params: {
-          ref_profile_id: refProfileId,
-          target_profile_id: targetProfileId,
-          ref_game_movement_ratio: refMovement ?? null,
-          target_game_movement_ratio: targetMovement ?? null,
+          refProfileId: refProfileId,
+          targetProfileId: targetProfileId,
+          refGameMovementRatio: refMovement ?? null,
+          targetGameMovementRatio: targetMovement ?? null,
         },
       });
       set({ currentComparison: comparison, isComparing: false });
@@ -56,7 +56,7 @@ export const useCrossGameStore = create<CrossGameState>((set) => ({
   loadHistory: async (profileId) => {
     try {
       const history = await invoke<CrossGameComparisonSummary[]>('get_cross_game_history_cmd', {
-        params: { profile_id: profileId },
+        params: { profileId: profileId },
       });
       set({ history });
     } catch (e) {

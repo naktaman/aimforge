@@ -196,9 +196,9 @@ function GripSvg({ type }: { type: GripType }) {
 /** DNA 기반 그립 추천 판단 */
 function suggestGrip(dna: AimDnaProfile | null): GripType | null {
   if (!dna) return null;
-  const war = dna.wrist_arm_ratio ?? 0.5;
-  const micro = dna.micro_freq ?? 0;
-  const fingerAcc = dna.finger_accuracy ?? 0.5;
+  const war = dna.wristArmRatio ?? 0.5;
+  const micro = dna.microFreq ?? 0;
+  const fingerAcc = dna.fingerAccuracy ?? 0.5;
 
   // 팔 중심 + 낮은 마이크로 플릭 → 팜
   if (war < 0.35 && micro < 0.3) return 'palm';

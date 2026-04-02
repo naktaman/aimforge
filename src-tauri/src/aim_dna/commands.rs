@@ -16,6 +16,7 @@ use super::{
 
 /// DNA 시계열 스냅샷 — 5축 레이더 점수 + 측정 컨텍스트
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DnaSnapshot {
     pub id: i64,
     pub profile_id: i64,
@@ -32,6 +33,7 @@ pub struct DnaSnapshot {
 
 /// 변경점 이벤트 — 기어/감도/그립/자세 변경 마킹
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DnaChangeEvent {
     pub id: i64,
     pub profile_id: i64,
@@ -44,6 +46,7 @@ pub struct DnaChangeEvent {
 
 /// 두 스냅샷 비교 결과
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SnapshotComparison {
     pub before: DnaSnapshot,
     pub after: DnaSnapshot,
@@ -55,6 +58,7 @@ pub struct SnapshotComparison {
 
 /// 단일 축 변화
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AxisDelta {
     pub axis: String,
     pub before_val: f64,
@@ -66,6 +70,7 @@ pub struct AxisDelta {
 
 /// 정체기 감지 결과
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct StagnationResult {
     pub profile_id: i64,
     /// 정체 중인 축 이름 목록
@@ -77,6 +82,7 @@ pub struct StagnationResult {
 
 /// Aim DNA 산출 요청 파라미터
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ComputeAimDnaParams {
     pub input: BatteryMetricsInput,
 }
@@ -128,6 +134,7 @@ pub fn compute_aim_dna_cmd(
 
 /// Aim DNA 조회 파라미터
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GetAimDnaParams {
     pub profile_id: i64,
 }
@@ -144,6 +151,7 @@ pub fn get_aim_dna(
 
 /// Aim DNA 히스토리 조회 파라미터
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GetAimDnaHistoryParams {
     pub profile_id: i64,
     pub feature_name: Option<String>,
@@ -151,6 +159,7 @@ pub struct GetAimDnaHistoryParams {
 
 /// Aim DNA 히스토리 항목
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AimDnaHistoryEntry {
     pub feature_name: String,
     pub value: f64,
@@ -170,6 +179,7 @@ pub fn get_aim_dna_history(
 
 /// 세션 목록 조회 파라미터
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GetSessionsParams {
     pub profile_id: i64,
     pub limit: Option<i64>,
@@ -177,6 +187,7 @@ pub struct GetSessionsParams {
 
 /// 세션 요약 정보
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SessionSummary {
     pub id: i64,
     pub mode: String,
@@ -200,12 +211,14 @@ pub fn get_sessions_history(
 
 /// 세션 상세 조회 파라미터
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GetSessionDetailParams {
     pub session_id: i64,
 }
 
 /// 트라이얼 요약
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TrialSummary {
     pub id: i64,
     pub scenario_type: String,
@@ -216,6 +229,7 @@ pub struct TrialSummary {
 
 /// 세션 상세 (트라이얼 포함)
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SessionDetail {
     pub session: SessionSummary,
     pub trials: Vec<TrialSummary>,
@@ -235,6 +249,7 @@ pub fn get_session_detail(
 
 /// DNA 추세 분석 요청 파라미터
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GetDnaTrendParams {
     pub profile_id: i64,
 }
@@ -282,6 +297,7 @@ pub fn detect_reference_game_cmd(
 
 /// DNA 스냅샷 목록 조회 파라미터
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GetDnaSnapshotsParams {
     pub profile_id: i64,
     pub limit: Option<i64>,
@@ -300,6 +316,7 @@ pub fn get_dna_snapshots_cmd(
 
 /// 변경점 이벤트 저장 파라미터
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SaveChangeEventParams {
     pub profile_id: i64,
     pub change_type: String,
@@ -327,6 +344,7 @@ pub fn save_change_event_cmd(
 
 /// 변경점 이벤트 목록 조회 파라미터
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GetChangeEventsParams {
     pub profile_id: i64,
     pub limit: Option<i64>,
@@ -345,6 +363,7 @@ pub fn get_change_events_cmd(
 
 /// 두 스냅샷 비교 파라미터
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CompareSnapshotsParams {
     pub before_id: i64,
     pub after_id: i64,
@@ -423,6 +442,7 @@ pub fn compare_snapshots_cmd(
 
 /// 정체기 감지 파라미터
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DetectStagnationParams {
     pub profile_id: i64,
 }

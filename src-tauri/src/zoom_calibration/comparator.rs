@@ -37,6 +37,7 @@ pub struct ComparatorEngine {
 
 /// 개별 트라이얼 데이터
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ComparatorTrialData {
     pub steady_score: f64,
     pub correction_score: f64,
@@ -46,6 +47,7 @@ pub struct ComparatorTrialData {
 
 /// 현재 트라이얼 정보 (프론트엔드에 전달)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ComparatorTrialAction {
     /// 현재 방식 이름
     pub method: String,
@@ -63,6 +65,7 @@ pub struct ComparatorTrialAction {
 
 /// 트라이얼 제출 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ComparatorTrialFeedback {
     /// 다음 트라이얼 존재 여부
     pub has_next: bool,
@@ -74,6 +77,7 @@ pub struct ComparatorTrialFeedback {
 
 /// 방식별 통계 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MethodScore {
     pub method: String,
     /// 해당 방식에 사용된 배율
@@ -95,6 +99,7 @@ pub struct MethodScore {
 
 /// 비교기 전체 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ComparatorResult {
     /// 방식별 결과 (순위순)
     pub method_scores: Vec<MethodScore>,

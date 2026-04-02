@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 /// 무브먼트 프리셋 — 게임별 이동 물리 파라미터
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MovementPreset {
     /// 게임 ID (game_db 프리셋과 매칭)
     pub game_id: String,
@@ -27,6 +28,7 @@ pub struct MovementPreset {
 
 /// 가중 감도 추천 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WeightedRecommendation {
     /// 정적 시나리오 최적 cm/360
     pub static_optimal: f64,
@@ -171,6 +173,7 @@ pub fn calculate_weighted_cm360(
 
 /// JSON 내보내기/가져오기용 데이터 구조
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MovementExportData {
     /// 포맷 버전 (현재 1)
     pub version: u32,

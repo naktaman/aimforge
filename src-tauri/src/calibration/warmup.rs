@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 /// 워밍업 플래토 감지기
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WarmupDetector {
     /// 플래토 판정에 필요한 연속 안정 baseline 수
     required_stable: usize,

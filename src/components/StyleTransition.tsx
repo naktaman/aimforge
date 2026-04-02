@@ -77,11 +77,11 @@ export default function StyleTransition({ onBack, profileId }: Props) {
           <div className="glass-card page-section">
             <div className="st-direction">
               <span className="st-direction__from">
-                {STYLE_TYPES.find(s => s.value === styleTransition.from_type)?.label || styleTransition.from_type}
+                {STYLE_TYPES.find(s => s.value === styleTransition.fromType)?.label || styleTransition.fromType}
               </span>
               <span className="st-direction__arrow">→</span>
               <span className="st-direction__to">
-                {STYLE_TYPES.find(s => s.value === styleTransition.to_type)?.label || styleTransition.to_type}
+                {STYLE_TYPES.find(s => s.value === styleTransition.toType)?.label || styleTransition.toType}
               </span>
             </div>
           </div>
@@ -110,19 +110,19 @@ export default function StyleTransition({ onBack, profileId }: Props) {
             <div className="st-progress-header">
               <span className="text-sm">전체 수렴도</span>
               <span className="font-bold" style={{ color: 'var(--info)' }}>
-                {transitionProgress.convergence_pct.toFixed(1)}%
+                {transitionProgress.convergencePct.toFixed(1)}%
               </span>
             </div>
             <div className="st-progress-track">
               <div
                 className="st-progress-fill"
-                style={{ width: `${transitionProgress.convergence_pct}%` }}
+                style={{ width: `${transitionProgress.convergencePct}%` }}
               />
             </div>
 
-            {transitionProgress.estimated_days_remaining > 0 && (
+            {transitionProgress.estimatedDaysRemaining > 0 && (
               <div className="st-remaining">
-                예상 잔여: ~{Math.ceil(transitionProgress.estimated_days_remaining)}일
+                예상 잔여: ~{Math.ceil(transitionProgress.estimatedDaysRemaining)}일
               </div>
             )}
           </div>
@@ -130,18 +130,18 @@ export default function StyleTransition({ onBack, profileId }: Props) {
           {/* 핵심 피처별 수렴 바 */}
           <div className="glass-card page-section">
             <h3 className="page-section__title">핵심 피처 수렴</h3>
-            {transitionProgress.key_features_status.map(f => (
-              <div key={f.feature_name} className="st-feature">
+            {transitionProgress.keyFeaturesStatus.map(f => (
+              <div key={f.featureName} className="st-feature">
                 <div className="st-feature__header">
-                  <span>{f.feature_name.replace(/_/g, ' ')}</span>
+                  <span>{f.featureName.replace(/_/g, ' ')}</span>
                   <span className="text-muted">
-                    {f.convergence_pct.toFixed(0)}% ({f.target_direction === 'up' ? '↑' : '↓'})
+                    {f.convergencePct.toFixed(0)}% ({f.targetDirection === 'up' ? '↑' : '↓'})
                   </span>
                 </div>
                 <div className="st-feature-track">
                   <div
-                    className={featureFillClass(f.convergence_pct)}
-                    style={{ width: `${f.convergence_pct}%` }}
+                    className={featureFillClass(f.convergencePct)}
+                    style={{ width: `${f.convergencePct}%` }}
                   />
                 </div>
               </div>
@@ -149,7 +149,7 @@ export default function StyleTransition({ onBack, profileId }: Props) {
           </div>
 
           {/* 플래토(정체) 경고 메시지 */}
-          {transitionProgress.plateau_detected && (
+          {transitionProgress.plateauDetected && (
             <div className="st-plateau-warning">
               플래토 감지: 수렴 속도가 정체되고 있습니다. 훈련 방법 변경을 고려하세요.
             </div>

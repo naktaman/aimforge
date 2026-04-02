@@ -31,17 +31,17 @@ interface RoutineRow {
   id: number;
   name: string;
   description: string;
-  total_duration_sec: number;
-  created_at: string;
+  totalDurationSec: number;
+  createdAt: string;
 }
 
 interface RoutineStepRow {
   id: number;
-  routine_id: number;
-  scenario_type: string;
-  config_json: string;
-  duration_sec: number;
-  step_order: number;
+  routineId: number;
+  scenarioType: string;
+  configJson: string;
+  durationSec: number;
+  stepOrder: number;
 }
 
 interface RoutineState {
@@ -70,19 +70,19 @@ function toRoutine(row: RoutineRow): Routine {
     id: row.id,
     name: row.name,
     description: row.description,
-    totalDurationSec: row.total_duration_sec,
-    createdAt: row.created_at,
+    totalDurationSec: row.totalDurationSec,
+    createdAt: row.createdAt,
   };
 }
 
 function toStep(row: RoutineStepRow): RoutineStep {
   return {
     id: row.id,
-    routineId: row.routine_id,
-    scenarioType: row.scenario_type,
-    config: row.config_json,
-    durationSec: row.duration_sec,
-    stepOrder: row.step_order,
+    routineId: row.routineId,
+    scenarioType: row.scenarioType,
+    config: row.configJson,
+    durationSec: row.durationSec,
+    stepOrder: row.stepOrder,
   };
 }
 

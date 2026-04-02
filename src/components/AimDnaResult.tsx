@@ -148,7 +148,7 @@ function FeatureCard({ title, items }: {
               <span className="feature-label">{label}</span>
               <span className="feature-value">
                 {insufficient
-                  ? `데이터 부족 (${sufficiency!.current_count}/${sufficiency!.required_count})`
+                  ? `데이터 부족 (${sufficiency!.currentCount}/${sufficiency!.requiredCount})`
                   : value}
               </span>
             </div>
@@ -167,7 +167,7 @@ const pct = (v: number | null) => fmt(v !== null ? v * 100 : null, 1, '%');
 
 /** 데이터 충족도 조회 헬퍼 */
 const getSuff = (dna: AimDnaProfile, key: string): FeatureSufficiency | undefined =>
-  dna.data_sufficiency?.[key];
+  dna.dataSufficiency?.[key];
 
 export function AimDnaResult({ onBack }: Props) {
   const { currentDna, trend, loadTrend } = useAimDnaStore();
@@ -181,9 +181,9 @@ export function AimDnaResult({ onBack }: Props) {
   // 추세 분석 로드
   useEffect(() => {
     if (currentDna) {
-      loadTrend(currentDna.profile_id);
+      loadTrend(currentDna.profileId);
     }
-  }, [currentDna?.profile_id]);
+  }, [currentDna?.profileId]);
 
   if (!currentDna) {
     return (
@@ -227,16 +227,16 @@ export function AimDnaResult({ onBack }: Props) {
         {tab === 'overview' && (
           <>
             {/* 재교정 추천 배너 */}
-            {trend?.recalibration_recommended && (
+            {trend?.recalibrationRecommended && (
               <div className="trend-banner" style={{
                 background: '#3d3520', border: '1px solid #f5a623', borderRadius: 8,
                 padding: '12px 16px', marginBottom: 16,
               }}>
                 <strong style={{ color: '#f5a623' }}>DNA 변화 감지 — 재교정을 추천합니다</strong>
                 <div style={{ marginTop: 8, fontSize: 13, color: '#ccc' }}>
-                  {trend.changed_features.slice(0, 5).map(f => (
+                  {trend.changedFeatures.slice(0, 5).map(f => (
                     <span key={f.feature} style={{ marginRight: 12 }}>
-                      {f.feature}: {f.change_pct > 0 ? '+' : ''}{f.change_pct.toFixed(1)}%
+                      {f.feature}: {f.changePct > 0 ? '+' : ''}{f.changePct.toFixed(1)}%
                       ({DIRECTION_LABELS[f.direction] ?? f.direction})
                     </span>
                   ))}
@@ -245,11 +245,11 @@ export function AimDnaResult({ onBack }: Props) {
             )}
 
             {/* type_label 배지 */}
-            {currentDna.type_label && (
+            {currentDna.typeLabel && (
               <div className="type-badge">
-                <span className="type-name">{currentDna.type_label}</span>
+                <span className="type-name">{currentDna.typeLabel}</span>
                 <span className="type-desc">
-                  {TYPE_DESCRIPTIONS[currentDna.type_label] ?? ''}
+                  {TYPE_DESCRIPTIONS[currentDna.typeLabel] ?? ''}
                 </span>
               </div>
             )}
@@ -262,41 +262,41 @@ export function AimDnaResult({ onBack }: Props) {
               <FeatureCard
                 title="Flick 역학"
                 items={[
-                  { label: 'Peak Velocity', value: fmt(currentDna.flick_peak_velocity, 0, '°/s') },
-                  { label: 'Avg Overshoot', value: fmt(currentDna.overshoot_avg, 3, ' rad'), sufficiency: getSuff(currentDna, 'overshoot_avg') },
-                  { label: 'Effective Range', value: fmt(currentDna.effective_range, 0, '°') },
-                  { label: 'Direction Bias', value: fmt(currentDna.direction_bias, 3), sufficiency: getSuff(currentDna, 'direction_bias') },
-                  { label: 'Pre-Aim Ratio', value: pct(currentDna.pre_aim_ratio) },
-                  { label: 'Pre-Fire Ratio', value: pct(currentDna.pre_fire_ratio) },
-                  { label: 'V/H Ratio', value: fmt(currentDna.v_h_ratio), sufficiency: getSuff(currentDna, 'v_h_ratio') },
+                  { label: 'Peak Velocity', value: fmt(currentDna.flickPeakVelocity, 0, '°/s') },
+                  { label: 'Avg Overshoot', value: fmt(currentDna.overshootAvg, 3, ' rad'), sufficiency: getSuff(currentDna, 'overshoot_avg') },
+                  { label: 'Effective Range', value: fmt(currentDna.effectiveRange, 0, '°') },
+                  { label: 'Direction Bias', value: fmt(currentDna.directionBias, 3), sufficiency: getSuff(currentDna, 'direction_bias') },
+                  { label: 'Pre-Aim Ratio', value: pct(currentDna.preAimRatio) },
+                  { label: 'Pre-Fire Ratio', value: pct(currentDna.preFireRatio) },
+                  { label: 'V/H Ratio', value: fmt(currentDna.vHRatio), sufficiency: getSuff(currentDna, 'v_h_ratio') },
                 ]}
               />
               <FeatureCard
                 title="Tracking 역학"
                 items={[
-                  { label: 'MAD', value: fmt(currentDna.tracking_mad, 4, ' rad'), sufficiency: getSuff(currentDna, 'tracking') },
-                  { label: 'Phase Lag', value: fmt(currentDna.phase_lag, 1, ' ms'), sufficiency: getSuff(currentDna, 'phase_lag') },
+                  { label: 'MAD', value: fmt(currentDna.trackingMad, 4, ' rad'), sufficiency: getSuff(currentDna, 'tracking') },
+                  { label: 'Phase Lag', value: fmt(currentDna.phaseLag, 1, ' ms'), sufficiency: getSuff(currentDna, 'phase_lag') },
                   { label: 'Smoothness', value: fmt(currentDna.smoothness, 1) },
-                  { label: 'Velocity Match', value: pct(currentDna.velocity_match) },
+                  { label: 'Velocity Match', value: pct(currentDna.velocityMatch) },
                 ]}
               />
               <FeatureCard
                 title="Motor 시스템"
                 items={[
-                  { label: 'Wrist/Arm Ratio', value: fmt(currentDna.wrist_arm_ratio) },
-                  { label: 'Finger Accuracy', value: pct(currentDna.finger_accuracy) },
-                  { label: 'Wrist Accuracy', value: pct(currentDna.wrist_accuracy) },
-                  { label: 'Arm Accuracy', value: pct(currentDna.arm_accuracy) },
-                  { label: 'Transition Angle', value: fmt(currentDna.motor_transition_angle, 0, '°'), sufficiency: getSuff(currentDna, 'motor_transition_angle') },
+                  { label: 'Wrist/Arm Ratio', value: fmt(currentDna.wristArmRatio) },
+                  { label: 'Finger Accuracy', value: pct(currentDna.fingerAccuracy) },
+                  { label: 'Wrist Accuracy', value: pct(currentDna.wristAccuracy) },
+                  { label: 'Arm Accuracy', value: pct(currentDna.armAccuracy) },
+                  { label: 'Transition Angle', value: fmt(currentDna.motorTransitionAngle, 0, '°'), sufficiency: getSuff(currentDna, 'motor_transition_angle') },
                 ]}
               />
               <FeatureCard
                 title="시간 역학"
                 items={[
-                  { label: "Fitts' a (intercept)", value: fmt(currentDna.fitts_a, 1, ' ms'), sufficiency: getSuff(currentDna, 'fitts') },
-                  { label: "Fitts' b (slope)", value: fmt(currentDna.fitts_b, 1, ' ms/bit'), sufficiency: getSuff(currentDna, 'fitts') },
-                  { label: 'Fatigue Decay', value: fmt(currentDna.fatigue_decay, 3) },
-                  { label: 'Sens Overshoot Corr', value: fmt(currentDna.sens_attributed_overshoot, 3) },
+                  { label: "Fitts' a (intercept)", value: fmt(currentDna.fittsA, 1, ' ms'), sufficiency: getSuff(currentDna, 'fitts') },
+                  { label: "Fitts' b (slope)", value: fmt(currentDna.fittsB, 1, ' ms/bit'), sufficiency: getSuff(currentDna, 'fitts') },
+                  { label: 'Fatigue Decay', value: fmt(currentDna.fatigueDecay, 3) },
+                  { label: 'Sens Overshoot Corr', value: fmt(currentDna.sensAttributedOvershoot, 3) },
                 ]}
               />
             </div>
@@ -331,7 +331,7 @@ export function AimDnaResult({ onBack }: Props) {
 
         {/* 히스토리 탭 */}
         {tab === 'history' && (
-          <AimDnaHistory profileId={currentDna.profile_id} />
+          <AimDnaHistory profileId={currentDna.profileId} />
         )}
 
         {/* 하단 공통 액션 */}

@@ -922,8 +922,8 @@ function App() {
       const statuses = selectedProfileIds.map((id) => {
         const p = availableProfiles.find((ap) => ap.id === id);
         return {
-          scopeName: p?.scope_name || `${id}`,
-          zoomRatio: p?.zoom_ratio || 1,
+          scopeName: p?.scopeName || `${id}`,
+          zoomRatio: p?.zoomRatio || 1,
           completed: false,
           iteration: 0,
           bestMultiplier: null,
@@ -949,7 +949,7 @@ function App() {
       const result = await invoke<any>('adjust_k', { delta });
       useZoomCalibrationStore.getState().setKFitResult({
         ...useZoomCalibrationStore.getState().kFitResult!,
-        k_value: result.k_value,
+        kValue: result.kValue,
       });
       useZoomCalibrationStore.getState().setPredictedMultipliers(result.predictions);
     } catch (e) {

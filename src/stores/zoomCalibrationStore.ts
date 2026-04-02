@@ -10,13 +10,13 @@ export type ZoomPhase = 'steady' | 'correction' | 'zoomout';
 /** 줌 프로파일 (DB에서 로드) */
 export interface ZoomProfile {
   id: number;
-  game_id: number;
-  scope_name: string;
-  zoom_ratio: number;
-  fov_override: number | null;
-  steady_weight: number;
-  transition_weight: number;
-  zoomout_weight: number;
+  gameId: number;
+  scopeName: string;
+  zoomRatio: number;
+  fovOverride: number | null;
+  steadyWeight: number;
+  transitionWeight: number;
+  zoomoutWeight: number;
 }
 
 /** 비율별 상태 */
@@ -31,35 +31,35 @@ export interface RatioStatus {
 
 /** K 피팅 결과 */
 export interface KFitResult {
-  k_value: number;
-  k_variance: number;
+  kValue: number;
+  kVariance: number;
   quality: 'Low' | 'Medium' | 'High';
-  data_points: { zoom_ratio: number; scope_fov: number; optimal_multiplier: number; score: number }[];
-  piecewise_k: { ratio_start: number; ratio_end: number; k: number }[] | null;
+  dataPoints: { zoomRatio: number; scopeFov: number; optimalMultiplier: number; score: number }[];
+  piecewiseK: { ratioStart: number; ratioEnd: number; k: number }[] | null;
 }
 
 /** 예측 배율 */
 export interface PredictedMultiplier {
-  scope_name: string;
-  zoom_ratio: number;
+  scopeName: string;
+  zoomRatio: number;
   multiplier: number;
-  is_measured: boolean;
+  isMeasured: boolean;
 }
 
 /** 방식별 점수 */
 export interface MethodScore {
   method: string;
   /** 해당 방식에 사용된 배율 */
-  multiplier_used: number;
-  steady_mean: number;
-  correction_mean: number;
-  zoomout_mean: number;
-  composite_mean: number;
-  composite_std: number;
-  p_value: number | null;
-  effect_size: number | null;
+  multiplierUsed: number;
+  steadyMean: number;
+  correctionMean: number;
+  zoomoutMean: number;
+  compositeMean: number;
+  compositeStd: number;
+  pValue: number | null;
+  effectSize: number | null;
   rank: number;
-  is_recommended: boolean;
+  isRecommended: boolean;
 }
 
 /** 비교기 상태 */
@@ -72,8 +72,8 @@ export interface ComparatorState {
 
 /** 비교기 결과 */
 export interface ComparatorResult {
-  method_scores: MethodScore[];
-  recommended_method: string;
+  methodScores: MethodScore[];
+  recommendedMethod: string;
   summary: string;
 }
 

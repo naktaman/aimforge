@@ -171,11 +171,11 @@ export function calculateBatteryScore(
   const weightMap: Record<string, number> = {
     flick: weights.flick,
     tracking: weights.tracking,
-    circular_tracking: weights.circular_tracking,
-    stochastic_tracking: weights.stochastic_tracking,
-    counter_strafe_flick: weights.counter_strafe_flick,
-    micro_flick: weights.micro_flick,
-    zoom_composite: weights.zoom_composite,
+    circular_tracking: weights.circularTracking,
+    stochastic_tracking: weights.stochasticTracking,
+    counter_strafe_flick: weights.counterStrafeFlick,
+    micro_flick: weights.microFlick,
+    zoom_composite: weights.zoomComposite,
   };
 
   for (const [type, weight] of Object.entries(weightMap)) {

@@ -129,7 +129,7 @@ export default function HardwareCompare({ onBack }: Props) {
               <div className="hw-compare__combo-chips">
                 {combos.map((c) => (
                   <span key={c.id} className="glass-card--compact hw-compare__chip">
-                    {c.mouse_model} / {c.mousepad_model ?? '미지정'} / {c.dpi} DPI
+                    {c.mouseModel} / {c.mousepadModel ?? '미지정'} / {c.dpi} DPI
                   </span>
                 ))}
               </div>
@@ -146,12 +146,12 @@ export default function HardwareCompare({ onBack }: Props) {
             <div className="glass-card glass-card--glow hw-compare__shift-card">
               <div className="stat-label">최적 cm/360 이동</div>
               <div className="stat-value stat-value--big">
-                {comparison.optimal_shift > 0 ? '+' : ''}{comparison.optimal_shift.toFixed(1)} cm
+                {comparison.optimalShift > 0 ? '+' : ''}{comparison.optimalShift.toFixed(1)} cm
                 <span className="stat-unit">
-                  ({comparison.shift_pct > 0 ? '+' : ''}{comparison.shift_pct.toFixed(1)}%)
+                  ({comparison.shiftPct > 0 ? '+' : ''}{comparison.shiftPct.toFixed(1)}%)
                 </span>
               </div>
-              <p className="text-sm text-muted">{comparison.shift_description}</p>
+              <p className="text-sm text-muted">{comparison.shiftDescription}</p>
             </div>
           </div>
 
@@ -162,7 +162,7 @@ export default function HardwareCompare({ onBack }: Props) {
                 DNA 피처 비교
                 {' '}
                 <span className="text-sm text-muted">
-                  개선 {comparison.improved_count} / 악화 {comparison.degraded_count}
+                  개선 {comparison.improvedCount} / 악화 {comparison.degradedCount}
                 </span>
               </h3>
               <table className="data-table">
@@ -176,16 +176,16 @@ export default function HardwareCompare({ onBack }: Props) {
                   </tr>
                 </thead>
                 <tbody>
-                  {comparison.dna_deltas
+                  {comparison.dnaDeltas
                     .filter((d) => d.status !== 'unchanged')
-                    .sort((a, b) => Math.abs(b.delta_pct) - Math.abs(a.delta_pct))
+                    .sort((a, b) => Math.abs(b.deltaPct) - Math.abs(a.deltaPct))
                     .map((d) => (
                       <tr key={d.feature}>
                         <td>{FEATURE_LABELS[d.feature] ?? d.feature}</td>
-                        <td className="text-mono">{d.value_a.toFixed(2)}</td>
-                        <td className="text-mono">{d.value_b.toFixed(2)}</td>
+                        <td className="text-mono">{d.valueA.toFixed(2)}</td>
+                        <td className="text-mono">{d.valueB.toFixed(2)}</td>
                         <td className={statusTextClass(d.status)}>
-                          {d.delta_pct > 0 ? '+' : ''}{d.delta_pct.toFixed(1)}%
+                          {d.deltaPct > 0 ? '+' : ''}{d.deltaPct.toFixed(1)}%
                         </td>
                         <td>
                           <span className={statusBadgeClass(d.status)}>

@@ -104,8 +104,8 @@ export function ConversionPanel({ games }: ConversionPanelProps) {
       {result && (
         <div className="conversion-results">
           <div className="conversion-fov-info">
-            FOV: {result.src_fov_h.toFixed(1)}° → {result.dst_fov_h.toFixed(1)}°
-            {' | '}cm/360: {result.src_cm360.toFixed(2)}
+            FOV: {result.srcFovH.toFixed(1)}° → {result.dstFovH.toFixed(1)}°
+            {' | '}cm/360: {result.srcCm360.toFixed(2)}
           </div>
           <table className="conversion-table">
             <thead>
@@ -122,7 +122,7 @@ export function ConversionPanel({ games }: ConversionPanelProps) {
                 if (!r) return null;
 
                 // sens_step 스냅 표시
-                const step = targetGame?.sens_step;
+                const step = targetGame?.sensStep;
                 let snappedSens = r.sens;
                 if (step) {
                   const floor = Math.floor(r.sens / step) * step;
@@ -156,7 +156,7 @@ export function ConversionPanel({ games }: ConversionPanelProps) {
             </tbody>
           </table>
           <div className="conversion-note">
-            * 스냅: 게임 감도 단위({targetGame?.sens_step ?? 'N/A'})에 맞춤
+            * 스냅: 게임 감도 단위({targetGame?.sensStep ?? 'N/A'})에 맞춤
           </div>
         </div>
       )}

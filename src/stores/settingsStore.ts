@@ -67,14 +67,14 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const state = get();
     const cmPer360 = gameSensToCm360(state.sensitivity, state.dpi, game.yaw);
     const hfov = gameFovToHfov(
-      game.default_fov,
-      game.fov_type,
-      game.default_aspect_ratio,
+      game.defaultFov,
+      game.fovType,
+      game.defaultAspectRatio,
     );
     set({
       selectedGame: game,
       cmPer360,
-      fovSetting: game.default_fov,
+      fovSetting: game.defaultFov,
       hfov,
     });
   },
@@ -92,8 +92,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const hfov = state.selectedGame
       ? gameFovToHfov(
           fovSetting,
-          state.selectedGame.fov_type,
-          state.selectedGame.default_aspect_ratio,
+          state.selectedGame.fovType,
+          state.selectedGame.defaultAspectRatio,
         )
       : fovSetting;
     set({ fovSetting, hfov });

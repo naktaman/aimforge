@@ -12,14 +12,14 @@ import { LoadingSpinner } from './LoadingSpinner';
 /** DB에서 로드된 커스텀 패턴 */
 interface RecoilPatternRow {
   id: number;
-  game_id: number;
-  weapon_name: string;
-  pattern_points: string;
+  gameId: number;
+  weaponName: string;
+  patternPoints: string;
   randomness: number;
   vertical: number;
   horizontal: number;
   rpm: number;
-  is_custom: boolean;
+  isCustom: boolean;
 }
 
 /** 패턴 아이템 (빌트인 + 커스텀 통합) */
@@ -82,11 +82,11 @@ export default function RecoilEditor({ onBack }: { onBack: () => void }) {
   const loadPatterns = useCallback(async () => {
     setLoading(true);
     const builtins = builtinToItems();
-    const dbRows = await safeInvoke<RecoilPatternRow[]>('get_recoil_patterns', { params: { game_id: null } });
+    const dbRows = await safeInvoke<RecoilPatternRow[]>('get_recoil_patterns', { params: { gameId: null } });
     const customs: PatternItem[] = (dbRows ?? []).map((r) => ({
       id: `db-${r.id}`,
-      name: r.weapon_name,
-      points: JSON.parse(r.pattern_points) as Array<[number, number]>,
+      name: r.weaponName,
+      points: JSON.parse(r.patternPoints) as Array<[number, number]>,
       rpm: r.rpm,
       randomness: r.randomness,
       vertical: r.vertical,
@@ -167,13 +167,13 @@ export default function RecoilEditor({ onBack }: { onBack: () => void }) {
     if (selected?.dbId) {
       // 업데이트
       await safeInvoke('update_recoil_pattern', { params: {
-        id: selected.dbId, weapon_name: editName, pattern_points: pointsJson,
+        id: selected.dbId, weaponName: editName, patternPoints: pointsJson,
         randomness: editRandomness, vertical: editVertical, horizontal: editHorizontal, rpm: editRpm,
       }});
     } else {
       // 새로 저장
       await safeInvoke('save_recoil_pattern', { params: {
-        game_id: 1, weapon_name: editName, pattern_points: pointsJson,
+        gameId: 1, weaponName: editName, patternPoints: pointsJson,
         randomness: editRandomness, vertical: editVertical, horizontal: editHorizontal, rpm: editRpm,
       }});
     }

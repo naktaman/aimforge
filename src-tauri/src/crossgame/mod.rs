@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 
 /// 크로스게임 DNA 비교 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CrossGameComparison {
     pub ref_profile_id: i64,
     pub target_profile_id: i64,
@@ -27,6 +28,7 @@ pub struct CrossGameComparison {
 
 /// 피처별 델타
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FeatureDelta {
     pub feature: String,
     pub ref_value: f64,
@@ -38,6 +40,7 @@ pub struct FeatureDelta {
 
 /// 갭 원인 분류
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GapCause {
     pub cause_type: String,
     pub description: String,
@@ -47,12 +50,14 @@ pub struct GapCause {
 
 /// 개선 플랜 — 4단계 Phase
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ImprovementPlan {
     pub phases: Vec<ImprovementPhase>,
 }
 
 /// 개선 Phase
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ImprovementPhase {
     pub phase: i32,
     pub name: String,
@@ -64,6 +69,7 @@ pub struct ImprovementPhase {
 
 /// 타임라인 예측 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TimelinePrediction {
     pub total_days: f64,
     pub bottleneck_feature: String,
@@ -73,6 +79,7 @@ pub struct TimelinePrediction {
 
 /// 피처별 예상 기간
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FeatureTimeline {
     pub feature: String,
     pub gap_pct: f64,

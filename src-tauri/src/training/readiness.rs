@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 
 /// Readiness 측정 입력 — 마이크로 테스트 결과
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ReadinessInput {
     pub profile_id: i64,
     /// 미니 Flick 명중률 (0~1)
@@ -23,6 +24,7 @@ pub struct ReadinessInput {
 
 /// Readiness 결과
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ReadinessResult {
     /// 종합 점수 (0~100)
     pub score: f64,
@@ -36,6 +38,7 @@ pub struct ReadinessResult {
 
 /// baseline DNA 대비 각 메트릭의 변화율
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BaselineDelta {
     pub flick_accuracy_pct: f64,
     pub ttt_pct: f64,

@@ -22,6 +22,7 @@ use serde::{Deserialize, Serialize};
 
 /// 캘리브레이션 스테이지
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum CalibrationStage {
     /// Stage 1: DNA 스크리닝
     Screening,
@@ -33,6 +34,7 @@ pub enum CalibrationStage {
 
 /// 캘리브레이션 모드
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum CalibrationMode {
     /// 넓은 범위 탐색 (current ± 15, clamp 15~60)
     Explore,
@@ -69,6 +71,7 @@ struct CalibrationConfig {
 
 /// 다음 트라이얼 지시
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct NextTrialAction {
     /// 테스트할 cm/360 값
     pub cm360: f64,
@@ -82,6 +85,7 @@ pub struct NextTrialAction {
 
 /// 트라이얼 제출 후 피드백
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TrialFeedback {
     /// 수렴 여부
     pub converged: bool,
@@ -99,6 +103,7 @@ pub struct TrialFeedback {
 
 /// 캘리브레이션 최종 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CalibrationResult {
     /// 추천 cm/360
     pub recommended_cm360: f64,
@@ -126,6 +131,7 @@ pub struct CalibrationResult {
 
 /// 캘리브레이션 상태 (프론트엔드 전송용)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CalibrationStatus {
     pub stage: CalibrationStage,
     pub mode: CalibrationMode,

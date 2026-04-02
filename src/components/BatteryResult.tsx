@@ -44,16 +44,16 @@ export function BatteryResult({ onBack, onViewDna }: Props) {
       const dna = await invoke<AimDnaProfile>('compute_aim_dna_cmd', {
         params: {
           input: {
-            profile_id: 1,
-            session_id: sessionId,
-            flick_metrics: toJson('flick'),
-            tracking_metrics: toJson('tracking'),
-            circular_metrics: toJson('circular_tracking'),
-            stochastic_metrics: toJson('stochastic_tracking'),
-            counter_strafe_metrics: toJson('counter_strafe_flick'),
-            micro_flick_metrics: toJson('micro_flick'),
-            zoom_metrics: toJson('zoom_composite'),
-            scenario_scores: {
+            profileId: 1,
+            sessionId: sessionId,
+            flickMetrics: toJson('flick'),
+            trackingMetrics: toJson('tracking'),
+            circularMetrics: toJson('circular_tracking'),
+            stochasticMetrics: toJson('stochastic_tracking'),
+            counterStrafeMetrics: toJson('counter_strafe_flick'),
+            microFlickMetrics: toJson('micro_flick'),
+            zoomMetrics: toJson('zoom_composite'),
+            scenarioScores: {
               flick: batteryResult.scores.flick ?? null,
               tracking: batteryResult.scores.tracking ?? null,
               circular_tracking: batteryResult.scores.circular_tracking ?? null,

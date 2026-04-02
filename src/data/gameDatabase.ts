@@ -1149,11 +1149,11 @@ export function toGamePreset(entry: GameEntry) {
     id: entry.id,
     name: entry.name,
     yaw: entry.yaw,
-    default_fov: entry.defaultFov,
-    fov_type: entry.fovType,
-    default_aspect_ratio: entry.defaultAspectRatio,
-    sens_step: entry.sensStep,
-    movement_ratio: entry.movementRatio,
+    defaultFov: entry.defaultFov,
+    fovType: entry.fovType,
+    defaultAspectRatio: entry.defaultAspectRatio,
+    sensStep: entry.sensStep,
+    movementRatio: entry.movementRatio,
   };
 }
 

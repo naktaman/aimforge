@@ -11,6 +11,7 @@ use std::sync::Arc;
 
 /// 마우스 이벤트 — raw input에서 캡처된 단일 마우스 움직임/클릭
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MouseEvent {
     /// X축 raw delta (DPI 단위)
     pub delta_x: i32,
@@ -24,6 +25,7 @@ pub struct MouseEvent {
 
 /// 마우스 버튼 종류
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum MouseButton {
     Left,
     Right,
@@ -32,6 +34,7 @@ pub enum MouseButton {
 
 /// 마우스 가속 상태
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MouseAccelStatus {
     /// 마우스 가속 활성화 여부
     pub enabled: bool,
@@ -43,6 +46,7 @@ pub struct MouseAccelStatus {
 
 /// DPI 검증 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DpiVerification {
     /// 유저가 입력한 DPI
     pub claimed_dpi: u32,
@@ -67,6 +71,7 @@ pub struct MouseInputState {
 /// 프레임당 드레인된 마우스 이벤트 배치
 /// total_dx/dy는 프레임 내 모든 delta 합산 (빠른 카메라 회전용)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MouseBatch {
     /// 개별 이벤트 목록 (타임스탬프 포함, 궤적 기록용)
     pub events: Vec<MouseEvent>,

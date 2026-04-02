@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 /// 수렴 모드별 EI 임계값
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum ConvergenceMode {
     Quick,     // ε = 0.01
     Deep,      // ε = 0.005
@@ -34,6 +35,7 @@ impl ConvergenceMode {
 
 /// 수렴 상태
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ConvergenceStatus {
     pub converged: bool,
     pub reason: Option<String>,
@@ -90,6 +92,7 @@ pub fn check_convergence(
 
 /// 이봉 감지용 피크 정보
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Peak {
     /// 피크 위치 (cm/360)
     pub cm360: f64,
@@ -177,6 +180,7 @@ pub fn detect_bimodal(
 
 /// 유의성 검정 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SignificanceResult {
     /// z-score
     pub z_score: f64,
@@ -188,6 +192,7 @@ pub struct SignificanceResult {
 
 /// 유의성 라벨
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub enum SignificanceLabel {
     /// p < 0.05: "변경 추천 (유의미한 개선)"
     Recommend,

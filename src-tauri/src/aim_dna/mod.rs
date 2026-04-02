@@ -9,6 +9,7 @@ use std::collections::HashMap;
 
 /// 배터리 실행 후 프론트엔드에서 전달하는 시나리오별 메트릭
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BatteryMetricsInput {
     pub profile_id: i64,
     pub session_id: i64,
@@ -26,6 +27,7 @@ pub struct BatteryMetricsInput {
 
 /// 시나리오별 종합 점수
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ScenarioScores {
     pub flick: Option<f64>,
     pub tracking: Option<f64>,
@@ -38,6 +40,7 @@ pub struct ScenarioScores {
 
 /// Flick 시나리오 개별 타겟 메트릭
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FlickTargetMetric {
     pub ttt: f64,
     pub overshoot: f64,
@@ -55,6 +58,7 @@ pub struct FlickTargetMetric {
 
 /// Tracking 시나리오 메트릭
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TrackingMetric {
     pub mad: f64,
     pub deviation_variance: f64,
@@ -64,6 +68,7 @@ pub struct TrackingMetric {
 
 /// MicroFlick 하이브리드 메트릭
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MicroFlickMetric {
     pub tracking_mad: f64,
     pub tracking_velocity_match: f64,
@@ -75,6 +80,7 @@ pub struct MicroFlickMetric {
 
 /// Zoom 복합 메트릭
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ZoomMetric {
     pub steady_score: f64,
     pub correction_score: f64,
@@ -95,6 +101,7 @@ const MIN_TRACKING_SAMPLES: usize = 3;
 
 /// 피처별 데이터 충족 상태
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FeatureSufficiency {
     pub sufficient: bool,
     pub current_count: usize,
@@ -103,6 +110,7 @@ pub struct FeatureSufficiency {
 
 /// 완성된 Aim DNA 프로파일 (26개 피처 + type_label)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AimDnaProfile {
     pub profile_id: i64,
     pub session_id: i64,
@@ -587,6 +595,7 @@ fn classify_type(dna: &AimDnaProfile, scores: &ScenarioScores) -> String {
 
 /// DNA 추세 분석 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DnaTrendResult {
     pub profile_id: i64,
     /// 재교정 추천 여부 (10% 이상 변화 피처 존재 시 true)
@@ -601,6 +610,7 @@ pub struct DnaTrendResult {
 
 /// 피처별 추세 변화
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FeatureTrendChange {
     pub feature: String,
     pub prior_avg: f64,
@@ -701,6 +711,7 @@ pub fn analyze_dna_trend(
 
 /// 레퍼런스 게임 감지 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ReferenceGameResult {
     pub reference_profile_id: Option<i64>,
     /// (profile_id, composite_score) 목록

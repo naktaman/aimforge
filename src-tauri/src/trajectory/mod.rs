@@ -6,6 +6,7 @@ use serde::Serialize;
 
 /// 궤적 포인트 (프론트엔드 TrajectoryPoint와 동일)
 #[derive(Debug, Clone, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TrajectoryPoint {
     pub timestamp_us: f64,
     pub camera_yaw: f64,
@@ -16,6 +17,7 @@ pub struct TrajectoryPoint {
 
 /// 클릭 이벤트 (프론트엔드 ClickEvent와 동일)
 #[derive(Debug, Clone, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ClickEvent {
     pub timestamp_us: f64,
     pub crosshair_velocity: f64,
@@ -32,6 +34,7 @@ pub struct ClickEvent {
 
 /// 추출된 클릭 벡터 — 클릭 시점 전후 궤적에서 산출
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ClickVector {
     /// X축 이동량 (도)
     pub dx_deg: f64,
@@ -55,6 +58,7 @@ pub struct ClickVector {
 
 /// GMM 단일 클러스터 파라미터
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GmmCluster {
     pub mean: f64,
     pub std_dev: f64,
@@ -64,6 +68,7 @@ pub struct GmmCluster {
 
 /// GMM 2-컴포넌트 결과
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GmmClusterResult {
     pub cluster_a: GmmCluster,
     pub cluster_b: GmmCluster,
@@ -75,6 +80,7 @@ pub struct GmmClusterResult {
 
 /// 감도 진단 결과
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SensDiagnosis {
     /// 행동 유형: overshoot_dominant / undershoot_dominant / balanced
     pub current_behavior: String,
@@ -90,6 +96,7 @@ pub struct SensDiagnosis {
 
 /// 궤적 분석 통합 결과
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TrajectoryAnalysisResult {
     pub click_vectors: Vec<ClickVector>,
     pub gmm: Option<GmmClusterResult>,

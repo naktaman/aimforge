@@ -11,26 +11,26 @@ import type { DnaSnapshot, DnaChangeEvent, SnapshotComparison } from '../utils/t
 
 // 5축 색상 팔레트
 const AXIS_COLORS: Record<string, string> = {
-  flick_power:        '#e94560',
-  tracking_precision: '#4ecdc4',
-  motor_control:      '#ffe66d',
+  flickPower:         '#e94560',
+  trackingPrecision:  '#4ecdc4',
+  motorControl:       '#ffe66d',
   speed:              '#a29bfe',
   consistency:        '#fd79a8',
 };
 
 const AXIS_LABELS: Record<string, string> = {
-  flick_power:        'Flick Power',
-  tracking_precision: 'Tracking',
-  motor_control:      'Motor Control',
+  flickPower:         'Flick Power',
+  trackingPrecision:  'Tracking',
+  motorControl:       'Motor Control',
   speed:              'Speed',
   consistency:        'Consistency',
 };
 
 /** DnaSnapshot에서 수치 축에 해당하는 키 */
-type AxisKey = 'flick_power' | 'tracking_precision' | 'motor_control' | 'speed' | 'consistency';
+type AxisKey = 'flickPower' | 'trackingPrecision' | 'motorControl' | 'speed' | 'consistency';
 
 const AXIS_KEYS: AxisKey[] = [
-  'flick_power', 'tracking_precision', 'motor_control', 'speed', 'consistency',
+  'flickPower', 'trackingPrecision', 'motorControl', 'speed', 'consistency',
 ];
 
 const CHANGE_TYPE_LABELS: Record<string, string> = {
@@ -71,7 +71,7 @@ function TimelineChart({ snapshots, changeEvents, selectedIds, onSelectSnapshot 
       .attr('transform', `translate(${margin.left},${margin.top})`);
 
     // X 스케일: 측정 시각
-    const dates = snapshots.map(s => new Date(s.measured_at));
+    const dates = snapshots.map(s => new Date(s.measuredAt));
     const xScale = d3.scaleTime()
       .domain(d3.extent(dates) as [Date, Date])
       .range([0, innerW]);
@@ -99,7 +99,7 @@ function TimelineChart({ snapshots, changeEvents, selectedIds, onSelectSnapshot 
     // 5축 라인 그리기
     AXIS_KEYS.forEach(key => {
       const lineGen = d3.line<DnaSnapshot>()
-        .x(s => xScale(new Date(s.measured_at)))
+        .x(s => xScale(new Date(s.measuredAt)))
         .y(s => yScale(s[key] as number))
         .curve(d3.curveMonotoneX);
 
@@ -114,7 +114,7 @@ function TimelineChart({ snapshots, changeEvents, selectedIds, onSelectSnapshot 
       g.selectAll<SVGCircleElement, DnaSnapshot>(`.dot-${key}`)
         .data(snapshots)
         .join('circle')
-        .attr('cx', s => xScale(new Date(s.measured_at)))
+        .attr('cx', s => xScale(new Date(s.measuredAt)))
         .attr('cy', s => yScale(s[key] as number))
         .attr('r', s => selectedIds.includes(s.id) ? 7 : 4)
         .attr('fill', s => selectedIds.includes(s.id) ? '#fff' : AXIS_COLORS[key])
@@ -126,7 +126,7 @@ function TimelineChart({ snapshots, changeEvents, selectedIds, onSelectSnapshot 
 
     // 변경점 이벤트 수직 마커
     changeEvents.forEach(ev => {
-      const evDate = new Date(ev.occurred_at);
+      const evDate = new Date(ev.occurredAt);
       const x = xScale(evDate);
       if (x < 0 || x > innerW) return;
 
@@ -143,7 +143,7 @@ function TimelineChart({ snapshots, changeEvents, selectedIds, onSelectSnapshot 
         .attr('y', 12)
         .attr('fill', '#f5a623')
         .attr('font-size', '10px')
-        .text(CHANGE_TYPE_LABELS[ev.change_type] ?? ev.change_type);
+        .text(CHANGE_TYPE_LABELS[ev.changeType] ?? ev.changeType);
     });
   }, [snapshots, changeEvents, selectedIds]);
 
@@ -207,9 +207,9 @@ function CompareRadar({ comparison }: CompareRadarProps) {
 
     // before 폴리곤 (파란색)
     const beforeVals = [
-      comparison.before.flick_power,
-      comparison.before.tracking_precision,
-      comparison.before.motor_control,
+      comparison.before.flickPower,
+      comparison.before.trackingPrecision,
+      comparison.before.motorControl,
       comparison.before.speed,
       comparison.before.consistency,
     ];
@@ -225,9 +225,9 @@ function CompareRadar({ comparison }: CompareRadarProps) {
 
     // after 폴리곤 (빨간색)
     const afterVals = [
-      comparison.after.flick_power,
-      comparison.after.tracking_precision,
-      comparison.after.motor_control,
+      comparison.after.flickPower,
+      comparison.after.trackingPrecision,
+      comparison.after.motorControl,
       comparison.after.speed,
       comparison.after.consistency,
     ];
@@ -290,7 +290,7 @@ export function AimDnaHistory({ profileId }: Props) {
       const a = snapshots.find(s => s.id === selectedIds[0]);
       const b = snapshots.find(s => s.id === selectedIds[1]);
       if (!a || !b) return;
-      const [beforeId, afterId] = new Date(a.measured_at) < new Date(b.measured_at)
+      const [beforeId, afterId] = new Date(a.measuredAt) < new Date(b.measuredAt)
         ? [a.id, b.id] : [b.id, a.id];
       await compareSnapshots(profileId, beforeId, afterId);
       setCompareMode(true);
@@ -302,13 +302,13 @@ export function AimDnaHistory({ profileId }: Props) {
   return (
     <div className="aim-dna-history">
       {/* 정체기 감지 배너 */}
-      {stagnation?.is_stagnant && (
+      {stagnation?.isStagnant && (
         <div className="stagnation-banner" style={{
           background: '#3d2a1a', border: '1px solid #f5a623',
           borderRadius: 8, padding: '12px 16px', marginBottom: 16,
         }}>
           <strong style={{ color: '#f5a623' }}>
-            정체기 감지 — {stagnation.stagnant_axes.join(', ')} 축이 5회 연속 변화 미미
+            정체기 감지 — {stagnation.stagnantAxes.join(', ')} 축이 5회 연속 변화 미미
           </strong>
           <ul style={{ margin: '8px 0 0', paddingLeft: 20, fontSize: 13, color: '#ccc' }}>
             {stagnation.suggestions.map((s, i) => <li key={i}>{s}</li>)}
@@ -421,10 +421,10 @@ export function AimDnaHistory({ profileId }: Props) {
                     return (
                       <tr key={d.axis}>
                         <td style={{ padding: '6px 8px', color: '#ccc' }}>{d.axis}</td>
-                        <td style={{ padding: '6px 8px', color: '#888' }}>{d.before_val.toFixed(1)}</td>
-                        <td style={{ padding: '6px 8px', color: '#ccc' }}>{d.after_val.toFixed(1)}</td>
+                        <td style={{ padding: '6px 8px', color: '#888' }}>{d.beforeVal.toFixed(1)}</td>
+                        <td style={{ padding: '6px 8px', color: '#ccc' }}>{d.afterVal.toFixed(1)}</td>
                         <td style={{ padding: '6px 8px', color }}>
-                          {d.delta_pct > 0 ? '+' : ''}{d.delta_pct.toFixed(1)}%
+                          {d.deltaPct > 0 ? '+' : ''}{d.deltaPct.toFixed(1)}%
                         </td>
                       </tr>
                     );
@@ -456,15 +456,15 @@ export function AimDnaHistory({ profileId }: Props) {
                 display: 'flex', gap: 12, alignItems: 'flex-start',
               }}>
                 <span style={{ color: '#f5a623', whiteSpace: 'nowrap' }}>
-                  {CHANGE_TYPE_LABELS[ev.change_type] ?? ev.change_type}
+                  {CHANGE_TYPE_LABELS[ev.changeType] ?? ev.changeType}
                 </span>
                 <span style={{ color: '#888', whiteSpace: 'nowrap' }}>
-                  {new Date(ev.occurred_at).toLocaleDateString('ko-KR')}
+                  {new Date(ev.occurredAt).toLocaleDateString('ko-KR')}
                 </span>
                 <span style={{ color: '#ccc', flex: 1 }}>{ev.description}</span>
-                {ev.before_value && (
+                {ev.beforeValue && (
                   <span style={{ color: '#555', fontSize: 11 }}>
-                    {ev.before_value} → {ev.after_value}
+                    {ev.beforeValue} → {ev.afterValue}
                   </span>
                 )}
               </div>

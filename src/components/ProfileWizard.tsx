@@ -69,7 +69,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
   /** 캘리브레이션 완료 감지 */
   useEffect(() => {
     if (store.currentStep === 'calibration' && calibrationStore.result) {
-      store.setCalibrationResult(calibrationStore.result.recommended_cm360);
+      store.setCalibrationResult(calibrationStore.result.recommendedCm360);
     }
   }, [calibrationStore.result, store.currentStep]);
 
@@ -179,7 +179,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
           gameName: store.selectedGame.name,
           dpi: store.dpi,
           sensitivity: store.gameSensValues['sensitivity'] ?? 1.0,
-          fov: store.selectedGame.default_fov,
+          fov: store.selectedGame.defaultFov,
           scopeMultiplier: 1.0,
         });
       } catch (e) {
@@ -505,8 +505,8 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                 {/* 레이더 차트 간소화 — 5축 점수 표시 */}
                 <div className="pw-radar-summary">
                   <h3>에임 특성 요약</h3>
-                  {store.aimDna.type_label && (
-                    <div className="pw-type-badge">{store.aimDna.type_label}</div>
+                  {store.aimDna.typeLabel && (
+                    <div className="pw-type-badge">{store.aimDna.typeLabel}</div>
                   )}
                   <div className="pw-radar-grid">
                     <div className="pw-radar-axis">
@@ -514,7 +514,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                       <div className="pw-radar-bar">
                         <div
                           className="pw-radar-fill"
-                          style={{ width: `${Math.min((store.aimDna.flick_peak_velocity ?? 0) / 10 * 100, 100)}%` }}
+                          style={{ width: `${Math.min((store.aimDna.flickPeakVelocity ?? 0) / 10 * 100, 100)}%` }}
                         />
                       </div>
                     </div>
@@ -523,7 +523,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                       <div className="pw-radar-bar">
                         <div
                           className="pw-radar-fill"
-                          style={{ width: `${Math.max(100 - (store.aimDna.tracking_mad ?? 5) * 20, 0)}%` }}
+                          style={{ width: `${Math.max(100 - (store.aimDna.trackingMad ?? 5) * 20, 0)}%` }}
                         />
                       </div>
                     </div>
@@ -541,7 +541,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                       <div className="pw-radar-bar">
                         <div
                           className="pw-radar-fill"
-                          style={{ width: `${Math.max(100 - (store.aimDna.overshoot_avg ?? 5) * 10, 0)}%` }}
+                          style={{ width: `${Math.max(100 - (store.aimDna.overshootAvg ?? 5) * 10, 0)}%` }}
                         />
                       </div>
                     </div>
@@ -550,7 +550,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
                       <div className="pw-radar-bar">
                         <div
                           className="pw-radar-fill"
-                          style={{ width: `${(store.aimDna.velocity_match ?? 0) * 100}%` }}
+                          style={{ width: `${(store.aimDna.velocityMatch ?? 0) * 100}%` }}
                         />
                       </div>
                     </div>
@@ -691,8 +691,8 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
             </div>
 
             {/* Aim DNA 타입 */}
-            {store.aimDna?.type_label && (
-              <div className="pw-type-badge large">{store.aimDna.type_label}</div>
+            {store.aimDna?.typeLabel && (
+              <div className="pw-type-badge large">{store.aimDna.typeLabel}</div>
             )}
 
             {/* 게임별 감도 변환 */}

@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 /// 피로도 추적기
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FatigueTracker {
     /// baseline 측정 간격 (트라이얼 수)
     baseline_interval: usize,

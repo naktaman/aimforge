@@ -119,18 +119,18 @@ export const useGPDashboardStore = create<GPDashboardState>((set, get) => ({
 
   updateFromStatus: (status) => {
     const prev = get();
-    const gpCurve = parseCurve(status.gp_curve);
+    const gpCurve = parseCurve(status.gpCurve);
     const observations = parseObservations(status.observations, prev.observations.length);
     const { progress, initialSigma } = calcConvergenceProgress(gpCurve, prev.initialMaxSigma);
 
     set({
       stage: status.stage,
       iteration: status.iteration,
-      maxIterations: status.max_iterations,
+      maxIterations: status.maxIterations,
       gpCurve,
       observations,
-      bestCm360: status.current_best ? status.current_best[0] : null,
-      bestScore: status.current_best ? status.current_best[1] : null,
+      bestCm360: status.currentBest ? status.currentBest[0] : null,
+      bestScore: status.currentBest ? status.currentBest[1] : null,
       convergenceProgress: progress,
       initialMaxSigma: initialSigma,
     });
@@ -140,9 +140,9 @@ export const useGPDashboardStore = create<GPDashboardState>((set, get) => ({
     view: 'result',
     finalResult: result,
     sensConversions: conversions,
-    bestCm360: result.recommended_cm360,
-    bestScore: result.recommended_score,
-    gpCurve: parseCurve(result.gp_curve),
+    bestCm360: result.recommendedCm360,
+    bestScore: result.recommendedScore,
+    gpCurve: parseCurve(result.gpCurve),
     observations: parseObservations(result.observations, 0),
   }),
 

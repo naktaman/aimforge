@@ -36,6 +36,7 @@ impl TransitionPhase {
 
 /// 스타일 전환 진행 상태
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TransitionProgress {
     /// 현재 페이즈
     pub phase: String,
@@ -51,6 +52,7 @@ pub struct TransitionProgress {
 
 /// 개별 피처 수렴 상태
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FeatureConvergence {
     pub feature_name: String,
     /// 현재 수렴도 (0~100)

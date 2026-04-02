@@ -6,6 +6,7 @@ use std::path::Path;
 
 /// 줌 프로파일 DB 행
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ZoomProfileRow {
     pub id: i64,
     pub game_id: i64,
@@ -1778,6 +1779,7 @@ impl Database {
 
 /// 무브먼트 프로필 행
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MovementProfileRow {
     pub id: i64,
     pub game_id: i64,
@@ -1792,6 +1794,7 @@ pub struct MovementProfileRow {
 
 /// 반동 패턴 행
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RecoilPatternRow {
     pub id: i64,
     pub game_id: i64,
@@ -1806,6 +1809,7 @@ pub struct RecoilPatternRow {
 
 /// FOV 프로필 행
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FovProfileRow {
     pub id: i64,
     pub profile_id: i64,
@@ -1819,6 +1823,7 @@ pub struct FovProfileRow {
 
 /// 하드웨어 콤보 행
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct HardwareComboRow {
     pub id: i64,
     pub mouse_model: String,
@@ -1831,6 +1836,7 @@ pub struct HardwareComboRow {
 
 /// 크래시 로그 행
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CrashLogRow {
     pub id: i64,
     pub error_type: String,
@@ -1843,6 +1849,7 @@ pub struct CrashLogRow {
 
 /// 일별 통계 행
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DailyStatRow {
     pub id: i64,
     pub profile_id: i64,
@@ -1858,6 +1865,7 @@ pub struct DailyStatRow {
 
 /// 주별 통계 행
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct WeeklyStatRow {
     pub profile_id: i64,
     pub week_start: String,
@@ -1872,6 +1880,7 @@ pub struct WeeklyStatRow {
 
 /// 스킬 진행도 행
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SkillProgressRow {
     pub id: i64,
     pub profile_id: i64,
@@ -1885,6 +1894,7 @@ pub struct SkillProgressRow {
 
 /// 게임 프로필 행
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GameProfileRow {
     pub id: i64,
     pub profile_id: i64,
@@ -1901,6 +1911,7 @@ pub struct GameProfileRow {
 
 /// 루틴 행
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RoutineRow {
     pub id: i64,
     pub profile_id: i64,
@@ -1912,6 +1923,7 @@ pub struct RoutineRow {
 
 /// 루틴 스텝 행
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct RoutineStepRow {
     pub id: i64,
     pub routine_id: i64,
@@ -1923,6 +1935,7 @@ pub struct RoutineStepRow {
 
 /// Readiness Score 행 — 매일 2분 마이크로 테스트 결과
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ReadinessScoreRow {
     pub id: i64,
     pub profile_id: i64,
@@ -1934,6 +1947,7 @@ pub struct ReadinessScoreRow {
 
 /// 스타일 전환 행 — 에임 스타일 전환 추적
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct StyleTransitionRow {
     pub id: i64,
     pub profile_id: i64,

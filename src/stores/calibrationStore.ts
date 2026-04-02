@@ -31,34 +31,34 @@ export interface Peak {
   cm360: number;
   score: number;
   variance: number;
-  is_primary: boolean;
+  isPrimary: boolean;
 }
 
 /** 유의성 검정 결과 */
 export interface SignificanceResult {
-  z_score: number;
-  p_value: number;
+  zScore: number;
+  pValue: number;
   label: 'Recommend' | 'Marginal' | 'Keep';
 }
 
 /** 캘리브레이션 최종 결과 */
 export interface CalibrationResult {
-  recommended_cm360: number;
-  recommended_score: number;
-  current_cm360: number;
+  recommendedCm360: number;
+  recommendedScore: number;
+  currentCm360: number;
   peaks: Peak[];
-  bimodal_detected: boolean;
+  bimodalDetected: boolean;
   significance: SignificanceResult;
-  partial_dna: {
-    wrist_arm_ratio: number;
-    avg_overshoot: number;
-    pre_aim_ratio: number;
-    direction_bias: number;
-    tracking_smoothness: number | null;
+  partialDna: {
+    wristArmRatio: number;
+    avgOvershoot: number;
+    preAimRatio: number;
+    directionBias: number;
+    trackingSmoothness: number | null;
   } | null;
-  adaptation_rate: number | null;
-  total_iterations: number;
-  gp_curve: [number, number, number][];
+  adaptationRate: number | null;
+  totalIterations: number;
+  gpCurve: [number, number, number][];
   observations: [number, number][];
 }
 
@@ -99,10 +99,10 @@ interface CalibrationState {
   updateStatus: (status: {
     stage: string;
     iteration: number;
-    max_iterations: number;
-    screening_progress: [number, number] | null;
-    current_best: [number, number] | null;
-    gp_curve: [number, number, number][];
+    maxIterations: number;
+    screeningProgress: [number, number] | null;
+    currentBest: [number, number] | null;
+    gpCurve: [number, number, number][];
     observations: [number, number][];
   }) => void;
   setResult: (result: CalibrationResult) => void;
@@ -151,14 +151,14 @@ export const useCalibrationStore = create<CalibrationState>((set) => ({
     set({
       stage: status.stage as CalibrationStage,
       iteration: status.iteration,
-      maxIterations: status.max_iterations,
-      screeningProgress: status.screening_progress
-        ? { current: status.screening_progress[0], target: status.screening_progress[1] }
+      maxIterations: status.maxIterations,
+      screeningProgress: status.screeningProgress
+        ? { current: status.screeningProgress[0], target: status.screeningProgress[1] }
         : null,
-      currentBest: status.current_best
-        ? { cm360: status.current_best[0], score: status.current_best[1] }
+      currentBest: status.currentBest
+        ? { cm360: status.currentBest[0], score: status.currentBest[1] }
         : null,
-      gpCurve: status.gp_curve.map(([x, mean, variance]) => ({ x, mean, variance })),
+      gpCurve: status.gpCurve.map(([x, mean, variance]) => ({ x, mean, variance })),
       observations: status.observations.map(([cm360, score]) => ({ cm360, score })),
     }),
 

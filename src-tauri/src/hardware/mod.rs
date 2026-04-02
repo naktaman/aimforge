@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 /// 하드웨어 콤보 정보
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct HardwareCombo {
     pub id: i64,
     pub mouse_model: String,
@@ -19,6 +20,7 @@ pub struct HardwareCombo {
 
 /// 하드웨어 비교 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct HardwareComparison {
     /// 콤보 A 정보
     pub combo_a: HardwareCombo,
@@ -42,6 +44,7 @@ pub struct HardwareComparison {
 
 /// DNA 피처 델타 (하드웨어 간)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DnaFeatureDelta {
     pub feature: String,
     pub value_a: f64,

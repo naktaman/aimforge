@@ -48,27 +48,27 @@ export function ComparatorResult({ result, onBack, onSave }: ComparatorResultPro
           </tr>
         </thead>
         <tbody>
-          {result.method_scores.map((ms) => (
-            <tr key={ms.method} className={ms.is_recommended ? 'recommended' : ''}>
+          {result.methodScores.map((ms) => (
+            <tr key={ms.method} className={ms.isRecommended ? 'recommended' : ''}>
               <td>
                 {ms.rank}
-                {ms.is_recommended && <span className="star"> ★</span>}
+                {ms.isRecommended && <span className="star"> ★</span>}
               </td>
               <td className="method-name">{ms.method}</td>
-              <td>{ms.steady_mean.toFixed(1)}</td>
-              <td>{ms.correction_mean.toFixed(1)}</td>
-              <td>{ms.zoomout_mean.toFixed(1)}</td>
+              <td>{ms.steadyMean.toFixed(1)}</td>
+              <td>{ms.correctionMean.toFixed(1)}</td>
+              <td>{ms.zoomoutMean.toFixed(1)}</td>
               <td className="composite">
-                {ms.composite_mean.toFixed(1)}
-                <span className="std"> ±{ms.composite_std.toFixed(1)}</span>
+                {ms.compositeMean.toFixed(1)}
+                <span className="std"> ±{ms.compositeStd.toFixed(1)}</span>
               </td>
-              <td className={`effect-size ${effectSizeLabel(ms.effect_size)}`}>
-                {ms.effect_size !== null ? ms.effect_size.toFixed(2) : '-'}
-                <span className="effect-label"> ({effectSizeLabel(ms.effect_size)})</span>
+              <td className={`effect-size ${effectSizeLabel(ms.effectSize)}`}>
+                {ms.effectSize !== null ? ms.effectSize.toFixed(2) : '-'}
+                <span className="effect-label"> ({effectSizeLabel(ms.effectSize)})</span>
               </td>
               <td className="p-value">
-                {ms.p_value !== null ? ms.p_value.toFixed(3) : '-'}
-                {significanceMarker(ms.p_value)}
+                {ms.pValue !== null ? ms.pValue.toFixed(3) : '-'}
+                {significanceMarker(ms.pValue)}
               </td>
             </tr>
           ))}

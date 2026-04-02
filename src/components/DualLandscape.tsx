@@ -105,7 +105,7 @@ export default function DualLandscape({ onBack }: Props) {
 
     // 가중 최적점 (빨간 수직선 + 원)
     if (recommendation) {
-      const wx = toX(recommendation.final_cm360);
+      const wx = toX(recommendation.finalCm360);
       ctx.beginPath();
       ctx.strokeStyle = '#e94560';
       ctx.lineWidth = 2;
@@ -124,7 +124,7 @@ export default function DualLandscape({ onBack }: Props) {
       ctx.fillStyle = '#e94560';
       ctx.font = 'bold 13px monospace';
       ctx.textAlign = 'center';
-      ctx.fillText(`${recommendation.final_cm360.toFixed(1)}`, wx, pad.top - 8);
+      ctx.fillText(`${recommendation.finalCm360.toFixed(1)}`, wx, pad.top - 8);
     }
 
     // 정적/무빙 최적점 마커
@@ -206,16 +206,16 @@ export default function DualLandscape({ onBack }: Props) {
         <div style={{ background: '#0f3460', padding: 16, borderRadius: 8, display: 'flex', gap: 32 }}>
           <div>
             <div style={{ fontSize: 12, opacity: 0.7 }}>정적 최적</div>
-            <div style={{ fontSize: 20, color: '#38bdf8' }}>{recommendation.static_optimal.toFixed(1)}</div>
+            <div style={{ fontSize: 20, color: '#38bdf8' }}>{recommendation.staticOptimal.toFixed(1)}</div>
           </div>
           <div>
             <div style={{ fontSize: 12, opacity: 0.7 }}>무빙 최적</div>
-            <div style={{ fontSize: 20, color: '#f5a623' }}>{recommendation.moving_optimal.toFixed(1)}</div>
+            <div style={{ fontSize: 20, color: '#f5a623' }}>{recommendation.movingOptimal.toFixed(1)}</div>
           </div>
           <div>
             <div style={{ fontSize: 12, opacity: 0.7 }}>가중 추천</div>
             <div style={{ fontSize: 20, color: '#e94560', fontWeight: 'bold' }}>
-              {recommendation.final_cm360.toFixed(1)} cm/360
+              {recommendation.finalCm360.toFixed(1)} cm/360
             </div>
           </div>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', opacity: 0.8 }}>

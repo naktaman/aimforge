@@ -90,11 +90,11 @@ export function SessionHistory({ onBack }: Props) {
                     className={`session-row ${expandedId === s.id ? 'expanded' : ''}`}
                     onClick={() => toggleDetail(s.id)}
                   >
-                    <td>{formatDate(s.started_at)}</td>
-                    <td>{s.session_type}</td>
+                    <td>{formatDate(s.startedAt)}</td>
+                    <td>{s.sessionType}</td>
                     <td>{s.mode}</td>
-                    <td>{s.total_trials}</td>
-                    <td>{s.avg_fps?.toFixed(0) ?? '—'}</td>
+                    <td>{s.totalTrials}</td>
+                    <td>{s.avgFps?.toFixed(0) ?? '—'}</td>
                   </tr>
                   {/* 인라인 상세 */}
                   {expandedId === s.id && detail && (
@@ -106,9 +106,9 @@ export function SessionHistory({ onBack }: Props) {
                           ) : (
                             detail.trials.map((t) => (
                               <div key={t.id} className="trial-item">
-                                <span>{t.scenario_type}</span>
-                                <span>{t.cm360_tested.toFixed(1)} cm/360</span>
-                                <span className="trial-score">{t.composite_score.toFixed(1)}</span>
+                                <span>{t.scenarioType}</span>
+                                <span>{t.cm360Tested.toFixed(1)} cm/360</span>
+                                <span className="trial-score">{t.compositeScore.toFixed(1)}</span>
                               </div>
                             ))
                           )}

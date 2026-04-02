@@ -462,11 +462,11 @@ export class GameEngine {
       if (this.pendingBatch) {
         const batch = this.pendingBatch;
         this.pendingBatch = null;
-        if (batch.total_dx !== 0 || batch.total_dy !== 0) {
-          this.applyMouseDelta(batch.total_dx, batch.total_dy);
+        if (batch.totalDx !== 0 || batch.totalDy !== 0) {
+          this.applyMouseDelta(batch.totalDx, batch.totalDy);
         }
-        if (batch.button_events.length > 0 && this.activeScenario) {
-          for (const evt of batch.button_events) {
+        if (batch.buttonEvents.length > 0 && this.activeScenario) {
+          for (const evt of batch.buttonEvents) {
             if (evt.button === 'Left') {
               // 발사 모드 컨트롤러를 통한 발사 판정
               const now = performance.now();
@@ -477,9 +477,9 @@ export class GameEngine {
           }
         }
         // 입력 레이턴시 추정 (최신 이벤트 타임스탬프 기준)
-        if (batch.latest_timestamp_us) {
+        if (batch.latestTimestampUs) {
           const nowUs = performance.now() * 1000;
-          this.inputLatencyUs = Math.max(0, nowUs - batch.latest_timestamp_us);
+          this.inputLatencyUs = Math.max(0, nowUs - batch.latestTimestampUs);
         }
       }
       // 다음 프레임용 배치를 비동기로 가져옴 (렌더 블로킹 없음)

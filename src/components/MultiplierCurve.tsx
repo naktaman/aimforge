@@ -43,7 +43,7 @@ export function MultiplierCurve({
     const plotH = height - margin.top - margin.bottom;
 
     // 데이터 범위
-    const ratios = predictions.map((p) => p.zoom_ratio);
+    const ratios = predictions.map((p) => p.zoomRatio);
     const mults = predictions.map((p) => p.multiplier);
     const xExtent = [Math.min(...ratios) * 0.8, Math.max(...ratios) * 1.1];
     const yExtent = [Math.min(...mults) * 0.8, Math.max(...mults) * 1.2];
@@ -60,7 +60,7 @@ export function MultiplierCurve({
       // scope_fov 근사: 2 * atan(tan(hip/2) / r)
       const hipHalf = Math.tan((hipfireFov * Math.PI / 180) / 2);
       const scopeHalf = hipHalf / r;
-      const mult = Math.pow(hipHalf / scopeHalf, kFit.k_value);
+      const mult = Math.pow(hipHalf / scopeHalf, kFit.kValue);
       curvePoints.push({ ratio: r, mult });
     }
 
@@ -77,12 +77,12 @@ export function MultiplierCurve({
       .attr('stroke-width', 2.5);
 
     // ── 측정점 (●) ──
-    const measured = predictions.filter((p) => p.is_measured);
+    const measured = predictions.filter((p) => p.isMeasured);
     g.selectAll('.measured-point')
       .data(measured)
       .enter()
       .append('circle')
-      .attr('cx', (d) => xScale(d.zoom_ratio))
+      .attr('cx', (d) => xScale(d.zoomRatio))
       .attr('cy', (d) => yScale(d.multiplier))
       .attr('r', 6)
       .attr('fill', '#60a5fa')
@@ -90,12 +90,12 @@ export function MultiplierCurve({
       .attr('stroke-width', 2);
 
     // ── 보간점 (○) ──
-    const interpolated = predictions.filter((p) => !p.is_measured);
+    const interpolated = predictions.filter((p) => !p.isMeasured);
     g.selectAll('.interp-point')
       .data(interpolated)
       .enter()
       .append('circle')
-      .attr('cx', (d) => xScale(d.zoom_ratio))
+      .attr('cx', (d) => xScale(d.zoomRatio))
       .attr('cy', (d) => yScale(d.multiplier))
       .attr('r', 5)
       .attr('fill', 'none')
@@ -108,12 +108,12 @@ export function MultiplierCurve({
       .data(predictions)
       .enter()
       .append('text')
-      .attr('x', (d) => xScale(d.zoom_ratio))
+      .attr('x', (d) => xScale(d.zoomRatio))
       .attr('y', (d) => yScale(d.multiplier) - 10)
       .attr('text-anchor', 'middle')
       .attr('fill', '#e2e8f0')
       .attr('font-size', '9px')
-      .text((d) => d.scope_name);
+      .text((d) => d.scopeName);
 
     // ── 축 ──
     g.append('g')
@@ -156,8 +156,8 @@ export function MultiplierCurve({
     <div className="multiplier-curve">
       {/* K 정보 */}
       <div className="k-info">
-        <span className="k-value">k = {kFit.k_value.toFixed(3)}</span>
-        <span className="k-variance"> (분산: {kFit.k_variance.toFixed(4)})</span>
+        <span className="k-value">k = {kFit.kValue.toFixed(3)}</span>
+        <span className="k-variance"> (분산: {kFit.kVariance.toFixed(4)})</span>
         <span className="k-quality" style={{ color: qualityColor }}>
           {qualityLabel}
         </span>
@@ -172,7 +172,7 @@ export function MultiplierCurve({
           <span className="adjust-label">K 미세 조정:</span>
           <button className="btn-small" onClick={() => onAdjustK(-0.05)}>-0.05</button>
           <button className="btn-small" onClick={() => onAdjustK(-0.01)}>-0.01</button>
-          <span className="k-display">{kFit.k_value.toFixed(3)}</span>
+          <span className="k-display">{kFit.kValue.toFixed(3)}</span>
           <button className="btn-small" onClick={() => onAdjustK(+0.01)}>+0.01</button>
           <button className="btn-small" onClick={() => onAdjustK(+0.05)}>+0.05</button>
         </div>

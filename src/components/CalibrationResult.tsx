@@ -29,7 +29,7 @@ export function CalibrationResult({ onBack, onApply }: CalibrationResultProps) {
   }
 
   const sig = SIGNIFICANCE_LABELS[result.significance.label];
-  const delta = result.recommended_cm360 - result.current_cm360;
+  const delta = result.recommendedCm360 - result.currentCm360;
 
   return (
     <div className="calibration-result">
@@ -39,12 +39,12 @@ export function CalibrationResult({ onBack, onApply }: CalibrationResultProps) {
       <div className="result-recommendation">
         <div className="result-card primary">
           <span className="card-label">추천 감도</span>
-          <span className="big-number">{result.recommended_cm360.toFixed(1)}</span>
+          <span className="big-number">{result.recommendedCm360.toFixed(1)}</span>
           <span className="unit">cm/360</span>
         </div>
         <div className="result-card secondary">
           <span className="card-label">현재 감도</span>
-          <span className="medium-number">{result.current_cm360.toFixed(1)}</span>
+          <span className="medium-number">{result.currentCm360.toFixed(1)}</span>
           <span className="unit">cm/360</span>
         </div>
         <div className="result-card delta">
@@ -63,20 +63,20 @@ export function CalibrationResult({ onBack, onApply }: CalibrationResultProps) {
           <span className="sig-label" style={{ color: sig.color }}>{sig.text}</span>
           <span className="sig-desc">{sig.desc}</span>
           <span className="sig-detail">
-            z-score: {result.significance.z_score.toFixed(2)}, p-value: {result.significance.p_value.toFixed(3)}
+            z-score: {result.significance.zScore.toFixed(2)}, p-value: {result.significance.pValue.toFixed(3)}
           </span>
         </div>
       </div>
 
       {/* 이봉 감지 */}
-      {result.bimodal_detected && (
+      {result.bimodalDetected && (
         <div className="bimodal-section">
           <h3>이봉 감지</h3>
           <p>두 개의 최적 영역이 발견되었습니다:</p>
           <div className="peaks-list">
             {result.peaks.map((peak, i) => (
-              <div key={i} className={`peak-item ${peak.is_primary ? 'primary' : ''}`}>
-                <span>{peak.is_primary ? '주 피크' : '부 피크'}</span>
+              <div key={i} className={`peak-item ${peak.isPrimary ? 'primary' : ''}`}>
+                <span>{peak.isPrimary ? '주 피크' : '부 피크'}</span>
                 <span className="peak-value">{peak.cm360.toFixed(1)} cm/360</span>
                 <span className="peak-score">score: {peak.score.toFixed(3)}</span>
               </div>
@@ -86,24 +86,24 @@ export function CalibrationResult({ onBack, onApply }: CalibrationResultProps) {
       )}
 
       {/* DNA 요약 (있으면) */}
-      {result.partial_dna && (
+      {result.partialDna && (
         <div className="dna-section">
           <h3>Aim DNA 요약</h3>
           <div className="dna-grid">
-            <DnaStat label="손목/팔 비율" value={result.partial_dna.wrist_arm_ratio} format="percent" />
-            <DnaStat label="평균 오버슈트" value={result.partial_dna.avg_overshoot} format="decimal" />
-            <DnaStat label="Pre-aim 비율" value={result.partial_dna.pre_aim_ratio} format="percent" />
-            <DnaStat label="방향 편향" value={result.partial_dna.direction_bias} format="decimal" />
-            {result.partial_dna.tracking_smoothness !== null && (
-              <DnaStat label="트래킹 부드러움" value={result.partial_dna.tracking_smoothness} format="decimal" />
+            <DnaStat label="손목/팔 비율" value={result.partialDna.wristArmRatio} format="percent" />
+            <DnaStat label="평균 오버슈트" value={result.partialDna.avgOvershoot} format="decimal" />
+            <DnaStat label="Pre-aim 비율" value={result.partialDna.preAimRatio} format="percent" />
+            <DnaStat label="방향 편향" value={result.partialDna.directionBias} format="decimal" />
+            {result.partialDna.trackingSmoothness !== null && (
+              <DnaStat label="트래킹 부드러움" value={result.partialDna.trackingSmoothness} format="decimal" />
             )}
           </div>
-          {result.adaptation_rate !== null && (
+          {result.adaptationRate !== null && (
             <div className="adaptation-rate">
-              적응 속도: {(result.adaptation_rate * 100).toFixed(1)}%
-              {result.adaptation_rate > 0.1
+              적응 속도: {(result.adaptationRate * 100).toFixed(1)}%
+              {result.adaptationRate > 0.1
                 ? ' (빠른 적응 — 감도 변경에 유연)'
-                : result.adaptation_rate < -0.05
+                : result.adaptationRate < -0.05
                   ? ' (피로 경향)'
                   : ' (보통)'}
             </div>
@@ -119,7 +119,7 @@ export function CalibrationResult({ onBack, onApply }: CalibrationResultProps) {
 
       {/* 통계 */}
       <div className="result-stats">
-        총 {result.total_iterations}회 반복 | 관측점 {result.observations.length}개
+        총 {result.totalIterations}회 반복 | 관측점 {result.observations.length}개
       </div>
 
       {/* 버튼 */}
@@ -129,7 +129,7 @@ export function CalibrationResult({ onBack, onApply }: CalibrationResultProps) {
         </button>
         <button
           className="btn-primary"
-          onClick={() => onApply(result.recommended_cm360)}
+          onClick={() => onApply(result.recommendedCm360)}
         >
           감도 적용
         </button>

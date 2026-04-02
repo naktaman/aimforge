@@ -53,11 +53,11 @@ export default function MovementEditor({ onBack }: Props) {
     setSelectedIdx(idx);
     const p = presets[idx];
     if (p) {
-      setMaxSpeed(p.max_speed);
-      setStopTime(p.stop_time);
-      setAccelType(p.accel_type);
-      setAirControl(p.air_control);
-      setCsBonus(p.cs_bonus);
+      setMaxSpeed(p.maxSpeed);
+      setStopTime(p.stopTime);
+      setAccelType(p.accelType);
+      setAirControl(p.airControl);
+      setCsBonus(p.csBonus);
     }
   };
 
@@ -76,7 +76,7 @@ export default function MovementEditor({ onBack }: Props) {
       r6siege: 0.25, fortnite: 0.40, cod_mw: 0.30, battlefield: 0.30,
       pubg: 0.30, quake: 0.30,
     };
-    const ratio = movementRatios[preset.game_id] ?? 0.3;
+    const ratio = movementRatios[preset.gameId] ?? 0.3;
     calculateRecommendation(staticOpt, movingOpt, ratio);
   };
 
@@ -85,13 +85,13 @@ export default function MovementEditor({ onBack }: Props) {
     const preset = presets[selectedIdx];
     if (!preset) return;
     const path = await exportProfile({
-      game_id: preset.game_id,
+      gameId: preset.gameId,
       name: preset.name,
-      max_speed: maxSpeed,
-      stop_time: stopTime,
-      accel_type: accelType,
-      air_control: airControl,
-      cs_bonus: csBonus,
+      maxSpeed: maxSpeed,
+      stopTime: stopTime,
+      accelType: accelType,
+      airControl: airControl,
+      csBonus: csBonus,
     });
     setExportPath(path);
     setTimeout(() => setExportPath(null), 5000);
@@ -105,11 +105,11 @@ export default function MovementEditor({ onBack }: Props) {
       const text = await file.text();
       const preset = await importProfile(text);
       if (preset) {
-        setMaxSpeed(preset.max_speed);
-        setStopTime(preset.stop_time);
-        setAccelType(preset.accel_type);
-        setAirControl(preset.air_control);
-        setCsBonus(preset.cs_bonus);
+        setMaxSpeed(preset.maxSpeed);
+        setStopTime(preset.stopTime);
+        setAccelType(preset.accelType);
+        setAirControl(preset.airControl);
+        setCsBonus(preset.csBonus);
         setImportMsg(`"${preset.name}" 가져오기 성공`);
       } else {
         setImportMsg('가져오기 실패: 잘못된 파일 형식');
@@ -126,10 +126,10 @@ export default function MovementEditor({ onBack }: Props) {
   const handleCalibrate = async () => {
     const preset = presets[selectedIdx];
     if (!preset) return;
-    const result = await calibrateMaxSpeed(preset.game_id, calDistance, calTime);
+    const result = await calibrateMaxSpeed(preset.gameId, calDistance, calTime);
     if (result) {
-      setMaxSpeed(result.calculated_max_speed);
-      setCalResult(`계산된 max_speed: ${result.calculated_max_speed} u/s (거리: ${result.distance_used})`);
+      setMaxSpeed(result.calculatedMaxSpeed);
+      setCalResult(`계산된 max_speed: ${result.calculatedMaxSpeed} u/s (거리: ${result.distanceUsed})`);
     } else {
       setCalResult('캘리브레이션 실패');
     }
@@ -154,7 +154,7 @@ export default function MovementEditor({ onBack }: Props) {
             onChange={(e) => selectPreset(Number(e.target.value))}
           >
             {presets.map((p, i) => (
-              <option key={p.game_id} value={i}>{p.name}</option>
+              <option key={p.gameId} value={i}>{p.name}</option>
             ))}
           </select>
         </div>
@@ -273,11 +273,11 @@ export default function MovementEditor({ onBack }: Props) {
         {recommendation && (
           <div className="movement-editor__rec-result">
             <div className="movement-editor__rec-value">
-              {recommendation.final_cm360.toFixed(1)} cm/360
+              {recommendation.finalCm360.toFixed(1)} cm/360
             </div>
             <div className="movement-editor__rec-detail text-muted">
-              정적 {recommendation.static_optimal.toFixed(1)} × 무빙 {recommendation.moving_optimal.toFixed(1)}
-              {' '}(비율 {(recommendation.movement_ratio * 100).toFixed(0)}%)
+              정적 {recommendation.staticOptimal.toFixed(1)} × 무빙 {recommendation.movingOptimal.toFixed(1)}
+              {' '}(비율 {(recommendation.movementRatio * 100).toFixed(0)}%)
             </div>
             <div className="movement-editor__rec-direction">
               {recommendation.direction}
@@ -303,17 +303,17 @@ export default function MovementEditor({ onBack }: Props) {
           <tbody>
             {presets.map((p, i) => (
               <tr
-                key={p.game_id}
+                key={p.gameId}
                 className={i === selectedIdx ? 'row-selected' : ''}
                 onClick={() => selectPreset(i)}
                 style={{ cursor: 'pointer' }}
               >
                 <td>{p.name}</td>
-                <td>{p.max_speed}</td>
-                <td>{p.stop_time}s</td>
-                <td>{ACCEL_LABELS[p.accel_type] ?? p.accel_type}</td>
-                <td>{p.air_control}</td>
-                <td>{p.cs_bonus}x</td>
+                <td>{p.maxSpeed}</td>
+                <td>{p.stopTime}s</td>
+                <td>{ACCEL_LABELS[p.accelType] ?? p.accelType}</td>
+                <td>{p.airControl}</td>
+                <td>{p.csBonus}x</td>
               </tr>
             ))}
           </tbody>

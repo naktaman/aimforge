@@ -91,8 +91,8 @@ export function ZoomCalibrationSetup({ onStart, onBack }: ZoomCalibrationSetupPr
                   checked={selectedProfileIds.includes(p.id)}
                   onChange={() => toggleProfile(p.id)}
                 />
-                <span className="scope-name">{p.scope_name}</span>
-                <span className="scope-ratio">{p.zoom_ratio}x</span>
+                <span className="scope-name">{p.scopeName}</span>
+                <span className="scope-ratio">{p.zoomRatio}x</span>
                 {recommendedIndices.includes(i) && (
                   <span className="ai-badge">AI</span>
                 )}

@@ -43,7 +43,7 @@ function ClickVectorScatter({ vectors }: { vectors: ClickVector[] }) {
       .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
     // 스케일 계산
-    const maxVal = d3.max(vectors, v => Math.max(Math.abs(v.dx_deg), Math.abs(v.dy_deg))) ?? 20;
+    const maxVal = d3.max(vectors, v => Math.max(Math.abs(v.dxDeg), Math.abs(v.dyDeg))) ?? 20;
     const range = maxVal * 1.2;
 
     const xScale = d3.scaleLinear().domain([-range, range]).range([0, w]);
@@ -73,10 +73,10 @@ function ClickVectorScatter({ vectors }: { vectors: ClickVector[] }) {
       .data(vectors)
       .enter()
       .append('circle')
-      .attr('cx', d => xScale(d.dx_deg))
-      .attr('cy', d => yScale(d.dy_deg))
+      .attr('cx', d => xScale(d.dxDeg))
+      .attr('cy', d => yScale(d.dyDeg))
       .attr('r', 4)
-      .attr('fill', d => MOTOR_COLORS[d.motor_region] || '#888')
+      .attr('fill', d => MOTOR_COLORS[d.motorRegion] || '#888')
       .attr('opacity', 0.7)
       .attr('stroke', d => d.overshoot ? '#e94560' : 'none')
       .attr('stroke-width', d => d.overshoot ? 2 : 0);
@@ -102,7 +102,7 @@ function GmmHistogram({ vectors, gmm }: { vectors: ClickVector[]; gmm: GmmCluste
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
-    const magnitudes = vectors.map(v => v.magnitude_deg);
+    const magnitudes = vectors.map(v => v.magnitudeDeg);
     const width = 400;
     const height = 250;
     const margin = { top: 20, right: 20, bottom: 40, left: 50 };
@@ -165,8 +165,8 @@ function GmmHistogram({ vectors, gmm }: { vectors: ClickVector[]; gmm: GmmCluste
           .attr('stroke', color).attr('stroke-width', 2).attr('stroke-dasharray', '4,2');
       };
 
-      drawGaussian(gmm.cluster_a.mean, gmm.cluster_a.std_dev, gmm.cluster_a.weight, '#4ade80');
-      drawGaussian(gmm.cluster_b.mean, gmm.cluster_b.std_dev, gmm.cluster_b.weight, '#f5a623');
+      drawGaussian(gmm.clusterA.mean, gmm.clusterA.stdDev, gmm.clusterA.weight, '#4ade80');
+      drawGaussian(gmm.clusterB.mean, gmm.clusterB.stdDev, gmm.clusterB.weight, '#f5a623');
     }
 
     // X축 라벨
@@ -221,7 +221,7 @@ export default function TrajectoryAnalysis({ onBack, trialId: initialTrialId }: 
         </button>
         {result && (
           <span className="text-sm text-muted">
-            총 {result.total_clicks}개 클릭 분석됨
+            총 {result.totalClicks}개 클릭 분석됨
           </span>
         )}
       </div>
@@ -233,7 +233,7 @@ export default function TrajectoryAnalysis({ onBack, trialId: initialTrialId }: 
             {/* 산점도 카드 */}
             <div className="glass-card glass-card--compact">
               <h3 className="page-section__title">클릭 벡터 분포</h3>
-              <ClickVectorScatter vectors={result.click_vectors} />
+              <ClickVectorScatter vectors={result.clickVectors} />
               {/* 범례 */}
               <div className="traj-legend">
                 {Object.entries(MOTOR_COLORS).map(([region, color]) => (
@@ -252,11 +252,11 @@ export default function TrajectoryAnalysis({ onBack, trialId: initialTrialId }: 
             {/* GMM 히스토그램 카드 */}
             <div className="glass-card glass-card--compact">
               <h3 className="page-section__title">이동 크기 분포 (GMM)</h3>
-              <GmmHistogram vectors={result.click_vectors} gmm={result.gmm} />
+              <GmmHistogram vectors={result.clickVectors} gmm={result.gmm} />
               {result.gmm && (
                 <div className="text-sm text-muted" style={{ textAlign: 'center', marginTop: 8 }}>
-                  분리도: {(result.gmm.separation_score * 100).toFixed(0)}%
-                  {result.gmm.bimodal_detected && (
+                  분리도: {(result.gmm.separationScore * 100).toFixed(0)}%
+                  {result.gmm.bimodalDetected && (
                     <span className="badge--warning" style={{ marginLeft: 12 }}>이봉 분포 감지</span>
                   )}
                 </div>
@@ -271,30 +271,30 @@ export default function TrajectoryAnalysis({ onBack, trialId: initialTrialId }: 
               <DiagCard
                 label="행동 유형"
                 value={
-                  result.diagnosis.current_behavior === 'overshoot_dominant' ? '오버슈팅 우세' :
-                  result.diagnosis.current_behavior === 'undershoot_dominant' ? '언더슈팅 우세' :
-                  result.diagnosis.current_behavior === 'balanced' ? '균형' : '데이터 부족'
+                  result.diagnosis.currentBehavior === 'overshoot_dominant' ? '오버슈팅 우세' :
+                  result.diagnosis.currentBehavior === 'undershoot_dominant' ? '언더슈팅 우세' :
+                  result.diagnosis.currentBehavior === 'balanced' ? '균형' : '데이터 부족'
                 }
                 color={
-                  result.diagnosis.current_behavior === 'balanced' ? '#4ade80' :
-                  result.diagnosis.current_behavior === 'insufficient_data' ? '#888' : '#f5a623'
+                  result.diagnosis.currentBehavior === 'balanced' ? '#4ade80' :
+                  result.diagnosis.currentBehavior === 'insufficient_data' ? '#888' : '#f5a623'
                 }
               />
               <DiagCard
                 label="일관성"
-                value={`${result.diagnosis.consistency_score.toFixed(0)}점`}
-                color={result.diagnosis.consistency_score > 70 ? '#4ade80' : '#f5a623'}
+                value={`${result.diagnosis.consistencyScore.toFixed(0)}점`}
+                color={result.diagnosis.consistencyScore > 70 ? '#4ade80' : '#f5a623'}
               />
               <DiagCard
                 label="신뢰도"
                 value={`${(result.diagnosis.confidence * 100).toFixed(0)}%`}
                 color="#60a5fa"
               />
-              {result.diagnosis.recommended_adjustment !== 0 && (
+              {result.diagnosis.recommendedAdjustment !== 0 && (
                 <DiagCard
                   label="권장 조정"
-                  value={`${result.diagnosis.recommended_adjustment > 0 ? '+' : ''}${result.diagnosis.recommended_adjustment.toFixed(1)} cm/360`}
-                  color={result.diagnosis.recommended_adjustment > 0 ? '#f5a623' : '#60a5fa'}
+                  value={`${result.diagnosis.recommendedAdjustment > 0 ? '+' : ''}${result.diagnosis.recommendedAdjustment.toFixed(1)} cm/360`}
+                  color={result.diagnosis.recommendedAdjustment > 0 ? '#f5a623' : '#60a5fa'}
                 />
               )}
             </div>

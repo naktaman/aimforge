@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 
 /// 훈련 처방 항목 — 약점 분석 후 추천되는 시나리오 + 파라미터
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TrainingPrescription {
     pub weakness: String,
     pub scenario_type: String,
@@ -33,6 +34,7 @@ pub enum StageCategory {
 
 /// 벤치마크 난이도 프리셋 (고정 파라미터, 비교용)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BenchmarkPreset {
     pub name: String,
     pub target_size_deg: f64,
@@ -43,6 +45,7 @@ pub struct BenchmarkPreset {
 
 /// 난이도 조절 파라미터 — 3층 구조 (벤치마크/수동/자동적응)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DifficultyConfig {
     /// 난이도 모드: "benchmark", "manual", "adaptive"
     pub mode: String,
@@ -73,6 +76,7 @@ impl Default for DifficultyConfig {
 
 /// 스테이지 결과 — 프론트엔드에서 전달
 #[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct StageResult {
     pub profile_id: i64,
     pub stage_type: String,
@@ -98,6 +102,7 @@ pub struct StageResult {
 
 /// DNA 기반 추천 결과
 #[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct StageRecommendation {
     pub stage_type: String,
     pub category: String,

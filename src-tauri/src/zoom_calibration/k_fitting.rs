@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 /// K 피팅 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct KFitResult {
     /// 피팅된 k 값
     pub k_value: f64,
@@ -23,6 +24,7 @@ pub struct KFitResult {
 
 /// 피팅 품질 등급
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum KQuality {
     /// 분산 < 0.05 — 안정적, 신뢰 가능
     Low,
@@ -34,6 +36,7 @@ pub enum KQuality {
 
 /// 피팅에 사용된 데이터 포인트
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct KDataPoint {
     /// 줌 비율 (예: 2.0, 4.0)
     pub zoom_ratio: f64,
@@ -47,6 +50,7 @@ pub struct KDataPoint {
 
 /// 구간별 k 값 (고분산 시)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PiecewiseK {
     /// 시작 줌 비율
     pub ratio_start: f64,
@@ -151,7 +155,7 @@ fn compute_piecewise_k(hipfire_fov: f64, data: &[KDataPoint]) -> Vec<PiecewiseK>
 
     // 줌 비율 기준 정렬된 데이터 사용
     let mut sorted = data.to_vec();
-    sorted.sort_by(|a, b| a.zoom_ratio.partial_cmp(&b.zoom_ratio).unwrap());
+    sorted.sort_by(|a, b| a.zoom_ratio.partial_cmp(&b.zoom_ratio).unwrap_or(std::cmp::Ordering::Equal));
 
     for pair in sorted.windows(2) {
         let a = &pair[0];
@@ -217,7 +221,7 @@ pub fn interpolate_multiplier_piecewise(
             if zoom_ratio < pieces[0].ratio_start {
                 pieces[0].k
             } else {
-                pieces.last().unwrap().k
+                pieces.last().map(|p| p.k).unwrap_or(1.0)
             }
         });
 

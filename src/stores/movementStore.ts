@@ -22,23 +22,23 @@ interface MovementState {
   loadProfiles: (gameId: number) => Promise<void>;
   /** 커스텀 프로필 저장 */
   saveProfile: (params: {
-    game_id: number;
+    gameId: number;
     name: string;
-    max_speed: number;
-    stop_time: number;
-    accel_type: string;
-    air_control: number;
-    cs_bonus: number;
+    maxSpeed: number;
+    stopTime: number;
+    accelType: string;
+    airControl: number;
+    csBonus: number;
   }) => Promise<number>;
   /** 프로필 수정 */
   updateProfile: (params: {
     id: number;
     name: string;
-    max_speed: number;
-    stop_time: number;
-    accel_type: string;
-    air_control: number;
-    cs_bonus: number;
+    maxSpeed: number;
+    stopTime: number;
+    accelType: string;
+    airControl: number;
+    csBonus: number;
   }) => Promise<void>;
   /** 프로필 삭제 */
   deleteProfile: (id: number) => Promise<void>;
@@ -46,18 +46,18 @@ interface MovementState {
   calculateRecommendation: (staticOpt: number, movingOpt: number, ratio: number) => Promise<void>;
   /** JSON 내보내기 — 파일 경로 반환 */
   exportProfile: (params: {
-    game_id: string;
+    gameId: string;
     name: string;
-    max_speed: number;
-    stop_time: number;
-    accel_type: string;
-    air_control: number;
-    cs_bonus: number;
+    maxSpeed: number;
+    stopTime: number;
+    accelType: string;
+    airControl: number;
+    csBonus: number;
   }) => Promise<string | null>;
   /** JSON 가져오기 — 프리셋 반환 */
   importProfile: (jsonString: string) => Promise<MovementPreset | null>;
-  /** 벽 도달 시간으로 max_speed 캘리브레이션 */
-  calibrateMaxSpeed: (gameId: string, distance: number, timeSec: number) => Promise<{ calculated_max_speed: number; distance_used: number } | null>;
+  /** 벽 도달 시간으로 maxSpeed 캘리브레이션 */
+  calibrateMaxSpeed: (gameId: string, distance: number, timeSec: number) => Promise<{ calculatedMaxSpeed: number; distanceUsed: number } | null>;
   /** 초기화 */
   clear: () => void;
 }
@@ -76,7 +76,7 @@ export const useMovementStore = create<MovementState>((set) => ({
   loadProfiles: async (gameId) => {
     set({ isLoading: true });
     const profiles = await safeInvoke<MovementProfileRow[]>('get_movement_profiles', {
-      params: { game_id: gameId },
+      params: { gameId: gameId },
     });
     set({ profiles: profiles ?? [], isLoading: false });
   },
@@ -97,9 +97,9 @@ export const useMovementStore = create<MovementState>((set) => ({
   calculateRecommendation: async (staticOpt, movingOpt, ratio) => {
     const rec = await safeInvoke<WeightedRecommendation>('calculate_weighted_recommendation', {
       params: {
-        static_optimal: staticOpt,
-        moving_optimal: movingOpt,
-        movement_ratio: ratio,
+        staticOptimal: staticOpt,
+        movingOptimal: movingOpt,
+        movementRatio: ratio,
       },
     });
     set({ recommendation: rec ?? null });
@@ -118,9 +118,9 @@ export const useMovementStore = create<MovementState>((set) => ({
   },
 
   calibrateMaxSpeed: async (gameId, distance, timeSec) => {
-    const result = await safeInvoke<{ calculated_max_speed: number; distance_used: number }>(
+    const result = await safeInvoke<{ calculatedMaxSpeed: number; distanceUsed: number }>(
       'calibrate_max_speed',
-      { params: { game_id: gameId, distance_units: distance, measured_time_sec: timeSec } },
+      { params: { gameId: gameId, distanceUnits: distance, measuredTimeSec: timeSec } },
     );
     return result;
   },

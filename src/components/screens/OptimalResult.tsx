@@ -17,8 +17,8 @@ export function OptimalResult({ result, conversions, onBack }: OptimalResultProp
 
   /** 결과 텍스트 포맷 (클립보드용) */
   const formatResultText = () => {
-    let text = `AimForge 최적 감도: ${result.recommended_cm360.toFixed(1)} cm/360\n`;
-    text += `성능 점수: ${(result.recommended_score * 100).toFixed(0)}점\n`;
+    let text = `AimForge 최적 감도: ${result.recommendedCm360.toFixed(1)} cm/360\n`;
+    text += `성능 점수: ${(result.recommendedScore * 100).toFixed(0)}점\n`;
     text += `신뢰도: ${result.significance.significant ? '통계적으로 유의미' : '추가 테스트 권장'}\n\n`;
     if (conversions.length > 0) {
       text += '게임별 변환:\n';
@@ -41,9 +41,9 @@ export function OptimalResult({ result, conversions, onBack }: OptimalResultProp
   };
 
   /** 효과 크기 라벨 */
-  const effectLabel = result.significance.effect_size === 'large'
+  const effectLabel = result.significance.effectSize === 'large'
     ? '큰 차이'
-    : result.significance.effect_size === 'medium'
+    : result.significance.effectSize === 'medium'
     ? '중간 차이'
     : '작은 차이';
 
@@ -58,11 +58,11 @@ export function OptimalResult({ result, conversions, onBack }: OptimalResultProp
       >
         <div className="optimal-result-label">최적 감도</div>
         <div className="optimal-result-value">
-          {result.recommended_cm360.toFixed(1)}
+          {result.recommendedCm360.toFixed(1)}
           <span className="optimal-result-unit">cm/360</span>
         </div>
         <div className="optimal-result-score">
-          성능 점수 {(result.recommended_score * 100).toFixed(0)}점
+          성능 점수 {(result.recommendedScore * 100).toFixed(0)}점
         </div>
       </motion.div>
 
@@ -70,7 +70,7 @@ export function OptimalResult({ result, conversions, onBack }: OptimalResultProp
       <div className="optimal-result-stats">
         <div className="optimal-result-stat">
           <span className="optimal-result-stat-label">총 라운드</span>
-          <span className="optimal-result-stat-value">{result.total_iterations}</span>
+          <span className="optimal-result-stat-value">{result.totalIterations}</span>
         </div>
         <div className="optimal-result-stat">
           <span className="optimal-result-stat-label">신뢰도</span>
@@ -82,7 +82,7 @@ export function OptimalResult({ result, conversions, onBack }: OptimalResultProp
           <span className="optimal-result-stat-label">효과 크기</span>
           <span className="optimal-result-stat-value">{effectLabel}</span>
         </div>
-        {result.bimodal_detected && (
+        {result.bimodalDetected && (
           <div className="optimal-result-stat optimal-result-stat-warn">
             <span className="optimal-result-stat-label">이봉 감지</span>
             <span className="optimal-result-stat-value">

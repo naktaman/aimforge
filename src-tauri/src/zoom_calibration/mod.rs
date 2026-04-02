@@ -24,6 +24,7 @@ use serde::{Deserialize, Serialize};
 
 /// 줌 캘리브레이션 페이즈
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum ZoomPhase {
     /// Phase A — 줌 상태 에이밍
     Steady,
@@ -35,6 +36,7 @@ pub enum ZoomPhase {
 
 /// 줌 프로파일 정보 (DB에서 로드)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ZoomProfileInfo {
     /// DB ID
     pub id: i64,
@@ -52,6 +54,7 @@ pub struct ZoomProfileInfo {
 
 /// 페이즈별 가중치
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ZoomPhaseWeights {
     pub steady: f64,
     pub correction: f64,
@@ -60,6 +63,7 @@ pub struct ZoomPhaseWeights {
 
 /// 비율별 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ZoomRatioResult {
     /// 줌 프로파일 DB ID
     pub zoom_profile_id: i64,
@@ -87,6 +91,7 @@ pub struct ZoomRatioResult {
 
 /// 다음 트라이얼 정보
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ZoomTrialAction {
     /// 현재 비율 인덱스
     pub ratio_index: usize,
@@ -106,6 +111,7 @@ pub struct ZoomTrialAction {
 
 /// 트라이얼 제출 피드백
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ZoomTrialFeedback {
     /// 현재 비율 수렴 여부
     pub ratio_converged: bool,
@@ -123,6 +129,7 @@ pub struct ZoomTrialFeedback {
 
 /// 줌 캘리브레이션 최종 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ZoomCalibrationResult {
     /// 비율별 결과
     pub ratio_results: Vec<ZoomRatioResult>,
@@ -136,6 +143,7 @@ pub struct ZoomCalibrationResult {
 
 /// 예측 배율 (측정 또는 보간)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PredictedMultiplier {
     /// 스코프 이름
     pub scope_name: String,
@@ -149,6 +157,7 @@ pub struct PredictedMultiplier {
 
 /// K 조정 후 새 예측
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AdjustedPredictions {
     /// 조정된 k 값
     pub k_value: f64,
@@ -606,7 +615,7 @@ impl ZoomCalibrationEngine {
             .enumerate()
             .map(|(i, p)| (i, p.zoom_ratio))
             .collect();
-        indices.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap());
+        indices.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
 
         let step = (indices.len() - 1) as f64 / (max_count - 1) as f64;
         let mut selected = Vec::new();
@@ -633,6 +642,7 @@ impl ZoomCalibrationEngine {
 
 /// 캘리브레이션 상태 (UI 업데이트용)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ZoomCalibrationStatus {
     pub current_ratio_index: usize,
     pub total_ratios: usize,

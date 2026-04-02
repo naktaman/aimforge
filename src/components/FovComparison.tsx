@@ -74,15 +74,15 @@ export default function FovComparison({ onBack, profileId }: Props) {
             <tbody>
               {results.map((r) => (
                 <tr key={r.id}>
-                  <td className={fovColorClass(r.fov_tested)}>
-                    {r.fov_tested}°
+                  <td className={fovColorClass(r.fovTested)}>
+                    {r.fovTested}°
                   </td>
-                  <td>{r.scenario_type}</td>
+                  <td>{r.scenarioType}</td>
                   <td>
-                    {r.peripheral_score != null ? r.peripheral_score.toFixed(1) : '-'}
+                    {r.peripheralScore != null ? r.peripheralScore.toFixed(1) : '-'}
                   </td>
                   <td>
-                    {r.center_score != null ? r.center_score.toFixed(1) : '-'}
+                    {r.centerScore != null ? r.centerScore.toFixed(1) : '-'}
                   </td>
                   <td>{r.score.toFixed(1)}</td>
                 </tr>
@@ -111,7 +111,7 @@ export default function FovComparison({ onBack, profileId }: Props) {
           {/* 추천 FOV 카드 */}
           <div className="fov-recommendation">
             <div className="fov-recommendation__value">
-              추천 FOV: {recommendation.recommended_fov}°
+              추천 FOV: {recommendation.recommendedFov}°
             </div>
             <div className="fov-recommendation__reason">
               {recommendation.reason}
@@ -121,7 +121,7 @@ export default function FovComparison({ onBack, profileId }: Props) {
           {/* FOV별 비교 바 */}
           <h4>FOV별 비교</h4>
           {recommendation.comparisons.map((comp) => {
-            const isRecommended = Math.abs(comp.fov - recommendation.recommended_fov) < 0.1;
+            const isRecommended = Math.abs(comp.fov - recommendation.recommendedFov) < 0.1;
             return (
               <div
                 key={comp.fov}
@@ -136,18 +136,18 @@ export default function FovComparison({ onBack, profileId }: Props) {
                   {/* Peripheral / Center 점수 표시 */}
                   <div className="fov-bar__scores">
                     <span>
-                      Peripheral: {comp.avg_peripheral.toFixed(1)}
-                      {comp.peripheral_delta_pct !== 0 && (
-                        <span className={comp.peripheral_delta_pct > 0 ? 'delta--positive' : 'delta--negative'}>
-                          {' '}({comp.peripheral_delta_pct > 0 ? '+' : ''}{comp.peripheral_delta_pct.toFixed(1)}%)
+                      Peripheral: {comp.avgPeripheral.toFixed(1)}
+                      {comp.peripheralDeltaPct !== 0 && (
+                        <span className={comp.peripheralDeltaPct > 0 ? 'delta--positive' : 'delta--negative'}>
+                          {' '}({comp.peripheralDeltaPct > 0 ? '+' : ''}{comp.peripheralDeltaPct.toFixed(1)}%)
                         </span>
                       )}
                     </span>
                     <span>
-                      Center: {comp.avg_center.toFixed(1)}
-                      {comp.center_delta_pct !== 0 && (
-                        <span className={comp.center_delta_pct > -5 ? 'delta--positive' : 'delta--negative'}>
-                          {' '}({comp.center_delta_pct > 0 ? '+' : ''}{comp.center_delta_pct.toFixed(1)}%)
+                      Center: {comp.avgCenter.toFixed(1)}
+                      {comp.centerDeltaPct !== 0 && (
+                        <span className={comp.centerDeltaPct > -5 ? 'delta--positive' : 'delta--negative'}>
+                          {' '}({comp.centerDeltaPct > 0 ? '+' : ''}{comp.centerDeltaPct.toFixed(1)}%)
                         </span>
                       )}
                     </span>

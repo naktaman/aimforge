@@ -158,27 +158,27 @@ function ComparisonResult({ comparison }: { comparison: ComparisonType }) {
 
   useEffect(() => {
     (async () => {
-      const ref = await invoke<AimDnaProfile | null>('get_aim_dna', { params: { profile_id: comparison.ref_profile_id } });
-      const target = await invoke<AimDnaProfile | null>('get_aim_dna', { params: { profile_id: comparison.target_profile_id } });
+      const ref = await invoke<AimDnaProfile | null>('get_aim_dna', { params: { profileId: comparison.refProfileId } });
+      const target = await invoke<AimDnaProfile | null>('get_aim_dna', { params: { profileId: comparison.targetProfileId } });
       setRefDna(ref);
       setTargetDna(target);
     })();
-  }, [comparison.ref_profile_id, comparison.target_profile_id]);
+  }, [comparison.refProfileId, comparison.targetProfileId]);
 
   const refAxes = refDna ? computeRadarAxes(refDna) : [];
   const targetAxes = targetDna ? computeRadarAxes(targetDna) : [];
-  const sortedDeltas = [...comparison.deltas].sort((a, b) => Math.abs(b.delta_pct) - Math.abs(a.delta_pct));
+  const sortedDeltas = [...comparison.deltas].sort((a, b) => Math.abs(b.deltaPct) - Math.abs(a.deltaPct));
 
   return (
     <div>
       {/* 전체 갭 요약 */}
       <div className="cg-gap-summary page-section">
         <div className="stat-value stat-value--accent stat-value--big">
-          {comparison.overall_gap.toFixed(1)}%
+          {comparison.overallGap.toFixed(1)}%
         </div>
         <div className="stat-label">전체 갭 크기</div>
         <p className="text-sm text-muted cg-gap-summary__adapt">
-          예상 적응 기간: <strong className="text-accent">{comparison.predicted_days.toFixed(0)}일</strong>
+          예상 적응 기간: <strong className="text-accent">{comparison.predictedDays.toFixed(0)}일</strong>
         </p>
       </div>
 
@@ -203,10 +203,10 @@ function ComparisonResult({ comparison }: { comparison: ComparisonType }) {
           {sortedDeltas.map(d => (
             <tr key={d.feature}>
               <td>{d.feature}</td>
-              <td className="text-right cg-ref-value">{d.ref_value.toFixed(3)}</td>
-              <td className="text-right cg-target-value">{d.target_value.toFixed(3)}</td>
-              <td className={`text-right ${d.delta_pct > 0 ? 'cg-delta-pos' : 'cg-delta-neg'}`}>
-                {d.delta_pct > 0 ? '+' : ''}{d.delta_pct.toFixed(1)}%
+              <td className="text-right cg-ref-value">{d.refValue.toFixed(3)}</td>
+              <td className="text-right cg-target-value">{d.targetValue.toFixed(3)}</td>
+              <td className={`text-right ${d.deltaPct > 0 ? 'cg-delta-pos' : 'cg-delta-neg'}`}>
+                {d.deltaPct > 0 ? '+' : ''}{d.deltaPct.toFixed(1)}%
               </td>
               <td className="text-center">
                 <span className={SEVERITY_BADGE[d.severity] ?? 'badge'}>
@@ -227,7 +227,7 @@ function ComparisonResult({ comparison }: { comparison: ComparisonType }) {
               <div key={i} className="glass-card glass-card--compact">
                 <div className="cg-cause-header">
                   <strong className="text-accent">
-                    {CAUSE_LABELS[cause.cause_type] ?? cause.cause_type}
+                    {CAUSE_LABELS[cause.causeType] ?? cause.causeType}
                   </strong>
                   <span className="text-sm text-muted">
                     심각도 {cause.severity.toFixed(0)}%
@@ -235,7 +235,7 @@ function ComparisonResult({ comparison }: { comparison: ComparisonType }) {
                 </div>
                 <p className="text-sm text-muted cg-cause-desc">{cause.description}</p>
                 <div className="cg-tag-list">
-                  {cause.contributing_features.map(f => (
+                  {cause.contributingFeatures.map(f => (
                     <span key={f} className="badge">{f}</span>
                   ))}
                 </div>
@@ -249,14 +249,14 @@ function ComparisonResult({ comparison }: { comparison: ComparisonType }) {
       <div className="page-section">
         <h3 className="page-section__title">개선 플랜</h3>
         <div className="cg-timeline">
-          {comparison.improvement_plan.phases.map(phase => (
+          {comparison.improvementPlan.phases.map(phase => (
             <div key={phase.phase} className="cg-timeline__phase">
               {/* Phase 마커 */}
               <div className="cg-timeline__marker">{phase.phase}</div>
               <div className="cg-timeline__content">
                 <div className="cg-timeline__phase-header">
                   <strong>{phase.name}</strong>
-                  <span className="badge badge--warning">{phase.duration_weeks}</span>
+                  <span className="badge badge--warning">{phase.durationWeeks}</span>
                 </div>
                 <ul className="cg-timeline__actions text-sm text-muted">
                   {phase.actions.map((a, i) => <li key={i}>{a}</li>)}
@@ -275,24 +275,24 @@ function ComparisonResult({ comparison }: { comparison: ComparisonType }) {
       </div>
 
       {/* 타임라인 예측 상세 */}
-      {comparison.timeline && comparison.timeline.per_feature.length > 0 && (
+      {comparison.timeline && comparison.timeline.perFeature.length > 0 && (
         <div className="page-section">
           <h3 className="page-section__title">피처별 예상 기간</h3>
           <div className="cg-feature-bars">
-            {comparison.timeline.per_feature
-              .sort((a, b) => b.estimated_days - a.estimated_days)
+            {comparison.timeline.perFeature
+              .sort((a, b) => b.estimatedDays - a.estimatedDays)
               .slice(0, 8)
               .map(ft => (
                 <div key={ft.feature} className="cg-feature-bar">
                   <span className="cg-feature-bar__label text-sm text-muted">{ft.feature}</span>
                   <div className="cg-feature-bar__track">
                     <div
-                      className={`cg-feature-bar__fill ${ft.feature === comparison.timeline!.bottleneck_feature ? 'cg-feature-bar__fill--bottleneck' : ''}`}
-                      style={{ width: `${Math.min(ft.estimated_days / (comparison.timeline!.total_days || 1) * 100, 100)}%` }}
+                      className={`cg-feature-bar__fill ${ft.feature === comparison.timeline!.bottleneckFeature ? 'cg-feature-bar__fill--bottleneck' : ''}`}
+                      style={{ width: `${Math.min(ft.estimatedDays / (comparison.timeline!.totalDays || 1) * 100, 100)}%` }}
                     />
                   </div>
                   <span className="cg-feature-bar__days text-sm text-muted">
-                    {ft.estimated_days.toFixed(0)}일
+                    {ft.estimatedDays.toFixed(0)}일
                   </span>
                 </div>
               ))}

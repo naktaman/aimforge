@@ -100,15 +100,15 @@ function classifySensBand(cm360: number): SensBand {
 /** DNA에서 추정 cm/360 범위 도출 */
 function estimateSensBand(dna: AimDnaProfile | null): SensBand | null {
   if (!dna) return null;
-  // effective_range가 넓으면 저감도, 좁으면 고감도
-  const range = dna.effective_range;
+  // effectiveRange가 넓으면 저감도, 좁으면 고감도
+  const range = dna.effectiveRange;
   if (range !== null) {
     if (range > 120) return 'low';
     if (range < 60) return 'high';
     return 'mid';
   }
-  // wrist_arm_ratio: 높으면 고감도, 낮으면 저감도
-  const war = dna.wrist_arm_ratio;
+  // wristArmRatio: 높으면 고감도, 낮으면 저감도
+  const war = dna.wristArmRatio;
   if (war !== null) {
     if (war > 0.6) return 'high';
     if (war < 0.35) return 'low';

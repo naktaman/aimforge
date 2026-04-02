@@ -4,20 +4,20 @@
 
 /** Rust MouseEvent와 대응하는 프론트엔드 타입 */
 export interface MouseEvent {
-  delta_x: number;
-  delta_y: number;
-  timestamp_us: number;
+  deltaX: number;
+  deltaY: number;
+  timestampUs: number;
   button: 'Left' | 'Right' | 'Middle' | null;
 }
 
 /** Rust MouseBatch와 대응 — drain_mouse_batch 반환값 */
 export interface MouseBatch {
   events: MouseEvent[];
-  total_dx: number;
-  total_dy: number;
-  button_events: MouseEvent[];
+  totalDx: number;
+  totalDy: number;
+  buttonEvents: MouseEvent[];
   /** 최신 이벤트의 QPC 타임스탬프 (µs) — 입력 레이턴시 계산용 */
-  latest_timestamp_us?: number;
+  latestTimestampUs?: number;
 }
 
 /** 퍼포먼스 오버레이 데이터 */
@@ -34,13 +34,13 @@ export interface GamePreset {
   id: string;
   name: string;
   yaw: number;
-  default_fov: number;
-  fov_type: 'horizontal' | 'vertical';
-  default_aspect_ratio: number;
+  defaultFov: number;
+  fovType: 'horizontal' | 'vertical';
+  defaultAspectRatio: number;
   /** 감도 최소 단위 (null이면 제한 없음) */
-  sens_step: number | null;
+  sensStep: number | null;
   /** 이동 시 감도 가중 비율 */
-  movement_ratio: number;
+  movementRatio: number;
 }
 
 /** 방식별 변환 결과 */
@@ -52,22 +52,22 @@ export interface ConversionResult {
 
 /** 6가지 변환 방식 동시 계산 결과 */
 export interface AllMethodsConversion {
-  src_game: string;
-  dst_game: string;
-  src_cm360: number;
-  src_fov_h: number;
-  dst_fov_h: number;
+  srcGame: string;
+  dstGame: string;
+  srcCm360: number;
+  srcFovH: number;
+  dstFovH: number;
   results: Record<string, ConversionResult>;
 }
 
 /** sens_step 스냅 결과 */
 export interface SnappedSensitivity {
-  floor_sens: number;
-  floor_cm360: number;
-  ceil_sens: number;
-  ceil_cm360: number;
-  recommended_sens: number;
-  recommended_cm360: number;
+  floorSens: number;
+  floorCm360: number;
+  ceilSens: number;
+  ceilCm360: number;
+  recommendedSens: number;
+  recommendedCm360: number;
 }
 
 /** 변환 방식 이름 */
@@ -363,11 +363,11 @@ export type BatteryPreset = 'TACTICAL' | 'MOVEMENT' | 'BR' | 'CUSTOM';
 export interface BatteryWeights {
   flick: number;
   tracking: number;
-  circular_tracking: number;
-  stochastic_tracking: number;
-  counter_strafe_flick: number;
-  micro_flick: number;
-  zoom_composite: number;
+  circularTracking: number;
+  stochasticTracking: number;
+  counterStrafeFlick: number;
+  microFlick: number;
+  zoomComposite: number;
 }
 
 /** 배터리 결과 */
@@ -385,99 +385,99 @@ export interface BatteryResult {
 
 /** 완성된 Aim DNA 프로파일 (Rust AimDnaProfile 대응) */
 export interface AimDnaProfile {
-  profile_id: number;
-  session_id: number;
-  flick_peak_velocity: number | null;
-  overshoot_avg: number | null;
-  direction_bias: number | null;
-  effective_range: number | null;
-  tracking_mad: number | null;
-  phase_lag: number | null;
+  profileId: number;
+  sessionId: number;
+  flickPeakVelocity: number | null;
+  overshootAvg: number | null;
+  directionBias: number | null;
+  effectiveRange: number | null;
+  trackingMad: number | null;
+  phaseLag: number | null;
   smoothness: number | null;
-  velocity_match: number | null;
-  micro_freq: number | null;
-  wrist_arm_ratio: number | null;
-  fitts_a: number | null;
-  fitts_b: number | null;
-  fatigue_decay: number | null;
-  pre_aim_ratio: number | null;
-  pre_fire_ratio: number | null;
-  sens_attributed_overshoot: number | null;
-  v_h_ratio: number | null;
-  finger_accuracy: number | null;
-  wrist_accuracy: number | null;
-  arm_accuracy: number | null;
-  motor_transition_angle: number | null;
-  type_label: string | null;
-  data_sufficiency?: Record<string, FeatureSufficiency>;
+  velocityMatch: number | null;
+  microFreq: number | null;
+  wristArmRatio: number | null;
+  fittsA: number | null;
+  fittsB: number | null;
+  fatigueDecay: number | null;
+  preAimRatio: number | null;
+  preFireRatio: number | null;
+  sensAttributedOvershoot: number | null;
+  vHRatio: number | null;
+  fingerAccuracy: number | null;
+  wristAccuracy: number | null;
+  armAccuracy: number | null;
+  motorTransitionAngle: number | null;
+  typeLabel: string | null;
+  dataSufficiency?: Record<string, FeatureSufficiency>;
 }
 
 /** 피처별 데이터 충족 상태 */
 export interface FeatureSufficiency {
   sufficient: boolean;
-  current_count: number;
-  required_count: number;
+  currentCount: number;
+  requiredCount: number;
 }
 
 /** DNA 추세 분석 결과 */
 export interface DnaTrendResult {
-  profile_id: number;
-  recalibration_recommended: boolean;
-  changed_features: FeatureTrendChange[];
-  stable_feature_count: number;
-  sessions_analyzed: number;
+  profileId: number;
+  recalibrationRecommended: boolean;
+  changedFeatures: FeatureTrendChange[];
+  stableFeatureCount: number;
+  sessionsAnalyzed: number;
 }
 
 /** 피처별 추세 변화 */
 export interface FeatureTrendChange {
   feature: string;
-  prior_avg: number;
-  recent_avg: number;
-  change_pct: number;
+  priorAvg: number;
+  recentAvg: number;
+  changePct: number;
   direction: string;
 }
 
 /** 레퍼런스 게임 감지 결과 */
 export interface ReferenceGameResult {
-  reference_profile_id: number | null;
+  referenceProfileId: number | null;
   scores: Array<[number, number]>;
 }
 
 /** 크로스게임 비교 히스토리 요약 */
 export interface CrossGameComparisonSummary {
   id: number;
-  profile_a_id: number;
-  profile_b_id: number;
-  overall_gap: number;
-  predicted_days: number;
-  created_at: string;
+  profileAId: number;
+  profileBId: number;
+  overallGap: number;
+  predictedDays: number;
+  createdAt: string;
 }
 
 /** Aim DNA 히스토리 항목 */
 export interface AimDnaHistoryEntry {
-  feature_name: string;
+  featureName: string;
   value: number;
-  measured_at: string;
+  measuredAt: string;
 }
 
 /** 세션 요약 */
 export interface SessionSummary {
   id: number;
   mode: string;
-  session_type: string;
-  started_at: string;
-  ended_at: string | null;
-  total_trials: number;
-  avg_fps: number | null;
+  sessionType: string;
+  startedAt: string;
+  endedAt: string | null;
+  totalTrials: number;
+  avgFps: number | null;
 }
 
 /** 트라이얼 요약 */
 export interface TrialSummary {
   id: number;
-  scenario_type: string;
-  cm360_tested: number;
-  composite_score: number;
-  created_at: string;
+  scenarioType: string;
+  cm360Tested: number;
+  compositeScore: number;
+  createdAt: string;
 }
 
 /** 세션 상세 (트라이얼 포함) */
@@ -715,17 +715,17 @@ export interface BenchmarkPreset {
 /** 피처별 델타 */
 export interface FeatureDelta {
   feature: string;
-  ref_value: number;
-  target_value: number;
-  delta_pct: number;
+  refValue: number;
+  targetValue: number;
+  deltaPct: number;
   severity: string;
 }
 
 /** 갭 원인 */
 export interface GapCause {
-  cause_type: string;
+  causeType: string;
   description: string;
-  contributing_features: string[];
+  contributingFeatures: string[];
   severity: number;
 }
 
@@ -733,30 +733,30 @@ export interface GapCause {
 export interface ImprovementPhase {
   phase: number;
   name: string;
-  duration_weeks: string;
+  durationWeeks: string;
   actions: string[];
-  target_metrics: string[];
+  targetMetrics: string[];
   scenarios: string[];
 }
 
 /** 크로스게임 비교 결과 */
 export interface CrossGameComparison {
-  ref_profile_id: number;
-  target_profile_id: number;
-  reference_game_id: number;
+  refProfileId: number;
+  targetProfileId: number;
+  referenceGameId: number;
   deltas: FeatureDelta[];
   causes: GapCause[];
-  overall_gap: number;
-  improvement_plan: { phases: ImprovementPhase[] };
-  predicted_days: number;
+  overallGap: number;
+  improvementPlan: { phases: ImprovementPhase[] };
+  predictedDays: number;
   timeline: TimelinePrediction;
 }
 
 /** 타임라인 예측 */
 export interface TimelinePrediction {
-  total_days: number;
-  bottleneck_feature: string;
-  per_feature: Array<{ feature: string; gap_pct: number; estimated_days: number }>;
+  totalDays: number;
+  bottleneckFeature: string;
+  perFeature: Array<{ feature: string; gapPct: number; estimatedDays: number }>;
   disclaimer: string;
 }
 
@@ -875,11 +875,11 @@ export const CROSSHAIR_PRESETS: CrosshairPreset[] = [
 /** 훈련 처방 항목 */
 export interface TrainingPrescription {
   weakness: string;
-  scenario_type: string;
-  scenario_params: Record<string, unknown>;
+  scenarioType: string;
+  scenarioParams: Record<string, unknown>;
   priority: number;
-  estimated_min: number;
-  source_type: 'single_game' | 'cross_game';
+  estimatedMin: number;
+  sourceType: 'single_game' | 'cross_game';
   description: string;
 }
 
@@ -887,87 +887,87 @@ export interface TrainingPrescription {
 
 /** Readiness 측정 입력 */
 export interface ReadinessInput {
-  profile_id: number;
-  flick_accuracy: number;
-  flick_avg_ttt_ms: number;
-  flick_avg_overshoot: number;
-  tracking_mad: number;
-  tracking_velocity_match: number;
+  profileId: number;
+  flickAccuracy: number;
+  flickAvgTttMs: number;
+  flickAvgOvershoot: number;
+  trackingMad: number;
+  trackingVelocityMatch: number;
 }
 
 /** Readiness 결과 */
 export interface ReadinessResult {
   score: number;
-  baseline_delta: BaselineDelta;
-  daily_advice: string;
+  baselineDelta: BaselineDelta;
+  dailyAdvice: string;
   category: 'peak' | 'ready' | 'moderate' | 'rest';
 }
 
 /** Baseline 대비 변화율 */
 export interface BaselineDelta {
-  flick_accuracy_pct: number;
-  ttt_pct: number;
-  overshoot_pct: number;
-  tracking_mad_pct: number;
-  velocity_match_pct: number;
+  flickAccuracyPct: number;
+  tttPct: number;
+  overshootPct: number;
+  trackingMadPct: number;
+  velocityMatchPct: number;
 }
 
 /** Readiness Score DB 행 */
 export interface ReadinessScoreRow {
   id: number;
-  profile_id: number;
+  profileId: number;
   score: number;
-  baseline_delta: string;
-  daily_advice: string | null;
-  measured_at: string;
+  baselineDelta: string;
+  dailyAdvice: string | null;
+  measuredAt: string;
 }
 
 // ========== Trajectory Analysis (Day 18) ==========
 
 /** 클릭 벡터 — 궤적 분석 결과 */
 export interface ClickVector {
-  dx_deg: number;
-  dy_deg: number;
-  magnitude_deg: number;
-  duration_ms: number;
-  peak_velocity: number;
-  end_velocity: number;
+  dxDeg: number;
+  dyDeg: number;
+  magnitudeDeg: number;
+  durationMs: number;
+  peakVelocity: number;
+  endVelocity: number;
   overshoot: boolean;
-  motor_region: 'finger' | 'wrist' | 'arm';
+  motorRegion: 'finger' | 'wrist' | 'arm';
   hit: boolean;
 }
 
 /** GMM 단일 클러스터 */
 export interface GmmCluster {
   mean: number;
-  std_dev: number;
+  stdDev: number;
   weight: number;
-  sample_count: number;
+  sampleCount: number;
 }
 
 /** GMM 2-컴포넌트 결과 */
 export interface GmmClusterResult {
-  cluster_a: GmmCluster;
-  cluster_b: GmmCluster;
-  separation_score: number;
-  bimodal_detected: boolean;
+  clusterA: GmmCluster;
+  clusterB: GmmCluster;
+  separationScore: number;
+  bimodalDetected: boolean;
 }
 
 /** 감도 진단 */
 export interface SensDiagnosis {
-  current_behavior: 'overshoot_dominant' | 'undershoot_dominant' | 'balanced' | 'insufficient_data';
-  consistency_score: number;
-  recommended_adjustment: number;
+  currentBehavior: 'overshoot_dominant' | 'undershoot_dominant' | 'balanced' | 'insufficient_data';
+  consistencyScore: number;
+  recommendedAdjustment: number;
   confidence: number;
   details: string;
 }
 
 /** 궤적 분석 통합 결과 */
 export interface TrajectoryAnalysisResult {
-  click_vectors: ClickVector[];
+  clickVectors: ClickVector[];
   gmm: GmmClusterResult | null;
   diagnosis: SensDiagnosis;
-  total_clicks: number;
+  totalClicks: number;
 }
 
 // ========== Style Transition (Day 18) ==========
@@ -975,30 +975,30 @@ export interface TrajectoryAnalysisResult {
 /** 스타일 전환 DB 행 */
 export interface StyleTransitionRow {
   id: number;
-  profile_id: number;
-  from_type: string;
-  to_type: string;
-  target_sens_range: string;
-  started_at: string;
-  current_phase: 'initial' | 'adaptation' | 'consolidation' | 'mastery';
-  plateau_detected: boolean;
-  completed_at: string | null;
+  profileId: number;
+  fromType: string;
+  toType: string;
+  targetSensRange: string;
+  startedAt: string;
+  currentPhase: 'initial' | 'adaptation' | 'consolidation' | 'mastery';
+  plateauDetected: boolean;
+  completedAt: string | null;
 }
 
 /** 피처 수렴 상태 */
 export interface FeatureConvergence {
-  feature_name: string;
-  convergence_pct: number;
-  target_direction: 'up' | 'down';
+  featureName: string;
+  convergencePct: number;
+  targetDirection: 'up' | 'down';
 }
 
 /** 전환 진행 상태 */
 export interface TransitionProgress {
   phase: string;
-  convergence_pct: number;
-  key_features_status: FeatureConvergence[];
-  plateau_detected: boolean;
-  estimated_days_remaining: number;
+  convergencePct: number;
+  keyFeaturesStatus: FeatureConvergence[];
+  plateauDetected: boolean;
+  estimatedDaysRemaining: number;
 }
 
 // ========== Progress Dashboard (Day 18) ==========
@@ -1006,62 +1006,62 @@ export interface TransitionProgress {
 /** 일별 통계 행 */
 export interface DailyStatRow {
   id: number;
-  profile_id: number;
-  stat_date: string;
-  scenario_type: string;
-  avg_score: number;
-  max_score: number;
-  sessions_count: number;
-  total_trials: number;
-  total_time_ms: number;
-  avg_accuracy: number;
+  profileId: number;
+  statDate: string;
+  scenarioType: string;
+  avgScore: number;
+  maxScore: number;
+  sessionsCount: number;
+  totalTrials: number;
+  totalTimeMs: number;
+  avgAccuracy: number;
 }
 
 /** 스킬 진행도 행 */
 export interface SkillProgressRow {
   id: number;
-  profile_id: number;
-  stage_type: string;
-  rolling_avg_score: number;
-  best_score: number;
-  total_sessions: number;
-  total_time_ms: number;
-  last_updated: string;
+  profileId: number;
+  stageType: string;
+  rollingAvgScore: number;
+  bestScore: number;
+  totalSessions: number;
+  totalTimeMs: number;
+  lastUpdated: string;
 }
 
 // ========== Movement System (Day 20) ==========
 
 /** 무브먼트 프리셋 — 게임별 이동 물리 파라미터 */
 export interface MovementPreset {
-  game_id: string;
+  gameId: string;
   name: string;
-  max_speed: number;
-  stop_time: number;
-  accel_type: string;
-  air_control: number;
-  cs_bonus: number;
+  maxSpeed: number;
+  stopTime: number;
+  accelType: string;
+  airControl: number;
+  csBonus: number;
 }
 
 /** 무브먼트 프로필 DB 행 */
 export interface MovementProfileRow {
   id: number;
-  game_id: number;
+  gameId: number;
   name: string;
-  max_speed: number;
-  stop_time: number;
-  accel_type: string;
-  air_control: number;
-  cs_bonus: number;
-  is_custom: boolean;
+  maxSpeed: number;
+  stopTime: number;
+  accelType: string;
+  airControl: number;
+  csBonus: number;
+  isCustom: boolean;
 }
 
 /** 가중 감도 추천 결과 */
 export interface WeightedRecommendation {
-  static_optimal: number;
-  moving_optimal: number;
-  movement_ratio: number;
-  final_cm360: number;
-  delta_from_static: number;
+  staticOptimal: number;
+  movingOptimal: number;
+  movementRatio: number;
+  finalCm360: number;
+  deltaFromStatic: number;
   direction: string;
 }
 
@@ -1070,31 +1070,31 @@ export interface WeightedRecommendation {
 /** FOV 테스트 결과 DB 행 */
 export interface FovProfileRow {
   id: number;
-  profile_id: number;
-  fov_tested: number;
-  scenario_type: string;
+  profileId: number;
+  fovTested: number;
+  scenarioType: string;
   score: number;
-  peripheral_score: number | null;
-  center_score: number | null;
-  created_at: string;
+  peripheralScore: number | null;
+  centerScore: number | null;
+  createdAt: string;
 }
 
 /** FOV별 비교 결과 */
 export interface FovComparison {
   fov: number;
-  avg_peripheral: number;
-  avg_center: number;
+  avgPeripheral: number;
+  avgCenter: number;
   composite: number;
-  peripheral_delta_pct: number;
-  center_delta_pct: number;
+  peripheralDeltaPct: number;
+  centerDeltaPct: number;
 }
 
 /** FOV 추천 결과 */
 export interface FovRecommendation {
-  recommended_fov: number;
+  recommendedFov: number;
   reason: string;
   comparisons: FovComparison[];
-  baseline_fov: number;
+  baselineFov: number;
 }
 
 // ========== Hardware Comparison (Day 20) ==========
@@ -1102,33 +1102,33 @@ export interface FovRecommendation {
 /** 하드웨어 콤보 DB 행 */
 export interface HardwareComboRow {
   id: number;
-  mouse_model: string;
+  mouseModel: string;
   dpi: number;
-  verified_dpi: number | null;
-  polling_rate: number | null;
-  mousepad_model: string | null;
-  created_at: string;
+  verifiedDpi: number | null;
+  pollingRate: number | null;
+  mousepadModel: string | null;
+  createdAt: string;
 }
 
 /** DNA 피처 델타 (하드웨어 간) */
 export interface DnaFeatureDelta {
   feature: string;
-  value_a: number;
-  value_b: number;
-  delta_pct: number;
+  valueA: number;
+  valueB: number;
+  deltaPct: number;
   status: 'improved' | 'degraded' | 'unchanged';
 }
 
 /** 하드웨어 비교 결과 */
 export interface HardwareComparison {
-  combo_a: HardwareComboRow;
-  combo_b: HardwareComboRow;
-  optimal_shift: number;
-  shift_pct: number;
-  shift_description: string;
-  dna_deltas: DnaFeatureDelta[];
-  improved_count: number;
-  degraded_count: number;
+  comboA: HardwareComboRow;
+  comboB: HardwareComboRow;
+  optimalShift: number;
+  shiftPct: number;
+  shiftDescription: string;
+  dnaDeltas: DnaFeatureDelta[];
+  improvedCount: number;
+  degradedCount: number;
   summary: string;
 }
 
@@ -1137,36 +1137,36 @@ export interface HardwareComparison {
 /** DNA 시계열 스냅샷 — 매 측정마다 5축 레이더 점수 저장 */
 export interface DnaSnapshot {
   id: number;
-  profile_id: number;
-  aim_dna_id: number;
-  flick_power: number;
-  tracking_precision: number;
-  motor_control: number;
+  profileId: number;
+  aimDnaId: number;
+  flickPower: number;
+  trackingPrecision: number;
+  motorControl: number;
   speed: number;
   consistency: number;
-  type_label: string | null;
-  cm360_sensitivity: number | null;
-  measured_at: string;
+  typeLabel: string | null;
+  cm360Sensitivity: number | null;
+  measuredAt: string;
 }
 
 /** 변경점 이벤트 — 기어/감도/그립/자세 변경 시 기록 */
 export interface DnaChangeEvent {
   id: number;
-  profile_id: number;
-  change_type: 'gear' | 'sensitivity' | 'grip' | 'posture';
-  before_value: string | null;
-  after_value: string;
+  profileId: number;
+  changeType: 'gear' | 'sensitivity' | 'grip' | 'posture';
+  beforeValue: string | null;
+  afterValue: string;
   description: string;
-  occurred_at: string;
+  occurredAt: string;
 }
 
 /** 단일 축 변화 */
 export interface AxisDelta {
   axis: string;
-  before_val: number;
-  after_val: number;
-  delta_abs: number;
-  delta_pct: number;
+  beforeVal: number;
+  afterVal: number;
+  deltaAbs: number;
+  deltaPct: number;
   direction: 'improved' | 'degraded' | 'stable';
 }
 
@@ -1180,8 +1180,8 @@ export interface SnapshotComparison {
 
 /** 정체기 감지 결과 */
 export interface StagnationResult {
-  profile_id: number;
-  stagnant_axes: string[];
-  is_stagnant: boolean;
+  profileId: number;
+  stagnantAxes: string[];
+  isStagnant: boolean;
   suggestions: string[];
 }

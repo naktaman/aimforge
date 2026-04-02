@@ -54,7 +54,7 @@ function DnaLineChart({ data, label, unit }: { data: AimDnaHistoryEntry[]; label
 
     // 데이터 파싱
     const parsed = data.map(d => ({
-      date: new Date(d.measured_at),
+      date: new Date(d.measuredAt),
       value: d.value,
     })).sort((a, b) => a.date.getTime() - b.date.getTime());
 
@@ -132,19 +132,19 @@ function skillBarClass(pct: number): string {
 
 /** 스킬 진행 카드 */
 function SkillCard({ skill }: { skill: SkillProgressRow }) {
-  const pct = Math.min(100, skill.rolling_avg_score);
+  const pct = Math.min(100, skill.rollingAvgScore);
   return (
     <div className="glass-card--compact">
       <div className="skill-card__name">
-        {skill.stage_type.replace(/_/g, ' ')}
+        {skill.stageType.replace(/_/g, ' ')}
       </div>
       <div className="skill-bar">
         <div className={skillBarClass(pct)} style={{ width: `${pct}%` }} />
       </div>
       <div className="skill-card__meta text-sm text-muted">
-        <span>평균 {skill.rolling_avg_score.toFixed(1)}</span>
-        <span>최고 {skill.best_score.toFixed(1)}</span>
-        <span>{skill.total_sessions}회</span>
+        <span>평균 {skill.rollingAvgScore.toFixed(1)}</span>
+        <span>최고 {skill.bestScore.toFixed(1)}</span>
+        <span>{skill.totalSessions}회</span>
       </div>
     </div>
   );
@@ -176,8 +176,8 @@ export default function ProgressDashboard({ onBack, profileId }: Props) {
   }, [profileId, timeRange, selectedFeature, loadDailyStats, loadSkillProgress, loadDnaTimeSeries, loadReadinessHistory]);
 
   // 일별 통계 — 총 연습 시간
-  const totalTimeMin = dailyStats.reduce((acc, s) => acc + s.total_time_ms, 0) / 60000;
-  const totalSessions = dailyStats.reduce((acc, s) => acc + s.sessions_count, 0);
+  const totalTimeMin = dailyStats.reduce((acc, s) => acc + s.totalTimeMs, 0) / 60000;
+  const totalSessions = dailyStats.reduce((acc, s) => acc + s.sessionsCount, 0);
 
   return (
     <div className="page page--wide">
@@ -198,7 +198,7 @@ export default function ProgressDashboard({ onBack, profileId }: Props) {
           <StatCard label="총 연습 시간" value={`${totalTimeMin.toFixed(0)}분`} />
           <StatCard label="평균 점수" value={
             dailyStats.length > 0
-              ? `${(dailyStats.reduce((a, s) => a + s.avg_score, 0) / dailyStats.length).toFixed(1)}`
+              ? `${(dailyStats.reduce((a, s) => a + s.avgScore, 0) / dailyStats.length).toFixed(1)}`
               : '-'
           } />
         </div>

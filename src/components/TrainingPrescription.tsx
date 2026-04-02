@@ -50,7 +50,7 @@ export default function TrainingPrescription({ onBack, onTrainingStart, profileI
   /** 필터 적용된 처방 목록 */
   const filtered = sourceFilter === 'all'
     ? prescriptions
-    : prescriptions.filter(p => p.source_type === sourceFilter);
+    : prescriptions.filter(p => p.sourceType === sourceFilter);
 
   return (
     <div className="page">
@@ -103,8 +103,8 @@ export default function TrainingPrescription({ onBack, onTrainingStart, profileI
             {/* 내용 */}
             <div className="prescription-body">
               <div className="prescription-tags">
-                <span className={`badge ${p.source_type === 'cross_game' ? 'badge--accent' : 'badge--info'}`}>
-                  {p.source_type === 'cross_game' ? '크로스게임' : '단일 게임'}
+                <span className={`badge ${p.sourceType === 'cross_game' ? 'badge--accent' : 'badge--info'}`}>
+                  {p.sourceType === 'cross_game' ? '크로스게임' : '단일 게임'}
                 </span>
                 <span className="badge badge--danger">
                   {WEAKNESS_LABELS[p.weakness] || p.weakness}
@@ -112,7 +112,7 @@ export default function TrainingPrescription({ onBack, onTrainingStart, profileI
               </div>
               <div className="text-base font-semibold">{p.description}</div>
               <div className="prescription-meta">
-                시나리오: {p.scenario_type} · 예상 {p.estimated_min}분
+                시나리오: {p.scenarioType} · 예상 {p.estimatedMin}분
               </div>
             </div>
 
@@ -121,7 +121,7 @@ export default function TrainingPrescription({ onBack, onTrainingStart, profileI
               className="btn btn--primary btn--sm"
               onClick={() => {
                 selectPrescription(p);
-                onTrainingStart(p.scenario_type, p.scenario_params);
+                onTrainingStart(p.scenarioType, p.scenarioParams);
               }}
             >
               시작

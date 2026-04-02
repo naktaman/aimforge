@@ -57,7 +57,7 @@ export class CounterStrafeFlickScenario extends Scenario {
   private targetAppearTime = 0;
   private targetAngle = 0;
   private targetDirection: Direction = 'right';
-  private movementEvents: Array<{ delta_x: number; delta_y: number }> = [];
+  private movementEvents: Array<{ deltaX: number; deltaY: number }> = [];
   private dpi: number;
   private targetType: TargetType;
   private minAngularError = Infinity;

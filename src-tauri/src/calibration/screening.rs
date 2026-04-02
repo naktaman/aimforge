@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 
 /// DNA 스크리닝 데이터 (Stage 1 수집)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ScreeningData {
     /// 스크리닝 트라이얼 점수들
     pub scores: Vec<f64>,
@@ -22,6 +23,7 @@ pub struct ScreeningData {
 
 /// 트라이얼 메트릭 요약 (프론트엔드에서 전달)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TrialMetricsSummary {
     pub overshoot: f64,
     pub pre_aim_ratio: f64,
@@ -32,6 +34,7 @@ pub struct TrialMetricsSummary {
 
 /// 운동체계 비율
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct MotorBreakdown {
     pub finger: f64,
     pub wrist: f64,
@@ -40,6 +43,7 @@ pub struct MotorBreakdown {
 
 /// 부분 Aim DNA — 스크리닝에서 추출되는 5개 특성
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PartialAimDna {
     /// 손목/팔 비율 (wrist / (wrist + arm))
     pub wrist_arm_ratio: f64,
@@ -55,6 +59,7 @@ pub struct PartialAimDna {
 
 /// 게임 카테고리 — informed prior 결정에 사용
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub enum GameCategory {
     /// 택티컬 (Valorant, CS2 등) — mean=38
     Tactical,
@@ -78,6 +83,7 @@ impl GameCategory {
 
 /// Informed prior 파라미터
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct InformedPrior {
     /// 사전 평균 (cm/360)
     pub mean: f64,

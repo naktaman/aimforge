@@ -22,13 +22,13 @@ export interface GameProfile {
 /** Rust에서 반환하는 row 타입 */
 interface GameProfileRow {
   id: number;
-  game_name: string;
+  gameName: string;
   dpi: number;
   sensitivity: number;
   fov: number;
-  scope_multiplier: number;
-  is_active: number;
-  created_at: string;
+  scopeMultiplier: number;
+  isActive: number;
+  createdAt: string;
 }
 
 interface GameProfileState {
@@ -51,13 +51,13 @@ interface GameProfileState {
 function toProfile(row: GameProfileRow): GameProfile {
   return {
     id: row.id,
-    gameName: row.game_name,
+    gameName: row.gameName,
     dpi: row.dpi,
     sensitivity: row.sensitivity,
     fov: row.fov,
-    scopeMultiplier: row.scope_multiplier,
-    isActive: row.is_active === 1,
-    createdAt: row.created_at,
+    scopeMultiplier: row.scopeMultiplier,
+    isActive: row.isActive === 1,
+    createdAt: row.createdAt,
   };
 }
 

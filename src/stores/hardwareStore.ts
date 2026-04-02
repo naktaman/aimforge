@@ -18,20 +18,20 @@ interface HardwareState {
   loadCombos: () => Promise<void>;
   /** 콤보 등록 */
   saveCombo: (params: {
-    mouse_model: string;
+    mouseModel: string;
     dpi: number;
-    verified_dpi?: number;
-    polling_rate?: number;
-    mousepad_model?: string;
+    verifiedDpi?: number;
+    pollingRate?: number;
+    mousepadModel?: string;
   }) => Promise<number>;
   /** 콤보 수정 */
   updateCombo: (params: {
     id: number;
-    mouse_model: string;
+    mouseModel: string;
     dpi: number;
-    verified_dpi?: number;
-    polling_rate?: number;
-    mousepad_model?: string;
+    verifiedDpi?: number;
+    pollingRate?: number;
+    mousepadModel?: string;
   }) => Promise<void>;
   /** 콤보 삭제 */
   deleteCombo: (id: number) => Promise<void>;
@@ -54,11 +54,11 @@ export const useHardwareStore = create<HardwareState>((set) => ({
   saveCombo: async (params) => {
     const id = await safeInvoke<number>('save_hardware_combo', {
       params: {
-        mouse_model: params.mouse_model,
+        mouseModel: params.mouseModel,
         dpi: params.dpi,
-        verified_dpi: params.verified_dpi ?? null,
-        polling_rate: params.polling_rate ?? null,
-        mousepad_model: params.mousepad_model ?? null,
+        verifiedDpi: params.verifiedDpi ?? null,
+        pollingRate: params.pollingRate ?? null,
+        mousepadModel: params.mousepadModel ?? null,
       },
     });
     return id ?? 0;
@@ -68,11 +68,11 @@ export const useHardwareStore = create<HardwareState>((set) => ({
     await safeInvoke('update_hardware_combo', {
       params: {
         id: params.id,
-        mouse_model: params.mouse_model,
+        mouseModel: params.mouseModel,
         dpi: params.dpi,
-        verified_dpi: params.verified_dpi ?? null,
-        polling_rate: params.polling_rate ?? null,
-        mousepad_model: params.mousepad_model ?? null,
+        verifiedDpi: params.verifiedDpi ?? null,
+        pollingRate: params.pollingRate ?? null,
+        mousepadModel: params.mousepadModel ?? null,
       },
     });
   },

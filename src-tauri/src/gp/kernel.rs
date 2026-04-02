@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 /// Matérn 5/2 커널 하이퍼파라미터
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Matern52Kernel {
     /// 길이 스케일 — 상관관계 감소 속도 제어
     pub length_scale: f64,

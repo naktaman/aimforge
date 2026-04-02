@@ -74,7 +74,7 @@ export class MicroFlickScenario extends Scenario {
   private reacquireStartTime = 0;
 
   // 궤적 누적 (운동체계 분류용)
-  private movementEvents: Array<{ delta_x: number; delta_y: number }> = [];
+  private movementEvents: Array<{ deltaX: number; deltaY: number }> = [];
   private dpi: number;
 
   // 오버슛 추적 (플릭용)

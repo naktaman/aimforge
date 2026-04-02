@@ -11,6 +11,7 @@ use std::collections::HashMap;
 
 /// 게임 프리셋 — 각 게임의 감도/FOV 변환에 필요한 상수
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct GamePreset {
     /// 게임 고유 ID (예: "cs2", "valorant")
     pub id: String,
@@ -33,6 +34,7 @@ pub struct GamePreset {
 
 /// 감도 변환 결과 (단일 방식)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SensitivityConversion {
     /// 원본 게임 ID
     pub from_game: String,
@@ -48,6 +50,7 @@ pub struct SensitivityConversion {
 
 /// 방식별 변환 결과 (cm360, 감도, 배율)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ConversionResult {
     pub cm360: f64,
     pub sens: f64,
@@ -56,6 +59,7 @@ pub struct ConversionResult {
 
 /// 6가지 변환 방식 동시 계산 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AllMethodsConversion {
     pub src_game: String,
     pub dst_game: String,
@@ -68,6 +72,7 @@ pub struct AllMethodsConversion {
 
 /// sens_step 스냅 결과 — floor/ceil 두 후보 + 추천
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SnappedSensitivity {
     pub floor_sens: f64,
     pub floor_cm360: f64,

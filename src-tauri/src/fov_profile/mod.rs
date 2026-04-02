@@ -9,6 +9,7 @@ use std::collections::HashMap;
 
 /// FOV 테스트 결과 (단일 시나리오)
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FovTestResult {
     pub fov_tested: f64,
     pub scenario_type: String,
@@ -19,6 +20,7 @@ pub struct FovTestResult {
 
 /// FOV별 비교 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FovComparison {
     /// 테스트한 FOV 값
     pub fov: f64,
@@ -36,6 +38,7 @@ pub struct FovComparison {
 
 /// FOV 추천 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct FovRecommendation {
     /// 추천 FOV
     pub recommended_fov: f64,
@@ -82,7 +85,7 @@ pub fn compare_fov_results(results: &[FovTestResult]) -> Option<FovRecommendatio
     }
 
     // FOV 오름차순 정렬
-    fov_stats.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+    fov_stats.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
 
     if fov_stats.is_empty() {
         return None;

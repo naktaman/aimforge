@@ -100,7 +100,7 @@ export default function ReadinessWidget({ result, onMeasure }: Props) {
       <svg ref={svgRef} style={{ width: 200, height: 140 }} />
       {result && (
         <p style={{ color: '#ccc', fontSize: 13, margin: '8px 0', maxWidth: 220 }}>
-          {result.daily_advice}
+          {result.dailyAdvice}
         </p>
       )}
       {onMeasure && (

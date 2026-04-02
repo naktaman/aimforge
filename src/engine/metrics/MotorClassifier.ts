@@ -23,14 +23,14 @@ export function classifyMotor(distanceCm: number): MotorRegion {
  * distance_cm = sqrt(sum_dx² + sum_dy²) / dpi × 2.54
  */
 export function calculateMovementDistance(
-  events: Array<{ delta_x: number; delta_y: number }>,
+  events: Array<{ deltaX: number; deltaY: number }>,
   dpi: number,
 ): number {
   let sumDx = 0;
   let sumDy = 0;
   for (const e of events) {
-    sumDx += e.delta_x;
-    sumDy += e.delta_y;
+    sumDx += e.deltaX;
+    sumDy += e.deltaY;
   }
   const [cmX, cmY] = rawToCm(sumDx, sumDy, dpi);
   return Math.sqrt(cmX * cmX + cmY * cmY);

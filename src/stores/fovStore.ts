@@ -18,12 +18,12 @@ interface FovState {
   loadResults: (profileId: number) => Promise<void>;
   /** 테스트 결과 저장 */
   saveResult: (params: {
-    profile_id: number;
-    fov_tested: number;
-    scenario_type: string;
+    profileId: number;
+    fovTested: number;
+    scenarioType: string;
     score: number;
-    peripheral_score?: number;
-    center_score?: number;
+    peripheralScore?: number;
+    centerScore?: number;
   }) => Promise<number>;
   /** FOV 비교 분석 실행 */
   compare: (profileId: number) => Promise<void>;
@@ -41,7 +41,7 @@ export const useFovStore = create<FovState>((set) => ({
   loadResults: async (profileId) => {
     set({ isLoading: true });
     const results = await safeInvoke<FovProfileRow[]>('get_fov_test_results', {
-      params: { profile_id: profileId },
+      params: { profileId: profileId },
     });
     set({ results: results ?? [], isLoading: false });
   },
@@ -49,12 +49,12 @@ export const useFovStore = create<FovState>((set) => ({
   saveResult: async (params) => {
     const id = await safeInvoke<number>('save_fov_test_result', {
       params: {
-        profile_id: params.profile_id,
-        fov_tested: params.fov_tested,
-        scenario_type: params.scenario_type,
+        profileId: params.profileId,
+        fovTested: params.fovTested,
+        scenarioType: params.scenarioType,
         score: params.score,
-        peripheral_score: params.peripheral_score ?? null,
-        center_score: params.center_score ?? null,
+        peripheralScore: params.peripheralScore ?? null,
+        centerScore: params.centerScore ?? null,
       },
     });
     return id ?? 0;
@@ -63,7 +63,7 @@ export const useFovStore = create<FovState>((set) => ({
   compare: async (profileId) => {
     set({ isLoading: true });
     const recommendation = await safeInvoke<FovRecommendation | null>('compare_fov_profiles', {
-      params: { profile_id: profileId },
+      params: { profileId: profileId },
     });
     set({ recommendation: recommendation ?? null, isLoading: false });
   },

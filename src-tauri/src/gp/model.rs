@@ -27,6 +27,7 @@ pub struct GaussianProcess {
 
 /// GP 예측 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Prediction {
     pub mean: f64,
     pub variance: f64,

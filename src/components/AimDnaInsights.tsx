@@ -57,7 +57,7 @@ export function generateInsights(
   if (mousepad) {
     const padIsSmall = mousepad.size === 'large';
     const padIsTiny = !['xl', 'xxl', 'desk'].includes(mousepad.size);
-    const effectiveRange = dna.effective_range ?? 90;
+    const effectiveRange = dna.effectiveRange ?? 90;
     const isLowSens = effectiveRange > 120;
     const isMidLowSens = effectiveRange > 90;
 
@@ -82,7 +82,7 @@ export function generateInsights(
 
   // ── 마우스 무게 vs 감도 궁합 ──────────────────────────────────────
   if (mouse) {
-    const wristRatio = dna.wrist_arm_ratio ?? 0.5;
+    const wristRatio = dna.wristArmRatio ?? 0.5;
     const isHighSens = wristRatio > 0.6;
     const isHeavy = mouse.weight_g > 90;
     const isModerateHeavy = mouse.weight_g > 70;
@@ -108,7 +108,7 @@ export function generateInsights(
 
   // ── 팔 중심 + 스피드 패드 불일치 ─────────────────────────────────
   if (mouse && mousepad) {
-    const wristRatio = dna.wrist_arm_ratio ?? 0.5;
+    const wristRatio = dna.wristArmRatio ?? 0.5;
     const isArmDominant = wristRatio < 0.35;
     const isSpeedPad = mousepad.surface === 'speed';
 
@@ -124,7 +124,7 @@ export function generateInsights(
 
     // 마우스 형태 vs 사용 패턴 불일치
     const isErgonomic = mouse.shape === 'ergonomic';
-    const microFreq = dna.micro_freq ?? 0;
+    const microFreq = dna.microFreq ?? 0;
     const isHighMicro = microFreq > 0.5;
 
     if (isErgonomic && isHighMicro) {
@@ -139,8 +139,8 @@ export function generateInsights(
   }
 
   // ── 오버슈트 높음 ─────────────────────────────────────────────────
-  if (dna.overshoot_avg !== null && dna.overshoot_avg > 0.04) {
-    const war = dna.wrist_arm_ratio ?? 0.5;
+  if (dna.overshootAvg !== null && dna.overshootAvg > 0.04) {
+    const war = dna.wristArmRatio ?? 0.5;
     if (war > 0.6) {
       insights.push({
         id: 'overshoot-high-sens',
@@ -153,7 +153,7 @@ export function generateInsights(
   }
 
   // ── 피로 감쇠 높음 ────────────────────────────────────────────────
-  if (dna.fatigue_decay !== null && dna.fatigue_decay > 0.05) {
+  if (dna.fatigueDecay !== null && dna.fatigueDecay > 0.05) {
     insights.push({
       id: 'fatigue-decay-high',
       type: 'info',
@@ -164,8 +164,8 @@ export function generateInsights(
   }
 
   // ── 방향 편향 ─────────────────────────────────────────────────────
-  if (dna.direction_bias !== null && Math.abs(dna.direction_bias) > 0.1) {
-    const dir = dna.direction_bias > 0 ? '오른쪽' : '왼쪽';
+  if (dna.directionBias !== null && Math.abs(dna.directionBias) > 0.1) {
+    const dir = dna.directionBias > 0 ? '오른쪽' : '왼쪽';
     insights.push({
       id: 'direction-bias',
       type: 'tip',

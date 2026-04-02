@@ -5,6 +5,7 @@ use tauri::State;
 
 /// 세션 시작 요청 파라미터
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct StartSessionParams {
     pub profile_id: i64,
     pub mode: String,
@@ -24,6 +25,7 @@ pub fn start_session(
 
 /// 트라이얼 저장 요청 파라미터
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct SaveTrialParams {
     pub session_id: i64,
     pub scenario_type: String,
@@ -59,6 +61,7 @@ pub fn save_trial(
 
 /// 세션 종료 요청 파라미터
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct EndSessionParams {
     pub session_id: i64,
     pub total_trials: i64,
@@ -88,6 +91,7 @@ pub fn end_session(
 
 /// 크래시 로그 저장 파라미터
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LogCrashParams {
     pub error_type: String,
     pub error_message: String,
@@ -179,6 +183,7 @@ pub fn get_all_user_settings(
 
 /// 게임 프로필 생성 파라미터
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateGameProfileParams {
     pub profile_id: i64,
     pub game_id: String,
@@ -216,6 +221,7 @@ pub fn get_game_profiles(
 
 /// 게임 프로필 업데이트 파라미터
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateGameProfileParams {
     pub id: i64,
     pub custom_sens: f64,
@@ -293,6 +299,7 @@ pub fn delete_routine(
 
 /// 루틴 스텝 추가 파라미터
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AddRoutineStepParams {
     pub routine_id: i64,
     pub step_order: i64,

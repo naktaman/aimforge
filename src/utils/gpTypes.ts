@@ -46,28 +46,28 @@ export interface CalibrationStatusData {
   stage: CalibrationStage;
   mode: string;
   iteration: number;
-  max_iterations: number;
-  screening_progress: [number, number] | null;
-  current_best: [number, number] | null;
-  gp_curve: [number, number, number][];
+  maxIterations: number;
+  screeningProgress: [number, number] | null;
+  currentBest: [number, number] | null;
+  gpCurve: [number, number, number][];
   observations: [number, number][];
 }
 
 /** 최종 결과 (Rust CalibrationResult 대응) */
 export interface CalibrationResultData {
-  recommended_cm360: number;
-  recommended_score: number;
-  current_cm360: number;
+  recommendedCm360: number;
+  recommendedScore: number;
+  currentCm360: number;
   peaks: { cm360: number; score: number; variance: number }[];
-  bimodal_detected: boolean;
+  bimodalDetected: boolean;
   significance: {
-    z_score: number;
-    p_value: number;
+    zScore: number;
+    pValue: number;
     significant: boolean;
-    effect_size: string;
+    effectSize: string;
   };
-  total_iterations: number;
-  gp_curve: [number, number, number][];
+  totalIterations: number;
+  gpCurve: [number, number, number][];
   observations: [number, number][];
 }
 

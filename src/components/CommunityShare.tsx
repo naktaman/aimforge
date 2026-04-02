@@ -88,11 +88,11 @@ export function CommunityShare({ onBack }: CommunityShareProps) {
   const handleShareMyCrosshair = useCallback(async () => {
     if (!isOnline) return;
     const crosshair = useSettingsStore.getState().crosshair;
-    const result = await apiClient.post<{ share_code: string }>('/share/crosshair', {
+    const result = await apiClient.post<{ shareCode: string }>('/share/crosshair', {
       data: crosshair,
     });
     if (result) {
-      alert(`공유 코드: ${result.share_code}`);
+      alert(`공유 코드: ${result.shareCode}`);
     }
   }, [isOnline]);
 

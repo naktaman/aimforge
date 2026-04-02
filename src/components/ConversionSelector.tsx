@@ -29,22 +29,22 @@ interface ConversionResult {
 
 /** 6가지 변환 결과 */
 interface AllMethodsConversion {
-  src_game: string;
-  dst_game: string;
-  src_cm360: number;
-  src_fov_h: number;
-  dst_fov_h: number;
+  srcGame: string;
+  dstGame: string;
+  srcCm360: number;
+  srcFovH: number;
+  dstFovH: number;
   results: Record<string, ConversionResult>;
 }
 
 /** 감도 스냅 결과 */
 interface SnappedSensitivity {
-  floor_sens: number;
-  floor_cm360: number;
-  ceil_sens: number;
-  ceil_cm360: number;
-  recommended_sens: number;
-  recommended_cm360: number;
+  floorSens: number;
+  floorCm360: number;
+  ceilSens: number;
+  ceilCm360: number;
+  recommendedSens: number;
+  recommendedCm360: number;
 }
 
 /** 6가지 변환 방식 표시 이름 + 설명 */
@@ -215,7 +215,7 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
       {result && !loading && (
         <>
           <div className="conversion-fov-info">
-            {result.src_game} → {result.dst_game} | 소스 cm/360: {result.src_cm360.toFixed(2)} | FOV: {result.src_fov_h.toFixed(1)}° → {result.dst_fov_h.toFixed(1)}°
+            {result.srcGame} → {result.dstGame} | 소스 cm/360: {result.srcCm360.toFixed(2)} | FOV: {result.srcFovH.toFixed(1)}° → {result.dstFovH.toFixed(1)}°
           </div>
 
           <table className="conversion-table">
@@ -269,23 +269,23 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
               <div style={{ display: 'flex', gap: 24 }}>
                 <div>
                   <div className="stat-label">추천 감도</div>
-                  <div className="stat-value stat-value--success">{snap.recommended_sens.toFixed(4)}</div>
-                  <div className="snap-indicator">{snap.recommended_cm360.toFixed(2)} cm/360</div>
+                  <div className="stat-value stat-value--success">{snap.recommendedSens.toFixed(4)}</div>
+                  <div className="snap-indicator">{snap.recommendedCm360.toFixed(2)} cm/360</div>
                 </div>
                 <div>
                   <div className="stat-label">Floor</div>
-                  <div className="stat-value">{snap.floor_sens.toFixed(4)}</div>
-                  <div className="snap-indicator">{snap.floor_cm360.toFixed(2)} cm/360</div>
+                  <div className="stat-value">{snap.floorSens.toFixed(4)}</div>
+                  <div className="snap-indicator">{snap.floorCm360.toFixed(2)} cm/360</div>
                 </div>
                 <div>
                   <div className="stat-label">Ceil</div>
-                  <div className="stat-value">{snap.ceil_sens.toFixed(4)}</div>
-                  <div className="snap-indicator">{snap.ceil_cm360.toFixed(2)} cm/360</div>
+                  <div className="stat-value">{snap.ceilSens.toFixed(4)}</div>
+                  <div className="snap-indicator">{snap.ceilCm360.toFixed(2)} cm/360</div>
                 </div>
               </div>
               <button
                 className="btn btn--success"
-                onClick={() => copyToClipboard(snap.recommended_sens.toFixed(4))}
+                onClick={() => copyToClipboard(snap.recommendedSens.toFixed(4))}
                 style={{ marginTop: 10 }}
               >
                 추천 감도 복사
