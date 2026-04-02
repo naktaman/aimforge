@@ -4,7 +4,7 @@
  * 고빈도 업데이트는 여기 저장하지 않음 (엔진 내부에서 직접 관리)
  */
 import { create } from 'zustand';
-import type { PerfData } from '../utils/types';
+import type { PerfData, TargetType } from '../utils/types';
 
 export type AppScreen =
   | 'settings' | 'viewport' | 'results'
@@ -66,6 +66,8 @@ interface EngineState {
   fireRpm: number;
   /** 무기 모델 표시 여부 */
   weaponVisible: boolean;
+  /** 타겟 타입 (구체 or 사람 모양) */
+  targetType: TargetType;
 
   /** 화면 전환 */
   setScreen: (screen: AppScreen) => void;
@@ -86,6 +88,8 @@ interface EngineState {
   cycleFireMode: () => void;
   /** 무기 모델 표시 토글 */
   toggleWeaponVisible: () => void;
+  /** 타겟 타입 변경 */
+  setTargetType: (type: TargetType) => void;
 }
 
 export const useEngineStore = create<EngineState>((set) => ({
@@ -100,6 +104,7 @@ export const useEngineStore = create<EngineState>((set) => ({
   fireMode: 'semi',
   fireRpm: 600,
   weaponVisible: true,
+  targetType: 'humanoid',
 
   setScreen: (currentScreen) => set({ currentScreen }),
   setEngineReady: (engineReady) => set({ engineReady }),
@@ -117,4 +122,5 @@ export const useEngineStore = create<EngineState>((set) => ({
     return { fireMode: order[idx] };
   }),
   toggleWeaponVisible: () => set((s) => ({ weaponVisible: !s.weaponVisible })),
+  setTargetType: (targetType) => set({ targetType }),
 }));

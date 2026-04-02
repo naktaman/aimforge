@@ -2,6 +2,9 @@
  * Static Flick 시나리오
  * 랜덤 각도/방향에 타겟 출현 → 플릭 → 클릭 → 히트 판정 → 다음 타겟
  * 각도/방향/운동체계별 분리 기록
+ *
+ * 120° 방위각 제한: 카메라 정면 ±60° 이내에서만 스폰
+ * humanoid 타겟: 수평 ±3° 스폰, head/body 히트존 구분
  */
 import * as THREE from 'three';
 import { Scenario } from './Scenario';
@@ -10,9 +13,11 @@ import { VelocityTracker } from '../metrics/VelocityTracker';
 import { classifyClick } from '../metrics/ClickClassifier';
 import { classifyMotor, calculateMovementDistance } from '../metrics/MotorClassifier';
 import { DEG2RAD } from '../../utils/physics';
+import { constrainedAzimuth } from '../SpawnUtils';
+import { HIT_ZONE_MULTIPLIER } from '../HumanoidTarget';
 import type { GameEngine } from '../GameEngine';
 import type { TargetManager } from '../TargetManager';
-import type { FlickConfig, Direction } from '../../utils/types';
+import type { FlickConfig, Direction, TargetType } from '../../utils/types';
 
 /** 8방향 각도 범위 (azimuth 기준) */
 const DIRECTION_SECTORS: Array<{ dir: Direction; min: number; max: number }> = [
@@ -41,6 +46,9 @@ export class FlickScenario extends Scenario {
   private targetDirection: Direction = 'right';
   private completed = false;
 
+  /** 타겟 타입 (sphere or humanoid) */
+  private targetType: TargetType;
+
   // 궤적 누적 (운동체계 분류용)
   private movementEvents: Array<{ delta_x: number; delta_y: number }> = [];
   private dpi: number;
@@ -58,10 +66,12 @@ export class FlickScenario extends Scenario {
     targetManager: TargetManager,
     config: FlickConfig,
     dpi: number,
+    targetType: TargetType = 'sphere',
   ) {
     super(engine, targetManager);
     this.config = config;
     this.dpi = dpi;
+    this.targetType = targetType;
     this.metrics = new MetricsCollector();
     this.velocityTracker = new VelocityTracker();
   }
@@ -92,30 +102,28 @@ export class FlickScenario extends Scenario {
 
     // 타임아웃 체크
     if (this.currentTargetId && now - this.targetAppearTime > this.config.timeout) {
-      // 타임아웃: 미스 처리
       this.recordMiss(now);
       this.advanceTarget();
     }
 
     // 오버슛 감지: 현재 각도 오차 추적
     if (this.currentTargetId) {
-      const target = this.targetManager.getTarget(this.currentTargetId);
-      if (target) {
+      // sphere + humanoid 통합 위치 조회
+      const targetPos = this.targetManager.getTargetPosition(this.currentTargetId);
+      if (targetPos) {
         const forward = this.engine.getCameraForward();
         const cameraPos = this.engine.getCamera().position;
         const toTarget = new THREE.Vector3()
-          .subVectors(target.position, cameraPos)
+          .subVectors(targetPos, cameraPos)
           .normalize();
         const angError = Math.acos(
           Math.max(-1, Math.min(1, forward.dot(toTarget))),
         );
 
-        // 오버슛 감지: 오차가 줄다가 증가하면 오버슛
         if (angError < this.minAngularError) {
           this.minAngularError = angError;
           this.wasApproaching = true;
         } else if (this.wasApproaching && angError > this.minAngularError + 0.02) {
-          // 오버슛 발생 → 보정 카운트 증가
           this.correctionCount++;
           this.wasApproaching = false;
         }
@@ -148,8 +156,20 @@ export class FlickScenario extends Scenario {
     // 히트 피드백
     const hit = hitResult?.hit ?? false;
     if (hit && hitResult) {
-      const target = this.targetManager.getTarget(hitResult.targetId);
-      target?.onHit();
+      if (this.targetType === 'humanoid') {
+        // humanoid: 히트된 파트에 시각 피드백
+        const entry = this.targetManager.getHumanoid(hitResult.targetId);
+        if (entry) {
+          const isHeadshot = hitResult.hitZone === 'head';
+          const flashMesh = isHeadshot
+            ? entry.humanoid.headMesh
+            : entry.humanoid.hitMeshes[1]; // torso
+          entry.humanoid.onHit(flashMesh, isHeadshot);
+        }
+      } else {
+        const target = this.targetManager.getTarget(hitResult.targetId);
+        target?.onHit();
+      }
     }
 
     // 메트릭 기록
@@ -170,12 +190,17 @@ export class FlickScenario extends Scenario {
     const pathEfficiency =
       moveDist > 0 ? Math.min(1, directAngleRad / (angularError + directAngleRad)) : 0;
 
+    // 히트존 배율 (humanoid head=2x, body=1x)
+    const hitZoneMultiplier = (hit && hitResult?.hitZone)
+      ? HIT_ZONE_MULTIPLIER[hitResult.hitZone]
+      : 1;
+
     // Flick 결과 저장
     const result: FlickTargetResult = {
       ttt,
       overshoot: this.minAngularError < angularError ? angularError - this.minAngularError : 0,
       correctionCount: this.correctionCount,
-      settleTime: ttt * 0.3, // 간이: TTT의 30%를 안정화 시간으로 추정
+      settleTime: ttt * 0.3,
       pathEfficiency,
       hit,
       angleBucket: this.getNearestBucket(this.targetAngle),
@@ -183,6 +208,7 @@ export class FlickScenario extends Scenario {
       motorRegion,
       clickType,
       angularError,
+      hitZoneMultiplier,
     };
     this.metrics.addFlickResult(result);
 
@@ -209,7 +235,6 @@ export class FlickScenario extends Scenario {
 
   /** 다음 타겟으로 진행 */
   private advanceTarget(): void {
-    // 현재 타겟 제거
     if (this.currentTargetId) {
       this.targetManager.removeTarget(this.currentTargetId);
       this.currentTargetId = null;
@@ -226,46 +251,54 @@ export class FlickScenario extends Scenario {
     this.spawnNextTarget();
   }
 
-  /** 랜덤 각도/방향에 새 타겟 배치 */
+  /** 랜덤 각도/방향에 새 타겟 배치 — 120° 방위각 제한 적용 */
   private spawnNextTarget(): void {
     const [minAngle, maxAngle] = this.config.angleRange;
-
-    // 랜덤 각도 선택
     this.targetAngle = minAngle + Math.random() * (maxAngle - minAngle);
 
-    // 랜덤 방향 (8방향 중 하나)
-    const azimuth = Math.random() * 360;
-    this.targetDirection = this.getDirection(azimuth);
+    // 120° 방위각 제한 (카메라 정면 ±60°)
+    const azimuth = constrainedAzimuth();
+    const azimuthNormalized = ((azimuth % 360) + 360) % 360;
+    this.targetDirection = this.getDirection(azimuthNormalized);
 
-    // 카메라 기준 타겟 위치 계산
     const camera = this.engine.getCamera();
     const cameraPos = camera.position.clone();
-
-    // 거리: hipfire 기준 5~15m
     const distance = 5 + Math.random() * 10;
 
-    // 구면 좌표 → 카메라 로컬 좌표 → 월드 좌표
     const angleRad = this.targetAngle * DEG2RAD;
     const azimuthRad = azimuth * DEG2RAD;
 
-    // 카메라 로컬 좌표계에서의 타겟 방향
+    // humanoid는 수평 ±3° elevation, sphere는 기존 로직 유지
+    const elevationRad = this.targetType === 'humanoid'
+      ? (Math.random() * 6 - 3) * DEG2RAD
+      : (azimuthRad - Math.PI / 2);
+
     const localDir = new THREE.Vector3(
       Math.sin(angleRad) * Math.cos(azimuthRad),
-      Math.sin(angleRad) * Math.sin(azimuthRad - Math.PI / 2), // 위/아래
-      -Math.cos(angleRad), // 전방
+      Math.sin(angleRad) * Math.sin(elevationRad),
+      -Math.cos(angleRad),
     );
 
-    // 카메라 quaternion으로 월드 방향 변환
     const worldDir = localDir.applyQuaternion(camera.quaternion);
     const targetPos = cameraPos.clone().addScaledVector(worldDir, distance);
 
-    // 타겟 생성
-    const target = this.targetManager.spawnTarget(targetPos, {
-      angularSizeDeg: this.config.targetSizeDeg,
-      distanceM: distance,
-      color: 0xe94560,
-    });
-    this.currentTargetId = target.id;
+    // 타겟 타입에 따라 sphere 또는 humanoid 생성
+    if (this.targetType === 'humanoid') {
+      const { id } = this.targetManager.spawnHumanoidTarget(
+        targetPos,
+        { angularSizeDeg: this.config.targetSizeDeg, distanceM: distance },
+        cameraPos,
+      );
+      this.currentTargetId = id;
+    } else {
+      const target = this.targetManager.spawnTarget(targetPos, {
+        angularSizeDeg: this.config.targetSizeDeg,
+        distanceM: distance,
+        color: 0xe94560,
+      });
+      this.currentTargetId = target.id;
+    }
+
     this.targetAppearTime = performance.now();
 
     // 추적 상태 초기화
@@ -297,7 +330,6 @@ export class FlickScenario extends Scenario {
 
   /** azimuth 각도 → 8방향 분류 */
   private getDirection(azimuthDeg: number): Direction {
-    // 0~360 정규화
     const norm = ((azimuthDeg % 360) + 360) % 360;
     for (const sector of DIRECTION_SECTORS) {
       if (sector.min < 0) {

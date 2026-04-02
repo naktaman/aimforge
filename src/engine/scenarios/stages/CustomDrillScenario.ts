@@ -282,7 +282,8 @@ export class CustomDrillScenario extends Scenario {
   // ── 스폰 헬퍼 ──
 
   private spawnFlickTarget(): void {
-    const azimuth = Math.random() * 360 - 180;
+    // 120° 방위각 제한 (±60°)
+    const azimuth = (Math.random() * 120) - 60;
     const DEG2RAD = Math.PI / 180;
     const d = this.config.distanceM;
 
