@@ -343,9 +343,9 @@ impl Database {
              direction_bias, effective_range, tracking_mad, phase_lag, smoothness, velocity_match, \
              micro_freq, wrist_arm_ratio, fitts_a, fitts_b, fatigue_decay, pre_aim_ratio, \
              pre_fire_ratio, sens_attributed_overshoot, v_h_ratio, finger_accuracy, wrist_accuracy, \
-             arm_accuracy, motor_transition_angle, adaptation_rate, type_label) \
+             arm_accuracy, motor_transition_angle, type_label) \
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16, \
-             ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24, ?25)",
+             ?17, ?18, ?19, ?20, ?21, ?22, ?23, ?24)",
             rusqlite::params![
                 dna.profile_id, dna.session_id,
                 dna.flick_peak_velocity, dna.overshoot_avg,
@@ -355,7 +355,7 @@ impl Database {
                 dna.fatigue_decay, dna.pre_aim_ratio, dna.pre_fire_ratio,
                 dna.sens_attributed_overshoot, dna.v_h_ratio,
                 dna.finger_accuracy, dna.wrist_accuracy, dna.arm_accuracy,
-                dna.motor_transition_angle, dna.adaptation_rate, dna.type_label
+                dna.motor_transition_angle, dna.type_label
             ],
         )?;
         Ok(self.conn.last_insert_rowid())
@@ -383,7 +383,7 @@ impl Database {
              effective_range, tracking_mad, phase_lag, smoothness, velocity_match, micro_freq, \
              wrist_arm_ratio, fitts_a, fitts_b, fatigue_decay, pre_aim_ratio, pre_fire_ratio, \
              sens_attributed_overshoot, v_h_ratio, finger_accuracy, wrist_accuracy, arm_accuracy, \
-             motor_transition_angle, adaptation_rate, type_label \
+             motor_transition_angle, type_label \
              FROM aim_dna WHERE profile_id = ?1 ORDER BY created_at DESC LIMIT 1"
         )?;
         let mut rows = stmt.query_map(rusqlite::params![profile_id], |row| {
@@ -411,8 +411,7 @@ impl Database {
                 wrist_accuracy: row.get(20)?,
                 arm_accuracy: row.get(21)?,
                 motor_transition_angle: row.get(22)?,
-                adaptation_rate: row.get(23)?,
-                type_label: row.get(24)?,
+                type_label: row.get(23)?,
                 data_sufficiency: std::collections::HashMap::new(),
             })
         })?;

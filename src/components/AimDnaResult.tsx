@@ -256,7 +256,6 @@ export function AimDnaResult({ onBack }: Props) {
               { label: "Fitts' a (intercept)", value: fmt(currentDna.fitts_a, 1, ' ms'), sufficiency: getSuff(currentDna, 'fitts') },
               { label: "Fitts' b (slope)", value: fmt(currentDna.fitts_b, 1, ' ms/bit'), sufficiency: getSuff(currentDna, 'fitts') },
               { label: 'Fatigue Decay', value: fmt(currentDna.fatigue_decay, 3) },
-              { label: 'Adaptation Rate', value: fmt(currentDna.adaptation_rate, 3) },
               { label: 'Sens Overshoot Corr', value: fmt(currentDna.sens_attributed_overshoot, 3) },
             ]}
           />
