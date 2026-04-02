@@ -7,6 +7,7 @@ import { create } from 'zustand';
 import type { PerfData, TargetType } from '../utils/types';
 
 export type AppScreen =
+  | 'splash' | 'welcome'
   | 'settings' | 'viewport' | 'results'
   | 'calibration-setup' | 'calibration-progress' | 'calibration-result'
   | 'zoom-calibration-setup' | 'zoom-calibration-progress' | 'zoom-calibration-result'
@@ -106,7 +107,7 @@ interface EngineState {
 }
 
 export const useEngineStore = create<EngineState>((set) => ({
-  currentScreen: 'settings',
+  currentScreen: 'splash',
   engineReady: false,
   pointerLocked: false,
   fps: 0,

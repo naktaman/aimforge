@@ -47,6 +47,8 @@ import RecoilEditor from './components/RecoilEditor';
 import ConversionSelector from './components/ConversionSelector';
 import { Toast } from './components/Toast';
 import { Onboarding } from './components/Onboarding';
+import { SplashScreen } from './components/screens/SplashScreen';
+import { WelcomeScreen } from './components/screens/WelcomeScreen';
 import { ProfileWizard } from './components/ProfileWizard';
 import { useProfileWizardStore } from './stores/profileWizardStore';
 import { useZoomCalibrationStore } from './stores/zoomCalibrationStore';
@@ -921,6 +923,32 @@ function App() {
 
   /* UI 설정 로드 전 빈 화면 */
   if (!uiLoaded) return null;
+
+  /** 스플래시 완료 → 첫 실행이면 welcome, 재방문이면 settings */
+  const handleSplashComplete = () => {
+    if (!onboardingCompleted) {
+      setScreen('welcome');
+    } else {
+      setScreen('settings');
+    }
+  };
+
+  /* 스플래시 화면 (앱 시작 시 항상 표시) */
+  if (currentScreen === 'splash') {
+    return <SplashScreen onComplete={handleSplashComplete} />;
+  }
+
+  /* 웰컴 화면 (첫 실행 시 스플래시 후 표시) */
+  if (currentScreen === 'welcome') {
+    return (
+      <WelcomeScreen
+        onGetStarted={() => {
+          /* 온보딩 미완료 → 기존 Onboarding 위자드로 이동 */
+          setScreen('settings');
+        }}
+      />
+    );
+  }
 
   /* 온보딩 미완료 시 위자드 표시 */
   if (!onboardingCompleted) return <Onboarding />;

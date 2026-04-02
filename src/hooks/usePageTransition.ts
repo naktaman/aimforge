@@ -85,6 +85,12 @@ const VARIANT_MAP: Record<TransitionType, Variants> = {
  * @param to - 다음 화면
  */
 function resolveTransitionType(from: AppScreen | null, to: AppScreen): TransitionType {
+  /* 스플래시 → 다음 화면: fade-to-black (프리미엄 전환) */
+  if (from === 'splash') return 'fade-to-black';
+
+  /* 웰컴 → 다음 화면: crossfade */
+  if (from === 'welcome') return 'crossfade';
+
   /* 시나리오 2: 게임 플레이 진입 → fade-to-black (긴장감) */
   if (to === 'viewport') return 'fade-to-black';
 
