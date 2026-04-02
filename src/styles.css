@@ -4452,3 +4452,138 @@ body {
   gap: 12px;
   justify-content: center;
 }
+
+/* ── 스플래시 화면 ── */
+.splash-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.splash-particles {
+  position: absolute;
+  inset: 0;
+}
+
+.splash-particles canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.splash-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  pointer-events: none;
+}
+
+.splash-logo {
+  font-size: 48px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: 2px;
+  text-shadow:
+    0 0 20px var(--accent-glow),
+    0 0 40px var(--accent-glow),
+    0 0 80px rgba(233, 69, 96, 0.1);
+  margin: 0;
+}
+
+.splash-tagline {
+  font-size: var(--font-md);
+  color: var(--text-secondary);
+  margin-top: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-weight: 300;
+}
+
+/* ── 웰컴 화면 ── */
+.welcome-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+}
+
+.welcome-card {
+  max-width: 520px;
+  width: 100%;
+  padding: 48px 40px;
+  text-align: center;
+}
+
+.welcome-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+
+.welcome-accent {
+  color: var(--accent);
+}
+
+.welcome-subtitle {
+  font-size: var(--font-md);
+  color: var(--text-secondary);
+  margin: 0 0 36px;
+}
+
+.welcome-features {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.welcome-feature-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-align: left;
+  transition: border-color 0.2s;
+}
+
+.welcome-feature-card:hover {
+  border-color: var(--accent-dim);
+}
+
+.welcome-feature-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.welcome-feature-title {
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+
+.welcome-feature-desc {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.welcome-cta {
+  width: 100%;
+  padding: 14px 24px;
+  font-size: var(--font-md);
+  font-weight: 600;
+  border-radius: 10px;
+}
