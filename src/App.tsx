@@ -50,6 +50,7 @@ import { Toast } from './components/Toast';
 import { Onboarding } from './components/Onboarding';
 import { SplashScreen } from './components/screens/SplashScreen';
 import { WelcomeScreen } from './components/screens/WelcomeScreen';
+import { SensitivityDashboard } from './components/screens/SensitivityDashboard';
 import { ProfileWizard } from './components/ProfileWizard';
 import { useProfileWizardStore } from './stores/profileWizardStore';
 import { useZoomCalibrationStore } from './stores/zoomCalibrationStore';
@@ -1324,6 +1325,13 @@ function App() {
       {currentScreen === 'conversion-selector' && (
         <main className="app-main">
           <ConversionSelector onBack={() => setScreen('settings')} />
+        </main>
+      )}
+
+      {/* 감도 최적화 대시보드 */}
+      {currentScreen === 'sensitivity-dashboard' && (
+        <main className="app-main">
+          <SensitivityDashboard />
         </main>
       )}
 

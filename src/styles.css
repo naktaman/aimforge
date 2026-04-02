@@ -4986,3 +4986,398 @@ body {
   position: absolute;
   top: -20px;
 }
+
+/* ========================================
+   감도 최적화 대시보드
+   ======================================== */
+
+.sensitivity-dashboard {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-height: 100%;
+}
+
+/* 헤더 */
+.sd-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.sd-back-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  padding: var(--space-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition-fast);
+}
+.sd-back-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.sd-title {
+  font-size: var(--font-2xl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.sd-subtitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: 2px;
+}
+
+.sd-mode-badge {
+  font-size: var(--font-xs);
+  font-weight: 600;
+  background: var(--accent);
+  color: #fff;
+  padding: 1px 8px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sd-stage {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+}
+
+/* GP 차트 섹션 */
+.sd-chart-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  overflow: hidden;
+}
+
+.gp-chart-svg {
+  width: 100%;
+  height: auto;
+  max-height: 380px;
+}
+
+.gp-chart-grid {
+  stroke: var(--border);
+  stroke-width: 0.5;
+  stroke-dasharray: 2 4;
+}
+
+.gp-chart-band {
+  fill: #3B82F6;
+  opacity: 0.12;
+}
+
+.gp-chart-mean {
+  stroke: #3B82F6;
+  stroke-width: 2.5;
+}
+
+.gp-chart-obs {
+  fill: #3B82F6;
+  stroke: var(--bg-card);
+  stroke-width: 1.5;
+}
+
+.gp-chart-obs-latest {
+  fill: #F97316;
+  stroke: var(--bg-card);
+  stroke-width: 2;
+}
+
+.gp-chart-ei-line {
+  stroke: #10B981;
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+  opacity: 0.7;
+}
+
+.gp-chart-best-line {
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  opacity: 0.5;
+}
+
+.gp-chart-tick-label {
+  font-size: 11px;
+  fill: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.gp-chart-axis-label {
+  font-size: 12px;
+  fill: var(--text-secondary);
+  font-weight: 500;
+}
+
+.gp-chart-legend {
+  font-size: 10px;
+  fill: var(--text-secondary);
+}
+
+/* 수렴 진행률 바 */
+.convergence-bar-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+}
+
+.convergence-bar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.convergence-bar-title {
+  font-size: var(--font-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.convergence-bar-percent {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  color: #3B82F6;
+  font-family: var(--font-mono);
+}
+
+.convergence-bar-track {
+  height: 8px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.convergence-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3B82F6, #10B981);
+  border-radius: var(--radius-full);
+}
+
+.convergence-bar-info {
+  display: flex;
+  justify-content: space-between;
+  margin-top: var(--space-2);
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+}
+
+.convergence-bar-mode {
+  opacity: 0.7;
+}
+
+/* 상태 카드 */
+.sd-status-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-3);
+}
+
+.sd-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  text-align: center;
+}
+
+.sd-card-label {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-1);
+}
+
+.sd-card-value {
+  font-size: var(--font-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+/* CTA */
+.sd-cta {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+}
+
+.sd-cta-next {
+  min-width: 180px;
+}
+
+/* 최종 결과 */
+.optimal-result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  align-items: center;
+}
+
+.optimal-result-hero {
+  text-align: center;
+  padding: var(--space-6) var(--space-8);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  width: 100%;
+}
+
+.optimal-result-label {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: var(--space-2);
+}
+
+.optimal-result-value {
+  font-size: var(--font-display);
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  line-height: 1.1;
+}
+
+.optimal-result-unit {
+  font-size: var(--font-lg);
+  font-weight: 400;
+  color: var(--text-secondary);
+  margin-left: var(--space-2);
+}
+
+.optimal-result-score {
+  font-size: var(--font-base);
+  color: var(--success);
+  margin-top: var(--space-2);
+}
+
+/* 통계 요약 */
+.optimal-result-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.optimal-result-stat {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  text-align: center;
+}
+
+.optimal-result-stat-warn {
+  border-color: var(--warning);
+}
+
+.optimal-result-stat-label {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: var(--space-1);
+}
+
+.optimal-result-stat-value {
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.stat-significant {
+  color: var(--success);
+}
+
+/* 게임별 변환 그리드 */
+.optimal-result-conversions {
+  width: 100%;
+}
+
+.optimal-result-section-title {
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 var(--space-3) 0;
+}
+
+.optimal-result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-2);
+}
+
+.optimal-result-game-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.optimal-result-game-name {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+}
+
+.optimal-result-game-sens {
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+}
+
+.optimal-result-game-sens small {
+  font-size: var(--font-xs);
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+/* 액션 버튼 */
+.optimal-result-actions {
+  display: flex;
+  gap: var(--space-3);
+  width: 100%;
+  justify-content: center;
+}
+
+/* 반응형 (800px 이하) */
+@media (max-width: 860px) {
+  .sd-status-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .optimal-result-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* 라이트 테마 보정 */
+[data-theme="light"] .gp-chart-band {
+  opacity: 0.15;
+}
+
+[data-theme="light"] .gp-chart-obs {
+  stroke: #fff;
+}
+
+[data-theme="light"] .gp-chart-obs-latest {
+  stroke: #fff;
+}

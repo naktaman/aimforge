@@ -26,7 +26,8 @@ export type AppScreen =
   | 'dual-landscape'
   | 'recoil-editor'
   | 'conversion-selector'
-  | 'profile-wizard';
+  | 'profile-wizard'
+  | 'sensitivity-dashboard';
 
 /** 반동(리코일) 프리셋 */
 export type RecoilPreset = 'none' | 'light' | 'heavy' | 'shotgun';
