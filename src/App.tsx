@@ -13,6 +13,7 @@ import { useBatteryStore, BATTERY_SCENARIO_DEFAULTS } from './stores/batteryStor
 import { ScenarioSelect, type ScenarioParams, type BatteryParams, type TrainingStartParams } from './components/ScenarioSelect';
 import { Viewport } from './components/Viewport';
 import { TrialResults } from './components/TrialResults';
+import { ResultScreen } from './components/screens/ResultScreen';
 import { CalibrationSetup } from './components/CalibrationSetup';
 import { CalibrationProgress } from './components/CalibrationProgress';
 import { CalibrationResult } from './components/CalibrationResult';
@@ -144,6 +145,9 @@ function App() {
   const engineRef = useRef<GameEngine | null>(null);
   const targetManagerRef = useRef<TargetManager | null>(null);
 
+  /** 마지막 시나리오 정보 — "다시 하기" 기능용 */
+  const lastScenarioRef = useRef<{ type: ScenarioType; params: ScenarioParams } | null>(null);
+
   /** 엔진 준비 완료 시 호출 */
   const handleEngineReady = useCallback((engine: GameEngine) => {
     engineRef.current = engine;
@@ -259,6 +263,9 @@ function App() {
       const tm = targetManagerRef.current;
       if (!engine || !tm) return;
       syncRecoilToEngine(engine);
+
+      // "다시 하기"를 위해 마지막 시나리오 정보 저장
+      lastScenarioRef.current = { type: scenarioType, params };
 
       setScreen('viewport');
       startScenario(scenarioType);
@@ -1061,9 +1068,18 @@ function App() {
         </>
       )}
 
-      {/* 결과 화면 */}
+      {/* 결과 화면 — 감정 디자인 ResultScreen + 기존 상세 TrialResults */}
       {currentScreen === 'results' && (
         <main className="app-main">
+          <ResultScreen
+            onRetry={() => {
+              const last = lastScenarioRef.current;
+              if (last) handleStart(last.type, last.params);
+            }}
+            onMainMenu={() => setScreen('settings')}
+            onGradeReveal={() => soundEngine.playStartSound()}
+            onPBFanfare={() => soundEngine.playKillSound()}
+          />
           <TrialResults onBack={() => setScreen('settings')} />
         </main>
       )}

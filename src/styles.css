@@ -4766,3 +4766,223 @@ body {
   font-weight: 600;
   border-radius: 10px;
 }
+
+/* ══════════════════════════════════════════════════════
+   결과 화면 — 3-Zone 감정 디자인
+   ══════════════════════════════════════════════════════ */
+
+.result-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  min-height: 100%;
+  padding: 24px 16px;
+}
+
+/* ── Hero Zone (등급 + 점수) ── */
+.result-screen__hero {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px 0 24px;
+}
+
+/* 등급 컨테이너 */
+.result-grade {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 140px;
+  height: 140px;
+}
+
+.result-grade__glow {
+  position: absolute;
+  inset: -40px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.result-grade__letter {
+  font-size: 96px;
+  font-weight: 900;
+  line-height: 1;
+  font-family: 'Inter', system-ui, sans-serif;
+  letter-spacing: -4px;
+  z-index: 1;
+}
+
+/* 점수 카운트업 */
+.result-screen__score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.result-screen__score-number {
+  font-size: 48px;
+  font-weight: 800;
+  font-family: monospace;
+  color: var(--text-primary);
+  letter-spacing: 2px;
+}
+
+.result-screen__score-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+}
+
+/* PB 배너 */
+.result-screen__pb-banner {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+/* ── Analytics Zone (통계) ── */
+.result-screen__analytics {
+  flex: 1 1 auto;
+  width: 100%;
+  padding: 16px 0;
+}
+
+.result-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.result-stats__item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+}
+
+.result-stats__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.result-stats__label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.result-stats__value {
+  font-size: 18px;
+  font-weight: 700;
+  font-family: monospace;
+  color: var(--text-primary);
+}
+
+.result-stats__bar-bg {
+  height: 6px;
+  background: var(--bg-secondary);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.result-stats__bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+/* ── Action Zone (CTA 버튼) ── */
+.result-screen__actions {
+  flex: 0 0 auto;
+  width: 100%;
+  padding: 16px 0 24px;
+}
+
+.result-actions {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.result-actions__retry {
+  flex: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 24px;
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-lg);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.result-actions__retry:hover {
+  background: var(--accent-dim);
+  box-shadow: var(--shadow-glow);
+}
+
+.result-actions__menu {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 24px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.result-actions__menu:hover {
+  background: var(--bg-card);
+}
+
+.result-actions__hint {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.5;
+  padding: 2px 6px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+/* ── 컨페티 ── */
+.result-confetti {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 100;
+}
+
+.result-confetti__particle {
+  position: absolute;
+  top: -20px;
+}
