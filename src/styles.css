@@ -513,6 +513,185 @@ body {
   z-index: 30;
 }
 
+/* === 인게임 HUD === */
+.game-hud {
+  position: fixed;
+  inset: 0;
+  z-index: 28;
+  pointer-events: none;
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 상단 영역: 정확도(좌) | 타이머(중앙) | 점수(우) */
+.game-hud-top {
+  position: absolute;
+  top: 12px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+/* 하단 영역: 우하단 통계 */
+.game-hud-bottom {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+}
+
+/* --- HUD 타이머 (상단 중앙) --- */
+.hud-timer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 16px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
+  will-change: transform;
+}
+
+.hud-timer-value {
+  font-size: 26px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: 0.05em;
+}
+
+.hud-timer-low {
+  color: #f87171;
+}
+
+.hud-timer-progress {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* --- HUD 점수 (우상단) --- */
+.hud-score {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 6px 14px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
+  min-width: 80px;
+  will-change: transform;
+}
+
+.hud-score-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.hud-score-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.1em;
+}
+
+.hud-score-flash {
+  position: absolute;
+  top: -4px;
+  right: 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #4ade80;
+  pointer-events: none;
+}
+
+.hud-score-flash-headshot {
+  color: #facc15;
+  font-size: 16px;
+}
+
+/* --- HUD 정확도 (좌상단) --- */
+.hud-accuracy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 6px 14px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
+  min-width: 80px;
+  will-change: transform;
+}
+
+.hud-accuracy-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  transition: color 0.2s;
+}
+
+.hud-acc-good { color: #4ade80; }
+.hud-acc-mid { color: #facc15; }
+.hud-acc-low { color: #f87171; }
+
+.hud-accuracy-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.1em;
+}
+
+.hud-accuracy-detail {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* --- HUD Tier 2 통계 (우하단) --- */
+.hud-stats {
+  display: flex;
+  gap: 12px;
+  padding: 6px 14px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
+}
+
+.hud-stats-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 40px;
+}
+
+.hud-stats-value {
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.hud-stats-hs {
+  color: #facc15;
+}
+
+.hud-stats-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.08em;
+}
+
+.hud-stats-pb {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.hud-pb-ahead {
+  color: #34d399;
+}
+
+.hud-pb-behind {
+  color: #f87171;
+}
+
 /* === 시나리오 설정 === */
 .scenario-select {
   width: 100%;

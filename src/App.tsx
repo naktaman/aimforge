@@ -56,6 +56,8 @@ import { Crosshair } from './components/overlays/Crosshair';
 import { ScopeOverlay } from './components/overlays/ScopeOverlay';
 import { ShootingFeedback, triggerShootingFeedback, getComboState } from './components/overlays/ShootingFeedback';
 import { FireModeIndicator } from './components/overlays/FireModeIndicator';
+import { GameHUD } from './components/overlays/GameHUD';
+import { useGameMetricsStore } from './hooks/useGameMetrics';
 import { TargetManager } from './engine/TargetManager';
 import { FlickScenario } from './engine/scenarios/FlickScenario';
 import { TrackingScenario } from './engine/scenarios/TrackingScenario';
@@ -149,22 +151,31 @@ function App() {
     targetManagerRef.current = tm;
     engine.setTargetManager(tm);
 
-    // 사격 피드백 연결: 총기음 + 히트/헤드샷 분기 + 콤보 피치 연동
+    // 사격 피드백 연결: 총기음 + 히트/헤드샷 분기 + 콤보 피치 연동 + HUD 메트릭
     engine.setOnShoot((hit, hitResult) => {
       soundEngine.playGunshot();
       const hitZone = hitResult?.hitZone;
       triggerShootingFeedback(hit ? 'hit' : 'miss', hitZone);
 
       if (hit) {
-        const { pitchMultiplier } = getComboState();
+        const { pitchMultiplier, count } = getComboState();
         if (hitZone === 'head') {
           soundEngine.playHeadshotSound(pitchMultiplier);
         } else {
           soundEngine.playHitSound(pitchMultiplier);
         }
+        // HUD 콤보 동기화
+        useGameMetricsStore.getState().syncCombo(count);
       } else {
         soundEngine.playMissSound();
+        useGameMetricsStore.getState().syncCombo(0);
       }
+
+      // HUD 메트릭 기록
+      useGameMetricsStore.getState().recordShot({
+        hit,
+        headshot: hit && hitZone === 'head',
+      });
     });
 
     // 발사 모드 + 무기 표시 상태 동기화
@@ -186,6 +197,7 @@ function App() {
 
       setFlickResult({ overall: results.overall, byAngle, byDirection, byMotor });
       endScenario();
+      useGameMetricsStore.getState().endSession();
       engine.setScenario(null);
       setScreen('results');
       soundEngine.playEndSound();
@@ -256,6 +268,14 @@ function App() {
         profile_id: 1, mode: 'quick_play', session_type: scenarioType,
       }}).then((sid) => { if (sid) useSessionStore.getState().setSessionId(sid); });
 
+      // HUD 메트릭 세션 시작 (시나리오 타입에 따라 duration/targets 설정)
+      const hudDuration = (scenarioType !== 'flick' && params.duration) ? params.duration : 0;
+      const hudTargets = scenarioType === 'flick' ? params.numTargets : undefined;
+      useGameMetricsStore.getState().startSession({
+        durationMs: hudDuration,
+        totalTargets: hudTargets,
+      });
+
       switch (scenarioType) {
         case 'flick': {
           const scenario = new FlickScenario(engine, tm, {
@@ -286,6 +306,7 @@ function App() {
           scenario.setOnComplete((results) => {
             setTrackingResult(results);
             endScenario();
+            useGameMetricsStore.getState().endSession();
             engine.setScenario(null);
             setScreen('results');
             // DB 저장
@@ -324,6 +345,7 @@ function App() {
           scenario.setOnComplete((results) => {
             setTrackingResult(results);
             endScenario();
+            useGameMetricsStore.getState().endSession();
             engine.setScenario(null);
             setScreen('results');
             const sid = useSessionStore.getState().sessionId;
@@ -359,6 +381,7 @@ function App() {
           scenario.setOnComplete((results) => {
             setTrackingResult(results);
             endScenario();
+            useGameMetricsStore.getState().endSession();
             engine.setScenario(null);
             setScreen('results');
             const sid = useSessionStore.getState().sessionId;
@@ -413,6 +436,7 @@ function App() {
           scenario.setOnComplete((results) => {
             setMicroFlickResult(results);
             endScenario();
+            useGameMetricsStore.getState().endSession();
             engine.setScenario(null);
             setScreen('results');
             const sid = useSessionStore.getState().sessionId;
@@ -455,6 +479,9 @@ function App() {
       // 세분류 시나리오는 'flick' ScenarioType으로 매핑 (결과 처리는 범용)
       startScenario('flick');
 
+      // HUD 메트릭 세션 시작 (훈련 모드 — 기본 20초 duration)
+      useGameMetricsStore.getState().startSession({ durationMs: 20000 });
+
       /** 스테이지 타입 → 카테고리 매핑 */
       const categoryFromStageType = (st: string): string => {
         if (st.startsWith('flick')) return 'flick';
@@ -473,6 +500,7 @@ function App() {
         };
         console.log('[Training]', r.stageType, 'score:', r.score, 'accuracy:', r.accuracy);
         endScenario();
+        useGameMetricsStore.getState().endSession();
         engine.setScenario(null);
         setScreen('results');
 
@@ -656,11 +684,20 @@ function App() {
       // 배터리 기본 파라미터
       const defaults = BATTERY_SCENARIO_DEFAULTS[scenarioType] ?? {};
 
+      // HUD 메트릭 세션 시작 (배터리 모드)
+      const bDur = (defaults.duration as number) ?? 0;
+      const bTargets = scenarioType === 'flick' ? ((defaults.numTargets as number) ?? 20) : undefined;
+      useGameMetricsStore.getState().startSession({
+        durationMs: scenarioType === 'flick' ? 0 : bDur,
+        totalTargets: bTargets,
+      });
+
       /** 배터리 모드 시나리오 완료 콜백 */
       const onBatteryComplete = (score: number, rawMetrics: unknown) => {
         useBatteryStore.getState().recordComplete(scenarioType, score, rawMetrics);
         useBatteryStore.getState().advanceNext();
         endScenario();
+        useGameMetricsStore.getState().endSession();
         engine.setScenario(null);
         setScreen('battery-progress');
 
@@ -1304,6 +1341,7 @@ function App() {
             <ScopeOverlay zoomLevel={currentZoom} active={scopeMultiplier > 1} />
             <ShootingFeedback />
             <FireModeIndicator />
+            <GameHUD />
             {/* HUD */}
             <div className="hud">
               <div className="hud-item">{fps} FPS</div>
