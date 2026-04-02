@@ -145,7 +145,8 @@ export type ClickType = 'PreAim' | 'PreFire' | 'Flick';
 export type TargetType = 'sphere' | 'humanoid';
 
 /** 히트 부위 (humanoid 전용) */
-export type HitZone = 'head' | 'body';
+/** 3구역 히트존: 머리(헤드샷 2x) / 상체(몸통+팔 1x) / 하체(다리 0.75x) */
+export type HitZone = 'head' | 'upper_body' | 'lower_body';
 
 /** 히트 결과 */
 export interface HitResult {
