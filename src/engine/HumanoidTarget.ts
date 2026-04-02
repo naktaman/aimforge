@@ -9,18 +9,25 @@ import * as THREE from 'three';
 /** 히트 가능한 신체 부위 */
 export type BodyPart = 'head' | 'torso' | 'left_arm' | 'right_arm' | 'left_leg' | 'right_leg';
 
-/** 히트 부위 분류 (점수 배율용) */
-export type HitZoneType = 'head' | 'body';
+/**
+ * 히트 부위 분류 (점수 배율용)
+ * head: 머리 (헤드샷 2x), upper_body: 몸통+팔 (1x), lower_body: 다리 (0.75x)
+ */
+export type HitZoneType = 'head' | 'upper_body' | 'lower_body';
 
 /** 히트존별 점수 배율 */
 export const HIT_ZONE_MULTIPLIER: Record<HitZoneType, number> = {
   head: 2,
-  body: 1,
+  upper_body: 1,
+  lower_body: 0.75,
 };
 
-/** BodyPart → HitZone 변환 */
+/** BodyPart → HitZoneType 변환 — 3구역 분리 */
 export function getHitZone(part: BodyPart): HitZoneType {
-  return part === 'head' ? 'head' : 'body';
+  if (part === 'head') return 'head';
+  if (part === 'left_leg' || part === 'right_leg') return 'lower_body';
+  // torso, left_arm, right_arm → upper_body
+  return 'upper_body';
 }
 
 /**
@@ -125,14 +132,24 @@ export class HumanoidTarget {
     return null;
   }
 
-  /** 히트 시 시각 피드백 — 맞은 파트만 색상 변경 */
-  onHit(mesh: THREE.Mesh, isHeadshot: boolean): void {
+  /**
+   * 히트 시 시각 피드백 — 구역별 다른 플래시 색상
+   * head: 빨강(0xff0000), upper_body: 흰색(0xffffff), lower_body: 주황(0xff8800)
+   */
+  onHit(mesh: THREE.Mesh, hitZone: HitZoneType): void {
     const mat = mesh.material as THREE.MeshStandardMaterial;
     this.originalColor = mat.color.getHex();
     this.flashedMesh = mesh;
 
-    // 헤드샷: 빨간 플래시, 바디: 흰 플래시
-    const flashColor = isHeadshot ? 0xff0000 : 0xffffff;
+    let flashColor: number;
+    if (hitZone === 'head') {
+      flashColor = 0xff0000; // 헤드샷: 빨강
+    } else if (hitZone === 'lower_body') {
+      flashColor = 0xff8800; // 하체: 주황 (서브옵티멀 신호)
+    } else {
+      flashColor = 0xffffff; // 상체: 흰색
+    }
+
     mat.color.setHex(flashColor);
     mat.emissive.setHex(flashColor);
     mat.emissiveIntensity = 1.0;
@@ -147,6 +164,7 @@ export class HumanoidTarget {
         const mat = this.flashedMesh.material as THREE.MeshStandardMaterial;
         mat.color.setHex(this.originalColor);
         mat.emissive.setHex(this.originalColor);
+        // 머리는 emissive 강도 0.3, 나머지 부위 0.2 복원
         mat.emissiveIntensity = this.flashedMesh.name === 'head' ? 0.3 : 0.2;
         this.flashedMesh = null;
       }

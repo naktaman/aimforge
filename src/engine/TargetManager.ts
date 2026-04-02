@@ -143,7 +143,8 @@ export class TargetManager {
         for (const [id, entry] of this.humanoids.entries()) {
           if (entry.humanoid.hitMeshes.includes(hitMesh)) {
             const bodyPart = HumanoidTarget.getBodyPartFromMesh(hitMesh);
-            const hitZone: HitZone = bodyPart ? getHitZone(bodyPart) : 'body';
+            // bodyPart 판별 실패 시 upper_body 기본값 (HitZone에 'body' 없음)
+            const hitZone: HitZone = bodyPart ? getHitZone(bodyPart) : 'upper_body';
             const angError = angularDistance(cameraPos, cameraForward, entry.position);
 
             humanoidResult = {

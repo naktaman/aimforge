@@ -14,7 +14,7 @@ import { classifyClick } from '../metrics/ClickClassifier';
 import { classifyMotor, calculateMovementDistance } from '../metrics/MotorClassifier';
 import { DEG2RAD } from '../../utils/physics';
 import { constrainedAzimuth } from '../SpawnUtils';
-import { HIT_ZONE_MULTIPLIER } from '../HumanoidTarget';
+import { HIT_ZONE_MULTIPLIER, type HitZoneType } from '../HumanoidTarget';
 import type { GameEngine } from '../GameEngine';
 import type { TargetManager } from '../TargetManager';
 import type { FlickConfig, Direction, TargetType } from '../../utils/types';
@@ -157,14 +157,20 @@ export class FlickScenario extends Scenario {
     const hit = hitResult?.hit ?? false;
     if (hit && hitResult) {
       if (this.targetType === 'humanoid') {
-        // humanoid: 히트된 파트에 시각 피드백
+        // humanoid: 히트존별 다른 메쉬에 시각 피드백
         const entry = this.targetManager.getHumanoid(hitResult.targetId);
         if (entry) {
-          const isHeadshot = hitResult.hitZone === 'head';
-          const flashMesh = isHeadshot
-            ? entry.humanoid.headMesh
-            : entry.humanoid.hitMeshes[1]; // torso
-          entry.humanoid.onHit(flashMesh, isHeadshot);
+          const zone = (hitResult.hitZone ?? 'upper_body') as HitZoneType;
+          // hitMeshes 배열 순서: [0]head [1]torso [2]leftArm [3]rightArm [4]leftLeg [5]rightLeg
+          let flashMesh: THREE.Mesh;
+          if (zone === 'head') {
+            flashMesh = entry.humanoid.headMesh;
+          } else if (zone === 'lower_body') {
+            flashMesh = entry.humanoid.hitMeshes[4]; // 왼다리 (하체 대표)
+          } else {
+            flashMesh = entry.humanoid.hitMeshes[1]; // 몸통 (상체 대표)
+          }
+          entry.humanoid.onHit(flashMesh, zone);
         }
       } else {
         const target = this.targetManager.getTarget(hitResult.targetId);
