@@ -1,7 +1,9 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { invoke } from '@tauri-apps/api/core';
 import { safeInvoke } from './utils/ipc';
 import { useEngineStore } from './stores/engineStore';
+import { usePageTransition } from './hooks/usePageTransition';
 import { useSettingsStore } from './stores/settingsStore';
 import { useSessionStore } from './stores/sessionStore';
 import { useUiStore } from './stores/uiStore';
@@ -85,6 +87,7 @@ const soundEngine = new SoundEngine();
 
 function App() {
   const { currentScreen, setScreen, fps, pointerLocked } = useEngineStore();
+  const { variants: pageVariants } = usePageTransition(currentScreen);
   const { mode, theme, onboardingCompleted, loaded: uiLoaded, toggleTheme, toggleMode, loadFromDb } = useUiStore();
 
   /** 앱 시작 시 UI 설정 로드 + 테마 적용 */
@@ -929,6 +932,18 @@ function App() {
       {/* 퍼포먼스 오버레이 (항상 렌더, F3 토글) */}
       <PerformanceOverlay />
 
+      {/* 화면 전환 애니메이션 컨테이너 (viewport 제외) */}
+      <AnimatePresence mode="wait">
+        {currentScreen !== 'viewport' && (
+          <motion.div
+            key={currentScreen}
+            variants={pageVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            style={{ willChange: 'transform, opacity' }}
+          >
+
       {/* 설정 화면 */}
       {currentScreen === 'settings' && (
         <>
@@ -980,30 +995,6 @@ function App() {
           </main>
         </>
       )}
-
-      {/* 뷰포트 (항상 마운트, 설정 화면에서는 숨김) */}
-      <div className={`viewport-wrapper ${currentScreen === 'viewport' ? 'visible' : 'hidden'}`}>
-        <Viewport onEngineReady={handleEngineReady} />
-        {/* 오버레이 */}
-        {currentScreen === 'viewport' && (
-          <>
-            <Crosshair />
-            <ScopeOverlay zoomLevel={currentZoom} active={scopeMultiplier > 1} />
-            <ShootingFeedback />
-            <FireModeIndicator />
-            {/* HUD */}
-            <div className="hud">
-              <div className="hud-item">{fps} FPS</div>
-              <div className="hud-item">{cmPer360.toFixed(1)} cm/360</div>
-              {!pointerLocked && (
-                <div className="hud-overlay-message">
-                  클릭하여 마우스 캡처 시작
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </div>
 
       {/* 결과 화면 */}
       {currentScreen === 'results' && (
@@ -1270,6 +1261,35 @@ function App() {
           />
         </main>
       )}
+
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 뷰포트 (항상 마운트, 설정 화면에서는 숨김) */}
+      <div className={`viewport-wrapper ${currentScreen === 'viewport' ? 'visible' : 'hidden'}`}>
+        <Viewport onEngineReady={handleEngineReady} />
+        {/* 오버레이 */}
+        {currentScreen === 'viewport' && (
+          <>
+            <Crosshair />
+            <ScopeOverlay zoomLevel={currentZoom} active={scopeMultiplier > 1} />
+            <ShootingFeedback />
+            <FireModeIndicator />
+            {/* HUD */}
+            <div className="hud">
+              <div className="hud-item">{fps} FPS</div>
+              <div className="hud-item">{cmPer360.toFixed(1)} cm/360</div>
+              {!pointerLocked && (
+                <div className="hud-overlay-message">
+                  클릭하여 마우스 캡처 시작
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+
     </div>
   );
 }

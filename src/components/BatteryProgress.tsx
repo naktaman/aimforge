@@ -3,6 +3,7 @@
  * 시나리오 큐 표시, 카운트다운, 자동 진행 관리
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { CountdownTransition } from './transitions';
 import { useBatteryStore } from '../stores/batteryStore';
 import type { ScenarioType } from '../utils/types';
 
@@ -105,13 +106,13 @@ export function BatteryProgress({ onLaunchScenario, onCancel, onComplete }: Prop
           <span className="progress-label">{progress.current} / {progress.total}</span>
         </div>
 
-        {/* 카운트다운 오버레이 */}
+        {/* 카운트다운 오버레이 (scale + fade 애니메이션) */}
         {countdown !== null && countdown > 0 && (
           <div className="countdown-overlay">
             <div className="countdown-text">
               {SCENARIO_LABELS[currentScenarioType ?? ''] ?? '다음 시나리오'}
             </div>
-            <div className="countdown-number">{countdown}</div>
+            <CountdownTransition count={countdown} />
           </div>
         )}
 
