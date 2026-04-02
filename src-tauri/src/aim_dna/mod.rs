@@ -127,7 +127,6 @@ pub struct AimDnaProfile {
     pub wrist_accuracy: Option<f64>,
     pub arm_accuracy: Option<f64>,
     pub motor_transition_angle: Option<f64>,
-    pub adaptation_rate: Option<f64>,
     pub type_label: Option<String>,
     /// 피처별 데이터 충족 상태 (DB에는 저장하지 않음, 계산 시점에만 사용)
     #[serde(default)]
@@ -161,7 +160,6 @@ impl AimDnaProfile {
             wrist_accuracy: None,
             arm_accuracy: None,
             motor_transition_angle: None,
-            adaptation_rate: None,
             type_label: None,
             data_sufficiency: HashMap::new(),
         }
@@ -198,7 +196,6 @@ impl AimDnaProfile {
         push_opt!("wrist_accuracy", self.wrist_accuracy);
         push_opt!("arm_accuracy", self.arm_accuracy);
         push_opt!("motor_transition_angle", self.motor_transition_angle);
-        push_opt!("adaptation_rate", self.adaptation_rate);
         pairs
     }
 }
@@ -547,13 +544,6 @@ fn compute_fatigue_and_adaptation(input: &BatteryMetricsInput, dna: &mut AimDnaP
     if first_half > 0.0 {
         dna.fatigue_decay = Some((first_half - second_half) / first_half);
     }
-
-    // 적응 속도: 초반 → 후반 점수 증가율 (양수 = 적응 중)
-    dna.adaptation_rate = Some(if first_half > 0.0 {
-        (second_half - first_half) / first_half
-    } else {
-        0.0
-    });
 }
 
 /// type_label 자동 분류

@@ -117,7 +117,6 @@ fn get_feature_value(dna: &crate::aim_dna::AimDnaProfile, feature_name: &str) ->
         "fatigue_decay" => dna.fatigue_decay,
         "v_h_ratio" => dna.v_h_ratio,
         "motor_transition_angle" => dna.motor_transition_angle,
-        "adaptation_rate" => dna.adaptation_rate,
         _ => None,
     }
 }

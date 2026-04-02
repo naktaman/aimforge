@@ -407,7 +407,6 @@ export interface AimDnaProfile {
   wrist_accuracy: number | null;
   arm_accuracy: number | null;
   motor_transition_angle: number | null;
-  adaptation_rate: number | null;
   type_label: string | null;
   data_sufficiency?: Record<string, FeatureSufficiency>;
 }

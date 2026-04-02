@@ -33,7 +33,6 @@ const FEATURE_LABELS: Record<string, string> = {
   wrist_accuracy: '손목 정확도',
   arm_accuracy: '팔 정확도',
   motor_transition_angle: '운동체계 전환각',
-  adaptation_rate: '적응 속도',
 };
 
 /** 상태에 따른 뱃지 클래스 반환 */
