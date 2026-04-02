@@ -5381,3 +5381,215 @@ body {
 [data-theme="light"] .gp-chart-obs-latest {
   stroke: #fff;
 }
+
+/* ── DNA 탭 네비게이션 ── */
+.dna-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+  flex-wrap: wrap;
+}
+.dna-tab {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 13px;
+  padding: 8px 14px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.dna-tab:hover { color: var(--text-primary); }
+.dna-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+/* ── 기어 선택기 ── */
+.gear-selector { display: flex; flex-direction: column; gap: 24px; max-width: 600px; }
+.gear-field { display: flex; flex-direction: column; gap: 8px; }
+.gear-label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+.gear-autocomplete { position: relative; }
+.gear-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 100;
+  list-style: none;
+  padding: 4px 0;
+  margin: 2px 0 0;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+.gear-dropdown-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.gear-dropdown-item:hover { background: var(--bg-hover); }
+.gear-item-name { font-size: 13px; color: var(--text-primary); }
+.gear-item-meta { font-size: 11px; color: var(--text-secondary); white-space: nowrap; }
+.gear-detail-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 6px 16px;
+  margin-top: 4px;
+}
+.gear-detail-row { display: flex; gap: 6px; align-items: center; }
+.gear-detail-key { font-size: 11px; color: var(--text-secondary); white-space: nowrap; }
+.gear-detail-val { font-size: 12px; color: var(--text-primary); font-weight: 500; }
+
+/* ── 그립 가이드 ── */
+.grip-guide { max-width: 700px; }
+.grip-guide-title { margin-bottom: 12px; }
+.grip-suggestion-banner {
+  background: var(--bg-secondary);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+}
+.grip-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.grip-tab {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 12px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s;
+}
+.grip-tab:hover { border-color: var(--accent); color: var(--text-primary); }
+.grip-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.grip-tab.suggested:not(.active) { border-color: var(--accent); color: var(--accent); }
+.grip-tab-star { margin-left: 4px; font-size: 10px; }
+
+.grip-detail { display: flex; gap: 24px; align-items: flex-start; flex-wrap: wrap; }
+.grip-visual { display: flex; flex-direction: column; align-items: center; gap: 8px; flex-shrink: 0; }
+.grip-svg { width: 120px; height: 140px; }
+.grip-pro-stat { font-size: 12px; color: var(--text-secondary); text-align: center; }
+
+.grip-info { flex: 1; min-width: 260px; }
+.grip-section { margin-bottom: 14px; }
+.grip-section h4 { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.grip-section ul { padding-left: 16px; margin: 0; }
+.grip-section li { font-size: 13px; color: var(--text-primary); margin-bottom: 3px; }
+.grip-pros li::marker { color: #4ecdc4; }
+.grip-cons li::marker { color: #e94560; }
+
+.grip-match-grid { display: flex; flex-direction: column; gap: 6px; }
+.grip-match-row { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+.grip-match-row span { width: 150px; color: var(--text-secondary); flex-shrink: 0; }
+.grip-match-bar { display: flex; gap: 3px; }
+.grip-match-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); }
+.grip-match-dot.active { background: var(--accent); }
+
+.grip-shape-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.grip-shape-tag {
+  font-size: 11px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 8px;
+  color: var(--text-secondary);
+}
+
+.grip-dna-note p { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+
+/* ── 자세 가이드 ── */
+.posture-guide { max-width: 700px; }
+.posture-guide-title { margin-bottom: 12px; }
+.posture-band-tabs { display: flex; gap: 2px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+.posture-band-tab {
+  padding: 8px 16px;
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.posture-band-tab.active { border-bottom-color: var(--accent); }
+.posture-band-label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.posture-band-range { font-size: 11px; color: var(--text-secondary); }
+
+.posture-detail { display: flex; flex-direction: column; gap: 16px; }
+.posture-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+.posture-metric-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+.posture-metric-label { font-size: 11px; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; }
+.posture-metric-val { font-size: 12px; color: var(--text-primary); line-height: 1.4; }
+
+.posture-section h4 { font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+.posture-section ul { padding-left: 16px; margin: 0; }
+.posture-section li { font-size: 13px; color: var(--text-primary); margin-bottom: 4px; line-height: 1.4; }
+.posture-tips li::marker { color: #4ecdc4; }
+.posture-watchout li::marker { color: #f5a623; }
+
+/* ── 인사이트 ── */
+.aim-insights { max-width: 700px; }
+.aim-insights-title { margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+.expert-badge {
+  font-size: 11px;
+  background: #f5a623;
+  color: #000;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+.expert-banner {
+  background: #3d3520;
+  border: 1px solid #f5a623;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #f5a623;
+  margin-bottom: 14px;
+}
+.aim-insights-empty { color: var(--text-secondary); font-size: 13px; }
+.aim-insights-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+
+.insight-card {
+  border-radius: 8px;
+  padding: 12px 14px;
+  border-left: 3px solid transparent;
+}
+.insight-info   { background: var(--bg-secondary); border-color: #4a90d9; }
+.insight-warn   { background: #2d1f1f; border-color: #e94560; }
+.insight-tip    { background: #1f2d1f; border-color: #4ecdc4; }
+.insight-expert { background: #2d2a1a; border-color: #f5a623; }
+
+.insight-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.insight-icon { font-size: 14px; flex-shrink: 0; }
+.insight-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.insight-body { font-size: 12px; color: var(--text-secondary); line-height: 1.5; margin: 0; }

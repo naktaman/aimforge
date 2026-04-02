@@ -2,13 +2,22 @@
  * Aim DNA 결과 화면
  * D3.js 레이더 차트 (5축) + 상세 분류표 + type_label 배지
  * + 데이터 충족도 표시 + 추세 배너 + 크로스게임 비교 진입
+ * + 기어 선택기 + 그립/자세 가이드 + 인사이트 엔진
  */
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { useAimDnaStore } from '../stores/aimDnaStore';
 import { useEngineStore } from '../stores/engineStore';
 import { computeRadarAxes } from '../utils/radarUtils';
 import type { AimDnaProfile, RadarAxis, FeatureSufficiency } from '../utils/types';
+import { AimDnaSensitivitySelector } from './AimDnaSensitivitySelector';
+import { AimDnaGripGuide } from './AimDnaGripGuide';
+import { AimDnaPostureGuide } from './AimDnaPostureGuide';
+import { AimDnaInsights } from './AimDnaInsights';
+import type { GearSelection } from './AimDnaSensitivitySelector';
+
+/** 탭 목록 */
+type DnaTab = 'overview' | 'gear' | 'grip' | 'posture' | 'insights';
 
 interface Props {
   onBack: () => void;
@@ -163,6 +172,11 @@ export function AimDnaResult({ onBack }: Props) {
   const { currentDna, trend, loadTrend } = useAimDnaStore();
   const { setScreen } = useEngineStore();
 
+  /** 현재 활성 탭 */
+  const [tab, setTab] = useState<DnaTab>('overview');
+  /** 기어 선택 상태 — 인사이트와 공유 */
+  const [gear, setGear] = useState<GearSelection>({ mouse: null, mousepad: null });
+
   // 추세 분석 로드
   useEffect(() => {
     if (currentDna) {
@@ -186,85 +200,135 @@ export function AimDnaResult({ onBack }: Props) {
       <div className="aim-dna-result">
         <h2>Aim DNA</h2>
 
-        {/* 재교정 추천 배너 */}
-        {trend?.recalibration_recommended && (
-          <div className="trend-banner" style={{
-            background: '#3d3520', border: '1px solid #f5a623', borderRadius: 8,
-            padding: '12px 16px', marginBottom: 16,
-          }}>
-            <strong style={{ color: '#f5a623' }}>DNA 변화 감지 — 재교정을 추천합니다</strong>
-            <div style={{ marginTop: 8, fontSize: 13, color: '#ccc' }}>
-              {trend.changed_features.slice(0, 5).map(f => (
-                <span key={f.feature} style={{ marginRight: 12 }}>
-                  {f.feature}: {f.change_pct > 0 ? '+' : ''}{f.change_pct.toFixed(1)}%
-                  ({DIRECTION_LABELS[f.direction] ?? f.direction})
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* type_label 배지 */}
-        {currentDna.type_label && (
-          <div className="type-badge">
-            <span className="type-name">{currentDna.type_label}</span>
-            <span className="type-desc">
-              {TYPE_DESCRIPTIONS[currentDna.type_label] ?? ''}
-            </span>
-          </div>
-        )}
-
-        {/* 레이더 차트 */}
-        <RadarChart axes={axes} />
-
-        {/* 상세 분류표 — 데이터 부족 표시 포함 */}
-        <div className="feature-cards">
-          <FeatureCard
-            title="Flick 역학"
-            items={[
-              { label: 'Peak Velocity', value: fmt(currentDna.flick_peak_velocity, 0, '°/s') },
-              { label: 'Avg Overshoot', value: fmt(currentDna.overshoot_avg, 3, ' rad'), sufficiency: getSuff(currentDna, 'overshoot_avg') },
-              { label: 'Effective Range', value: fmt(currentDna.effective_range, 0, '°') },
-              { label: 'Direction Bias', value: fmt(currentDna.direction_bias, 3), sufficiency: getSuff(currentDna, 'direction_bias') },
-              { label: 'Pre-Aim Ratio', value: pct(currentDna.pre_aim_ratio) },
-              { label: 'Pre-Fire Ratio', value: pct(currentDna.pre_fire_ratio) },
-              { label: 'V/H Ratio', value: fmt(currentDna.v_h_ratio), sufficiency: getSuff(currentDna, 'v_h_ratio') },
-            ]}
-          />
-          <FeatureCard
-            title="Tracking 역학"
-            items={[
-              { label: 'MAD', value: fmt(currentDna.tracking_mad, 4, ' rad'), sufficiency: getSuff(currentDna, 'tracking') },
-              { label: 'Phase Lag', value: fmt(currentDna.phase_lag, 1, ' ms'), sufficiency: getSuff(currentDna, 'phase_lag') },
-              { label: 'Smoothness', value: fmt(currentDna.smoothness, 1) },
-              { label: 'Velocity Match', value: pct(currentDna.velocity_match) },
-            ]}
-          />
-          <FeatureCard
-            title="Motor 시스템"
-            items={[
-              { label: 'Wrist/Arm Ratio', value: fmt(currentDna.wrist_arm_ratio) },
-              { label: 'Finger Accuracy', value: pct(currentDna.finger_accuracy) },
-              { label: 'Wrist Accuracy', value: pct(currentDna.wrist_accuracy) },
-              { label: 'Arm Accuracy', value: pct(currentDna.arm_accuracy) },
-              { label: 'Transition Angle', value: fmt(currentDna.motor_transition_angle, 0, '°'), sufficiency: getSuff(currentDna, 'motor_transition_angle') },
-            ]}
-          />
-          <FeatureCard
-            title="시간 역학"
-            items={[
-              { label: "Fitts' a (intercept)", value: fmt(currentDna.fitts_a, 1, ' ms'), sufficiency: getSuff(currentDna, 'fitts') },
-              { label: "Fitts' b (slope)", value: fmt(currentDna.fitts_b, 1, ' ms/bit'), sufficiency: getSuff(currentDna, 'fitts') },
-              { label: 'Fatigue Decay', value: fmt(currentDna.fatigue_decay, 3) },
-              { label: 'Sens Overshoot Corr', value: fmt(currentDna.sens_attributed_overshoot, 3) },
-            ]}
-          />
+        {/* 탭 네비게이션 */}
+        <div className="dna-tabs">
+          {([
+            { id: 'overview',  label: '분석 결과' },
+            { id: 'gear',      label: '기어 선택' },
+            { id: 'grip',      label: '그립 가이드' },
+            { id: 'posture',   label: '자세 가이드' },
+            { id: 'insights',  label: '인사이트' },
+          ] as { id: DnaTab; label: string }[]).map(t => (
+            <button
+              key={t.id}
+              className={`dna-tab ${tab === t.id ? 'active' : ''}`}
+              onClick={() => setTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
         </div>
 
-        <div className="result-actions">
-          <button className="btn-primary" onClick={() => setScreen('cross-game-comparison')}>
-            크로스게임 비교
-          </button>
+        {/* ── 탭 콘텐츠 ─────────────────────────────────────────── */}
+
+        {/* 분석 결과 탭 */}
+        {tab === 'overview' && (
+          <>
+            {/* 재교정 추천 배너 */}
+            {trend?.recalibration_recommended && (
+              <div className="trend-banner" style={{
+                background: '#3d3520', border: '1px solid #f5a623', borderRadius: 8,
+                padding: '12px 16px', marginBottom: 16,
+              }}>
+                <strong style={{ color: '#f5a623' }}>DNA 변화 감지 — 재교정을 추천합니다</strong>
+                <div style={{ marginTop: 8, fontSize: 13, color: '#ccc' }}>
+                  {trend.changed_features.slice(0, 5).map(f => (
+                    <span key={f.feature} style={{ marginRight: 12 }}>
+                      {f.feature}: {f.change_pct > 0 ? '+' : ''}{f.change_pct.toFixed(1)}%
+                      ({DIRECTION_LABELS[f.direction] ?? f.direction})
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* type_label 배지 */}
+            {currentDna.type_label && (
+              <div className="type-badge">
+                <span className="type-name">{currentDna.type_label}</span>
+                <span className="type-desc">
+                  {TYPE_DESCRIPTIONS[currentDna.type_label] ?? ''}
+                </span>
+              </div>
+            )}
+
+            {/* 레이더 차트 */}
+            <RadarChart axes={axes} />
+
+            {/* 상세 분류표 — 데이터 부족 표시 포함 */}
+            <div className="feature-cards">
+              <FeatureCard
+                title="Flick 역학"
+                items={[
+                  { label: 'Peak Velocity', value: fmt(currentDna.flick_peak_velocity, 0, '°/s') },
+                  { label: 'Avg Overshoot', value: fmt(currentDna.overshoot_avg, 3, ' rad'), sufficiency: getSuff(currentDna, 'overshoot_avg') },
+                  { label: 'Effective Range', value: fmt(currentDna.effective_range, 0, '°') },
+                  { label: 'Direction Bias', value: fmt(currentDna.direction_bias, 3), sufficiency: getSuff(currentDna, 'direction_bias') },
+                  { label: 'Pre-Aim Ratio', value: pct(currentDna.pre_aim_ratio) },
+                  { label: 'Pre-Fire Ratio', value: pct(currentDna.pre_fire_ratio) },
+                  { label: 'V/H Ratio', value: fmt(currentDna.v_h_ratio), sufficiency: getSuff(currentDna, 'v_h_ratio') },
+                ]}
+              />
+              <FeatureCard
+                title="Tracking 역학"
+                items={[
+                  { label: 'MAD', value: fmt(currentDna.tracking_mad, 4, ' rad'), sufficiency: getSuff(currentDna, 'tracking') },
+                  { label: 'Phase Lag', value: fmt(currentDna.phase_lag, 1, ' ms'), sufficiency: getSuff(currentDna, 'phase_lag') },
+                  { label: 'Smoothness', value: fmt(currentDna.smoothness, 1) },
+                  { label: 'Velocity Match', value: pct(currentDna.velocity_match) },
+                ]}
+              />
+              <FeatureCard
+                title="Motor 시스템"
+                items={[
+                  { label: 'Wrist/Arm Ratio', value: fmt(currentDna.wrist_arm_ratio) },
+                  { label: 'Finger Accuracy', value: pct(currentDna.finger_accuracy) },
+                  { label: 'Wrist Accuracy', value: pct(currentDna.wrist_accuracy) },
+                  { label: 'Arm Accuracy', value: pct(currentDna.arm_accuracy) },
+                  { label: 'Transition Angle', value: fmt(currentDna.motor_transition_angle, 0, '°'), sufficiency: getSuff(currentDna, 'motor_transition_angle') },
+                ]}
+              />
+              <FeatureCard
+                title="시간 역학"
+                items={[
+                  { label: "Fitts' a (intercept)", value: fmt(currentDna.fitts_a, 1, ' ms'), sufficiency: getSuff(currentDna, 'fitts') },
+                  { label: "Fitts' b (slope)", value: fmt(currentDna.fitts_b, 1, ' ms/bit'), sufficiency: getSuff(currentDna, 'fitts') },
+                  { label: 'Fatigue Decay', value: fmt(currentDna.fatigue_decay, 3) },
+                  { label: 'Sens Overshoot Corr', value: fmt(currentDna.sens_attributed_overshoot, 3) },
+                ]}
+              />
+            </div>
+
+            <div className="result-actions">
+              <button className="btn-primary" onClick={() => setScreen('cross-game-comparison')}>
+                크로스게임 비교
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* 기어 선택 탭 */}
+        {tab === 'gear' && (
+          <AimDnaSensitivitySelector value={gear} onChange={setGear} />
+        )}
+
+        {/* 그립 가이드 탭 */}
+        {tab === 'grip' && (
+          <AimDnaGripGuide dna={currentDna} />
+        )}
+
+        {/* 자세 가이드 탭 */}
+        {tab === 'posture' && (
+          <AimDnaPostureGuide dna={currentDna} />
+        )}
+
+        {/* 인사이트 탭 */}
+        {tab === 'insights' && (
+          <AimDnaInsights dna={currentDna} gear={gear} />
+        )}
+
+        {/* 하단 공통 액션 */}
+        <div className="result-actions" style={{ marginTop: 24 }}>
           <button className="btn-secondary" onClick={onBack}>돌아가기</button>
         </div>
       </div>
