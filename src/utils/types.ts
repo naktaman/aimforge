@@ -141,11 +141,19 @@ export type MotorRegion = 'finger' | 'wrist' | 'arm';
 /** 클릭 타이밍 분류 */
 export type ClickType = 'PreAim' | 'PreFire' | 'Flick';
 
+/** 타겟 타입 (구체 or 사람 모양) */
+export type TargetType = 'sphere' | 'humanoid';
+
+/** 히트 부위 (humanoid 전용) */
+export type HitZone = 'head' | 'body';
+
 /** 히트 결과 */
 export interface HitResult {
   hit: boolean;
   angularError: number;
   targetId: string;
+  /** humanoid 타겟의 히트 부위 (sphere일 때는 undefined) */
+  hitZone?: HitZone;
 }
 
 /** Flick 트라이얼 메트릭 */

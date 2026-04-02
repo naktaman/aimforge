@@ -11,9 +11,11 @@ import { VelocityTracker } from '../metrics/VelocityTracker';
 import { classifyClick } from '../metrics/ClickClassifier';
 import { classifyMotor, calculateMovementDistance } from '../metrics/MotorClassifier';
 import { DEG2RAD } from '../../utils/physics';
+import { constrainedAzimuth } from '../SpawnUtils';
+import { HIT_ZONE_MULTIPLIER } from '../HumanoidTarget';
 import type { GameEngine } from '../GameEngine';
 import type { TargetManager } from '../TargetManager';
-import type { CounterStrafeFlickConfig, Direction } from '../../utils/types';
+import type { CounterStrafeFlickConfig, Direction, TargetType } from '../../utils/types';
 
 /** 상태 머신 */
 type CSState = 'STRAFING' | 'STOPPING' | 'FLICK';
@@ -57,6 +59,7 @@ export class CounterStrafeFlickScenario extends Scenario {
   private targetDirection: Direction = 'right';
   private movementEvents: Array<{ delta_x: number; delta_y: number }> = [];
   private dpi: number;
+  private targetType: TargetType;
   private minAngularError = Infinity;
   private correctionCount = 0;
   private wasApproaching = true;
@@ -69,10 +72,12 @@ export class CounterStrafeFlickScenario extends Scenario {
     targetManager: TargetManager,
     config: CounterStrafeFlickConfig,
     dpi: number,
+    targetType: TargetType = 'sphere',
   ) {
     super(engine, targetManager);
     this.config = config;
     this.dpi = dpi;
+    this.targetType = targetType;
     this.metrics = new MetricsCollector();
     this.velocityTracker = new VelocityTracker();
   }
@@ -138,11 +143,27 @@ export class CounterStrafeFlickScenario extends Scenario {
 
     const hit = hitResult?.hit ?? false;
     if (hit && hitResult) {
-      const target = this.targetManager.getTarget(hitResult.targetId);
-      target?.onHit();
+      if (this.targetType === 'humanoid') {
+        const entry = this.targetManager.getHumanoid(hitResult.targetId);
+        if (entry) {
+          const isHeadshot = hitResult.hitZone === 'head';
+          const flashMesh = isHeadshot
+            ? entry.humanoid.headMesh
+            : entry.humanoid.hitMeshes[1];
+          entry.humanoid.onHit(flashMesh, isHeadshot);
+        }
+      } else {
+        const target = this.targetManager.getTarget(hitResult.targetId);
+        target?.onHit();
+      }
     }
 
     const angularError = hitResult?.angularError ?? Math.PI;
+
+    // 히트존 배율
+    const hitZoneMultiplier = (hit && hitResult?.hitZone)
+      ? HIT_ZONE_MULTIPLIER[hitResult.hitZone]
+      : 1;
 
     // 메트릭 기록
     this.metrics.recordClick({
@@ -172,6 +193,7 @@ export class CounterStrafeFlickScenario extends Scenario {
       motorRegion,
       clickType,
       angularError,
+      hitZoneMultiplier,
     };
     this.metrics.addFlickResult(result);
 
@@ -252,13 +274,13 @@ export class CounterStrafeFlickScenario extends Scenario {
       return;
     }
 
-    // 오버슛 감지
-    const target = this.targetManager.getTarget(this.currentTargetId);
-    if (target) {
+    // 오버슛 감지 (sphere + humanoid 통합)
+    const targetPos = this.targetManager.getTargetPosition(this.currentTargetId);
+    if (targetPos) {
       const forward = this.engine.getCameraForward();
       const cameraPos = this.engine.getCamera().position;
       const toTarget = new THREE.Vector3()
-        .subVectors(target.position, cameraPos)
+        .subVectors(targetPos, cameraPos)
         .normalize();
       const angError = Math.acos(
         Math.max(-1, Math.min(1, forward.dot(toTarget))),
@@ -298,37 +320,52 @@ export class CounterStrafeFlickScenario extends Scenario {
     this.startStrafe();
   }
 
-  /** 플릭 타겟 스폰 */
+  /** 플릭 타겟 스폰 — 120° 방위각 제한 적용 */
   private spawnFlickTarget(): void {
     const [minAngle, maxAngle] = this.config.angleRange;
     this.targetAngle = minAngle + Math.random() * (maxAngle - minAngle);
 
-    const azimuth = Math.random() * 360;
-    this.targetDirection = this.getDirection(azimuth);
+    // 120° 방위각 제한 (±60°)
+    const azimuth = constrainedAzimuth();
+    const azimuthNormalized = ((azimuth % 360) + 360) % 360;
+    this.targetDirection = this.getDirection(azimuthNormalized);
 
     const camera = this.engine.getCamera();
+    const cameraPos = camera.position.clone();
     const distance = 5 + Math.random() * 10;
 
     const angleRad = this.targetAngle * DEG2RAD;
     const azimuthRad = azimuth * DEG2RAD;
 
+    // humanoid는 수평 ±3° elevation
+    const elevationRad = this.targetType === 'humanoid'
+      ? (Math.random() * 6 - 3) * DEG2RAD
+      : (azimuthRad - Math.PI / 2);
+
     const localDir = new THREE.Vector3(
       Math.sin(angleRad) * Math.cos(azimuthRad),
-      Math.sin(angleRad) * Math.sin(azimuthRad - Math.PI / 2),
+      Math.sin(angleRad) * Math.sin(elevationRad),
       -Math.cos(angleRad),
     );
 
     const worldDir = localDir.applyQuaternion(camera.quaternion);
-    const targetPos = camera.position
-      .clone()
-      .addScaledVector(worldDir, distance);
+    const targetPos = cameraPos.clone().addScaledVector(worldDir, distance);
 
-    const target = this.targetManager.spawnTarget(targetPos, {
-      angularSizeDeg: this.config.targetSizeDeg,
-      distanceM: distance,
-      color: 0xe94560,
-    });
-    this.currentTargetId = target.id;
+    if (this.targetType === 'humanoid') {
+      const { id } = this.targetManager.spawnHumanoidTarget(
+        targetPos,
+        { angularSizeDeg: this.config.targetSizeDeg, distanceM: distance },
+        cameraPos,
+      );
+      this.currentTargetId = id;
+    } else {
+      const target = this.targetManager.spawnTarget(targetPos, {
+        angularSizeDeg: this.config.targetSizeDeg,
+        distanceM: distance,
+        color: 0xe94560,
+      });
+      this.currentTargetId = target.id;
+    }
     this.targetAppearTime = performance.now();
 
     // 추적 상태 초기화

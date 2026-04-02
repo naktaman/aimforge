@@ -201,7 +201,8 @@ export class AimDnaScanScenario extends Scenario {
   // ── 스폰 헬퍼 ──
 
   private spawnFlickTarget(): void {
-    const azimuth = Math.random() * 360 - 180;
+    // 120° 방위각 제한 (±60°)
+    const azimuth = (Math.random() * 120) - 60;
     const DEG2RAD = Math.PI / 180;
     const d = 12;
     const pos = new THREE.Vector3(
@@ -220,7 +221,8 @@ export class AimDnaScanScenario extends Scenario {
 
   private spawnCloseTarget(): void {
     // 근거리 + 큰 각도
-    const azimuth = Math.random() * 360 - 180;
+    // 120° 방위각 제한 (±60°)
+    const azimuth = (Math.random() * 120) - 60;
     const DEG2RAD = Math.PI / 180;
     const d = 3 + Math.random() * 3;
     const pos = new THREE.Vector3(

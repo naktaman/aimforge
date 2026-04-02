@@ -147,7 +147,8 @@ export class ScopedFlickScenario extends Scenario {
     const angle = 10 + Math.random() * (maxAngle - 10);
     this.targetAngle = angle;
 
-    const azimuth = Math.random() * 360;
+    // 120° 방위각 제한 (±60°)
+    const azimuth = (Math.random() * 120) - 60;
     const distance = 15 + Math.random() * 20;
 
     const yawRad = (azimuth - 180) * DEG2RAD;

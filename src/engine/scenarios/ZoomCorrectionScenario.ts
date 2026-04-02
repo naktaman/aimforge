@@ -165,7 +165,8 @@ export class ZoomCorrectionScenario extends Scenario {
 
     // 타겟 위치: 중앙에서 2~5° 벗어남 (줌 전환 후 보정 필요)
     const offsetDeg = 2 + Math.random() * 3;
-    const azimuth = Math.random() * 360;
+    // 120° 방위각 제한 (±60°)
+    const azimuth = (Math.random() * 120) - 60;
     const angleRad = offsetDeg * DEG2RAD;
     const azimuthRad = azimuth * DEG2RAD;
 

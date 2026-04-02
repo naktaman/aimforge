@@ -48,6 +48,8 @@ export interface FlickTargetResult {
   motorRegion: MotorRegion;
   clickType: ClickType;
   angularError: number;
+  /** 히트존 배율 (humanoid head=2, body=1, sphere=미정의) */
+  hitZoneMultiplier?: number;
 }
 
 /** Tracking 프레임별 오차 */

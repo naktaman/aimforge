@@ -12,6 +12,7 @@ import { classifyClick } from '../metrics/ClickClassifier';
 import { classifyMotor, calculateMovementDistance } from '../metrics/MotorClassifier';
 import { angularDistance } from '../HitDetection';
 import { DEG2RAD, RAD2DEG } from '../../utils/physics';
+import { constrainedAzimuth } from '../SpawnUtils';
 import type { GameEngine } from '../GameEngine';
 import type { TargetManager } from '../TargetManager';
 import type { MicroFlickConfig, Direction } from '../../utils/types';
@@ -298,13 +299,13 @@ export class MicroFlickScenario extends Scenario {
       return;
     }
 
-    // 오버슛 감지
-    const target = this.targetManager.getTarget(this.interruptTargetId);
-    if (target) {
+    // 오버슛 감지 (sphere + humanoid 통합)
+    const targetPos = this.targetManager.getTargetPosition(this.interruptTargetId);
+    if (targetPos) {
       const forward = this.engine.getCameraForward();
       const cameraPos = this.engine.getCamera().position;
       const toTarget = new THREE.Vector3()
-        .subVectors(target.position, cameraPos)
+        .subVectors(targetPos, cameraPos)
         .normalize();
       const angError = Math.acos(
         Math.max(-1, Math.min(1, forward.dot(toTarget))),
@@ -400,13 +401,15 @@ export class MicroFlickScenario extends Scenario {
     });
   }
 
-  /** 인터럽트 플릭 타겟 스폰 */
+  /** 인터럽트 플릭 타겟 스폰 — 120° 방위각 제한 */
   private spawnInterruptTarget(): void {
     const [minAngle, maxAngle] = this.config.flickAngleRange;
     this.interruptAngle = minAngle + Math.random() * (maxAngle - minAngle);
 
-    const azimuth = Math.random() * 360;
-    this.interruptDirection = this.getDirection(azimuth);
+    // 120° 방위각 제한 (±60°)
+    const azimuth = constrainedAzimuth();
+    const azimuthNormalized = ((azimuth % 360) + 360) % 360;
+    this.interruptDirection = this.getDirection(azimuthNormalized);
 
     const camera = this.engine.getCamera();
     const distance = 5 + Math.random() * 10;
