@@ -147,6 +147,11 @@
 
 ## 다음 작업
 
+### Aim DNA 버그 수정 ✅ (2026-04-02)
+- `AimDnaProfile::adaptation_rate` 제거 — `fatigue_decay = -adaptation_rate` 수학적 중복 피처
+- 수정 파일: aim_dna/mod.rs, db/mod.rs, training/style_transition.rs, types.ts, AimDnaResult.tsx, HardwareCompare.tsx
+- `calibration::ScreeningData::adaptation_rate`, `crossgame::adaptation_rate`는 다른 컨텍스트로 유지
+
 - ReadinessWidget, DualLandscape 등 남은 컴포넌트 인라인 스타일 정리
 - 프로파일 점검 탭에 실제 DNA 데이터 연동 (배터리 완료 → 요약 표시)
 - 사용자 테스트 피드백 반영
