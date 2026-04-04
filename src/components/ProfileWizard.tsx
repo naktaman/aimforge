@@ -3,10 +3,11 @@
  * 8단계 플로우: Welcome → 게임 세팅 → 하드웨어 → 캘리브레이션 → 전체 점검 → 분석 → 재테스트 → 완료
  * 상단 진행률 바, 이전/다음 네비게이션, 중간 저장 지원
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useTranslation } from '../i18n';
 import { safeInvoke } from '../utils/ipc';
+import { GAME_DATABASE, type GameCategory } from '../data/gameDatabase';
 import {
   useProfileWizardStore,
   WIZARD_STEPS,
@@ -52,6 +53,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
 
   const [games, setGames] = useState<GamePreset[]>([]);
   const [gameSearch, setGameSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
   /** 게임 목록 로드 */
   useEffect(() => {
@@ -60,13 +62,44 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
       .catch((e) => console.error('게임 목록 로드 실패:', e));
   }, []);
 
-  /** 검색 필터링된 게임 목록 */
-  const filteredGames = gameSearch.trim()
-    ? games.filter(g =>
-        g.name.toLowerCase().includes(gameSearch.toLowerCase()) ||
-        g.id.toLowerCase().includes(gameSearch.toLowerCase())
-      )
-    : games;
+  /** 카테고리 → 아바타 배경색 */
+  const CATEGORY_COLORS: Record<string, string> = {
+    fps: '#60a5fa', tactical: '#34d399', 'battle-royale': '#fbbf24',
+    tps: '#f0913a', arena: '#a78bfa', default: '#a78bfa',
+  };
+  const FILTER_CATEGORIES = ['all', 'fps', 'tactical', 'battle-royale', 'tps', 'arena'] as const;
+  const CATEGORY_LABEL_KEYS: Record<string, string> = {
+    all: 'gameFilter.all', fps: 'gameFilter.fps', tactical: 'gameFilter.tactical',
+    'battle-royale': 'gameFilter.battleRoyale', tps: 'gameFilter.tps', arena: 'gameFilter.other',
+  };
+
+  /** GamePreset → 카테고리 조회 */
+  const getGameCategory = (game: GamePreset): GameCategory | 'default' => {
+    const entry = GAME_DATABASE.find(g => g.id === game.id || g.name === game.name);
+    return entry?.category ?? 'default';
+  };
+
+  /** 게임 이니셜 추출 */
+  const getGameInitials = (name: string): string => {
+    const words = name.split(/[\s:]+/).filter(Boolean);
+    return words.length >= 2 ? (words[0][0] + words[1][0]).toUpperCase() : name.slice(0, 2).toUpperCase();
+  };
+
+  /** 검색 + 카테고리 필터링 */
+  const filteredGames = useMemo(() => {
+    let result = games;
+    if (categoryFilter !== 'all') {
+      result = result.filter(g => getGameCategory(g) === categoryFilter);
+    }
+    if (gameSearch.trim()) {
+      const q = gameSearch.toLowerCase();
+      result = result.filter(g => {
+        const entry = GAME_DATABASE.find(e => e.id === g.id || e.name === g.name);
+        return g.name.toLowerCase().includes(q) || g.id.toLowerCase().includes(q) || (entry?.nameKo && entry.nameKo.includes(q));
+      });
+    }
+    return result;
+  }, [games, categoryFilter, gameSearch]);
 
   /** 캘리브레이션 완료 감지 */
   useEffect(() => {
@@ -259,26 +292,52 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
             <p className="pw-description">{t('wizard.selectMainGameDesc')}</p>
 
             {/* 게임 검색 */}
-            <input
-              type="text"
-              className="input-field"
-              placeholder={t('wizard.searchGame')}
-              value={gameSearch}
-              onChange={e => setGameSearch(e.target.value)}
-              style={{ marginBottom: 12, maxWidth: 400 }}
-            />
+            <div className="game-search-field">
+              <input
+                type="text"
+                placeholder={t('wizard.searchGame')}
+                value={gameSearch}
+                onChange={e => setGameSearch(e.target.value)}
+              />
+            </div>
+
+            {/* 카테고리 필터 칩 */}
+            <div className="game-filter-chips">
+              {FILTER_CATEGORIES.map((cat) => {
+                const isActive = categoryFilter === cat;
+                const color = cat === 'all' ? 'var(--accent)' : CATEGORY_COLORS[cat as GameCategory] ?? CATEGORY_COLORS.default;
+                return (
+                  <button
+                    key={cat}
+                    className={`filter-chip ${isActive ? 'active' : ''}`}
+                    style={isActive ? { background: color, borderColor: color } : undefined}
+                    onClick={() => setCategoryFilter(cat)}
+                  >
+                    {cat !== 'all' && <span className="chip-dot" style={{ background: color }} />}
+                    {t(CATEGORY_LABEL_KEYS[cat])}
+                  </button>
+                );
+              })}
+            </div>
 
             <div className="pw-game-grid">
-              {filteredGames.map(g => (
-                <div
-                  key={g.name}
-                  className={`pw-game-card ${store.selectedGame?.name === g.name ? 'selected' : ''}`}
-                  onClick={() => store.setSelectedGame(g)}
-                >
-                  <span className="pw-game-name">{g.name}</span>
-                  <span className="pw-game-yaw">yaw: {g.yaw}</span>
-                </div>
-              ))}
+              {filteredGames.map(g => {
+                const cat = getGameCategory(g);
+                const color = CATEGORY_COLORS[cat];
+                return (
+                  <div
+                    key={g.name}
+                    className={`pw-game-card ${store.selectedGame?.name === g.name ? 'selected' : ''}`}
+                    onClick={() => store.setSelectedGame(g)}
+                  >
+                    <div className="game-avatar" style={{ background: color }}>
+                      {getGameInitials(g.name)}
+                    </div>
+                    <span className="pw-game-name">{g.name}</span>
+                    <span className="pw-game-yaw">yaw: {g.yaw}</span>
+                  </div>
+                );
+              })}
             </div>
 
             {/* 게임별 전용 감도 필드 */}

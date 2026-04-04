@@ -87,6 +87,17 @@
   "onboarding.uiMode": "UI 모드",
   "onboarding.simpleDesc": "Simple: 핵심 기능만 표시 / Advanced: 모든 기능 표시",
   "onboarding.notSelected": "미선택",
+  "onboarding.searchGame": "게임 검색...",
+  "onboarding.dpiError": "DPI는 100~32000 범위여야 합니다",
+  "onboarding.sensError": "감도는 0보다 커야 합니다",
+  "onboarding.gameError": "게임을 선택해주세요",
+
+  "gameFilter.all": "전체",
+  "gameFilter.fps": "FPS",
+  "gameFilter.tactical": "전술 FPS",
+  "gameFilter.battleRoyale": "배틀로얄",
+  "gameFilter.tps": "TPS",
+  "gameFilter.other": "기타",
 
   "mode.simple": "Simple",
   "mode.advanced": "Advanced",

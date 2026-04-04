@@ -87,6 +87,17 @@
   "onboarding.uiMode": "UI Mode",
   "onboarding.simpleDesc": "Simple: Core features only / Advanced: All features",
   "onboarding.notSelected": "Not selected",
+  "onboarding.searchGame": "Search games...",
+  "onboarding.dpiError": "DPI must be between 100 and 32000",
+  "onboarding.sensError": "Sensitivity must be greater than 0",
+  "onboarding.gameError": "Please select a game",
+
+  "gameFilter.all": "All",
+  "gameFilter.fps": "FPS",
+  "gameFilter.tactical": "Tactical FPS",
+  "gameFilter.battleRoyale": "Battle Royale",
+  "gameFilter.tps": "TPS",
+  "gameFilter.other": "Other",
 
   "mode.simple": "Simple",
   "mode.advanced": "Advanced",
