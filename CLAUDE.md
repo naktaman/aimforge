@@ -32,8 +32,10 @@ npm run build          # 프론트엔드 빌드만
 - **@docs/progress/** — 구현 진행 현황
   - [status.md](docs/progress/status.md) — Day별 완료 현황 + 다음 작업
   - [v1-feedback-changes.md](docs/progress/v1-feedback-changes.md) — v1 피드백 이후 8대 변경사항 상세
+  - [incident-log.md](docs/progress/incident-log.md) — 출시 후 이슈 및 수정 기록
 - **@docs/quality/** — 코드 규칙
   - [coding-rules.md](docs/quality/coding-rules.md) — 코딩 규칙, 빌드 명령어, 세션 관리
+  - [troubleshooting.md](docs/quality/troubleshooting.md) — 트러블슈팅 가이드
 - **@docs/planning/** — 로드맵
   - [roadmap.md](docs/planning/roadmap.md) — 30일 로드맵 참조, 설계 원칙, 프로파일 5축
 

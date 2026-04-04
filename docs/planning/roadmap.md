@@ -10,17 +10,21 @@ Infrastructure, Three.js 엔진, GP Calibration, Go/No-Go 검증
 ## Week 2 — Scenarios + Game DB (Day 8~14) ✅
 시나리오 확장, Game DB 10개, Landscape, Zoom Calibration, Comparator
 
-## Week 3 — DNA + Cross-game + Movement (Day 15~21)
+## Week 3 — DNA + Cross-game + Movement (Day 15~21) ✅
 - Day 15~17 ✅ — Aim DNA Engine + Cross-game DNA Comparator
-- Day 18~19 — 훈련 처방 + 궤적 분석 + Progress Dashboard + Game Readiness
-- Day 20~21 — Movement + FOV + Hardware
+- Day 18~19 ✅ — 훈련 처방 + 궤적 분석 + Progress Dashboard + Game Readiness
+- Day 20~21 ✅ — Movement + FOV + Hardware
 
-## Week 4 — Editors + Session + UX + Launch (Day 22~30)
-- Day 22~23 — Recoil/Movement Editor + Conversion Selector
-- Day 24~25 — AI Session Planner + Population 인프라
-- Day 26~27 — UX Polish (Simple/Advanced, 온보딩, 다크모드, i18n)
-- Day 28~29 — 집중 테스트 (10개 플로우)
-- Day 30 — Launch (.msi + GitHub + README)
+## Week 4 — Editors + Session + UX + Launch (Day 22~30) ✅
+- Day 22~23 ✅ — Recoil/Movement Editor + Conversion Selector
+- Day 24~25 ✅ — AI Session Planner + Population 인프라
+- Day 26~27 ✅ — UX Polish (Simple/Advanced, 온보딩, 다크모드, i18n)
+- Day 28~29 ✅ — 집중 테스트 (10개 플로우)
+- Day 30 ✅ — Launch (.msi + GitHub + README)
+
+## Post-Launch — UI 디자인 감사 + 품질 개선
+- P0 디자인 감사 ✅ (2026-04-05) — 게임 그리드 이니셜 아바타+검색+필터 칩, 온보딩 전환 애니메이션+유효성 피드백
+- P1~P2 디자인 감사 — DNA 레이더 차트, 키보드 접근성, 반응형 레이아웃 등 (예정)
 
 ---
 
