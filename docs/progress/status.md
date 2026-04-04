@@ -216,10 +216,21 @@
 - 인라인 스타일 하드코딩 색상 CSS 변수화 (AimDnaHistory, DualLandscape, MultiplierCurve 등 15개 컴포넌트)
 - 수정 파일: styles.css, App.tsx, 15개 컴포넌트 (17파일 508+/378-)
 
+### 보안 코드 감사 (2026-04-05) [claude/brave-mccarthy]
+- 7개 항목 정적 분석 (읽기 전용): IPC, SQLite, XSS, 시크릿, 파일시스템, 의존성, 프라이버시
+- **High 1건**: CSP 비활성화 (`tauri.conf.json` `"csp": null`)
+- **Medium 1건**: IPC String 파라미터 길이 제한 없음
+- **Low 2건**: innerHTML 1건 (숫자 데이터), 크래시 로그 경로 노출 가능
+- **안전**: SQL 인젝션 0건 (100% 파라미터 바인딩), API키 하드코딩 0건, npm 취약점 0건, path traversal 방어 적용
+- 상세: `docs/security-audit.md`
+
 ---
 
 ## 다음 작업
 
+- **CSP 정책 활성화** (High — `tauri.conf.json`)
+- **IPC 입력 길이 제한** (Medium)
+- **cargo-audit 설치 및 CI 연동**
 - EmptyState 컴포넌트 실 적용 (SessionHistory, Leaderboard 등 빈 상태 교체)
 - 키보드 네비게이션 심화 (탭 방향키 이동, focus trap)
 - 반응형 레이아웃 (모바일 breakpoint)
