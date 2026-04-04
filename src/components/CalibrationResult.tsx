@@ -12,9 +12,9 @@ interface CalibrationResultProps {
 
 /** 유의성 라벨 — i18n 키 매핑 */
 const SIGNIFICANCE_LABELS = {
-  Recommend: { textKey: 'cal.sigRecommend', color: '#4ade80', descKey: 'cal.sigRecommendDesc' },
-  Marginal: { textKey: 'cal.sigMarginal', color: '#facc15', descKey: 'cal.sigMarginalDesc' },
-  Keep: { textKey: 'cal.sigKeep', color: '#60a5fa', descKey: 'cal.sigKeepDesc' },
+  Recommend: { textKey: 'cal.sigRecommend', color: 'var(--color-hit)', descKey: 'cal.sigRecommendDesc' },
+  Marginal: { textKey: 'cal.sigMarginal', color: 'var(--warning)', descKey: 'cal.sigMarginalDesc' },
+  Keep: { textKey: 'cal.sigKeep', color: 'var(--info)', descKey: 'cal.sigKeepDesc' },
 };
 
 export function CalibrationResult({ onBack, onApply }: CalibrationResultProps) {

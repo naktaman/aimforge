@@ -1036,7 +1036,7 @@ function App() {
                   <button className={mode === 'advanced' ? 'active' : ''} onClick={() => mode !== 'advanced' && toggleMode()}>Advanced</button>
                 </div>
                 {/* 테마 토글 */}
-                <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? t('theme.light') : t('theme.dark')}>
+                <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? t('theme.light') : t('theme.dark')} aria-label={theme === 'dark' ? t('theme.light') : t('theme.dark')}>
                   {theme === 'dark' ? '\u2600' : '\u263E'}
                 </button>
                 {/* 언어 전환 */}

@@ -167,7 +167,7 @@ export default function ConversionSelector({ onBack }: { onBack: () => void }) {
           </select>
         </label>
 
-        <button className="btn btn--ghost btn--icon" onClick={swap} title={`${t('conv.sourceGame')}/${t('conv.destGame')}`}>
+        <button className="btn btn--ghost btn--icon" onClick={swap} title={`${t('conv.sourceGame')}/${t('conv.destGame')}`} aria-label={`${t('conv.sourceGame')}/${t('conv.destGame')}`}>
           ⇄
         </button>
 

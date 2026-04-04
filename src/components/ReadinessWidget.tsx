@@ -102,7 +102,7 @@ export default function ReadinessWidget({ result, onMeasure }: Props) {
     <div style={{ textAlign: 'center' }}>
       <svg ref={svgRef} style={{ width: 200, height: 140 }} />
       {result && (
-        <p style={{ color: '#ccc', fontSize: 13, margin: '8px 0', maxWidth: 220 }}>
+        <p style={{ color: 'var(--text-primary)', fontSize: 13, margin: '8px 0', maxWidth: 220 }}>
           {result.dailyAdvice}
         </p>
       )}
@@ -110,7 +110,7 @@ export default function ReadinessWidget({ result, onMeasure }: Props) {
         <button
           onClick={onMeasure}
           style={{
-            background: '#3b82f6', color: '#fff', border: 'none',
+            background: 'var(--info)', color: '#fff', border: 'none',
             borderRadius: 6, padding: '8px 20px', cursor: 'pointer',
             fontSize: 13, fontWeight: 500, marginTop: 8,
           }}

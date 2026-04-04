@@ -208,15 +208,15 @@ export default function DualLandscape({ onBack }: Props) {
         <div style={{ background: '#0f3460', padding: 16, borderRadius: 8, display: 'flex', gap: 32 }}>
           <div>
             <div style={{ fontSize: 12, opacity: 0.7 }}>{t('landscape.staticOpt')}</div>
-            <div style={{ fontSize: 20, color: '#38bdf8' }}>{recommendation.staticOptimal.toFixed(1)}</div>
+            <div style={{ fontSize: 20, color: 'var(--color-sky)' }}>{recommendation.staticOptimal.toFixed(1)}</div>
           </div>
           <div>
             <div style={{ fontSize: 12, opacity: 0.7 }}>{t('landscape.movingOpt')}</div>
-            <div style={{ fontSize: 20, color: '#f5a623' }}>{recommendation.movingOptimal.toFixed(1)}</div>
+            <div style={{ fontSize: 20, color: 'var(--color-amber)' }}>{recommendation.movingOptimal.toFixed(1)}</div>
           </div>
           <div>
             <div style={{ fontSize: 12, opacity: 0.7 }}>{t('landscape.weightedRecommended')}</div>
-            <div style={{ fontSize: 20, color: '#f0913a', fontWeight: 'bold' }}>
+            <div style={{ fontSize: 20, color: 'var(--accent)', fontWeight: 'bold' }}>
               {recommendation.finalCm360.toFixed(1)} cm/360
             </div>
           </div>

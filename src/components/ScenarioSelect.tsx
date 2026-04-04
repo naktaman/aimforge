@@ -391,7 +391,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
       </section>
 
       {/* ── 메인 탭 네비게이션 (재설계) ── */}
-      <div className="main-tabs">
+      <div className="main-tabs" role="tablist" aria-label={t('scenario.tabSensitivity')}>
         {([
           { key: 'sensitivity' as MainTab, label: t('scenario.tabSensitivity'), emoji: '' },
           { key: 'training' as MainTab, label: t('scenario.tabTraining'), emoji: '' },
@@ -399,6 +399,8 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
         ]).map(({ key, label }) => (
           <button
             key={key}
+            role="tab"
+            aria-selected={mainTab === key}
             className={`main-tab ${mainTab === key ? 'active' : ''}`}
             onClick={() => setMainTab(key)}
           >
@@ -508,7 +510,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
       {mainTab === 'training' && (
         <>
           {/* 훈련 서브 탭 */}
-          <div className="sub-tabs">
+          <div className="sub-tabs" role="tablist" aria-label={t('scenario.tabTraining')}>
             {([
               { key: 'catalog' as TrainingSub, label: t('scenario.catalog') },
               { key: 'custom' as TrainingSub, label: t('scenario.customPlay') },
@@ -516,6 +518,8 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
             ]).map(({ key, label }) => (
               <button
                 key={key}
+                role="tab"
+                aria-selected={trainingSub === key}
                 className={`sub-tab ${trainingSub === key ? 'active' : ''}`}
                 onClick={() => setTrainingSub(key)}
               >

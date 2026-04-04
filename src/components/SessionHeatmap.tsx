@@ -165,11 +165,11 @@ export function SessionHeatmap({
       const y = click.ny * height;
       ctx.beginPath();
       ctx.arc(x, y, click.hit ? 4 : 5, 0, Math.PI * 2);
-      ctx.fillStyle = click.hit ? '#4ade80' : '#f87171';
+      ctx.fillStyle = click.hit ? '#4ade80' : '#f87171';  /* 캔버스 컨텍스트 — CSS 변수 사용 불가 */
       ctx.fill();
       if (!click.hit) {
         // 미스: X 마커
-        ctx.strokeStyle = '#f87171';
+        ctx.strokeStyle = '#f87171';  /* 캔버스 컨텍스트 */
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(x - 4, y - 4); ctx.lineTo(x + 4, y + 4);
@@ -220,6 +220,19 @@ export function SessionHeatmap({
         height={height}
         className="heatmap-canvas"
       />
+
+      {/* 밀도 히트맵 색상 범례 */}
+      {showDensity && (
+        <div className="heatmap-legend">
+          <span className="heatmap-legend-label">낮음</span>
+          <div className="heatmap-legend-bar" />
+          <span className="heatmap-legend-label">높음</span>
+          <div className="heatmap-legend-markers">
+            <span className="heatmap-marker heatmap-marker--hit">● 히트</span>
+            <span className="heatmap-marker heatmap-marker--miss">✕ 미스</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

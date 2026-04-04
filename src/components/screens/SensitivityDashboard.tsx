@@ -61,7 +61,7 @@ export function SensitivityDashboard() {
     >
       {/* 1층: 헤더 */}
       <div className="sd-header">
-        <button className="sd-back-btn" onClick={handleBack} title="뒤로">
+        <button className="sd-back-btn" onClick={handleBack} title="뒤로" aria-label="뒤로">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M12 4L6 10L12 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>

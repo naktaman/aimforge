@@ -344,10 +344,12 @@ export function AimDnaGripGuide({ dna }: Props) {
       )}
 
       {/* 그립 탭 선택 */}
-      <div className="grip-tabs">
+      <div className="grip-tabs" role="tablist" aria-label={t('dna.gripGuide')}>
         {GRIPS.map(g => (
           <button
             key={g.id}
+            role="tab"
+            aria-selected={selected === g.id}
             className={`grip-tab ${selected === g.id ? 'active' : ''} ${suggested === g.id ? 'suggested' : ''}`}
             onClick={() => setSelected(g.id)}
           >

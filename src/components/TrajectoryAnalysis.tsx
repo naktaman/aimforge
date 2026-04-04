@@ -276,19 +276,19 @@ export default function TrajectoryAnalysis({ onBack, trialId: initialTrialId }: 
                   result.diagnosis.currentBehavior === 'balanced' ? '균형' : '데이터 부족'
                 }
                 color={
-                  result.diagnosis.currentBehavior === 'balanced' ? '#4ade80' :
-                  result.diagnosis.currentBehavior === 'insufficient_data' ? '#888' : '#f5a623'
+                  result.diagnosis.currentBehavior === 'balanced' ? 'var(--color-hit)' :
+                  result.diagnosis.currentBehavior === 'insufficient_data' ? 'var(--text-secondary)' : 'var(--color-amber)'
                 }
               />
               <DiagCard
                 label="일관성"
                 value={`${result.diagnosis.consistencyScore.toFixed(0)}점`}
-                color={result.diagnosis.consistencyScore > 70 ? '#4ade80' : '#f5a623'}
+                color={result.diagnosis.consistencyScore > 70 ? 'var(--color-hit)' : 'var(--color-amber)'}
               />
               <DiagCard
                 label="신뢰도"
                 value={`${(result.diagnosis.confidence * 100).toFixed(0)}%`}
-                color="#60a5fa"
+                color="var(--info)"
               />
               {result.diagnosis.recommendedAdjustment !== 0 && (
                 <DiagCard

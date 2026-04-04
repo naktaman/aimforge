@@ -220,7 +220,7 @@ export function AimDnaResult({ onBack }: Props) {
         <h2>Aim DNA</h2>
 
         {/* 탭 네비게이션 */}
-        <div className="dna-tabs">
+        <div className="dna-tabs" role="tablist" aria-label="Aim DNA">
           {([
             { id: 'overview',  labelKey: 'dna.analysisResult' },
             { id: 'gear',      labelKey: 'dna.gearSelect' },
@@ -231,6 +231,8 @@ export function AimDnaResult({ onBack }: Props) {
           ] as { id: DnaTab; labelKey: string }[]).map(item => (
             <button
               key={item.id}
+              role="tab"
+              aria-selected={tab === item.id}
               className={`dna-tab ${tab === item.id ? 'active' : ''}`}
               onClick={() => setTab(item.id)}
             >
@@ -243,6 +245,8 @@ export function AimDnaResult({ onBack }: Props) {
         <AnimatePresence mode="wait">
         <motion.div
           key={tab}
+          role="tabpanel"
+          aria-label={tab}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -255,11 +259,11 @@ export function AimDnaResult({ onBack }: Props) {
             {/* 재교정 추천 배너 */}
             {trend?.recalibrationRecommended && (
               <div className="trend-banner" style={{
-                background: '#3d3520', border: '1px solid #f5a623', borderRadius: 8,
+                background: '#3d3520', border: '1px solid var(--color-amber)', borderRadius: 8,
                 padding: '12px 16px', marginBottom: 16,
               }}>
-                <strong style={{ color: '#f5a623' }}>{t('dna.recalibrationNotice')}</strong>
-                <div style={{ marginTop: 8, fontSize: 13, color: '#ccc' }}>
+                <strong style={{ color: 'var(--color-amber)' }}>{t('dna.recalibrationNotice')}</strong>
+                <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-primary)' }}>
                   {trend.changedFeatures.slice(0, 5).map(f => (
                     <span key={f.feature} style={{ marginRight: 12 }}>
                       {f.feature}: {f.changePct > 0 ? '+' : ''}{f.changePct.toFixed(1)}%

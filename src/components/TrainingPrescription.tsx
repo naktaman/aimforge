@@ -64,10 +64,12 @@ export default function TrainingPrescription({ onBack, onTrainingStart, profileI
 
       {/* 소스 필터 탭 + 새로고침 버튼 */}
       <div className="page-header">
-        <div className="tab-group">
+        <div className="tab-group" role="tablist" aria-label={t('prescription.title')}>
           {(['all', 'single_game', 'cross_game'] as const).map(tab => (
             <button
               key={tab}
+              role="tab"
+              aria-selected={sourceFilter === tab}
               className={`tab-item${sourceFilter === tab ? ' active' : ''}`}
               onClick={() => setSourceFilter(tab)}
             >

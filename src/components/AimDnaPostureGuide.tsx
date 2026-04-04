@@ -253,10 +253,12 @@ export function AimDnaPostureGuide({ cm360, dna }: Props) {
       <h3 className="posture-guide-title">{t('posture.title')}</h3>
 
       {/* 감도 대역 선택 탭 */}
-      <div className="posture-band-tabs">
+      <div className="posture-band-tabs" role="tablist" aria-label={t('posture.title')}>
         {POSTURE_DATA.map(p => (
           <div
             key={p.band}
+            role="tab"
+            aria-selected={p.band === band}
             className={`posture-band-tab ${p.band === band ? 'active' : ''}`}
             style={p.band === band ? { borderBottomColor: BAND_COLOR[p.band] } : undefined}
           >

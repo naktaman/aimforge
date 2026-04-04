@@ -211,10 +211,12 @@ export default function ProgressDashboard({ onBack, profileId }: Props) {
       <div className="glass-card page-section">
         <div className="chart-section__header">
           <h3>{t('progress.dnaChangeTrend')}</h3>
-          <div className="tab-group">
+          <div className="tab-group" role="tablist" aria-label={t('progress.dnaChangeTrend')}>
             {TIME_RANGES.map(r => (
               <button
                 key={r.key}
+                role="tab"
+                aria-selected={timeRange === r.key}
                 onClick={() => setTimeRange(r.key as typeof timeRange)}
                 className={`tab-item${timeRange === r.key ? ' active' : ''}`}
               >
@@ -225,10 +227,12 @@ export default function ProgressDashboard({ onBack, profileId }: Props) {
         </div>
 
         {/* 피처 선택 탭 */}
-        <div className="feature-tabs">
+        <div className="feature-tabs" role="tablist" aria-label="Feature">
           {KEY_FEATURES.map(f => (
             <button
               key={f.key}
+              role="tab"
+              aria-selected={selectedFeature === f.key}
               onClick={() => setSelectedFeature(f.key)}
               className={`feature-tab${selectedFeature === f.key ? ' active' : ''}`}
             >

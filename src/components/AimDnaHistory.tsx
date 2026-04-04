@@ -314,13 +314,13 @@ export function AimDnaHistory({ profileId }: Props) {
       {/* 정체기 감지 배너 */}
       {stagnation?.isStagnant && (
         <div className="stagnation-banner" style={{
-          background: '#3d2a1a', border: '1px solid #f5a623',
+          background: '#3d2a1a', border: '1px solid var(--color-amber)',
           borderRadius: 8, padding: '12px 16px', marginBottom: 16,
         }}>
-          <strong style={{ color: '#f5a623' }}>
+          <strong style={{ color: 'var(--color-amber)' }}>
             {t('dnaHistory.stagnation').replace('{axes}', stagnation.stagnantAxes.join(', '))}
           </strong>
-          <ul style={{ margin: '8px 0 0', paddingLeft: 20, fontSize: 13, color: '#ccc' }}>
+          <ul style={{ margin: '8px 0 0', paddingLeft: 20, fontSize: 13, color: 'var(--text-primary)' }}>
             {stagnation.suggestions.map((s, i) => <li key={i}>{s}</li>)}
           </ul>
         </div>
@@ -329,14 +329,14 @@ export function AimDnaHistory({ profileId }: Props) {
       {/* 타임라인 차트 */}
       <div className="history-section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-          <h3 style={{ margin: 0, fontSize: 15, color: '#ccc' }}>{t('dnaHistory.growthTimeline')}</h3>
-          <div style={{ fontSize: 12, color: '#666' }}>
+          <h3 style={{ margin: 0, fontSize: 15, color: 'var(--text-primary)' }}>{t('dnaHistory.growthTimeline')}</h3>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
             {t('dnaHistory.selectSnapshots')}
           </div>
         </div>
 
         {snapshots.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px 0', color: '#555' }}>
+          <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-secondary)' }}>
             {t('dnaHistory.noData')}
           </div>
         ) : (
@@ -355,12 +355,12 @@ export function AimDnaHistory({ profileId }: Props) {
             {AXIS_KEYS.map(key => (
               <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }}>
                 <div style={{ width: 16, height: 3, background: AXIS_COLORS[key], borderRadius: 2 }} />
-                <span style={{ color: '#999' }}>{AXIS_LABELS[key]}</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{AXIS_LABELS[key]}</span>
               </div>
             ))}
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12 }}>
-              <div style={{ width: 16, height: 3, background: '#f5a623', borderRadius: 2, borderTop: '2px dashed #f5a623' }} />
-              <span style={{ color: '#f5a623' }}>{t('dnaHistory.changePoint')}</span>
+              <div style={{ width: 16, height: 3, background: 'var(--color-amber)', borderRadius: 2, borderTop: '2px dashed var(--color-amber)' }} />
+              <span style={{ color: 'var(--color-amber)' }}>{t('dnaHistory.changePoint')}</span>
             </div>
           </div>
         )}
@@ -378,7 +378,7 @@ export function AimDnaHistory({ profileId }: Props) {
             {t('dnaHistory.compareSnapshots')}
           </button>
           {canCompare && (
-            <span style={{ fontSize: 13, color: '#888' }}>
+            <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
               {t('dnaHistory.snapshotVs')} #{selectedIds[0]} vs #{selectedIds[1]}
             </span>
           )}
@@ -397,7 +397,7 @@ export function AimDnaHistory({ profileId }: Props) {
           background: '#141414', border: '1px solid #2a2a2a',
           borderRadius: 10, padding: 20, marginTop: 8,
         }}>
-          <h3 style={{ marginTop: 0, fontSize: 15, color: '#ccc' }}>{t('dnaHistory.compareResult')}</h3>
+          <h3 style={{ marginTop: 0, fontSize: 15, color: 'var(--text-primary)' }}>{t('dnaHistory.compareResult')}</h3>
 
           <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap', alignItems: 'flex-start' }}>
             {/* 레이더 오버레이 */}
@@ -406,11 +406,11 @@ export function AimDnaHistory({ profileId }: Props) {
               <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 8, fontSize: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                   <div style={{ width: 12, height: 12, background: '#74b9ff', borderRadius: 2, opacity: 0.6 }} />
-                  <span style={{ color: '#74b9ff' }}>{t('dnaHistory.before')}</span>
+                  <span style={{ color: 'var(--info)' }}>{t('dnaHistory.before')}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                   <div style={{ width: 12, height: 12, background: '#f0913a', borderRadius: 2, opacity: 0.6 }} />
-                  <span style={{ color: '#f0913a' }}>{t('dnaHistory.after')}</span>
+                  <span style={{ color: 'var(--accent)' }}>{t('dnaHistory.after')}</span>
                 </div>
               </div>
             </div>
@@ -421,19 +421,19 @@ export function AimDnaHistory({ profileId }: Props) {
                 <thead>
                   <tr>
                     {[t('dnaHistory.axis'), t('dnaHistory.before'), t('dnaHistory.after'), t('dnaHistory.changePct')].map(h => (
-                      <th key={h} style={{ textAlign: 'left', padding: '4px 8px', color: '#666', fontWeight: 'normal', borderBottom: '1px solid #222' }}>{h}</th>
+                      <th key={h} style={{ textAlign: 'left', padding: '4px 8px', color: 'var(--text-secondary)', fontWeight: 'normal', borderBottom: '1px solid var(--border)' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {comparison.deltas.map(d => {
-                    const color = d.direction === 'improved' ? '#00b894'
-                      : d.direction === 'degraded' ? '#f87171' : '#888';
+                    const color = d.direction === 'improved' ? 'var(--success)'
+                      : d.direction === 'degraded' ? 'var(--danger)' : 'var(--text-secondary)';
                     return (
                       <tr key={d.axis}>
-                        <td style={{ padding: '6px 8px', color: '#ccc' }}>{d.axis}</td>
-                        <td style={{ padding: '6px 8px', color: '#888' }}>{d.beforeVal.toFixed(1)}</td>
-                        <td style={{ padding: '6px 8px', color: '#ccc' }}>{d.afterVal.toFixed(1)}</td>
+                        <td style={{ padding: '6px 8px', color: 'var(--text-primary)' }}>{d.axis}</td>
+                        <td style={{ padding: '6px 8px', color: 'var(--text-secondary)' }}>{d.beforeVal.toFixed(1)}</td>
+                        <td style={{ padding: '6px 8px', color: 'var(--text-primary)' }}>{d.afterVal.toFixed(1)}</td>
                         <td style={{ padding: '6px 8px', color }}>
                           {d.deltaPct > 0 ? '+' : ''}{d.deltaPct.toFixed(1)}%
                         </td>
@@ -447,8 +447,8 @@ export function AimDnaHistory({ profileId }: Props) {
 
           {/* 자동 인사이트 */}
           <div style={{ marginTop: 16 }}>
-            <div style={{ fontSize: 13, color: '#888', marginBottom: 6 }}>{t('dnaHistory.autoAnalysis')}</div>
-            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: '#ccc' }}>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 6 }}>{t('dnaHistory.autoAnalysis')}</div>
+            <ul style={{ margin: 0, paddingLeft: 20, fontSize: 13, color: 'var(--text-primary)' }}>
               {comparison.insights.map((msg, i) => <li key={i}>{msg}</li>)}
             </ul>
           </div>
@@ -458,7 +458,7 @@ export function AimDnaHistory({ profileId }: Props) {
       {/* 변경점 이벤트 목록 */}
       {changeEvents.length > 0 && (
         <div className="change-events-section" style={{ marginTop: 24 }}>
-          <h3 style={{ fontSize: 15, color: '#ccc', marginBottom: 8 }}>{t('dnaHistory.changeEventLog')}</h3>
+          <h3 style={{ fontSize: 15, color: 'var(--text-primary)', marginBottom: 8 }}>{t('dnaHistory.changeEventLog')}</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {changeEvents.slice(0, 10).map(ev => (
               <div key={ev.id} style={{
@@ -466,15 +466,15 @@ export function AimDnaHistory({ profileId }: Props) {
                 borderRadius: 6, padding: '10px 14px', fontSize: 13,
                 display: 'flex', gap: 12, alignItems: 'flex-start',
               }}>
-                <span style={{ color: '#f5a623', whiteSpace: 'nowrap' }}>
+                <span style={{ color: 'var(--color-amber)', whiteSpace: 'nowrap' }}>
                   {changeTypeLabels[ev.changeType] ?? ev.changeType}
                 </span>
-                <span style={{ color: '#888', whiteSpace: 'nowrap' }}>
+                <span style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                   {new Date(ev.occurredAt).toLocaleDateString('ko-KR')}
                 </span>
-                <span style={{ color: '#ccc', flex: 1 }}>{ev.description}</span>
+                <span style={{ color: 'var(--text-primary)', flex: 1 }}>{ev.description}</span>
                 {ev.beforeValue && (
-                  <span style={{ color: '#555', fontSize: 11 }}>
+                  <span style={{ color: 'var(--text-secondary)', fontSize: 11 }}>
                     {ev.beforeValue} → {ev.afterValue}
                   </span>
                 )}

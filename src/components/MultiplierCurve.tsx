@@ -150,7 +150,7 @@ export function MultiplierCurve({
 
   /** K 품질 한글 라벨 */
   const qualityLabel = kFit.quality === 'Low' ? '안정적' : kFit.quality === 'Medium' ? '수용 가능' : '불안정 (piecewise 사용)';
-  const qualityColor = kFit.quality === 'Low' ? '#4ade80' : kFit.quality === 'Medium' ? '#f59e0b' : '#ef4444';
+  const qualityColor = kFit.quality === 'Low' ? 'var(--color-hit)' : kFit.quality === 'Medium' ? 'var(--warning)' : 'var(--danger)';
 
   return (
     <div className="multiplier-curve">
@@ -180,9 +180,9 @@ export function MultiplierCurve({
 
       {/* 범례 */}
       <div className="curve-legend">
-        <span className="legend-item"><span style={{ color: '#60a5fa' }}>{'\u25CF'}</span> 측정</span>
-        <span className="legend-item"><span style={{ color: '#94a3b8' }}>{'\u25CB'}</span> 보간</span>
-        <span className="legend-item"><span style={{ color: '#4ade80' }}>{'\u2014'}</span> 피팅 곡선</span>
+        <span className="legend-item"><span style={{ color: 'var(--info)' }}>{'\u25CF'}</span> 측정</span>
+        <span className="legend-item"><span style={{ color: 'var(--text-secondary)' }}>{'\u25CB'}</span> 보간</span>
+        <span className="legend-item"><span style={{ color: 'var(--color-hit)' }}>{'\u2014'}</span> 피팅 곡선</span>
       </div>
     </div>
   );
