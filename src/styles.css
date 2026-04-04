@@ -4196,6 +4196,8 @@ body {
   display: flex;
   gap: var(--space-2);
   margin-top: var(--space-2);
+}
+
 /* ========== Profile Wizard ========== */
 .profile-wizard {
   max-width: 720px;
@@ -4828,7 +4830,8 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 9998;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* 배경 글로우 효과 (상단 오렌지, 하단 블루) */
