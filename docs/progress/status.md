@@ -1,6 +1,6 @@
 # AimForge 구현 진행 현황
 
-> 마지막 업데이트: 2026-04-05 (P1 디자인 개선 — SVG 아이콘, 레이더 애니메이션, 탭 fade, EmptyState, 라이트 glow)
+> 마지막 업데이트: 2026-04-05 (P2 디자인 개선 — CSS 변수 체계화, 접근성, 히트맵 범례)
 
 ---
 
@@ -205,12 +205,24 @@
 - 라이트 테마 glow 변수 opacity 0.15→0.22 (accent, success, info, warning)
 - 수정 파일: ScenarioSelect.tsx, AimDnaResult.tsx, EmptyState.tsx (신규), styles.css
 
+### P2 디자인 개선 ✅ (2026-04-05) [claude/funny-kirch → master]
+- 하드코딩 색상 → CSS 시맨틱 변수 (--color-hit, --color-miss, --color-amber 등 13개) + 라이트 테마 대응값
+- font-size 하드코딩 → 9단계 폰트 스케일 변수 (--font-xs ~ --font-display) 110+ 곳 교체
+- font-weight 산발적 사용 → 변수 체계 (--fw-normal ~ --fw-black) 80+ 곳 통일
+- 탭 컴포넌트 ARIA 접근성: role="tablist"/"tab", aria-selected 8개 탭그룹 (AimDnaResult, ScenarioSelect, ProgressDashboard 등)
+- 아이콘 버튼 aria-label: 테마 토글, 스왑 버튼, 뒤로가기 버튼
+- state별 glow 변수 (--glow-accent-sm/md/lg/focus, --glow-success-sm/lg, --glow-danger-sm, --glow-info-sm) 통합
+- SessionHeatmap: 밀도 색상 범례 바 (blue→green→yellow→red) + 히트/미스 마커 범례 추가
+- 인라인 스타일 하드코딩 색상 CSS 변수화 (AimDnaHistory, DualLandscape, MultiplierCurve 등 15개 컴포넌트)
+- 수정 파일: styles.css, App.tsx, 15개 컴포넌트 (17파일 508+/378-)
+
 ---
 
 ## 다음 작업
 
-- P2 디자인 감사 항목 (키보드 네비게이션, 반응형 레이아웃 등)
 - EmptyState 컴포넌트 실 적용 (SessionHistory, Leaderboard 등 빈 상태 교체)
+- 키보드 네비게이션 심화 (탭 방향키 이동, focus trap)
+- 반응형 레이아웃 (모바일 breakpoint)
 - 사용자 테스트 피드백 반영
 - v0.2.0 릴리즈 준비
 
@@ -221,8 +233,8 @@
 | 항목 | 상태 |
 |------|------|
 | Rust tests | 147/147 통과 |
-| npm build | 성공 (1,440 kB) |
-| CSS | 95 kB |
+| npm build | 성공 (1,443 kB) |
+| CSS | 101 kB |
 | 타입 에러 | 0 |
 
-> 빌드 시점: 2026-04-05 (P1 디자인 개선 후)
+> 빌드 시점: 2026-04-05 (P2 디자인 개선 후)
