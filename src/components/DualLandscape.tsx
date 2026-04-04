@@ -109,7 +109,7 @@ export default function DualLandscape({ onBack }: Props) {
     if (recommendation) {
       const wx = toX(recommendation.finalCm360);
       ctx.beginPath();
-      ctx.strokeStyle = '#e94560';
+      ctx.strokeStyle = '#f0913a';
       ctx.lineWidth = 2;
       ctx.setLineDash([5, 5]);
       ctx.moveTo(wx, pad.top);
@@ -119,11 +119,11 @@ export default function DualLandscape({ onBack }: Props) {
 
       // 최적점 마커
       ctx.beginPath();
-      ctx.fillStyle = '#e94560';
+      ctx.fillStyle = '#f0913a';
       ctx.arc(wx, toY(80), 6, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = '#e94560';
+      ctx.fillStyle = '#f0913a';
       ctx.font = 'bold 13px monospace';
       ctx.textAlign = 'center';
       ctx.fillText(`${recommendation.finalCm360.toFixed(1)}`, wx, pad.top - 8);
@@ -160,7 +160,7 @@ export default function DualLandscape({ onBack }: Props) {
     ctx.fillStyle = '#f5a623';
     ctx.fillRect(pad.left + 80, legendY - 8, 12, 3);
     ctx.fillText(t('landscape.moving'), pad.left + 98, legendY);
-    ctx.fillStyle = '#e94560';
+    ctx.fillStyle = '#f0913a';
     ctx.fillRect(pad.left + 150, legendY - 8, 12, 3);
     ctx.fillText(t('landscape.weighted'), pad.left + 168, legendY);
   }, [staticOpt, movingOpt, ratio, recommendation, t]);
@@ -216,7 +216,7 @@ export default function DualLandscape({ onBack }: Props) {
           </div>
           <div>
             <div style={{ fontSize: 12, opacity: 0.7 }}>{t('landscape.weightedRecommended')}</div>
-            <div style={{ fontSize: 20, color: '#e94560', fontWeight: 'bold' }}>
+            <div style={{ fontSize: 20, color: '#f0913a', fontWeight: 'bold' }}>
               {recommendation.finalCm360.toFixed(1)} cm/360
             </div>
           </div>

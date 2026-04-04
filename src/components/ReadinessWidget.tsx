@@ -18,7 +18,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   peak: '#4ade80',
   ready: '#60a5fa',
   moderate: '#f5a623',
-  rest: '#e94560',
+  rest: '#f87171',
 };
 
 /** 카테고리별 i18n 키 */

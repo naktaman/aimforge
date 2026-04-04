@@ -165,11 +165,11 @@ export function SessionHeatmap({
       const y = click.ny * height;
       ctx.beginPath();
       ctx.arc(x, y, click.hit ? 4 : 5, 0, Math.PI * 2);
-      ctx.fillStyle = click.hit ? '#4ade80' : '#e94560';
+      ctx.fillStyle = click.hit ? '#4ade80' : '#f87171';
       ctx.fill();
       if (!click.hit) {
         // 미스: X 마커
-        ctx.strokeStyle = '#e94560';
+        ctx.strokeStyle = '#f87171';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(x - 4, y - 4); ctx.lineTo(x + 4, y + 4);

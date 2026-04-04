@@ -10,15 +10,16 @@ import { useTranslation } from '../i18n';
 import { BackButton } from './BackButton';
 import { LoadingSpinner } from './LoadingSpinner';
 
-/** 게임 프리셋 */
+/** 게임 프리셋 — serde camelCase에 맞춤 */
 interface GamePreset {
   id: string;
   name: string;
   yaw: number;
-  default_fov: number;
-  fov_type: string;
-  sens_step: number | null;
-  movement_ratio: number;
+  defaultFov: number;
+  fovType: string;
+  sensStep: number | null;
+  movementRatio: number;
+  defaultAspectRatio: number;
 }
 
 /** 변환 결과 */

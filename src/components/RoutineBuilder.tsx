@@ -18,7 +18,7 @@ const AVAILABLE_SCENARIOS: { type: ScenarioType; name: string; defaultDuration: 
 
 /** 시나리오별 색상 */
 const SCENARIO_COLORS: Record<string, string> = {
-  flick: '#e94560',
+  flick: '#f0913a',
   tracking: '#4ade80',
   circular_tracking: '#38bdf8',
   stochastic_tracking: '#c084fc',
