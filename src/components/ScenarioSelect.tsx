@@ -5,6 +5,7 @@
  */
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
+import { AnimatePresence, motion } from 'motion/react';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useEngineStore, RECOIL_PRESETS, type RecoilPreset, type FireMode } from '../stores/engineStore';
 import { useUiStore } from '../stores/uiStore';
@@ -62,11 +63,38 @@ interface ScenarioSelectProps {
   onHistory?: () => void;
 }
 
+/** 카테고리 SVG 아이콘 (18px, currentColor) */
+const CategoryIcons: Record<string, React.ReactNode> = {
+  /* Flick — 십자선 아이콘 */
+  Flick: (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+      <circle cx="9" cy="9" r="6" />
+      <line x1="9" y1="1" x2="9" y2="5" />
+      <line x1="9" y1="13" x2="9" y2="17" />
+      <line x1="1" y1="9" x2="5" y2="9" />
+      <line x1="13" y1="9" x2="17" y2="9" />
+    </svg>
+  ),
+  /* Tracking — 웨이브 아이콘 */
+  Tracking: (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+      <path d="M1 9 C3 5, 5 5, 7 9 S11 13, 13 9 S15 5, 17 9" />
+    </svg>
+  ),
+  /* Switching — 양방향 화살표 아이콘 */
+  Switching: (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="2" y1="9" x2="16" y2="9" />
+      <polyline points="5,6 2,9 5,12" />
+      <polyline points="13,6 16,9 13,12" />
+    </svg>
+  ),
+};
+
 /** 9개 세분류 훈련 카탈로그 — desc 키는 i18n용 */
 const TRAINING_CATALOG = [
   {
     category: 'Flick',
-    icon: '///',
     items: [
       { type: 'flick_micro' as StageType, name: 'Micro Flick', descKey: 'training.flickMicroDesc', color: '#ff6b6b' },
       { type: 'flick_medium' as StageType, name: 'Medium Flick', descKey: 'training.flickMediumDesc', color: '#ffa500', star: true },
@@ -75,7 +103,6 @@ const TRAINING_CATALOG = [
   },
   {
     category: 'Tracking',
-    icon: '~~~',
     items: [
       { type: 'tracking_close' as StageType, name: 'Close Range', descKey: 'training.trackCloseDesc', color: '#00b894' },
       { type: 'tracking_mid' as StageType, name: 'Mid Range', descKey: 'training.trackMidDesc', color: '#0984e3' },
@@ -84,7 +111,6 @@ const TRAINING_CATALOG = [
   },
   {
     category: 'Switching',
-    icon: '<->',
     items: [
       { type: 'switching_close' as StageType, name: 'Close Multi', descKey: 'training.switchCloseDesc', color: '#fdcb6e' },
       { type: 'switching_wide' as StageType, name: 'Wide Multi', descKey: 'training.switchWideDesc', color: '#e17055' },
@@ -396,6 +422,16 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
         </section>
       )}
 
+      {/* ── 탭 콘텐츠 (fade 전환) ── */}
+      <AnimatePresence mode="wait">
+      <motion.div
+        key={mainTab}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+
       {/* ══════════════════════════════════════════
           탭 1: 감도 프로파일 — 앱의 핵심 기능
           ══════════════════════════════════════════ */}
@@ -491,10 +527,10 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
           {/* 카탈로그 — 8종 훈련 시나리오 */}
           {trainingSub === 'catalog' && (
             <section className="training-catalog">
-              {TRAINING_CATALOG.map(({ category, icon, items }) => (
+              {TRAINING_CATALOG.map(({ category, items }) => (
                 <div key={category} className="catalog-category">
                   <h3 className="category-header">
-                    <span className="category-icon">{icon}</span> {category}
+                    <span className="category-icon">{CategoryIcons[category]}</span> {category}
                   </h3>
                   <div className="catalog-items">
                     {items.map((item) => (
@@ -614,6 +650,9 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
           </div>
         </section>
       )}
+
+      </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

@@ -83,15 +83,15 @@
   --text-secondary: #6b6d7a;
   --accent: #d97b1e;
   --accent-dim: #c06c18;
-  --accent-glow: rgba(217, 123, 30, 0.15);
+  --accent-glow: rgba(217, 123, 30, 0.22);
   --accent-subtle: rgba(217, 123, 30, 0.06);
   --accent-light: #e8a44a;
   --success: #22c55e;
-  --success-glow: rgba(34, 197, 94, 0.15);
+  --success-glow: rgba(34, 197, 94, 0.22);
   --info: #3b82f6;
-  --info-glow: rgba(59, 130, 246, 0.15);
+  --info-glow: rgba(59, 130, 246, 0.22);
   --warning: #f59e0b;
-  --warning-glow: rgba(245, 158, 11, 0.15);
+  --warning-glow: rgba(245, 158, 11, 0.22);
   --danger: #ef4444;
   --border: #d5d4d1;
   --border-light: #e0dfdc;
@@ -1765,10 +1765,14 @@ body {
 }
 
 .category-icon {
-  font-family: monospace;
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
   color: var(--accent);
   opacity: 0.7;
+}
+.category-icon svg {
+  width: 18px;
+  height: 18px;
 }
 
 .catalog-items {
@@ -5959,6 +5963,42 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255,255,255,0.18);
+}
+
+/* ── EmptyState 컴포넌트 ── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  gap: 12px;
+}
+.empty-state__icon {
+  color: var(--text-secondary);
+  opacity: 0.5;
+  margin-bottom: 4px;
+}
+.empty-state__icon svg {
+  width: 48px;
+  height: 48px;
+}
+.empty-state__title {
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+.empty-state__desc {
+  color: var(--text-secondary);
+  font-size: 13px;
+  max-width: 320px;
+  line-height: 1.5;
+  margin: 0;
+}
+.empty-state__action {
+  margin-top: 8px;
 }
 
 /* 선택 텍스트 색상 — forge 테마 */

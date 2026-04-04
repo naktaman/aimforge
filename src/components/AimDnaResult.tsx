@@ -6,6 +6,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
+import { AnimatePresence, motion } from 'motion/react';
 import { useTranslation } from '../i18n';
 import { useAimDnaStore } from '../stores/aimDnaStore';
 import { useEngineStore } from '../stores/engineStore';
@@ -86,27 +87,41 @@ function RadarChart({ axes }: { axes: RadarAxis[] }) {
         .attr('stroke-width', 0.5);
     });
 
-    // 데이터 폴리곤
+    // 데이터 폴리곤 — 중심→실제값 600ms 애니메이션
     const rScale = d3.scaleLinear().domain([0, 100]).range([0, maxR]);
     const points = axes.map((axis, i) => {
       const angle = angleSlice * i - Math.PI / 2;
       const r = rScale(axis.value);
       return [r * Math.cos(angle), r * Math.sin(angle)] as [number, number];
     });
+    // 시작 상태: 중심(0,0)
+    const zeroPoints = axes.map(() => [0, 0] as [number, number]);
 
-    g.append('polygon')
-      .attr('points', points.map(p => p.join(',')).join(' '))
+    const polygon = g.append('polygon')
+      .attr('points', zeroPoints.map(p => p.join(',')).join(' '))
       .attr('fill', '#f0913a')
       .attr('fill-opacity', 0.25)
       .attr('stroke', '#f0913a')
       .attr('stroke-width', 2);
 
-    // 데이터 포인트 + 라벨
+    // 중심→실제값 트랜지션 (600ms, easeOutCubic)
+    polygon.transition()
+      .duration(600)
+      .ease(d3.easeCubicOut)
+      .attr('points', points.map(p => p.join(',')).join(' '));
+
+    // 데이터 포인트 + 라벨 (포인트도 애니메이션)
     points.forEach((p, i) => {
       g.append('circle')
-        .attr('cx', p[0]).attr('cy', p[1])
+        .attr('cx', 0).attr('cy', 0)
         .attr('r', 4)
-        .attr('fill', '#f0913a');
+        .attr('fill', '#f0913a')
+        .attr('opacity', 0)
+        .transition()
+        .duration(600)
+        .ease(d3.easeCubicOut)
+        .attr('cx', p[0]).attr('cy', p[1])
+        .attr('opacity', 1);
 
       const angle = angleSlice * i - Math.PI / 2;
       const labelR = maxR + 25;
@@ -224,7 +239,15 @@ export function AimDnaResult({ onBack }: Props) {
           ))}
         </div>
 
-        {/* ── 탭 콘텐츠 ─────────────────────────────────────────── */}
+        {/* ── 탭 콘텐츠 (fade 전환) ── */}
+        <AnimatePresence mode="wait">
+        <motion.div
+          key={tab}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
 
         {/* 분석 결과 탭 */}
         {tab === 'overview' && (
@@ -340,6 +363,9 @@ export function AimDnaResult({ onBack }: Props) {
         {tab === 'history' && (
           <AimDnaHistory profileId={currentDna.profileId} />
         )}
+
+        </motion.div>
+        </AnimatePresence>
 
         {/* 하단 공통 액션 */}
         <div className="result-actions" style={{ marginTop: 24 }}>
