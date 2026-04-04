@@ -2629,6 +2629,8 @@ body {
 .onboarding-card {
   width: 480px;
   max-width: 90vw;
+  max-height: 90vh;
+  overflow-y: auto;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 16px;
@@ -2710,6 +2712,8 @@ body {
   gap: 8px;
   text-align: left;
   margin-bottom: 20px;
+  max-height: 240px;
+  overflow-y: auto;
 }
 
 .game-card {
@@ -4203,6 +4207,8 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 10px;
   margin-bottom: 24px;
+  max-height: 280px;
+  overflow-y: auto;
 }
 
 .pw-game-card {
