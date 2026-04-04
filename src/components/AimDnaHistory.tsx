@@ -12,7 +12,7 @@ import type { DnaSnapshot, DnaChangeEvent, SnapshotComparison } from '../utils/t
 
 // 5축 색상 팔레트
 const AXIS_COLORS: Record<string, string> = {
-  flickPower:         '#e94560',
+  flickPower:         '#f0913a',
   trackingPrecision:  '#4ecdc4',
   motorControl:       '#ffe66d',
   speed:              '#a29bfe',
@@ -242,8 +242,8 @@ function CompareRadar({ comparison }: CompareRadarProps) {
     });
     g.append('polygon')
       .attr('points', afterPts.map(p => p.join(',')).join(' '))
-      .attr('fill', '#e94560').attr('fill-opacity', 0.2)
-      .attr('stroke', '#e94560').attr('stroke-width', 2);
+      .attr('fill', '#f0913a').attr('fill-opacity', 0.2)
+      .attr('stroke', '#f0913a').attr('stroke-width', 2);
   }, [comparison]);
 
   return <svg ref={svgRef} />;
@@ -409,8 +409,8 @@ export function AimDnaHistory({ profileId }: Props) {
                   <span style={{ color: '#74b9ff' }}>{t('dnaHistory.before')}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <div style={{ width: 12, height: 12, background: '#e94560', borderRadius: 2, opacity: 0.6 }} />
-                  <span style={{ color: '#e94560' }}>{t('dnaHistory.after')}</span>
+                  <div style={{ width: 12, height: 12, background: '#f0913a', borderRadius: 2, opacity: 0.6 }} />
+                  <span style={{ color: '#f0913a' }}>{t('dnaHistory.after')}</span>
                 </div>
               </div>
             </div>
@@ -428,7 +428,7 @@ export function AimDnaHistory({ profileId }: Props) {
                 <tbody>
                   {comparison.deltas.map(d => {
                     const color = d.direction === 'improved' ? '#00b894'
-                      : d.direction === 'degraded' ? '#e94560' : '#888';
+                      : d.direction === 'degraded' ? '#f87171' : '#888';
                     return (
                       <tr key={d.axis}>
                         <td style={{ padding: '6px 8px', color: '#ccc' }}>{d.axis}</td>

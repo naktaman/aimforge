@@ -96,9 +96,9 @@ function RadarChart({ axes }: { axes: RadarAxis[] }) {
 
     g.append('polygon')
       .attr('points', points.map(p => p.join(',')).join(' '))
-      .attr('fill', '#e94560')
+      .attr('fill', '#f0913a')
       .attr('fill-opacity', 0.25)
-      .attr('stroke', '#e94560')
+      .attr('stroke', '#f0913a')
       .attr('stroke-width', 2);
 
     // 데이터 포인트 + 라벨
@@ -106,7 +106,7 @@ function RadarChart({ axes }: { axes: RadarAxis[] }) {
       g.append('circle')
         .attr('cx', p[0]).attr('cy', p[1])
         .attr('r', 4)
-        .attr('fill', '#e94560');
+        .attr('fill', '#f0913a');
 
       const angle = angleSlice * i - Math.PI / 2;
       const labelR = maxR + 25;
@@ -123,7 +123,7 @@ function RadarChart({ axes }: { axes: RadarAxis[] }) {
         .attr('x', labelR * Math.cos(angle))
         .attr('y', labelR * Math.sin(angle) + 14)
         .attr('text-anchor', 'middle')
-        .attr('fill', '#e94560')
+        .attr('fill', '#f0913a')
         .attr('font-size', '11px')
         .attr('font-weight', 'bold')
         .text(`${axes[i].value.toFixed(0)}`);

@@ -78,7 +78,7 @@ function ClickVectorScatter({ vectors }: { vectors: ClickVector[] }) {
       .attr('r', 4)
       .attr('fill', d => MOTOR_COLORS[d.motorRegion] || '#888')
       .attr('opacity', 0.7)
-      .attr('stroke', d => d.overshoot ? '#e94560' : 'none')
+      .attr('stroke', d => d.overshoot ? '#f87171' : 'none')
       .attr('stroke-width', d => d.overshoot ? 2 : 0);
 
     // 축 라벨

@@ -85,7 +85,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
 
     const material = new THREE.PointsMaterial({
-      color: 0xe94560, // accent color
+      color: 0xf0913a, // forge accent (앰버/오렌지)
       size: 0.08,
       transparent: true,
       opacity: 0,

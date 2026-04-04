@@ -408,7 +408,7 @@ function MovementPreviewPanel({ maxSpeed, stopTime, accelType, airControl, csBon
       ctx.stroke();
 
       // 이동 점 — 가속/감속/정지 색상 분기
-      const dotColor = phase === 0 ? '#4ade80' : phase === 1 ? '#fbbf24' : '#e94560';
+      const dotColor = phase === 0 ? '#4ade80' : phase === 1 ? '#fbbf24' : '#f87171';
       ctx.fillStyle = dotColor;
       ctx.beginPath();
       ctx.arc(dotX, H - 30, 8, 0, Math.PI * 2);
@@ -420,7 +420,7 @@ function MovementPreviewPanel({ maxSpeed, stopTime, accelType, airControl, csBon
       const speedPct = (maxSpeed - 100) / 500;
       const gradient = ctx.createLinearGradient(10, 0, 10 + (W - 20) * speedPct, 0);
       gradient.addColorStop(0, '#38bdf8');
-      gradient.addColorStop(1, '#e94560');
+      gradient.addColorStop(1, '#f87171');
       ctx.fillStyle = gradient;
       ctx.fillRect(10, 10, (W - 20) * speedPct, 8);
 
@@ -442,7 +442,7 @@ function MovementPreviewPanel({ maxSpeed, stopTime, accelType, airControl, csBon
       ctx.fillText(`${t('movement.air')}: ${(airControl * 100).toFixed(0)}%`, 95, airY + 6);
 
       // CS 보너스 뱃지
-      const badgeColor = csBonus < 0.9 ? '#4ade80' : csBonus > 1.0 ? '#e94560' : '#666';
+      const badgeColor = csBonus < 0.9 ? '#4ade80' : csBonus > 1.0 ? '#f87171' : '#666';
       ctx.fillStyle = badgeColor;
       ctx.fillText(`${t('movement.csBonus')}: ${csBonus}x`, 10, airY + 20);
 
