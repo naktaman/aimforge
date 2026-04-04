@@ -1,6 +1,6 @@
 # AimForge 구현 진행 현황
 
-> 마지막 업데이트: 2026-04-05 (P0 디자인 감사 수정 — 게임 그리드 + 온보딩 애니메이션)
+> 마지막 업데이트: 2026-04-05 (P1 디자인 개선 — SVG 아이콘, 레이더 애니메이션, 탭 fade, EmptyState, 라이트 glow)
 
 ---
 
@@ -197,11 +197,20 @@
 
 수정 파일: Onboarding.tsx, ProfileWizard.tsx, styles.css, en.json, ko.json
 
+### P1 디자인 개선 ✅ (2026-04-05) [claude/xenodochial-merkle → master]
+- ScenarioSelect: 텍스트 아이콘('///', '~~~', '<->') → 인라인 SVG 아이콘 (18px, currentColor)
+- AimDnaResult 레이더 차트: d3.transition() 600ms draw 애니메이션 (중심→실제값, easeOutCubic)
+- AimDnaResult + ScenarioSelect: AnimatePresence motion fade 탭 전환 (0.2s)
+- EmptyState.tsx 범용 컴포넌트 신규 생성 (icon, title, description, action props + CSS)
+- 라이트 테마 glow 변수 opacity 0.15→0.22 (accent, success, info, warning)
+- 수정 파일: ScenarioSelect.tsx, AimDnaResult.tsx, EmptyState.tsx (신규), styles.css
+
 ---
 
 ## 다음 작업
 
-- P1~P2 디자인 감사 항목 (DNA 레이더 차트, 키보드 네비게이션, 반응형 등)
+- P2 디자인 감사 항목 (키보드 네비게이션, 반응형 레이아웃 등)
+- EmptyState 컴포넌트 실 적용 (SessionHistory, Leaderboard 등 빈 상태 교체)
 - 사용자 테스트 피드백 반영
 - v0.2.0 릴리즈 준비
 
@@ -216,4 +225,4 @@
 | CSS | 95 kB |
 | 타입 에러 | 0 |
 
-> 빌드 시점: 2026-04-05 (P0 디자인 감사 수정 후)
+> 빌드 시점: 2026-04-05 (P1 디자인 개선 후)
