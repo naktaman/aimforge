@@ -57,7 +57,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
   useEffect(() => {
     invoke<GamePreset[]>('get_available_games')
       .then(setGames)
-      .catch(() => {});
+      .catch((e) => console.error('게임 목록 로드 실패:', e));
   }, []);
 
   /** 검색 필터링된 게임 목록 */

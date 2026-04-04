@@ -28,7 +28,7 @@ export function Onboarding() {
   useEffect(() => {
     invoke<GamePreset[]>('get_available_games')
       .then(setGames)
-      .catch(() => {});
+      .catch((e) => console.error('게임 목록 로드 실패:', e));
   }, []);
 
   /** cm/360 실시간 계산 */
