@@ -317,7 +317,13 @@ fn parse_tracking_metrics(input: &BatteryMetricsInput) -> Vec<TrackingMetric> {
 /// MicroFlick 메트릭 파싱
 fn parse_micro_flick_metrics(input: &BatteryMetricsInput) -> Option<MicroFlickMetric> {
     input.micro_flick_metrics.as_ref()
-        .and_then(|s| serde_json::from_str::<MicroFlickMetric>(s).ok())
+        .and_then(|s| match serde_json::from_str::<MicroFlickMetric>(s) {
+            Ok(v) => Some(v),
+            Err(e) => {
+                log::warn!("MicroFlick 메트릭 JSON 파싱 실패: {}", e);
+                None
+            }
+        })
 }
 
 /// Flick 기본 피처 계산 (threshold 불필요 — 데이터만 있으면 계산)

@@ -12,6 +12,7 @@ import { DEG2RAD, RAD2DEG } from '../../utils/physics';
 import type { GameEngine } from '../GameEngine';
 import type { TargetManager } from '../TargetManager';
 import type { TrackingConfig, TrackingTrialMetrics } from '../../utils/types';
+import { DEFAULT_TRACKING_DISTANCE_M } from '../../config/constants';
 
 export class TrackingScenario extends Scenario {
   private config: TrackingConfig;
@@ -30,7 +31,7 @@ export class TrackingScenario extends Scenario {
 
   // 타겟 이동 속도 (°/s → 실제 m/s 변환 시 거리 기반)
   private targetSpeedDegPerSec: number;
-  private targetDistance = 10; // m
+  private targetDistance = DEFAULT_TRACKING_DISTANCE_M; // m
 
   // 이전 타겟 위치 (속도 계산용)
   private prevTargetPos: THREE.Vector3 | null = null;

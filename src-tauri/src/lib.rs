@@ -58,7 +58,10 @@ pub fn run() {
                 .path()
                 .app_data_dir()
                 .map_err(|e| format!("앱 데이터 디렉토리 접근 실패: {}", e))?;
-            std::fs::create_dir_all(&app_dir).ok();
+            if let Err(e) = std::fs::create_dir_all(&app_dir) {
+                log::error!("앱 데이터 디렉토리 생성 실패: {}", e);
+                return Err(format!("앱 데이터 디렉토리 생성 실패: {}", e).into());
+            }
 
             let db_path = app_dir.join("aimforge.db");
             let database = Database::new(&db_path)

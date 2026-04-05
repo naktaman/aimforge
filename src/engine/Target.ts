@@ -4,6 +4,8 @@
  */
 import * as THREE from 'three';
 import { DEG2RAD } from '../utils/physics';
+import { HIT_FLASH_DURATION_SEC, HIT_EMISSIVE_INTENSITY } from '../config/constants';
+import { TARGET_COLORS, HIT_FLASH_COLORS } from '../config/theme';
 
 /** 타겟 이동 패턴 */
 export type MovementType = 'static' | 'linear' | 'circular' | 'random';
@@ -48,7 +50,7 @@ export class Target {
     position: THREE.Vector3,
     angularSizeDeg: number,
     distanceM: number,
-    color: number = 0xe94560,
+    color: number = TARGET_COLORS.flickRed,
     movementType: MovementType = 'static',
     movementParams: MovementParams = {},
   ) {
@@ -113,10 +115,10 @@ export class Target {
   /** 히트 시 시각 피드백 (초록색 플래시) */
   onHit(): void {
     const mat = this.mesh.material as THREE.MeshStandardMaterial;
-    mat.color.setHex(0x4ade80);
-    mat.emissive.setHex(0x4ade80);
-    mat.emissiveIntensity = 0.8;
-    this.hitFlashTime = 0.3;
+    mat.color.setHex(HIT_FLASH_COLORS.default);
+    mat.emissive.setHex(HIT_FLASH_COLORS.default);
+    mat.emissiveIntensity = HIT_EMISSIVE_INTENSITY;
+    this.hitFlashTime = HIT_FLASH_DURATION_SEC;
   }
 
   /** 씬에서 제거 */

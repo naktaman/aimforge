@@ -586,7 +586,13 @@ impl Database {
             "SELECT DISTINCT profile_id FROM aim_dna"
         )?;
         let pids: Vec<i64> = stmt.query_map([], |row| row.get(0))?
-            .filter_map(|r| r.ok())
+            .filter_map(|r| match r {
+                Ok(v) => Some(v),
+                Err(e) => {
+                    log::warn!("프로파일 ID 행 읽기 실패: {}", e);
+                    None
+                }
+            })
             .collect();
 
         let mut results = Vec::new();

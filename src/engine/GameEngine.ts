@@ -13,6 +13,7 @@ import { requestPointerLock, isPointerLocked, onPointerLockChange } from './Poin
 import { FireModeController } from './FireModeController';
 import { WeaponViewModel } from './WeaponViewModel';
 import type { FireMode } from './FireModeController';
+import { EYE_HEIGHT_M } from '../config/constants';
 import type { WeaponStyle } from './WeaponViewModel';
 import type { MouseBatch, EngineConfig, PerfData } from '../utils/types';
 import type { TargetManager } from './TargetManager';
@@ -117,7 +118,7 @@ export class GameEngine {
       0.1,
       500,
     );
-    this.camera.position.set(0, 1.6, 0); // 눈 높이 ~1.6m
+    this.camera.position.set(0, EYE_HEIGHT_M, 0); // 눈 높이
 
     // 환경 구성 (Group 반환 — counter-strafe에서 이동용)
     this.environmentGroup = createEnvironment(this.scene);

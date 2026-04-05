@@ -162,10 +162,13 @@ pub fn submit_stage_result(
 
     // 일별 통계 + 스킬 진행도 자동 집계
     let today = chrono::Local::now().format("%Y-%m-%d").to_string();
-    let time_ms: i64 = serde_json::from_str::<serde_json::Value>(&result.raw_metrics)
-        .ok()
-        .and_then(|v| v.get("total_time_ms").and_then(|t| t.as_i64()))
-        .unwrap_or(0);
+    let time_ms: i64 = match serde_json::from_str::<serde_json::Value>(&result.raw_metrics) {
+        Ok(v) => v.get("total_time_ms").and_then(|t| t.as_i64()).unwrap_or(0),
+        Err(e) => {
+            log::warn!("raw_metrics JSON 파싱 실패: {}", e);
+            0
+        }
+    };
     // 보조 집계 — 메인 결과 저장 이후이므로 경고만 출력
     if let Err(e) = db.upsert_daily_stat(result.profile_id, &today, &result.stage_type, result.score, result.accuracy, time_ms) {
         log::warn!("일별 통계 업데이트 실패: {}", e);
@@ -354,7 +357,9 @@ pub fn get_style_transition_status(
             // Phase 갱신 (진행된 경우)
             if let Some(ref p) = progress {
                 if p.phase != t.current_phase {
-                    db.update_style_transition_phase(t.id, &p.phase).ok();
+                    if let Err(e) = db.update_style_transition_phase(t.id, &p.phase) {
+                        log::warn!("스타일 전환 Phase 갱신 실패 (id={}): {}", t.id, e);
+                    }
                 }
             }
 

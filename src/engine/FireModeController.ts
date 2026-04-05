@@ -5,6 +5,8 @@
  * - 점사 (Burst): 클릭당 3발 연속
  */
 
+import { DEFAULT_RPM, BURST_FIRE_COUNT, RPM_MIN, RPM_MAX } from '../config/constants';
+
 /** 발사 모드 타입 */
 export type FireMode = 'semi' | 'auto' | 'burst';
 
@@ -13,11 +15,11 @@ const MODE_ORDER: FireMode[] = ['semi', 'auto', 'burst'];
 
 export class FireModeController {
   private mode: FireMode = 'semi';
-  private rpm = 600;
+  private rpm = DEFAULT_RPM;
   private lastFireTimeMs = 0;
   private mouseDown = false;
   private burstRemaining = 0;
-  private burstCount = 3; // 점사 시 연속 발사 수
+  private burstCount = BURST_FIRE_COUNT; // 점사 시 연속 발사 수
 
   /** 발사 간격 (ms) = 60000 / RPM */
   get intervalMs(): number {
@@ -43,7 +45,7 @@ export class FireModeController {
 
   /** RPM 설정 (최소 60, 최대 1200) */
   setRpm(rpm: number): void {
-    this.rpm = Math.max(60, Math.min(1200, rpm));
+    this.rpm = Math.max(RPM_MIN, Math.min(RPM_MAX, rpm));
   }
 
   /** 발사 모드 순환 (semi → auto → burst → semi) */

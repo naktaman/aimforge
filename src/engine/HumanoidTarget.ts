@@ -5,6 +5,15 @@
  * CapsuleGeometry 사용하지 않음 (Three.js r128 호환)
  */
 import * as THREE from 'three';
+import {
+  HIT_FLASH_DURATION_SEC,
+  HUMANOID_HEAD_RADIUS,
+  HUMANOID_TORSO_SIZE,
+  HUMANOID_ARM_SIZE,
+  HUMANOID_LEG_SIZE,
+  HUMANOID_EMISSIVE,
+} from '../config/constants';
+import { TARGET_COLORS, HIT_FLASH_COLORS } from '../config/theme';
 
 /** 히트 가능한 신체 부위 */
 export type BodyPart = 'head' | 'torso' | 'left_arm' | 'right_arm' | 'left_leg' | 'right_leg';
@@ -55,11 +64,11 @@ export class HumanoidTarget {
     this.hitMeshes = [];
 
     // === 머리: SphereGeometry r=0.12m (빨강 계열) ===
-    const headGeo = new THREE.SphereGeometry(0.12, 16, 12);
+    const headGeo = new THREE.SphereGeometry(HUMANOID_HEAD_RADIUS, 16, 12);
     const headMat = new THREE.MeshStandardMaterial({
-      color: 0xe94560,
-      emissive: 0xe94560,
-      emissiveIntensity: 0.3,
+      color: TARGET_COLORS.flickRed,
+      emissive: TARGET_COLORS.flickRed,
+      emissiveIntensity: HUMANOID_EMISSIVE.head,
       roughness: 0.4,
       metalness: 0.1,
     });
@@ -71,11 +80,11 @@ export class HumanoidTarget {
     this.hitMeshes.push(this.headMesh);
 
     // === 몸통: BoxGeometry 0.4×0.5×0.25m (파랑 계열) ===
-    const torsoGeo = new THREE.BoxGeometry(0.4, 0.5, 0.25);
+    const torsoGeo = new THREE.BoxGeometry(HUMANOID_TORSO_SIZE.w, HUMANOID_TORSO_SIZE.h, HUMANOID_TORSO_SIZE.d);
     const bodyMat = new THREE.MeshStandardMaterial({
-      color: 0x3b82f6,
-      emissive: 0x3b82f6,
-      emissiveIntensity: 0.2,
+      color: TARGET_COLORS.bodyBlue,
+      emissive: TARGET_COLORS.bodyBlue,
+      emissiveIntensity: HUMANOID_EMISSIVE.body,
       roughness: 0.5,
       metalness: 0.1,
     });
@@ -87,7 +96,7 @@ export class HumanoidTarget {
     this.hitMeshes.push(torsoMesh);
 
     // === 왼팔: CylinderGeometry r=0.08m h=0.45m ===
-    const armGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.45, 8);
+    const armGeo = new THREE.CylinderGeometry(HUMANOID_ARM_SIZE.r, HUMANOID_ARM_SIZE.r, HUMANOID_ARM_SIZE.h, 8);
     const leftArm = new THREE.Mesh(armGeo, bodyMat.clone());
     leftArm.name = 'left_arm';
     // 몸통 좌측 바깥에 배치
@@ -103,7 +112,7 @@ export class HumanoidTarget {
     this.hitMeshes.push(rightArm);
 
     // === 왼다리: CylinderGeometry r=0.09m h=0.5m ===
-    const legGeo = new THREE.CylinderGeometry(0.09, 0.09, 0.5, 8);
+    const legGeo = new THREE.CylinderGeometry(HUMANOID_LEG_SIZE.r, HUMANOID_LEG_SIZE.r, HUMANOID_LEG_SIZE.h, 8);
     const leftLeg = new THREE.Mesh(legGeo, bodyMat.clone());
     leftLeg.name = 'left_leg';
     // 몸통 아래, 좌측
@@ -143,17 +152,17 @@ export class HumanoidTarget {
 
     let flashColor: number;
     if (hitZone === 'head') {
-      flashColor = 0xff0000; // 헤드샷: 빨강
+      flashColor = HIT_FLASH_COLORS.headshot; // 헤드샷: 빨강
     } else if (hitZone === 'lower_body') {
-      flashColor = 0xff8800; // 하체: 주황 (서브옵티멀 신호)
+      flashColor = HIT_FLASH_COLORS.lowerBody; // 하체: 주황 (서브옵티멀 신호)
     } else {
-      flashColor = 0xffffff; // 상체: 흰색
+      flashColor = HIT_FLASH_COLORS.upperBody; // 상체: 흰색
     }
 
     mat.color.setHex(flashColor);
     mat.emissive.setHex(flashColor);
     mat.emissiveIntensity = 1.0;
-    this.hitFlashTime = 0.3;
+    this.hitFlashTime = HIT_FLASH_DURATION_SEC;
   }
 
   /** 매 프레임 업데이트 — 히트 플래시 복원 */
@@ -164,8 +173,8 @@ export class HumanoidTarget {
         const mat = this.flashedMesh.material as THREE.MeshStandardMaterial;
         mat.color.setHex(this.originalColor);
         mat.emissive.setHex(this.originalColor);
-        // 머리는 emissive 강도 0.3, 나머지 부위 0.2 복원
-        mat.emissiveIntensity = this.flashedMesh.name === 'head' ? 0.3 : 0.2;
+        // 머리는 emissive 강도 head, 나머지 부위 body 복원
+        mat.emissiveIntensity = this.flashedMesh.name === 'head' ? HUMANOID_EMISSIVE.head : HUMANOID_EMISSIVE.body;
         this.flashedMesh = null;
       }
     }

@@ -18,6 +18,7 @@ import { HIT_ZONE_MULTIPLIER, type HitZoneType } from '../HumanoidTarget';
 import type { GameEngine } from '../GameEngine';
 import type { TargetManager } from '../TargetManager';
 import type { FlickConfig, Direction, TargetType } from '../../utils/types';
+import { FLICK_ANGLE_BUCKETS } from '../../config/constants';
 
 /** 8방향 각도 범위 (azimuth 기준) */
 const DIRECTION_SECTORS: Array<{ dir: Direction; min: number; max: number }> = [
@@ -32,7 +33,7 @@ const DIRECTION_SECTORS: Array<{ dir: Direction; min: number; max: number }> = [
 ];
 
 /** 각도 구간 버킷 */
-const BUCKETS = [10, 30, 60, 90, 120, 150, 180];
+const BUCKETS = FLICK_ANGLE_BUCKETS;
 
 export class FlickScenario extends Scenario {
   private config: FlickConfig;

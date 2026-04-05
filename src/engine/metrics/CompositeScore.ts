@@ -7,6 +7,28 @@ import type {
   BatteryWeights,
   ScenarioType,
 } from '../../utils/types';
+import {
+  COMPOSITE_FLICK_WEIGHT,
+  COMPOSITE_TRACKING_WEIGHT,
+  PRE_FIRE_RATIO_THRESHOLD,
+  PRE_FIRE_PENALTY_DISCOUNT,
+  FLICK_TTT_BASELINE_MS,
+  FLICK_TTT_BASE_FACTOR,
+  FLICK_TTT_BONUS_FACTOR,
+  OVERSHOOT_PENALTY_MULTIPLIER,
+  MAD_SCORE_FACTOR,
+  VELOCITY_MATCH_BONUS_MULTIPLIER,
+  ZOOM_PHASE_WEIGHTS,
+  ZOOM_CORRECTION_SPEED_BASELINE_MS,
+  ZOOM_CORRECTION_BASE_FACTOR,
+  ZOOM_CORRECTION_SPEED_BONUS,
+  OVER_CORRECTION_PENALTY_MULTIPLIER,
+  ZOOM_REACQUIRE_SPEED_BASELINE_MS,
+  ZOOM_REACQUIRE_BASE_FACTOR,
+  ZOOM_REACQUIRE_SPEED_BONUS,
+  MICRO_FLICK_WEIGHTS,
+  MICRO_FLICK_REACQUIRE_DIVISOR,
+} from '../../config/constants';
 
 export interface ScoreWeights {
   flick: number;
@@ -15,8 +37,8 @@ export interface ScoreWeights {
 
 /** 기본 가중치 (게임 프리셋별로 오버라이드 가능) */
 export const DEFAULT_WEIGHTS: ScoreWeights = {
-  flick: 0.6,
-  tracking: 0.4,
+  flick: COMPOSITE_FLICK_WEIGHT,
+  tracking: COMPOSITE_TRACKING_WEIGHT,
 };
 
 /**
@@ -40,8 +62,8 @@ export function adjustOvershootPenalty(
   rawPenalty: number,
   preFireRatio: number,
 ): number {
-  if (preFireRatio > 0.5) {
-    return rawPenalty * 0.5;
+  if (preFireRatio > PRE_FIRE_RATIO_THRESHOLD) {
+    return rawPenalty * PRE_FIRE_PENALTY_DISCOUNT;
   }
   return rawPenalty;
 }
@@ -59,12 +81,12 @@ export function calculateFlickScore(
   // 기본 점수: 히트율 × 100
   let score = hitRate * 100;
 
-  // TTT 보너스/패널티 (500ms 기준, 빠를수록 보너스)
-  const tttFactor = Math.max(0, 1 - avgTtt / 3000);
-  score *= 0.7 + tttFactor * 0.3;
+  // TTT 보너스/패널티 (기준값 대비, 빠를수록 보너스)
+  const tttFactor = Math.max(0, 1 - avgTtt / FLICK_TTT_BASELINE_MS);
+  score *= FLICK_TTT_BASE_FACTOR + tttFactor * FLICK_TTT_BONUS_FACTOR;
 
   // 오버슛 패널티
-  const overshootPenalty = avgOvershoot * 10; // 라디안 → 패널티
+  const overshootPenalty = avgOvershoot * OVERSHOOT_PENALTY_MULTIPLIER; // 라디안 → 패널티
   score -= adjustOvershootPenalty(overshootPenalty, preFireRatio);
 
   return Math.max(0, Math.min(100, score));
@@ -79,9 +101,9 @@ export function calculateTrackingScore(
   velocityMatchRatio: number,
 ): number {
   // MAD → 점수 (0.01 rad ≈ 0.57° = 완벽, 0.2 rad ≈ 11.5° = 매우 나쁨)
-  const madScore = Math.max(0, 100 - mad * 500);
+  const madScore = Math.max(0, 100 - mad * MAD_SCORE_FACTOR);
   // velocity match 보너스
-  const matchBonus = velocityMatchRatio * 20;
+  const matchBonus = velocityMatchRatio * VELOCITY_MATCH_BONUS_MULTIPLIER;
   return Math.max(0, Math.min(100, madScore + matchBonus));
 }
 
@@ -93,7 +115,7 @@ export function calculateZoomCompositeScore(
   steadyScore: number,
   correctionScore: number,
   zoomoutScore: number,
-  weights: ZoomPhaseWeights = { steady: 0.5, correction: 0.3, zoomout: 0.2 },
+  weights: ZoomPhaseWeights = { steady: ZOOM_PHASE_WEIGHTS.steady, correction: ZOOM_PHASE_WEIGHTS.correction, zoomout: ZOOM_PHASE_WEIGHTS.zoomout },
 ): number {
   return Math.max(
     0,
@@ -117,11 +139,11 @@ export function calculateZoomCorrectionScore(
 ): number {
   // 히트율 기본 점수
   let score = hitRate * 100;
-  // 보정 속도 보너스 (500ms 기준)
-  const speedFactor = Math.max(0, 1 - avgCorrectionTimeMs / 2000);
-  score *= 0.7 + speedFactor * 0.3;
+  // 보정 속도 보너스 (기준값 대비)
+  const speedFactor = Math.max(0, 1 - avgCorrectionTimeMs / ZOOM_CORRECTION_SPEED_BASELINE_MS);
+  score *= ZOOM_CORRECTION_BASE_FACTOR + speedFactor * ZOOM_CORRECTION_SPEED_BONUS;
   // 과보정 패널티
-  score -= overCorrectionRatio * 15;
+  score -= overCorrectionRatio * OVER_CORRECTION_PENALTY_MULTIPLIER;
   return Math.max(0, Math.min(100, score));
 }
 
@@ -134,9 +156,9 @@ export function calculateZoomReacquisitionScore(
   avgReacquisitionTimeMs: number,
 ): number {
   let score = reacquisitionRate * 100;
-  // 재획득 속도 보너스 (1000ms 기준)
-  const speedFactor = Math.max(0, 1 - avgReacquisitionTimeMs / 3000);
-  score *= 0.7 + speedFactor * 0.3;
+  // 재획득 속도 보너스 (기준값 대비)
+  const speedFactor = Math.max(0, 1 - avgReacquisitionTimeMs / ZOOM_REACQUIRE_SPEED_BASELINE_MS);
+  score *= ZOOM_REACQUIRE_BASE_FACTOR + speedFactor * ZOOM_REACQUIRE_SPEED_BONUS;
   return Math.max(0, Math.min(100, score));
 }
 
@@ -149,11 +171,11 @@ export function calculateMicroFlickScore(
   flickScore: number,
   avgReacquireTimeMs: number,
 ): number {
-  // 재획득 보너스: 빠를수록 높음 (1000ms 기준)
-  const reacquireBonus = Math.max(0, 100 - avgReacquireTimeMs / 10);
+  // 재획득 보너스: 빠를수록 높음
+  const reacquireBonus = Math.max(0, 100 - avgReacquireTimeMs / MICRO_FLICK_REACQUIRE_DIVISOR);
   return Math.max(
     0,
-    Math.min(100, trackingScore * 0.6 + flickScore * 0.3 + reacquireBonus * 0.1),
+    Math.min(100, trackingScore * MICRO_FLICK_WEIGHTS.tracking + flickScore * MICRO_FLICK_WEIGHTS.flick + reacquireBonus * MICRO_FLICK_WEIGHTS.reacquire),
   );
 }
 

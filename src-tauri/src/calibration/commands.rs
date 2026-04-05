@@ -104,7 +104,13 @@ pub fn submit_calibration_trial(
     let metrics = params
         .metrics_json
         .as_deref()
-        .and_then(|json| serde_json::from_str(json).ok());
+        .and_then(|json| match serde_json::from_str(json) {
+            Ok(v) => Some(v),
+            Err(e) => {
+                log::warn!("캘리브레이션 메트릭 JSON 파싱 실패: {}", e);
+                None
+            }
+        });
 
     let mut cal = lock_state(&state.calibration)?;
     let engine = cal.as_mut()

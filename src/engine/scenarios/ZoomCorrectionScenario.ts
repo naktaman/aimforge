@@ -13,14 +13,15 @@ import { DEG2RAD } from '../../utils/physics';
 import type { GameEngine } from '../GameEngine';
 import type { TargetManager } from '../TargetManager';
 import type { ZoomPhaseConfig, ZoomPhaseResult, ZoomCorrectionResult } from '../../utils/types';
+import { ZOOM_PRE_ZOOM_DELAY_MS, ZOOM_CORRECTION_TIMEOUT_MS } from '../../config/constants';
 
 /** 상태 머신 */
 type ZCState = 'HIPFIRE_VIEW' | 'ZOOMED_CORRECT' | 'BETWEEN';
 
 /** 타겟 표시 대기 시간 (ms) — 줌 전에 타겟 위치 인지 */
-const PRE_ZOOM_DELAY = 500;
+const PRE_ZOOM_DELAY = ZOOM_PRE_ZOOM_DELAY_MS;
 /** 보정 타임아웃 (ms) */
-const CORRECTION_TIMEOUT = 3000;
+const CORRECTION_TIMEOUT = ZOOM_CORRECTION_TIMEOUT_MS;
 
 export class ZoomCorrectionScenario extends Scenario {
   private config: ZoomPhaseConfig;

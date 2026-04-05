@@ -13,17 +13,23 @@ import { DEG2RAD, RAD2DEG } from '../../utils/physics';
 import type { GameEngine } from '../GameEngine';
 import type { TargetManager } from '../TargetManager';
 import type { ZoomPhaseConfig, ZoomPhaseResult, ZoomReacquisitionResult } from '../../utils/types';
+import {
+  ZOOM_TRACKING_MIN_MS,
+  ZOOM_TRACKING_MAX_MS,
+  ZOOM_REACQUIRE_TIMEOUT_MS,
+  ZOOM_REACQUIRE_THRESHOLD_MULTIPLIER,
+} from '../../config/constants';
 
 /** 상태 머신 */
 type ZRState = 'ZOOMED_TRACKING' | 'HIPFIRE_REACQUIRE' | 'BETWEEN';
 
 /** 줌 트래킹 최소/최대 시간 (ms) */
-const ZOOM_TRACKING_MIN = 1000;
-const ZOOM_TRACKING_MAX = 3000;
+const ZOOM_TRACKING_MIN = ZOOM_TRACKING_MIN_MS;
+const ZOOM_TRACKING_MAX = ZOOM_TRACKING_MAX_MS;
 /** 재획득 타임아웃 (ms) */
-const REACQUIRE_TIMEOUT = 5000;
-/** 재획득 판정 각도 임계값 (rad) — 타겟 반지름의 2배 */
-const REACQUIRE_MULTIPLIER = 2;
+const REACQUIRE_TIMEOUT = ZOOM_REACQUIRE_TIMEOUT_MS;
+/** 재획득 판정 각도 임계값 (rad) — 타겟 반지름의 N배 */
+const REACQUIRE_MULTIPLIER = ZOOM_REACQUIRE_THRESHOLD_MULTIPLIER;
 
 export class ZoomReacquisitionScenario extends Scenario {
   private config: ZoomPhaseConfig;

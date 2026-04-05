@@ -3,7 +3,7 @@
  * 현재 DNA 프로파일, 히스토리, 추세 분석, 레퍼런스 게임 관리
  */
 import { create } from 'zustand';
-import { invoke } from '@tauri-apps/api/core';
+import { storeInvoke } from './storeHelpers';
 import type {
   AimDnaProfile, AimDnaHistoryEntry, DnaTrendResult, ReferenceGameResult,
   DnaSnapshot, DnaChangeEvent, SnapshotComparison, StagnationResult,
@@ -30,27 +30,16 @@ interface AimDnaState {
   isLoading: boolean;
 
   // Actions
-  /** DNA 직접 설정 (compute 결과 등) */
   setCurrentDna: (dna: AimDnaProfile) => void;
-  /** DB에서 최신 DNA 로드 */
   loadDna: (profileId: number) => Promise<void>;
-  /** DB에서 피처별 히스토리 로드 */
   loadHistory: (profileId: number, featureName?: string) => Promise<void>;
-  /** 5축 스냅샷 목록 로드 */
   loadSnapshots: (profileId: number, limit?: number) => Promise<void>;
-  /** 변경점 이벤트 저장 */
   saveChangeEvent: (profileId: number, changeType: string, beforeValue: string | null, afterValue: string, description: string) => Promise<void>;
-  /** 변경점 이벤트 목록 로드 */
   loadChangeEvents: (profileId: number, limit?: number) => Promise<void>;
-  /** 두 스냅샷 비교 */
   compareSnapshots: (profileId: number, beforeId: number, afterId: number) => Promise<void>;
-  /** 정체기 감지 */
   detectStagnation: (profileId: number) => Promise<void>;
-  /** DNA 추세 분석 로드 */
   loadTrend: (profileId: number) => Promise<void>;
-  /** 레퍼런스 게임 자동 감지 */
   detectReferenceGame: () => Promise<void>;
-  /** 초기화 */
   clear: () => void;
 }
 
@@ -67,110 +56,85 @@ export const useAimDnaStore = create<AimDnaState>((set) => ({
 
   setCurrentDna: (dna) => set({ currentDna: dna }),
 
-  loadDna: async (profileId) => {
-    set({ isLoading: true });
-    try {
-      const dna = await invoke<AimDnaProfile | null>('get_aim_dna', {
-        params: { profile_id: profileId },
-      });
-      set({ currentDna: dna, isLoading: false });
-    } catch (e) {
-      console.error('Aim DNA 로드 실패:', e);
-      set({ isLoading: false });
-    }
-  },
+  loadDna: (profileId) =>
+    storeInvoke<AimDnaState, AimDnaProfile | null>(
+      set, 'get_aim_dna',
+      { params: { profile_id: profileId } },
+      (dna) => ({ currentDna: dna }),
+      'Aim DNA 로드',
+    ),
 
-  loadHistory: async (profileId, featureName) => {
-    try {
-      const history = await invoke<AimDnaHistoryEntry[]>('get_aim_dna_history', {
-        params: { profile_id: profileId, feature_name: featureName ?? null },
-      });
-      set({ history });
-    } catch (e) {
-      console.error('Aim DNA 히스토리 로드 실패:', e);
-    }
-  },
+  loadHistory: (profileId, featureName) =>
+    storeInvoke<AimDnaState, AimDnaHistoryEntry[]>(
+      set, 'get_aim_dna_history',
+      { params: { profile_id: profileId, feature_name: featureName ?? null } },
+      (history) => ({ history }),
+      'Aim DNA 히스토리 로드',
+      false,
+    ),
 
-  // 5축 스냅샷 목록 로드
-  loadSnapshots: async (profileId, limit = 30) => {
-    try {
-      const snapshots = await invoke<DnaSnapshot[]>('get_dna_snapshots_cmd', {
-        params: { profile_id: profileId, limit },
-      });
-      set({ snapshots });
-    } catch (e) {
-      console.error('DNA 스냅샷 로드 실패:', e);
-    }
-  },
+  loadSnapshots: (profileId, limit = 30) =>
+    storeInvoke<AimDnaState, DnaSnapshot[]>(
+      set, 'get_dna_snapshots_cmd',
+      { params: { profile_id: profileId, limit } },
+      (snapshots) => ({ snapshots }),
+      'DNA 스냅샷 로드',
+      false,
+    ),
 
-  // 변경점 이벤트 저장
-  saveChangeEvent: async (profileId, changeType, beforeValue, afterValue, description) => {
-    try {
-      await invoke<number>('save_change_event_cmd', {
-        params: { profile_id: profileId, change_type: changeType, before_value: beforeValue, after_value: afterValue, description },
-      });
-    } catch (e) {
-      console.error('변경점 이벤트 저장 실패:', e);
-    }
-  },
+  saveChangeEvent: (profileId, changeType, beforeValue, afterValue, description) =>
+    storeInvoke<AimDnaState, number>(
+      set, 'save_change_event_cmd',
+      { params: { profile_id: profileId, change_type: changeType, before_value: beforeValue, after_value: afterValue, description } },
+      () => ({}),
+      '변경점 이벤트 저장',
+      false,
+    ),
 
-  // 변경점 이벤트 목록 로드
-  loadChangeEvents: async (profileId, limit = 50) => {
-    try {
-      const changeEvents = await invoke<DnaChangeEvent[]>('get_change_events_cmd', {
-        params: { profile_id: profileId, limit },
-      });
-      set({ changeEvents });
-    } catch (e) {
-      console.error('변경점 이벤트 로드 실패:', e);
-    }
-  },
+  loadChangeEvents: (profileId, limit = 50) =>
+    storeInvoke<AimDnaState, DnaChangeEvent[]>(
+      set, 'get_change_events_cmd',
+      { params: { profile_id: profileId, limit } },
+      (changeEvents) => ({ changeEvents }),
+      '변경점 이벤트 로드',
+      false,
+    ),
 
-  // 두 스냅샷 비교
-  compareSnapshots: async (profileId, beforeId, afterId) => {
-    try {
-      const comparison = await invoke<SnapshotComparison>('compare_snapshots_cmd', {
-        params: { profile_id: profileId, before_id: beforeId, after_id: afterId },
-      });
-      set({ comparison });
-    } catch (e) {
-      console.error('스냅샷 비교 실패:', e);
-    }
-  },
+  compareSnapshots: (profileId, beforeId, afterId) =>
+    storeInvoke<AimDnaState, SnapshotComparison>(
+      set, 'compare_snapshots_cmd',
+      { params: { profile_id: profileId, before_id: beforeId, after_id: afterId } },
+      (comparison) => ({ comparison }),
+      '스냅샷 비교',
+      false,
+    ),
 
-  // 정체기 감지
-  detectStagnation: async (profileId) => {
-    try {
-      const stagnation = await invoke<StagnationResult>('detect_stagnation_cmd', {
-        params: { profile_id: profileId },
-      });
-      set({ stagnation });
-    } catch (e) {
-      console.error('정체기 감지 실패:', e);
-    }
-  },
+  detectStagnation: (profileId) =>
+    storeInvoke<AimDnaState, StagnationResult>(
+      set, 'detect_stagnation_cmd',
+      { params: { profile_id: profileId } },
+      (stagnation) => ({ stagnation }),
+      '정체기 감지',
+      false,
+    ),
 
-  // DNA 시계열 추세 분석 — 재교정 필요 여부 판단
-  loadTrend: async (profileId) => {
-    try {
-      const trend = await invoke<DnaTrendResult>('get_dna_trend_cmd', {
-        params: { profile_id: profileId },
-      });
-      set({ trend });
-    } catch (e) {
-      console.error('DNA 추세 분석 실패:', e);
-    }
-  },
+  loadTrend: (profileId) =>
+    storeInvoke<AimDnaState, DnaTrendResult>(
+      set, 'get_dna_trend_cmd',
+      { params: { profile_id: profileId } },
+      (trend) => ({ trend }),
+      'DNA 추세 분석',
+      false,
+    ),
 
-  // 레퍼런스 게임 자동 감지
-  detectReferenceGame: async () => {
-    try {
-      const result = await invoke<ReferenceGameResult>('detect_reference_game_cmd');
-      set({ referenceGame: result });
-    } catch (e) {
-      console.error('레퍼런스 게임 감지 실패:', e);
-    }
-  },
+  detectReferenceGame: () =>
+    storeInvoke<AimDnaState, ReferenceGameResult>(
+      set, 'detect_reference_game_cmd',
+      undefined,
+      (referenceGame) => ({ referenceGame }),
+      '레퍼런스 게임 감지',
+      false,
+    ),
 
   clear: () => set({
     currentDna: null, history: [], snapshots: [], changeEvents: [],
