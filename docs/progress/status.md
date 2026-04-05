@@ -292,6 +292,18 @@
 
 빌드 검증: Rust 147/147 통과, npm build 성공 (1,447 kB), TS 에러 0
 
+### 줌 캘리브레이션 머지 + 에임 트레이너 DB 추가 ✅ (2026-04-05) [dazzling-moore]
+
+#### Step 1: jovial-chatterjee 워크트리 머지 → master
+- 미커밋 변경사항 커밋 후 `claude/jovial-chatterjee` → master no-ff 머지
+- 13개 파일 (504+/14-): k_fitting.rs, zoom_calibration/mod.rs, commands.rs, crossgame/commands.rs, lib.rs, CrossGameConverter.tsx, ZoomProfileChart.tsx, WeaponSystem.ts, ZoomSteadyScenario.ts, ZoomMultiFlickScenario.ts, physics.ts, types.ts, status.md
+
+#### Step 2: 에임 트레이너 3개 DB 추가
+- **game_db/mod.rs**: Tier1(KovaaK's 2.0, Aim Lab), Tier2(Aiming.Pro) — yaw=0.022, fov=103.0, horizontal
+- **gameDatabase.ts**: 동일 3개 + `GameCategory`에 `'trainer'` 타입 추가
+- **Onboarding.tsx**: `CATEGORY_COLORS`에 trainer 색상(`#22d3ee`) 추가 (TS 컴파일 에러 수정)
+- 빌드 검증: Rust 147/147 통과, npm build 성공 (1,448 kB), TS 에러 0
+
 ## 다음 작업
 
 - 사용자 테스트 피드백 반영
