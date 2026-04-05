@@ -1,6 +1,6 @@
 # AimForge 구현 진행 현황
 
-> 마지막 업데이트: 2026-04-05 (P3 접근성 + EmptyState + 반응형 레이아웃)
+> 마지막 업데이트: 2026-04-05 (v0.2.0 릴리즈 준비)
 
 ---
 
@@ -255,11 +255,15 @@
 
 ---
 
+### v0.2.0 릴리즈 준비 ✅ (2026-04-05) [claude/sleepy-bardeen → master]
+- **CI 보안 감사**: `.github/workflows/security-audit.yml` — cargo audit + npm audit (push/PR/주간 자동 실행)
+- **버전 업데이트**: 0.1.0 → 0.2.0 (Cargo.toml, tauri.conf.json, package.json)
+- **CHANGELOG.md**: 0.1.0 이후 변경사항 요약 (코드품질, UI디자인, 보안, 기능, CI)
+
 ## 다음 작업
 
-- **cargo-audit 설치 및 CI 연동**
 - 사용자 테스트 피드백 반영
-- v0.2.0 릴리즈 준비
+- v0.2.0 .msi 빌드 + GitHub 릴리즈
 
 ---
 
@@ -272,4 +276,4 @@
 | CSS | 102 kB |
 | 타입 에러 | 0 |
 
-> 빌드 시점: 2026-04-05 (P3 접근성 + EmptyState + 반응형 후)
+> 빌드 시점: 2026-04-05 (v0.2.0 릴리즈 준비 후)

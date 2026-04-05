@@ -29,6 +29,7 @@ Infrastructure, Three.js 엔진, GP Calibration, Go/No-Go 검증
 - P3 디자인 감사 ✅ (2026-04-05) — 키보드 방향키 네비게이션 (useTabKeyboard 훅, 7개 tablist), EmptyState 적용 (4개 화면), 반응형 레이아웃 (minWidth 960px, 2개 breakpoint)
 - 보안 개선 Phase 1 ✅ (2026-04-05) — CSP 강화, Capabilities 세분화, devTools 확인, audit 실행
 - 보안 개선 Phase 2 ✅ (2026-04-05) — IPC 입력 검증 (DPI/sens/FOV/ID), PublicError 패턴 (내부 에러 차단), 주석 정리
+- v0.2.0 릴리즈 준비 ✅ (2026-04-05) — CI 보안 감사 (cargo audit + npm audit), 버전 0.2.0 업데이트, CHANGELOG.md
 
 ---
 

@@ -40,6 +40,7 @@ npm run build          # 프론트엔드 빌드만
   - [troubleshooting.md](docs/quality/troubleshooting.md) — 트러블슈팅 가이드
 - **@docs/planning/** — 로드맵
   - [roadmap.md](docs/planning/roadmap.md) — 30일 로드맵 참조, 설계 원칙, 프로파일 5축
+- [CHANGELOG.md](CHANGELOG.md) — 버전별 변경사항 요약
 
 ---
 
@@ -49,6 +50,7 @@ npm run build          # 프론트엔드 빌드만
 - React: `src/{components, stores, utils}/`
 - Engine: `src/engine/{scenarios, metrics}/`
 - 보안 감사: `docs/security-audit.md` — 코드 감사 보고서 + 해결 현황
+- CI: `.github/workflows/security-audit.yml` (cargo audit + npm audit)
 - 로드맵 원본: `C:\Users\ned78\Downloads\AIMPRO2\`
 
 ---
