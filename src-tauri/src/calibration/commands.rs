@@ -5,7 +5,9 @@ use super::{
     CalibrationEngine, CalibrationMode, CalibrationResult, CalibrationStatus, NextTrialAction,
     TrialFeedback,
 };
+use crate::error::{AppError, PublicError, lock_state};
 use crate::gp::analysis::ConvergenceMode;
+use crate::validate;
 use crate::AppState;
 use serde::Deserialize;
 use tauri::State;
@@ -34,7 +36,13 @@ pub struct SubmitTrialParams {
 pub fn start_calibration(
     state: State<AppState>,
     params: StartCalibrationParams,
-) -> Result<i64, String> {
+) -> Result<i64, PublicError> {
+    // 입력값 검증
+    validate::id(params.profile_id, "profile_id")?;
+    validate::non_empty_str(&params.mode, "mode")?;
+    validate::cm360(params.current_cm360)?;
+    validate::non_empty_str(&params.game_category, "game_category")?;
+
     let mode = CalibrationMode::from_str(&params.mode);
 
     // 수렴 모드 파싱 (기본값: Quick)
@@ -50,7 +58,7 @@ pub fn start_calibration(
     );
 
     // DB에 세션 기록
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let db = lock_state(&state.db)?;
     let session_id = db
         .insert_calibration_session(
             params.profile_id,
@@ -58,16 +66,16 @@ pub fn start_calibration(
             params.current_cm360,
             &params.game_category,
         )
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
     // GP 모델 기록
     db.insert_gp_model(session_id, 5.0, 0.1, 0.015, None, None)
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
     drop(db); // DB lock 해제 후 calibration lock
 
     // 엔진 저장
-    let mut cal = state.calibration.lock().map_err(|e| e.to_string())?;
+    let mut cal = lock_state(&state.calibration)?;
     *cal = Some(engine);
 
     Ok(session_id)
@@ -75,9 +83,10 @@ pub fn start_calibration(
 
 /// 다음 테스트할 cm/360 조회
 #[tauri::command]
-pub fn get_next_trial_sens(state: State<AppState>) -> Result<NextTrialAction, String> {
-    let cal = state.calibration.lock().map_err(|e| e.to_string())?;
-    let engine = cal.as_ref().ok_or("캘리브레이션이 시작되지 않음")?;
+pub fn get_next_trial_sens(state: State<AppState>) -> Result<NextTrialAction, PublicError> {
+    let cal = lock_state(&state.calibration)?;
+    let engine = cal.as_ref()
+        .ok_or_else(|| AppError::NotFound("캘리브레이션이 시작되지 않음".to_string()))?;
     Ok(engine.get_next_sens())
 }
 
@@ -86,45 +95,47 @@ pub fn get_next_trial_sens(state: State<AppState>) -> Result<NextTrialAction, St
 pub fn submit_calibration_trial(
     state: State<AppState>,
     params: SubmitTrialParams,
-) -> Result<TrialFeedback, String> {
+) -> Result<TrialFeedback, PublicError> {
+    // 입력값 검증
+    validate::cm360(params.cm360)?;
+    validate::score(params.score)?;
+
     // 메트릭 파싱 (있으면)
     let metrics = params
         .metrics_json
         .as_deref()
         .and_then(|json| serde_json::from_str(json).ok());
 
-    let mut cal = state.calibration.lock().map_err(|e| e.to_string())?;
-    let engine = cal.as_mut().ok_or("캘리브레이션이 시작되지 않음")?;
+    let mut cal = lock_state(&state.calibration)?;
+    let engine = cal.as_mut()
+        .ok_or_else(|| AppError::NotFound("캘리브레이션이 시작되지 않음".to_string()))?;
 
     Ok(engine.submit_trial(params.cm360, params.score, metrics))
 }
 
 /// 현재 캘리브레이션 상태 조회
 #[tauri::command]
-pub fn get_calibration_status(state: State<AppState>) -> Result<CalibrationStatus, String> {
-    let cal = state.calibration.lock().map_err(|e| e.to_string())?;
-    let engine = cal.as_ref().ok_or("캘리브레이션이 시작되지 않음")?;
+pub fn get_calibration_status(state: State<AppState>) -> Result<CalibrationStatus, PublicError> {
+    let cal = lock_state(&state.calibration)?;
+    let engine = cal.as_ref()
+        .ok_or_else(|| AppError::NotFound("캘리브레이션이 시작되지 않음".to_string()))?;
     Ok(engine.get_status())
 }
 
 /// 캘리브레이션 최종 결과 생성 + DB 저장
 #[tauri::command]
-pub fn finalize_calibration(state: State<AppState>) -> Result<CalibrationResult, String> {
-    let cal = state.calibration.lock().map_err(|e| e.to_string())?;
-    let engine = cal.as_ref().ok_or("캘리브레이션이 시작되지 않음")?;
+pub fn finalize_calibration(state: State<AppState>) -> Result<CalibrationResult, PublicError> {
+    let cal = lock_state(&state.calibration)?;
+    let engine = cal.as_ref()
+        .ok_or_else(|| AppError::NotFound("캘리브레이션이 시작되지 않음".to_string()))?;
 
-    let result = engine.finalize();
-
-    // TODO: DB에 결과 저장 (calibration_session_id 필요)
-    // 현재는 결과만 반환
-
-    Ok(result)
+    Ok(engine.finalize())
 }
 
 /// 캘리브레이션 취소
 #[tauri::command]
-pub fn cancel_calibration(state: State<AppState>) -> Result<(), String> {
-    let mut cal = state.calibration.lock().map_err(|e| e.to_string())?;
+pub fn cancel_calibration(state: State<AppState>) -> Result<(), PublicError> {
+    let mut cal = lock_state(&state.calibration)?;
     *cal = None;
     Ok(())
 }

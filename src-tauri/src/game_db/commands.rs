@@ -1,6 +1,8 @@
 /// Tauri IPC 커맨드 — 게임 DB 및 감도 변환 관련
 use super::conversion;
 use super::{AllMethodsConversion, ConversionResult, GamePreset, SensitivityConversion, SnappedSensitivity};
+use crate::error::PublicError;
+use crate::validate;
 use std::collections::HashMap;
 
 /// 지원 게임 목록 반환 커맨드
@@ -19,19 +21,31 @@ pub fn convert_sensitivity(
     to_game_id: String,
     sens: f64,
     dpi: u32,
-) -> Result<SensitivityConversion, String> {
+) -> Result<SensitivityConversion, PublicError> {
+    // 입력값 검증
+    validate::dpi(dpi)?;
+    validate::sensitivity(sens)?;
+    validate::non_empty_str(&from_game_id, "from_game_id")?;
+    validate::non_empty_str(&to_game_id, "to_game_id")?;
+
     let presets = super::get_default_presets();
 
     // 원본/대상 게임 프리셋 찾기
     let from_game = presets
         .iter()
         .find(|g| g.id == from_game_id)
-        .ok_or_else(|| format!("게임을 찾을 수 없습니다: {}", from_game_id))?;
+        .ok_or_else(|| PublicError {
+            message: format!("게임을 찾을 수 없습니다: {}", from_game_id),
+            code: "NOT_FOUND",
+        })?;
 
     let to_game = presets
         .iter()
         .find(|g| g.id == to_game_id)
-        .ok_or_else(|| format!("게임을 찾을 수 없습니다: {}", to_game_id))?;
+        .ok_or_else(|| PublicError {
+            message: format!("게임을 찾을 수 없습니다: {}", to_game_id),
+            code: "NOT_FOUND",
+        })?;
 
     // 원본 감도 → cm/360 → 대상 감도
     let cm360 = conversion::game_sens_to_cm360(sens, dpi, from_game.yaw);
@@ -55,16 +69,28 @@ pub fn convert_all_methods(
     sens: f64,
     dpi: u32,
     aspect_ratio: Option<f64>,
-) -> Result<AllMethodsConversion, String> {
+) -> Result<AllMethodsConversion, PublicError> {
+    // 입력값 검증
+    validate::dpi(dpi)?;
+    validate::sensitivity(sens)?;
+    validate::non_empty_str(&from_game_id, "from_game_id")?;
+    validate::non_empty_str(&to_game_id, "to_game_id")?;
+
     let presets = super::get_default_presets();
     let from = presets
         .iter()
         .find(|g| g.id == from_game_id)
-        .ok_or_else(|| format!("게임을 찾을 수 없습니다: {}", from_game_id))?;
+        .ok_or_else(|| PublicError {
+            message: format!("게임을 찾을 수 없습니다: {}", from_game_id),
+            code: "NOT_FOUND",
+        })?;
     let to = presets
         .iter()
         .find(|g| g.id == to_game_id)
-        .ok_or_else(|| format!("게임을 찾을 수 없습니다: {}", to_game_id))?;
+        .ok_or_else(|| PublicError {
+            message: format!("게임을 찾을 수 없습니다: {}", to_game_id),
+            code: "NOT_FOUND",
+        })?;
 
     let ar = aspect_ratio.unwrap_or(16.0 / 9.0);
     let src_cm360 = conversion::game_sens_to_cm360(sens, dpi, from.yaw);
@@ -105,12 +131,20 @@ pub fn snap_sensitivity(
     game_id: String,
     target_cm360: f64,
     dpi: u32,
-) -> Result<SnappedSensitivity, String> {
+) -> Result<SnappedSensitivity, PublicError> {
+    // 입력값 검증
+    validate::dpi(dpi)?;
+    validate::cm360(target_cm360)?;
+    validate::non_empty_str(&game_id, "game_id")?;
+
     let presets = super::get_default_presets();
     let game = presets
         .iter()
         .find(|g| g.id == game_id)
-        .ok_or_else(|| format!("게임을 찾을 수 없습니다: {}", game_id))?;
+        .ok_or_else(|| PublicError {
+            message: format!("게임을 찾을 수 없습니다: {}", game_id),
+            code: "NOT_FOUND",
+        })?;
 
     let step = game.sens_step.unwrap_or(0.01);
     let (floor_s, floor_c, ceil_s, ceil_c) =

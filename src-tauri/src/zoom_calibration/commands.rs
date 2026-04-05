@@ -1,6 +1,8 @@
 //! 줌 캘리브레이션 IPC 커맨드 — 프론트엔드↔백엔드 인터페이스
 
 use crate::db::ZoomProfileRow;
+use crate::error::{AppError, PublicError, lock_state};
+use crate::validate;
 use crate::AppState;
 use serde::{Deserialize, Serialize};
 use tauri::State;
@@ -70,9 +72,10 @@ pub struct SaveLandscapeParams {
 pub fn get_zoom_profiles(
     state: State<'_, AppState>,
     game_id: i64,
-) -> Result<Vec<ZoomProfileRow>, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
-    db.get_zoom_profiles(game_id).map_err(|e| e.to_string())
+) -> Result<Vec<ZoomProfileRow>, PublicError> {
+    validate::id(game_id, "game_id")?;
+    let db = lock_state(&state.db)?;
+    db.get_zoom_profiles(game_id).map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 // ── 줌 캘리브레이션 ──
@@ -82,13 +85,19 @@ pub fn get_zoom_profiles(
 pub fn start_zoom_calibration(
     state: State<'_, AppState>,
     params: StartZoomCalibrationParams,
-) -> Result<(), String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<(), PublicError> {
+    // 입력값 검증
+    validate::id(params.profile_id, "profile_id")?;
+    validate::id(params.game_id, "game_id")?;
+    validate::fov(params.hipfire_fov)?;
+    validate::cm360(params.base_cm360)?;
+
+    let db = lock_state(&state.db)?;
 
     // DB에서 전체 줌 프로파일 로드
     let all_rows = db
         .get_zoom_profiles(params.game_id)
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
     // ZoomProfileInfo로 변환
     let all_profiles: Vec<ZoomProfileInfo> = all_rows
@@ -104,7 +113,7 @@ pub fn start_zoom_calibration(
         .collect();
 
     if selected_profiles.is_empty() {
-        return Err("선택된 줌 프로파일이 없습니다".to_string());
+        return Err(AppError::Validation("선택된 줌 프로파일이 없습니다".to_string()).into());
     }
 
     // 수렴 모드 파싱
@@ -123,7 +132,8 @@ pub fn start_zoom_calibration(
         mode,
     );
 
-    let mut zoom_cal = state.zoom_calibration.lock().map_err(|e| e.to_string())?;
+    drop(db);
+    let mut zoom_cal = lock_state(&state.zoom_calibration)?;
     *zoom_cal = Some(engine);
 
     Ok(())
@@ -133,11 +143,11 @@ pub fn start_zoom_calibration(
 #[tauri::command]
 pub fn get_next_zoom_trial(
     state: State<'_, AppState>,
-) -> Result<Option<ZoomTrialAction>, String> {
-    let zoom_cal = state.zoom_calibration.lock().map_err(|e| e.to_string())?;
+) -> Result<Option<ZoomTrialAction>, PublicError> {
+    let zoom_cal = lock_state(&state.zoom_calibration)?;
     match zoom_cal.as_ref() {
         Some(engine) => Ok(engine.get_next_trial()),
-        None => Err("줌 캘리브레이션이 시작되지 않았습니다".to_string()),
+        None => Err(AppError::NotFound("줌 캘리브레이션이 시작되지 않았습니다".to_string()).into()),
     }
 }
 
@@ -146,17 +156,21 @@ pub fn get_next_zoom_trial(
 pub fn submit_zoom_trial(
     state: State<'_, AppState>,
     params: SubmitZoomTrialParams,
-) -> Result<ZoomTrialFeedback, String> {
-    let mut zoom_cal = state.zoom_calibration.lock().map_err(|e| e.to_string())?;
+) -> Result<ZoomTrialFeedback, PublicError> {
+    // 입력값 검증
+    validate::score(params.score)?;
+    validate::non_empty_str(&params.phase, "phase")?;
+
+    let mut zoom_cal = lock_state(&state.zoom_calibration)?;
     let engine = zoom_cal
         .as_mut()
-        .ok_or("줌 캘리브레이션이 시작되지 않았습니다")?;
+        .ok_or_else(|| AppError::NotFound("줌 캘리브레이션이 시작되지 않았습니다".to_string()))?;
 
     let phase = match params.phase.as_str() {
         "steady" => ZoomPhase::Steady,
         "correction" => ZoomPhase::Correction,
         "zoomout" => ZoomPhase::Zoomout,
-        _ => return Err(format!("알 수 없는 페이즈: {}", params.phase)),
+        _ => return Err(AppError::Validation(format!("알 수 없는 페이즈: {}", params.phase)).into()),
     };
 
     Ok(engine.submit_trial(phase, params.score))
@@ -166,16 +180,16 @@ pub fn submit_zoom_trial(
 #[tauri::command]
 pub fn finalize_zoom_calibration(
     state: State<'_, AppState>,
-) -> Result<ZoomCalibrationResult, String> {
-    let mut zoom_cal = state.zoom_calibration.lock().map_err(|e| e.to_string())?;
+) -> Result<ZoomCalibrationResult, PublicError> {
+    let mut zoom_cal = lock_state(&state.zoom_calibration)?;
     let engine = zoom_cal
         .as_mut()
-        .ok_or("줌 캘리브레이션이 시작되지 않았습니다")?;
+        .ok_or_else(|| AppError::NotFound("줌 캘리브레이션이 시작되지 않았습니다".to_string()))?;
 
     let result = engine.finalize();
 
     // DB에 결과 저장
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let db = lock_state(&state.db)?;
     for rr in &result.ratio_results {
         db.insert_zoom_calibration(
             engine.profile_id,
@@ -190,21 +204,23 @@ pub fn finalize_zoom_calibration(
             Some(rr.optimal_multiplier),
             Some(rr.deviation),
         )
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| AppError::Database(e.to_string()))?;
     }
 
     // K 값 저장
+    let data_points_json = serde_json::to_string(&result.k_fit.data_points)
+        .map_err(|e| AppError::Internal(e.to_string()))?;
     db.insert_multiplier_curve(
         engine.profile_id,
         result.k_fit.k_value,
         Some(result.k_fit.k_variance),
-        &serde_json::to_string(&result.k_fit.data_points).map_err(|e| e.to_string())?,
+        &data_points_json,
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(|e| AppError::Database(e.to_string()))?;
 
     // 프로파일 k_value 업데이트
     db.update_profile_k_value(engine.profile_id, result.k_fit.k_value)
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
     Ok(result)
 }
@@ -214,11 +230,11 @@ pub fn finalize_zoom_calibration(
 pub fn adjust_k(
     state: State<'_, AppState>,
     delta: f64,
-) -> Result<AdjustedPredictions, String> {
-    let mut zoom_cal = state.zoom_calibration.lock().map_err(|e| e.to_string())?;
+) -> Result<AdjustedPredictions, PublicError> {
+    let mut zoom_cal = lock_state(&state.zoom_calibration)?;
     let engine = zoom_cal
         .as_mut()
-        .ok_or("줌 캘리브레이션이 시작되지 않았습니다")?;
+        .ok_or_else(|| AppError::NotFound("줌 캘리브레이션이 시작되지 않았습니다".to_string()))?;
 
     Ok(engine.adjust_k(delta))
 }
@@ -227,11 +243,11 @@ pub fn adjust_k(
 #[tauri::command]
 pub fn get_zoom_calibration_status(
     state: State<'_, AppState>,
-) -> Result<ZoomCalibrationStatus, String> {
-    let zoom_cal = state.zoom_calibration.lock().map_err(|e| e.to_string())?;
+) -> Result<ZoomCalibrationStatus, PublicError> {
+    let zoom_cal = lock_state(&state.zoom_calibration)?;
     match zoom_cal.as_ref() {
         Some(engine) => Ok(engine.get_status()),
-        None => Err("줌 캘리브레이션이 시작되지 않았습니다".to_string()),
+        None => Err(AppError::NotFound("줌 캘리브레이션이 시작되지 않았습니다".to_string()).into()),
     }
 }
 
@@ -242,9 +258,12 @@ pub fn get_zoom_calibration_status(
 pub fn start_comparator(
     state: State<'_, AppState>,
     params: StartComparatorParams,
-) -> Result<(), String> {
+) -> Result<(), PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    validate::id(params.zoom_profile_id, "zoom_profile_id")?;
+
     let engine = ComparatorEngine::new(params.profile_id, params.zoom_profile_id, 3, params.multipliers.clone());
-    let mut comp = state.comparator.lock().map_err(|e| e.to_string())?;
+    let mut comp = lock_state(&state.comparator)?;
     *comp = Some(engine);
     Ok(())
 }
@@ -254,11 +273,11 @@ pub fn start_comparator(
 pub fn get_next_comparator_trial(
     state: State<'_, AppState>,
     multipliers: Vec<f64>,
-) -> Result<Option<super::comparator::ComparatorTrialAction>, String> {
-    let comp = state.comparator.lock().map_err(|e| e.to_string())?;
+) -> Result<Option<super::comparator::ComparatorTrialAction>, PublicError> {
+    let comp = lock_state(&state.comparator)?;
     match comp.as_ref() {
         Some(engine) => Ok(engine.get_next_trial(&multipliers)),
-        None => Err("비교기가 시작되지 않았습니다".to_string()),
+        None => Err(AppError::NotFound("비교기가 시작되지 않았습니다".to_string()).into()),
     }
 }
 
@@ -267,11 +286,17 @@ pub fn get_next_comparator_trial(
 pub fn submit_comparator_trial(
     state: State<'_, AppState>,
     params: SubmitComparatorParams,
-) -> Result<ComparatorTrialFeedback, String> {
-    let mut comp = state.comparator.lock().map_err(|e| e.to_string())?;
+) -> Result<ComparatorTrialFeedback, PublicError> {
+    // 입력값 검증
+    validate::score(params.steady_score)?;
+    validate::score(params.correction_score)?;
+    validate::score(params.zoomout_score)?;
+    validate::score(params.composite_score)?;
+
+    let mut comp = lock_state(&state.comparator)?;
     let engine = comp
         .as_mut()
-        .ok_or("비교기가 시작되지 않았습니다")?;
+        .ok_or_else(|| AppError::NotFound("비교기가 시작되지 않았습니다".to_string()))?;
 
     let data = ComparatorTrialData {
         steady_score: params.steady_score,
@@ -287,20 +312,20 @@ pub fn submit_comparator_trial(
 #[tauri::command]
 pub fn finalize_comparator(
     state: State<'_, AppState>,
-) -> Result<ComparatorResult, String> {
-    let comp = state.comparator.lock().map_err(|e| e.to_string())?;
+) -> Result<ComparatorResult, PublicError> {
+    let comp = lock_state(&state.comparator)?;
     let engine = comp
         .as_ref()
-        .ok_or("비교기가 시작되지 않았습니다")?;
+        .ok_or_else(|| AppError::NotFound("비교기가 시작되지 않았습니다".to_string()))?;
 
     if !engine.is_complete() {
-        return Err("아직 모든 트라이얼이 완료되지 않았습니다".to_string());
+        return Err(AppError::Validation("아직 모든 트라이얼이 완료되지 않았습니다".to_string()).into());
     }
 
     let result = engine.finalize();
 
     // DB에 결과 저장
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+    let db = lock_state(&state.db)?;
     for ms in &result.method_scores {
         db.insert_conversion_comparison(
             engine.profile_id,
@@ -315,7 +340,7 @@ pub fn finalize_comparator(
             ms.effect_size,
             Some(ms.rank as i64),
         )
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| AppError::Database(e.to_string()))?;
     }
 
     Ok(result)
@@ -328,8 +353,11 @@ pub fn finalize_comparator(
 pub fn save_landscape(
     state: State<'_, AppState>,
     params: SaveLandscapeParams,
-) -> Result<i64, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<i64, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    validate::non_empty_str(&params.gp_mean_curve, "gp_mean_curve")?;
+
+    let db = lock_state(&state.db)?;
     db.insert_performance_landscape(
         params.profile_id,
         params.calibration_session_id,
@@ -338,7 +366,7 @@ pub fn save_landscape(
         &params.scenario_overlays,
         &params.bimodal_peaks,
     )
-    .map_err(|e| e.to_string())
+    .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 // ── 헬퍼 ──
@@ -348,7 +376,6 @@ fn row_to_profile_info(row: &ZoomProfileRow, hipfire_fov: f64) -> ZoomProfileInf
     // FOV 오버라이드가 있으면 사용, 없으면 비율로 계산
     let scope_fov = row.fov_override.unwrap_or_else(|| {
         // 근사: scope_fov = hipfire_fov / zoom_ratio
-        // (정확한 변환은 tan 기반이지만 단순 비율로 근사)
         let hip_rad = hipfire_fov.to_radians() / 2.0;
         let scope_half = (hip_rad.tan() / row.zoom_ratio).atan();
         (scope_half * 2.0).to_degrees()

@@ -1,5 +1,7 @@
 //! FOV 프로파일 Tauri IPC 커맨드
 
+use crate::error::{AppError, PublicError, lock_state};
+use crate::validate;
 use crate::AppState;
 use serde::Deserialize;
 use tauri::State;
@@ -23,8 +25,12 @@ pub struct SaveFovTestResultParams {
 pub fn save_fov_test_result(
     state: State<AppState>,
     params: SaveFovTestResultParams,
-) -> Result<i64, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<i64, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    validate::fov(params.fov_tested)?;
+    validate::non_empty_str(&params.scenario_type, "scenario_type")?;
+
+    let db = lock_state(&state.db)?;
     db.insert_fov_profile(
         params.profile_id,
         params.fov_tested,
@@ -33,7 +39,7 @@ pub fn save_fov_test_result(
         params.peripheral_score,
         params.center_score,
     )
-    .map_err(|e| e.to_string())
+    .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 /// FOV 테스트 결과 조회 파라미터
@@ -47,9 +53,11 @@ pub struct GetFovTestResultsParams {
 pub fn get_fov_test_results(
     state: State<AppState>,
     params: GetFovTestResultsParams,
-) -> Result<Vec<FovProfileRow>, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
-    db.get_fov_profiles(params.profile_id).map_err(|e| e.to_string())
+) -> Result<Vec<FovProfileRow>, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    let db = lock_state(&state.db)?;
+    db.get_fov_profiles(params.profile_id)
+        .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 /// FOV 비교 분석 파라미터
@@ -63,9 +71,11 @@ pub struct CompareFovProfilesParams {
 pub fn compare_fov_profiles(
     state: State<AppState>,
     params: CompareFovProfilesParams,
-) -> Result<Option<FovRecommendation>, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
-    let rows = db.get_fov_profiles(params.profile_id).map_err(|e| e.to_string())?;
+) -> Result<Option<FovRecommendation>, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    let db = lock_state(&state.db)?;
+    let rows = db.get_fov_profiles(params.profile_id)
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
     // DB Row → FovTestResult 변환
     let results: Vec<FovTestResult> = rows
@@ -93,7 +103,9 @@ pub struct DeleteFovTestResultsParams {
 pub fn delete_fov_test_results(
     state: State<AppState>,
     params: DeleteFovTestResultsParams,
-) -> Result<(), String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
-    db.delete_fov_profiles(params.profile_id).map_err(|e| e.to_string())
+) -> Result<(), PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    let db = lock_state(&state.db)?;
+    db.delete_fov_profiles(params.profile_id)
+        .map_err(|e| AppError::Database(e.to_string()).into())
 }

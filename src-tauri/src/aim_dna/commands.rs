@@ -1,5 +1,7 @@
 //! Aim DNA IPC 커맨드 — 배터리 결과 → DNA 산출, 조회, 히스토리, 스냅샷, 변경점
 
+use crate::error::{AppError, PublicError, lock_state};
+use crate::validate;
 use crate::AppState;
 use serde::{Deserialize, Serialize};
 use tauri::State;
@@ -93,17 +95,18 @@ pub struct ComputeAimDnaParams {
 pub fn compute_aim_dna_cmd(
     state: State<AppState>,
     params: ComputeAimDnaParams,
-) -> Result<AimDnaProfile, String> {
+) -> Result<AimDnaProfile, PublicError> {
     let dna = compute_aim_dna(&params.input);
 
     // DB 저장
-    let db = state.db.lock().map_err(|e| e.to_string())?;
-    let dna_id = db.insert_aim_dna(&dna).map_err(|e| e.to_string())?;
+    let db = lock_state(&state.db)?;
+    let dna_id = db.insert_aim_dna(&dna)
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
     // 히스토리 저장
     let pairs = dna.to_feature_pairs();
     db.insert_aim_dna_history_batch(dna.profile_id, &pairs)
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
     // 5축 레이더 점수 계산 → 스냅샷 저장
     let axes = compute_radar_axes(&dna);
@@ -144,9 +147,11 @@ pub struct GetAimDnaParams {
 pub fn get_aim_dna(
     state: State<AppState>,
     params: GetAimDnaParams,
-) -> Result<Option<AimDnaProfile>, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
-    db.get_latest_aim_dna(params.profile_id).map_err(|e| e.to_string())
+) -> Result<Option<AimDnaProfile>, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    let db = lock_state(&state.db)?;
+    db.get_latest_aim_dna(params.profile_id)
+        .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 /// Aim DNA 히스토리 조회 파라미터
@@ -171,10 +176,11 @@ pub struct AimDnaHistoryEntry {
 pub fn get_aim_dna_history(
     state: State<AppState>,
     params: GetAimDnaHistoryParams,
-) -> Result<Vec<AimDnaHistoryEntry>, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<Vec<AimDnaHistoryEntry>, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    let db = lock_state(&state.db)?;
     db.get_aim_dna_history(params.profile_id, params.feature_name.as_deref())
-        .map_err(|e| e.to_string())
+        .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 /// 세션 목록 조회 파라미터
@@ -203,10 +209,11 @@ pub struct SessionSummary {
 pub fn get_sessions_history(
     state: State<AppState>,
     params: GetSessionsParams,
-) -> Result<Vec<SessionSummary>, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<Vec<SessionSummary>, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    let db = lock_state(&state.db)?;
     db.get_sessions_list(params.profile_id, params.limit.unwrap_or(50))
-        .map_err(|e| e.to_string())
+        .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 /// 세션 상세 조회 파라미터
@@ -240,9 +247,11 @@ pub struct SessionDetail {
 pub fn get_session_detail(
     state: State<AppState>,
     params: GetSessionDetailParams,
-) -> Result<SessionDetail, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
-    db.get_session_detail(params.session_id).map_err(|e| e.to_string())
+) -> Result<SessionDetail, PublicError> {
+    validate::id(params.session_id, "session_id")?;
+    let db = lock_state(&state.db)?;
+    db.get_session_detail(params.session_id)
+        .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 // ── DNA 추세 분석 ──
@@ -259,11 +268,12 @@ pub struct GetDnaTrendParams {
 pub fn get_dna_trend_cmd(
     state: State<AppState>,
     params: GetDnaTrendParams,
-) -> Result<DnaTrendResult, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<DnaTrendResult, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    let db = lock_state(&state.db)?;
     let history_entries = db
         .get_aim_dna_history(params.profile_id, None)
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
     // AimDnaHistoryEntry → (name, value, measured_at) 튜플 변환
     let tuples: Vec<(String, f64, String)> = history_entries
@@ -280,14 +290,16 @@ pub fn get_dna_trend_cmd(
 #[tauri::command]
 pub fn detect_reference_game_cmd(
     state: State<AppState>,
-) -> Result<ReferenceGameResult, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
-    let all_dnas = db.get_all_profiles_latest_dna().map_err(|e| e.to_string())?;
+) -> Result<ReferenceGameResult, PublicError> {
+    let db = lock_state(&state.db)?;
+    let all_dnas = db.get_all_profiles_latest_dna()
+        .map_err(|e| AppError::Database(e.to_string()))?;
     let result = detect_reference_game(&all_dnas);
 
     // 결과 반영
     if let Some(ref_id) = result.reference_profile_id {
-        db.set_reference_game(ref_id).map_err(|e| e.to_string())?;
+        db.set_reference_game(ref_id)
+            .map_err(|e| AppError::Database(e.to_string()))?;
     }
 
     Ok(result)
@@ -308,10 +320,11 @@ pub struct GetDnaSnapshotsParams {
 pub fn get_dna_snapshots_cmd(
     state: State<AppState>,
     params: GetDnaSnapshotsParams,
-) -> Result<Vec<DnaSnapshot>, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<Vec<DnaSnapshot>, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    let db = lock_state(&state.db)?;
     db.get_dna_snapshots(params.profile_id, params.limit.unwrap_or(30))
-        .map_err(|e| e.to_string())
+        .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 /// 변경점 이벤트 저장 파라미터
@@ -330,8 +343,13 @@ pub struct SaveChangeEventParams {
 pub fn save_change_event_cmd(
     state: State<AppState>,
     params: SaveChangeEventParams,
-) -> Result<i64, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<i64, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    validate::non_empty_str(&params.change_type, "change_type")?;
+    validate::non_empty_str(&params.after_value, "after_value")?;
+    validate::non_empty_str(&params.description, "description")?;
+
+    let db = lock_state(&state.db)?;
     db.insert_change_event(
         params.profile_id,
         &params.change_type,
@@ -339,7 +357,7 @@ pub fn save_change_event_cmd(
         &params.after_value,
         &params.description,
     )
-    .map_err(|e| e.to_string())
+    .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 /// 변경점 이벤트 목록 조회 파라미터
@@ -355,10 +373,11 @@ pub struct GetChangeEventsParams {
 pub fn get_change_events_cmd(
     state: State<AppState>,
     params: GetChangeEventsParams,
-) -> Result<Vec<DnaChangeEvent>, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<Vec<DnaChangeEvent>, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    let db = lock_state(&state.db)?;
     db.get_change_events(params.profile_id, params.limit.unwrap_or(50))
-        .map_err(|e| e.to_string())
+        .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 /// 두 스냅샷 비교 파라미터
@@ -375,18 +394,23 @@ pub struct CompareSnapshotsParams {
 pub fn compare_snapshots_cmd(
     state: State<AppState>,
     params: CompareSnapshotsParams,
-) -> Result<SnapshotComparison, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<SnapshotComparison, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    validate::id(params.before_id, "before_id")?;
+    validate::id(params.after_id, "after_id")?;
 
-    // 두 스냅샷 중 before/after 찾기 (1~2개 범위에서 탐색)
-    let all = db.get_dna_snapshots(params.profile_id, 100).map_err(|e| e.to_string())?;
+    let db = lock_state(&state.db)?;
+
+    // 두 스냅샷 중 before/after 찾기
+    let all = db.get_dna_snapshots(params.profile_id, 100)
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
     let before = all.iter().find(|s| s.id == params.before_id)
         .cloned()
-        .ok_or_else(|| format!("스냅샷 not found: {}", params.before_id))?;
+        .ok_or_else(|| AppError::NotFound(format!("스냅샷을 찾을 수 없습니다: {}", params.before_id)))?;
     let after = all.iter().find(|s| s.id == params.after_id)
         .cloned()
-        .ok_or_else(|| format!("스냅샷 not found: {}", params.after_id))?;
+        .ok_or_else(|| AppError::NotFound(format!("스냅샷을 찾을 수 없습니다: {}", params.after_id)))?;
 
     // 축별 델타 계산
     let axes = [
@@ -452,9 +476,11 @@ pub struct DetectStagnationParams {
 pub fn detect_stagnation_cmd(
     state: State<AppState>,
     params: DetectStagnationParams,
-) -> Result<StagnationResult, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
-    let snapshots = db.get_dna_snapshots(params.profile_id, 5).map_err(|e| e.to_string())?;
+) -> Result<StagnationResult, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    let db = lock_state(&state.db)?;
+    let snapshots = db.get_dna_snapshots(params.profile_id, 5)
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
     // 5회 미만이면 정체기 판단 불가
     if snapshots.len() < 5 {

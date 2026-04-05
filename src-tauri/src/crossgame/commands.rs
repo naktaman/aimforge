@@ -1,5 +1,7 @@
 //! Cross-Game DNA Tauri IPC 커맨드
 
+use crate::error::{AppError, PublicError, lock_state};
+use crate::validate;
 use crate::AppState;
 use serde::Deserialize;
 use tauri::State;
@@ -21,32 +23,35 @@ pub struct CompareGamesParams {
 pub fn compare_game_dna(
     state: State<AppState>,
     params: CompareGamesParams,
-) -> Result<CrossGameComparison, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<CrossGameComparison, PublicError> {
+    validate::id(params.ref_profile_id, "ref_profile_id")?;
+    validate::id(params.target_profile_id, "target_profile_id")?;
+
+    let db = lock_state(&state.db)?;
 
     // 두 프로파일의 최신 DNA 조회
     let ref_dna = db
         .get_latest_aim_dna(params.ref_profile_id)
-        .map_err(|e| e.to_string())?
-        .ok_or("Reference 게임의 Aim DNA가 없습니다.")?;
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::NotFound("Reference 게임의 Aim DNA가 없습니다.".to_string()))?;
 
     let target_dna = db
         .get_latest_aim_dna(params.target_profile_id)
-        .map_err(|e| e.to_string())?
-        .ok_or("Target 게임의 Aim DNA가 없습니다.")?;
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::NotFound("Target 게임의 Aim DNA가 없습니다.".to_string()))?;
 
     let ref_movement = params.ref_game_movement_ratio.unwrap_or(0.3);
     let target_movement = params.target_game_movement_ratio.unwrap_or(0.3);
 
     // 레퍼런스 게임 ID + cm/360 차이 조회
     let reference_game_id = db.get_reference_game_profile_id()
-        .map_err(|e| e.to_string())?
+        .map_err(|e| AppError::Database(e.to_string()))?
         .unwrap_or(params.ref_profile_id);
     let ref_cm360 = db.get_profile_cm360(params.ref_profile_id)
-        .map_err(|e| e.to_string())?
+        .map_err(|e| AppError::Database(e.to_string()))?
         .unwrap_or(0.0);
     let target_cm360 = db.get_profile_cm360(params.target_profile_id)
-        .map_err(|e| e.to_string())?
+        .map_err(|e| AppError::Database(e.to_string()))?
         .unwrap_or(0.0);
     let sens_diff = (target_cm360 - ref_cm360).abs();
 
@@ -57,16 +62,23 @@ pub fn compare_game_dna(
     );
 
     // DB 저장
+    let deltas_json = serde_json::to_string(&comparison.deltas)
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+    let causes_json = serde_json::to_string(&comparison.causes)
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+    let plan_json = serde_json::to_string(&comparison.improvement_plan)
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+
     db.insert_crossgame_comparison(
         params.ref_profile_id,
         params.target_profile_id,
         reference_game_id,
-        &serde_json::to_string(&comparison.deltas).map_err(|e| e.to_string())?,
-        &serde_json::to_string(&comparison.causes).map_err(|e| e.to_string())?,
-        &serde_json::to_string(&comparison.improvement_plan).map_err(|e| e.to_string())?,
+        &deltas_json,
+        &causes_json,
+        &plan_json,
         comparison.predicted_days,
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(|e| AppError::Database(e.to_string()))?;
 
     Ok(comparison)
 }
@@ -85,18 +97,21 @@ pub struct PredictTimelineParams {
 pub fn predict_crossgame_timeline(
     state: State<AppState>,
     params: PredictTimelineParams,
-) -> Result<TimelinePrediction, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<TimelinePrediction, PublicError> {
+    validate::id(params.ref_profile_id, "ref_profile_id")?;
+    validate::id(params.target_profile_id, "target_profile_id")?;
+
+    let db = lock_state(&state.db)?;
 
     let ref_dna = db
         .get_latest_aim_dna(params.ref_profile_id)
-        .map_err(|e| e.to_string())?
-        .ok_or("Reference DNA 없음")?;
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::NotFound("Reference DNA 없음".to_string()))?;
 
     let target_dna = db
         .get_latest_aim_dna(params.target_profile_id)
-        .map_err(|e| e.to_string())?
-        .ok_or("Target DNA 없음")?;
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::NotFound("Target DNA 없음".to_string()))?;
 
     // 피처 비교를 위해 compare_games 호출
     let comparison = compare_games(&ref_dna, &target_dna, 0.3, 0.3, 0, 0.0);
@@ -124,15 +139,18 @@ pub struct RecordProgressParams {
 pub fn record_crossgame_progress(
     state: State<AppState>,
     params: RecordProgressParams,
-) -> Result<i64, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<i64, PublicError> {
+    validate::id(params.comparison_id, "comparison_id")?;
+    validate::non_empty_str(&params.metrics, "metrics")?;
+
+    let db = lock_state(&state.db)?;
     db.insert_crossgame_progress(
         params.comparison_id,
         params.week_number,
         &params.metrics,
         params.gap_reduction_pct,
     )
-    .map_err(|e| e.to_string())
+    .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 // ── 크로스게임 비교 조회 ──
@@ -160,10 +178,11 @@ pub struct GetComparisonHistoryParams {
 pub fn get_cross_game_history_cmd(
     state: State<AppState>,
     params: GetComparisonHistoryParams,
-) -> Result<Vec<CrossGameComparisonSummary>, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<Vec<CrossGameComparisonSummary>, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    let db = lock_state(&state.db)?;
     db.get_crossgame_history(params.profile_id, params.limit.unwrap_or(20))
-        .map_err(|e| e.to_string())
+        .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 /// 크로스게임 갭 기반 훈련 처방 생성
@@ -171,24 +190,30 @@ pub fn get_cross_game_history_cmd(
 pub fn generate_crossgame_prescriptions_cmd(
     state: State<AppState>,
     params: CompareGamesParams,
-) -> Result<Vec<crate::training::TrainingPrescription>, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<Vec<crate::training::TrainingPrescription>, PublicError> {
+    validate::id(params.ref_profile_id, "ref_profile_id")?;
+    validate::id(params.target_profile_id, "target_profile_id")?;
+
+    let db = lock_state(&state.db)?;
 
     let ref_dna = db
         .get_latest_aim_dna(params.ref_profile_id)
-        .map_err(|e| e.to_string())?
-        .ok_or("Reference DNA 없음")?;
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::NotFound("Reference DNA 없음".to_string()))?;
     let target_dna = db
         .get_latest_aim_dna(params.target_profile_id)
-        .map_err(|e| e.to_string())?
-        .ok_or("Target DNA 없음")?;
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::NotFound("Target DNA 없음".to_string()))?;
 
     let ref_movement = params.ref_game_movement_ratio.unwrap_or(0.3);
     let target_movement = params.target_game_movement_ratio.unwrap_or(0.3);
-    let ref_cm360 = db.get_profile_cm360(params.ref_profile_id).map_err(|e| e.to_string())?.unwrap_or(0.0);
-    let target_cm360 = db.get_profile_cm360(params.target_profile_id).map_err(|e| e.to_string())?.unwrap_or(0.0);
+    let ref_cm360 = db.get_profile_cm360(params.ref_profile_id)
+        .map_err(|e| AppError::Database(e.to_string()))?.unwrap_or(0.0);
+    let target_cm360 = db.get_profile_cm360(params.target_profile_id)
+        .map_err(|e| AppError::Database(e.to_string()))?.unwrap_or(0.0);
     let sens_diff = (target_cm360 - ref_cm360).abs();
-    let ref_game_id = db.get_reference_game_profile_id().map_err(|e| e.to_string())?.unwrap_or(params.ref_profile_id);
+    let ref_game_id = db.get_reference_game_profile_id()
+        .map_err(|e| AppError::Database(e.to_string()))?.unwrap_or(params.ref_profile_id);
 
     let comparison = compare_games(&ref_dna, &target_dna, ref_movement, target_movement, ref_game_id, sens_diff);
     let prescriptions = generate_crossgame_prescriptions(&comparison);

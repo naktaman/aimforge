@@ -207,8 +207,7 @@ pub fn get_informed_prior(category: GameCategory, _partial_dna: &PartialAimDna) 
         GameCategory::BattleRoyale => (32.0, 120.0),
     };
 
-    // TODO: partial_dna를 사용한 prior 보정 (population 데이터 축적 후)
-    // 현재는 게임 카테고리 기본값 사용
+    // 게임 카테고리 기본값 사용 (population 데이터 축적 후 prior 보정 가능)
     InformedPrior {
         mean: base_mean,
         variance: base_var,

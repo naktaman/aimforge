@@ -1,5 +1,7 @@
 //! 훈련 시스템 Tauri IPC 커맨드
 
+use crate::error::{AppError, PublicError, lock_state};
+use crate::validate;
 use crate::AppState;
 use serde::Deserialize;
 use tauri::State;
@@ -37,35 +39,37 @@ pub struct GeneratePrescriptionsParams {
 pub fn generate_training_prescriptions(
     state: State<AppState>,
     params: GeneratePrescriptionsParams,
-) -> Result<Vec<TrainingPrescription>, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<Vec<TrainingPrescription>, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    let db = lock_state(&state.db)?;
 
     // 최신 Aim DNA 조회
     let dna = db
         .get_latest_aim_dna(params.profile_id)
-        .map_err(|e| e.to_string())?
-        .ok_or_else(|| "Aim DNA 데이터가 없습니다. 먼저 배터리를 실행하세요.".to_string())?;
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::NotFound("Aim DNA 데이터가 없습니다. 먼저 배터리를 실행하세요.".to_string()))?;
 
     let prescriptions = generate_prescriptions(&dna);
 
     // DB 저장 — aim_dna ID 조회 후 처방 저장
     let aim_dna_id = db
         .get_latest_aim_dna_id(params.profile_id)
-        .map_err(|e| e.to_string())?
-        .ok_or("aim_dna_id 조회 실패")?;
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::NotFound("aim_dna_id 조회 실패".to_string()))?;
 
     for p in &prescriptions {
+        let params_json = serde_json::to_string(&p.scenario_params)
+            .map_err(|e| AppError::Internal(e.to_string()))?;
         db.insert_training_prescription(
             aim_dna_id,
             &p.source_type,
             &p.weakness,
             &p.scenario_type,
-            // 직렬화 실패 시 에러 전파 — 빈 문자열 저장 방지
-            &serde_json::to_string(&p.scenario_params).map_err(|e| e.to_string())?,
+            &params_json,
             p.priority,
             Some(p.estimated_min),
         )
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| AppError::Database(e.to_string()))?;
     }
 
     Ok(prescriptions)
@@ -76,20 +80,21 @@ pub fn generate_training_prescriptions(
 pub fn get_stage_recommendations(
     state: State<AppState>,
     params: GeneratePrescriptionsParams,
-) -> Result<Vec<StageRecommendation>, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<Vec<StageRecommendation>, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    let db = lock_state(&state.db)?;
 
     let dna = db
         .get_latest_aim_dna(params.profile_id)
-        .map_err(|e| e.to_string())?
-        .ok_or_else(|| "Aim DNA 데이터가 없습니다.".to_string())?;
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::NotFound("Aim DNA 데이터가 없습니다.".to_string()))?;
 
     Ok(recommend_stages(&dna))
 }
 
 /// 벤치마크 프리셋 목록 조회
 #[tauri::command]
-pub fn get_benchmark_preset_list() -> Result<serde_json::Value, String> {
+pub fn get_benchmark_preset_list() -> Result<serde_json::Value, PublicError> {
     let presets = get_benchmark_presets();
     let list: Vec<serde_json::Value> = presets
         .into_iter()
@@ -118,9 +123,17 @@ pub struct SubmitStageResultParams {
 pub fn submit_stage_result(
     state: State<AppState>,
     params: SubmitStageResultParams,
-) -> Result<serde_json::Value, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<serde_json::Value, PublicError> {
+    validate::id(params.result.profile_id, "profile_id")?;
+    validate::non_empty_str(&params.result.stage_type, "stage_type")?;
+    validate::non_empty_str(&params.result.category, "category")?;
+
+    let db = lock_state(&state.db)?;
     let result = &params.result;
+
+    // 난이도 직렬화
+    let difficulty_json = serde_json::to_string(&result.difficulty)
+        .map_err(|e| AppError::Internal(e.to_string()))?;
 
     // 스테이지 결과 DB 저장
     let stage_id = db
@@ -136,16 +149,15 @@ pub fn submit_stage_result(
             result.avg_undershoot_deg,
             result.tracking_mad,
             &result.raw_metrics,
-            // 난이도 직렬화 실패 시 에러 전파
-            &serde_json::to_string(&result.difficulty).map_err(|e| e.to_string())?,
+            &difficulty_json,
         )
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
     // DNA 피처 매핑 → 히스토리 저장
     let features = map_stage_to_dna_features(result);
     if !features.is_empty() {
         db.insert_aim_dna_history_batch(result.profile_id, &features)
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| AppError::Database(e.to_string()))?;
     }
 
     // 일별 통계 + 스킬 진행도 자동 집계
@@ -179,7 +191,7 @@ pub struct AdaptDifficultyParams {
 #[tauri::command]
 pub fn calculate_adaptive_difficulty(
     params: AdaptDifficultyParams,
-) -> Result<DifficultyConfig, String> {
+) -> Result<DifficultyConfig, PublicError> {
     Ok(adapt_difficulty(&params.current_difficulty, params.recent_accuracy))
 }
 
@@ -196,14 +208,15 @@ pub struct GetStageResultsParams {
 pub fn get_stage_results(
     state: State<AppState>,
     params: GetStageResultsParams,
-) -> Result<Vec<StageResultRow>, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<Vec<StageResultRow>, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    let db = lock_state(&state.db)?;
     db.get_stage_results(
         params.profile_id,
         params.limit.unwrap_or(50),
         params.stage_type.as_deref(),
     )
-    .map_err(|e| e.to_string())
+    .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 // ═══════════════════════════════════════════════════
@@ -215,27 +228,29 @@ pub fn get_stage_results(
 pub fn calculate_readiness_score(
     state: State<AppState>,
     params: super::readiness::ReadinessInput,
-) -> Result<super::readiness::ReadinessResult, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<super::readiness::ReadinessResult, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    let db = lock_state(&state.db)?;
 
     // baseline DNA 로드
     let dna = db
         .get_latest_aim_dna(params.profile_id)
-        .map_err(|e| e.to_string())?
-        .ok_or_else(|| "Aim DNA 데이터가 없습니다. 먼저 배터리를 실행하세요.".to_string())?;
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::NotFound("Aim DNA 데이터가 없습니다. 먼저 배터리를 실행하세요.".to_string()))?;
 
     let baseline = super::readiness::extract_baseline(&dna);
     let result = super::readiness::calculate_readiness(&params, &baseline);
 
     // DB 저장
-    let delta_json = serde_json::to_string(&result.baseline_delta).map_err(|e| e.to_string())?;
+    let delta_json = serde_json::to_string(&result.baseline_delta)
+        .map_err(|e| AppError::Internal(e.to_string()))?;
     db.insert_readiness_score(
         params.profile_id,
         result.score,
         &delta_json,
         Some(&result.daily_advice),
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(|e| AppError::Database(e.to_string()))?;
 
     Ok(result)
 }
@@ -252,10 +267,11 @@ pub struct GetReadinessHistoryParams {
 pub fn get_readiness_history(
     state: State<AppState>,
     params: GetReadinessHistoryParams,
-) -> Result<Vec<crate::db::ReadinessScoreRow>, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<Vec<crate::db::ReadinessScoreRow>, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    let db = lock_state(&state.db)?;
     db.get_readiness_scores(params.profile_id, params.limit.unwrap_or(30))
-        .map_err(|e| e.to_string())
+        .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 // ═══════════════════════════════════════════════════
@@ -276,14 +292,18 @@ pub struct StartStyleTransitionParams {
 pub fn start_style_transition(
     state: State<AppState>,
     params: StartStyleTransitionParams,
-) -> Result<serde_json::Value, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<serde_json::Value, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    validate::non_empty_str(&params.from_type, "from_type")?;
+    validate::non_empty_str(&params.to_type, "to_type")?;
+    validate::non_empty_str(&params.target_sens_range, "target_sens_range")?;
+
+    let db = lock_state(&state.db)?;
 
     // 기존 활성 전환이 있으면 완료 처리
     if let Ok(Some(existing)) = db.get_active_style_transition(params.profile_id) {
-        // 기존 전환 완료 실패 시 새 전환 생성 차단 (데이터 무결성)
         db.complete_style_transition(existing.id)
-            .map_err(|e| format!("기존 스타일 전환 완료 처리 실패: {}", e))?;
+            .map_err(|e| AppError::Database(format!("기존 스타일 전환 완료 처리 실패: {}", e)))?;
     }
 
     let id = db
@@ -293,7 +313,7 @@ pub fn start_style_transition(
             &params.to_type,
             &params.target_sens_range,
         )
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
     Ok(serde_json::json!({ "transition_id": id }))
 }
@@ -309,12 +329,13 @@ pub struct GetStyleTransitionParams {
 pub fn get_style_transition_status(
     state: State<AppState>,
     params: GetStyleTransitionParams,
-) -> Result<serde_json::Value, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<serde_json::Value, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    let db = lock_state(&state.db)?;
 
     let transition = db
         .get_active_style_transition(params.profile_id)
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| AppError::Database(e.to_string()))?;
 
     match transition {
         Some(t) => {
@@ -361,25 +382,28 @@ pub struct UpdateStyleTransitionParams {
 pub fn update_style_transition(
     state: State<AppState>,
     params: UpdateStyleTransitionParams,
-) -> Result<serde_json::Value, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<serde_json::Value, PublicError> {
+    validate::id(params.profile_id, "profile_id")?;
+    validate::non_empty_str(&params.action, "action")?;
+
+    let db = lock_state(&state.db)?;
 
     let transition = db
         .get_active_style_transition(params.profile_id)
-        .map_err(|e| e.to_string())?
-        .ok_or("활성 스타일 전환이 없습니다.")?;
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::NotFound("활성 스타일 전환이 없습니다.".to_string()))?;
 
     match params.action.as_str() {
         "complete" => {
             db.complete_style_transition(transition.id)
-                .map_err(|e| e.to_string())?;
+                .map_err(|e| AppError::Database(e.to_string()))?;
             Ok(serde_json::json!({ "status": "completed" }))
         }
         "detect_plateau" => {
             db.mark_plateau_detected(transition.id)
-                .map_err(|e| e.to_string())?;
+                .map_err(|e| AppError::Database(e.to_string()))?;
             Ok(serde_json::json!({ "status": "plateau_marked" }))
         }
-        _ => Err("알 수 없는 액션입니다. 'complete' 또는 'detect_plateau'를 사용하세요.".into()),
+        _ => Err(AppError::Validation("알 수 없는 액션입니다. 'complete' 또는 'detect_plateau'를 사용하세요.".to_string()).into()),
     }
 }

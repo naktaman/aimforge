@@ -1,5 +1,7 @@
 //! Movement 시스템 Tauri IPC 커맨드
 
+use crate::error::{AppError, PublicError, lock_state};
+use crate::validate;
 use crate::AppState;
 use serde::Deserialize;
 use tauri::{Manager, State};
@@ -27,9 +29,11 @@ pub struct GetMovementProfilesParams {
 pub fn get_movement_profiles(
     state: State<AppState>,
     params: GetMovementProfilesParams,
-) -> Result<Vec<MovementProfileRow>, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
-    db.get_movement_profiles(params.game_id).map_err(|e| e.to_string())
+) -> Result<Vec<MovementProfileRow>, PublicError> {
+    validate::id(params.game_id, "game_id")?;
+    let db = lock_state(&state.db)?;
+    db.get_movement_profiles(params.game_id)
+        .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 /// 무브먼트 프로필 저장 파라미터
@@ -49,8 +53,14 @@ pub struct SaveMovementProfileParams {
 pub fn save_movement_profile(
     state: State<AppState>,
     params: SaveMovementProfileParams,
-) -> Result<i64, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<i64, PublicError> {
+    validate::id(params.game_id, "game_id")?;
+    validate::non_empty_str(&params.name, "name")?;
+    validate::positive_f64(params.max_speed, "max_speed")?;
+    validate::non_negative_f64(params.stop_time, "stop_time")?;
+    validate::non_empty_str(&params.accel_type, "accel_type")?;
+
+    let db = lock_state(&state.db)?;
     db.insert_movement_profile(
         params.game_id,
         &params.name,
@@ -61,7 +71,7 @@ pub fn save_movement_profile(
         params.cs_bonus,
         true, // 커스텀
     )
-    .map_err(|e| e.to_string())
+    .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 /// 무브먼트 프로필 수정 파라미터
@@ -81,8 +91,14 @@ pub struct UpdateMovementProfileParams {
 pub fn update_movement_profile(
     state: State<AppState>,
     params: UpdateMovementProfileParams,
-) -> Result<(), String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<(), PublicError> {
+    validate::id(params.id, "id")?;
+    validate::non_empty_str(&params.name, "name")?;
+    validate::positive_f64(params.max_speed, "max_speed")?;
+    validate::non_negative_f64(params.stop_time, "stop_time")?;
+    validate::non_empty_str(&params.accel_type, "accel_type")?;
+
+    let db = lock_state(&state.db)?;
     db.update_movement_profile(
         params.id,
         &params.name,
@@ -92,7 +108,7 @@ pub fn update_movement_profile(
         params.air_control,
         params.cs_bonus,
     )
-    .map_err(|e| e.to_string())
+    .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 /// 무브먼트 프로필 삭제 파라미터
@@ -106,9 +122,11 @@ pub struct DeleteMovementProfileParams {
 pub fn delete_movement_profile(
     state: State<AppState>,
     params: DeleteMovementProfileParams,
-) -> Result<(), String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
-    db.delete_movement_profile(params.id).map_err(|e| e.to_string())
+) -> Result<(), PublicError> {
+    validate::id(params.id, "id")?;
+    let db = lock_state(&state.db)?;
+    db.delete_movement_profile(params.id)
+        .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 /// 가중 추천 계산 파라미터
@@ -148,7 +166,11 @@ pub struct ExportMovementProfileParams {
 pub fn export_movement_profile(
     app_handle: tauri::AppHandle,
     params: ExportMovementProfileParams,
-) -> Result<String, String> {
+) -> Result<String, PublicError> {
+    validate::non_empty_str(&params.game_id, "game_id")?;
+    validate::non_empty_str(&params.name, "name")?;
+    validate::positive_f64(params.max_speed, "max_speed")?;
+
     let export_data = MovementExportData {
         version: 1,
         game_id: params.game_id,
@@ -159,18 +181,19 @@ pub fn export_movement_profile(
         air_control: params.air_control,
         cs_bonus: params.cs_bonus,
     };
-    export_data.validate()?;
+    export_data.validate()
+        .map_err(|e| AppError::Validation(e))?;
 
     let json = serde_json::to_string_pretty(&export_data)
-        .map_err(|e| format!("JSON 직렬화 실패: {}", e))?;
+        .map_err(|e| AppError::Internal(format!("JSON 직렬화 실패: {}", e)))?;
 
     // app_data_dir/exports/ 디렉토리에 저장
     let app_dir = app_handle.path()
         .app_data_dir()
-        .map_err(|e| format!("앱 데이터 디렉토리 조회 실패: {}", e))?;
+        .map_err(|e| AppError::Internal(format!("앱 데이터 디렉토리 조회 실패: {}", e)))?;
     let export_dir = app_dir.join("exports");
     std::fs::create_dir_all(&export_dir)
-        .map_err(|e| format!("디렉토리 생성 실패: {}", e))?;
+        .map_err(|e| AppError::Internal(format!("디렉토리 생성 실패: {}", e)))?;
 
     // 파일명: movement_{name}_{timestamp}.json
     let timestamp = chrono::Local::now().format("%Y%m%d_%H%M%S");
@@ -179,7 +202,7 @@ pub fn export_movement_profile(
     let file_path = export_dir.join(&filename);
 
     std::fs::write(&file_path, json)
-        .map_err(|e| format!("파일 저장 실패: {}", e))?;
+        .map_err(|e| AppError::Internal(format!("파일 저장 실패: {}", e)))?;
 
     Ok(file_path.to_string_lossy().to_string())
 }
@@ -188,10 +211,12 @@ pub fn export_movement_profile(
 #[tauri::command]
 pub fn import_movement_profile_from_string(
     json_string: String,
-) -> Result<MovementPreset, String> {
+) -> Result<MovementPreset, PublicError> {
+    validate::non_empty_str(&json_string, "json_string")?;
     let export_data: MovementExportData = serde_json::from_str(&json_string)
-        .map_err(|e| format!("JSON 파싱 실패: {}", e))?;
-    export_data.validate()?;
+        .map_err(|e| AppError::Validation(format!("JSON 파싱 실패: {}", e)))?;
+    export_data.validate()
+        .map_err(|e| AppError::Validation(e))?;
     Ok(export_data.to_preset())
 }
 
@@ -216,16 +241,22 @@ pub struct CalibrateMaxSpeedResult {
 #[tauri::command]
 pub fn calibrate_max_speed(
     params: CalibrateMaxSpeedParams,
-) -> Result<CalibrateMaxSpeedResult, String> {
+) -> Result<CalibrateMaxSpeedResult, PublicError> {
+    validate::non_empty_str(&params.game_id, "game_id")?;
+    validate::positive_f64(params.measured_time_sec, "measured_time_sec")?;
+
     // 거리: 직접 입력값 사용 (0이면 게임 기본값 fallback)
     let distance = if params.distance_units > 0.0 {
         params.distance_units
     } else {
         get_calibration_distance(&params.game_id)
-            .ok_or_else(|| format!("게임 '{}'의 기본 캘리브레이션 거리가 없습니다", params.game_id))?
+            .ok_or_else(|| AppError::NotFound(
+                format!("게임 '{}'의 기본 캘리브레이션 거리가 없습니다", params.game_id)
+            ))?
     };
 
-    let speed = calculate_max_speed_from_wall_time(distance, params.measured_time_sec)?;
+    let speed = calculate_max_speed_from_wall_time(distance, params.measured_time_sec)
+        .map_err(|e| AppError::Validation(e))?;
 
     Ok(CalibrateMaxSpeedResult {
         calculated_max_speed: (speed * 10.0).round() / 10.0, // 소수점 1자리 반올림

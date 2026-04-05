@@ -2,6 +2,7 @@ mod aim_dna;
 mod calibration;
 mod crossgame;
 mod db;
+mod error;
 mod fov_profile;
 mod game_db;
 mod gp;
@@ -10,6 +11,7 @@ mod input;
 mod movement;
 mod trajectory;
 mod training;
+mod validate;
 mod zoom_calibration;
 
 use calibration::CalibrationEngine;

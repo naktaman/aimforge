@@ -1,5 +1,7 @@
 //! Hardware 콤보 비교 Tauri IPC 커맨드
 
+use crate::error::{AppError, PublicError, lock_state};
+use crate::validate;
 use crate::AppState;
 use serde::Deserialize;
 use tauri::State;
@@ -22,8 +24,14 @@ pub struct SaveHardwareComboParams {
 pub fn save_hardware_combo(
     state: State<AppState>,
     params: SaveHardwareComboParams,
-) -> Result<i64, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<i64, PublicError> {
+    validate::non_empty_str(&params.mouse_model, "mouse_model")?;
+    validate::dpi_i64(params.dpi)?;
+    if let Some(v) = params.verified_dpi {
+        validate::dpi_i64(v)?;
+    }
+
+    let db = lock_state(&state.db)?;
     db.insert_hardware_combo(
         &params.mouse_model,
         params.dpi,
@@ -31,16 +39,17 @@ pub fn save_hardware_combo(
         params.polling_rate,
         params.mousepad_model.as_deref(),
     )
-    .map_err(|e| e.to_string())
+    .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 /// 전체 하드웨어 콤보 조회
 #[tauri::command]
 pub fn get_hardware_combos(
     state: State<AppState>,
-) -> Result<Vec<HardwareComboRow>, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
-    db.get_hardware_combos().map_err(|e| e.to_string())
+) -> Result<Vec<HardwareComboRow>, PublicError> {
+    let db = lock_state(&state.db)?;
+    db.get_hardware_combos()
+        .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 /// 하드웨어 콤보 수정 파라미터
@@ -59,8 +68,15 @@ pub struct UpdateHardwareComboParams {
 pub fn update_hardware_combo(
     state: State<AppState>,
     params: UpdateHardwareComboParams,
-) -> Result<(), String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<(), PublicError> {
+    validate::id(params.id, "id")?;
+    validate::non_empty_str(&params.mouse_model, "mouse_model")?;
+    validate::dpi_i64(params.dpi)?;
+    if let Some(v) = params.verified_dpi {
+        validate::dpi_i64(v)?;
+    }
+
+    let db = lock_state(&state.db)?;
     db.update_hardware_combo(
         params.id,
         &params.mouse_model,
@@ -69,7 +85,7 @@ pub fn update_hardware_combo(
         params.polling_rate,
         params.mousepad_model.as_deref(),
     )
-    .map_err(|e| e.to_string())
+    .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 /// 하드웨어 콤보 삭제 파라미터
@@ -83,9 +99,11 @@ pub struct DeleteHardwareComboParams {
 pub fn delete_hardware_combo(
     state: State<AppState>,
     params: DeleteHardwareComboParams,
-) -> Result<(), String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
-    db.delete_hardware_combo(params.id).map_err(|e| e.to_string())
+) -> Result<(), PublicError> {
+    validate::id(params.id, "id")?;
+    let db = lock_state(&state.db)?;
+    db.delete_hardware_combo(params.id)
+        .map_err(|e| AppError::Database(e.to_string()).into())
 }
 
 /// 하드웨어 비교 파라미터
@@ -100,24 +118,27 @@ pub struct CompareHardwareCombosParams {
 pub fn compare_hardware_combos(
     state: State<AppState>,
     params: CompareHardwareCombosParams,
-) -> Result<HardwareComparison, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
+) -> Result<HardwareComparison, PublicError> {
+    validate::id(params.profile_a_id, "profile_a_id")?;
+    validate::id(params.profile_b_id, "profile_b_id")?;
+
+    let db = lock_state(&state.db)?;
 
     // 프로필에서 hardware_combo_id 추출 및 최적 cm360 조회
     let opt_a = db.get_profile_cm360(params.profile_a_id)
-        .map_err(|e| e.to_string())?
+        .map_err(|e| AppError::Database(e.to_string()))?
         .unwrap_or(0.0);
     let opt_b = db.get_profile_cm360(params.profile_b_id)
-        .map_err(|e| e.to_string())?
+        .map_err(|e| AppError::Database(e.to_string()))?
         .unwrap_or(0.0);
 
     // DNA 조회
     let dna_a = db.get_latest_aim_dna(params.profile_a_id)
-        .map_err(|e| e.to_string())?
-        .ok_or("프로필 A의 Aim DNA가 없습니다.")?;
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::NotFound("프로필 A의 Aim DNA가 없습니다.".to_string()))?;
     let dna_b = db.get_latest_aim_dna(params.profile_b_id)
-        .map_err(|e| e.to_string())?
-        .ok_or("프로필 B의 Aim DNA가 없습니다.")?;
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::NotFound("프로필 B의 Aim DNA가 없습니다.".to_string()))?;
 
     // hardware_combo_id로 콤보 정보 조회
     let combo_a_row = get_hardware_for_profile(&db, params.profile_a_id)?;
@@ -136,7 +157,7 @@ pub fn compare_hardware_combos(
 fn get_hardware_for_profile(
     db: &crate::db::Database,
     profile_id: i64,
-) -> Result<HardwareComboRow, String> {
+) -> Result<HardwareComboRow, PublicError> {
     // profiles 테이블에서 hardware_combo_id 조회
     let combo_id: Option<i64> = db.conn()
         .query_row(
@@ -144,13 +165,14 @@ fn get_hardware_for_profile(
             rusqlite::params![profile_id],
             |row| row.get(0),
         )
-        .map_err(|e| format!("프로필 {} 조회 실패: {}", profile_id, e))?;
+        .map_err(|e| AppError::Database(format!("프로필 {} 조회 실패: {}", profile_id, e)))?;
 
-    let combo_id = combo_id.ok_or(format!("프로필 {}에 하드웨어 콤보가 연결되지 않았습니다.", profile_id))?;
+    let combo_id = combo_id
+        .ok_or_else(|| AppError::NotFound(format!("프로필 {}에 하드웨어 콤보가 연결되지 않았습니다.", profile_id)))?;
 
     db.get_hardware_combo(combo_id)
-        .map_err(|e| e.to_string())?
-        .ok_or(format!("하드웨어 콤보 {} 을(를) 찾을 수 없습니다.", combo_id))
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::NotFound(format!("하드웨어 콤보 {}을(를) 찾을 수 없습니다.", combo_id)).into())
 }
 
 /// HardwareComboRow → HardwareCombo 변환

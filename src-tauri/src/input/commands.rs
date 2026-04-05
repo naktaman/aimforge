@@ -1,6 +1,8 @@
 /// Tauri IPC 커맨드 — 프론트엔드에서 호출 가능한 마우스 입력 관련 명령
 use super::raw_input;
 use super::{DpiVerification, MouseAccelStatus, MouseBatch, MouseInputState};
+use crate::error::{AppError, PublicError, lock_state};
+use crate::validate;
 use crate::AppState;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -18,7 +20,11 @@ pub fn get_mouse_acceleration_status() -> MouseAccelStatus {
 /// claimed_dpi: 유저 입력 DPI, total_counts: 드래그 중 누적 raw delta 합
 /// distance_cm: 실제 드래그 거리 (기본 10cm)
 #[tauri::command]
-pub fn check_dpi(claimed_dpi: u32, total_counts: i64, distance_cm: f64) -> DpiVerification {
+pub fn check_dpi(claimed_dpi: u32, total_counts: i64, distance_cm: f64) -> Result<DpiVerification, PublicError> {
+    // 입력값 검증
+    validate::dpi(claimed_dpi)?;
+    validate::positive_f64(distance_cm, "distance_cm")?;
+
     // DPI = counts / inches, 1 inch = 2.54 cm
     let distance_inches = distance_cm / 2.54;
     let measured_dpi = total_counts.unsigned_abs() as f64 / distance_inches;
@@ -34,23 +40,23 @@ pub fn check_dpi(claimed_dpi: u32, total_counts: i64, distance_cm: f64) -> DpiVe
         "fail".to_string()
     };
 
-    DpiVerification {
+    Ok(DpiVerification {
         claimed_dpi,
         measured_dpi,
         error_pct,
         status,
-    }
+    })
 }
 
 /// 마우스 Raw Input 캡처 시작
 /// 백그라운드 스레드에서 WM_INPUT 메시지 루프 실행, crossbeam 채널로 이벤트 전송
 #[tauri::command]
-pub fn start_mouse_capture(state: State<AppState>) -> Result<String, String> {
-    let mut mouse_input = state.mouse_input.lock().map_err(|e| e.to_string())?;
+pub fn start_mouse_capture(state: State<AppState>) -> Result<String, PublicError> {
+    let mut mouse_input = lock_state(&state.mouse_input)?;
 
     // 이미 캡처 중이면 에러
     if mouse_input.is_some() {
-        return Err("마우스 캡처가 이미 실행 중입니다.".to_string());
+        return Err(AppError::Validation("마우스 캡처가 이미 실행 중입니다.".to_string()).into());
     }
 
     // crossbeam bounded channel 생성 (1000Hz × 2초 = 2000 이벤트 버퍼)
@@ -72,8 +78,8 @@ pub fn start_mouse_capture(state: State<AppState>) -> Result<String, String> {
 
 /// 마우스 Raw Input 캡처 중지
 #[tauri::command]
-pub fn stop_mouse_capture(state: State<AppState>) -> Result<String, String> {
-    let mut mouse_input = state.mouse_input.lock().map_err(|e| e.to_string())?;
+pub fn stop_mouse_capture(state: State<AppState>) -> Result<String, PublicError> {
+    let mut mouse_input = lock_state(&state.mouse_input)?;
 
     if let Some(mut input_state) = mouse_input.take() {
         // 캡처 플래그를 false로 설정 → 스레드 메시지 루프 종료
@@ -87,7 +93,7 @@ pub fn stop_mouse_capture(state: State<AppState>) -> Result<String, String> {
         log::info!("마우스 캡처 중지됨");
         Ok("마우스 캡처가 중지되었습니다.".to_string())
     } else {
-        Err("마우스 캡처가 실행 중이 아닙니다.".to_string())
+        Err(AppError::NotFound("마우스 캡처가 실행 중이 아닙니다.".to_string()).into())
     }
 }
 
@@ -95,12 +101,12 @@ pub fn stop_mouse_capture(state: State<AppState>) -> Result<String, String> {
 /// requestAnimationFrame당 한 번 호출하여 누적된 모든 이벤트를 가져감
 /// total_dx/dy는 프레임 내 합산 delta (빠른 카메라 회전용)
 #[tauri::command]
-pub fn drain_mouse_batch(state: State<AppState>) -> Result<MouseBatch, String> {
-    let mouse_input = state.mouse_input.lock().map_err(|e| e.to_string())?;
+pub fn drain_mouse_batch(state: State<AppState>) -> Result<MouseBatch, PublicError> {
+    let mouse_input = lock_state(&state.mouse_input)?;
 
     let input_state = mouse_input
         .as_ref()
-        .ok_or("마우스 캡처가 실행 중이 아닙니다.")?;
+        .ok_or_else(|| AppError::NotFound("마우스 캡처가 실행 중이 아닙니다.".to_string()))?;
 
     // 채널 잔여량 기반 pre-alloc (정확하지 않을 수 있으나 힌트로 충분)
     let pending = input_state.receiver.len();
