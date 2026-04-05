@@ -28,6 +28,7 @@ Infrastructure, Three.js 엔진, GP Calibration, Go/No-Go 검증
 - P2 디자인 개선 ✅ (2026-04-05) — CSS 변수 체계화 (색상+폰트+weight+glow), ARIA 접근성, 히트맵 범례
 - P3 디자인 감사 — 키보드 방향키 네비게이션, 반응형 레이아웃, focus trap 등 (예정)
 - 보안 개선 Phase 1 ✅ (2026-04-05) — CSP 강화, Capabilities 세분화, devTools 확인, audit 실행
+- 보안 개선 Phase 2 ✅ (2026-04-05) — IPC 입력 검증 (DPI/sens/FOV/ID), PublicError 패턴 (내부 에러 차단), 주석 정리
 
 ---
 

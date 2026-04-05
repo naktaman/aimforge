@@ -1,6 +1,6 @@
 # AimForge 구현 진행 현황
 
-> 마지막 업데이트: 2026-04-05 (보안 개선 Phase 1 — CSP 강화, Capabilities 세분화, audit 실행)
+> 마지막 업데이트: 2026-04-05 (보안 개선 Phase 2 — IPC 입력 검증, PublicError 패턴, 주석 정리)
 
 ---
 
@@ -232,12 +232,22 @@
 - **cargo audit**: 18건 warning — 전부 Tauri 업스트림 전이적 의존성 (GTK3 unmaintained 11건, unic-* unmaintained 5건, proc-macro-error unmaintained 1건, glib unsound 1건). 직접 수정 불가, Tauri 업데이트 시 해소 예정
 - 수정 파일: `src-tauri/tauri.conf.json`, `src-tauri/capabilities/default.json`
 
+### 보안 개선 Phase 2 ✅ (2026-04-05) [claude/stoic-poitras → master]
+- **error.rs 신규**: `AppError` (내부 에러 5변형: Validation/Database/Lock/NotFound/Internal) + `PublicError` (프론트 전달용: message+code)
+- **validate.rs 신규**: 입력값 범위 검증 헬퍼 10개 — DPI(100-32000), sensitivity(>0), FOV(1-179), 문자열(비어있지않음), ID(>=0), score(0-1), cm360(>0), positive_f64, non_negative_f64, zoom_ratio(≥1)
+- **PublicError 패턴**: 전체 13개 commands.rs의 반환 타입을 `Result<T, String>` → `Result<T, PublicError>`로 전환
+  - DB 경로, SQL 에러 텍스트, 시스템 경로 프론트엔드 노출 차단
+  - 내부 에러는 log::error!/log::warn!으로만 기록
+  - Validation/NotFound 에러는 사용자 메시지 그대로 전달 (입력 교정 가능)
+- **IPC 입력 검증**: 모든 `#[tauri::command]` 진입점에 입력값 범위 검증 추가
+- **lock_state() 헬퍼**: Mutex lock 에러 처리 통일 (PoisonError → AppError::Lock)
+- **주석 정리**: calibration/screening.rs 방치 TODO 1건 정리
+- 수정 파일: 15개 수정 + 2개 신규 (error.rs, validate.rs), 928+/379-
+
 ---
 
 ## 다음 작업
 
-- **CSP 정책 활성화** (High — `tauri.conf.json`)
-- **IPC 입력 길이 제한** (Medium)
 - **cargo-audit 설치 및 CI 연동**
 - EmptyState 컴포넌트 실 적용 (SessionHistory, Leaderboard 등 빈 상태 교체)
 - 키보드 네비게이션 심화 (탭 방향키 이동, focus trap)
@@ -256,4 +266,4 @@
 | CSS | 101 kB |
 | 타입 에러 | 0 |
 
-> 빌드 시점: 2026-04-05 (P2 디자인 개선 후)
+> 빌드 시점: 2026-04-05 (보안 개선 Phase 2 후)

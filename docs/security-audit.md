@@ -154,26 +154,27 @@
 
 | # | 항목 | 상태 | 심각도 | 위치 | 설명 |
 |---|------|------|--------|------|------|
-| 1 | CSP 비활성화 | 위험 | **High** | `tauri.conf.json:26` | `"csp": null` — WebView 보호 미비 |
-| 2 | IPC 문자열 길이 무제한 | 주의 | **Medium** | `db/commands.rs` 전체 | String 파라미터 길이/범위 검증 없음 |
-| 3 | innerHTML 사용 | 주의 | **Low** | `PerformanceLandscape.tsx:286` | 숫자 `.toFixed()` 후 삽입이라 실질 위험 낮음 |
-| 4 | 크래시 로그 민감정보 | 주의 | **Low** | `db/commands.rs:105` | 스택 트레이스에 경로 포함 가능 |
-| 5 | cargo audit 미실행 | 정보 | **Info** | — | `cargo-audit` 설치 후 실행 필요 |
-| 6 | SQL 인젝션 | 안전 | **Info** | `db/mod.rs` 전체 | 100% 파라미터 바인딩 |
-| 7 | API 키 하드코딩 | 안전 | **Info** | — | 미발견 |
-| 8 | Path Traversal | 안전 | **Info** | `movement/commands.rs:177` | 파일명 sanitization 적용 |
-| 9 | npm 취약점 | 안전 | **Info** | — | 0 vulnerabilities |
-| 10 | Tauri Permissions | 안전 | **Info** | `capabilities/default.json` | core:default만 허용 |
+| 1 | CSP 비활성화 | **해결** | **High** | `tauri.conf.json:26` | Phase 1에서 strict CSP 정책 설정 완료 |
+| 2 | IPC 문자열 길이 무제한 | **해결** | **Medium** | `db/commands.rs` 전체 | Phase 2에서 validate.rs 추가, 전 커맨드 입력 검증 적용 |
+| 3 | 내부 에러 노출 | **해결** | **Medium** | 전체 commands.rs | Phase 2에서 PublicError 패턴 적용, DB/시스템 경로 차단 |
+| 4 | innerHTML 사용 | 주의 | **Low** | `PerformanceLandscape.tsx:286` | 숫자 `.toFixed()` 후 삽입이라 실질 위험 낮음 |
+| 5 | 크래시 로그 민감정보 | 주의 | **Low** | `db/commands.rs:105` | 스택 트레이스에 경로 포함 가능 |
+| 6 | cargo audit 미실행 | 정보 | **Info** | — | `cargo-audit` 설치 후 실행 필요 |
+| 7 | SQL 인젝션 | 안전 | **Info** | `db/mod.rs` 전체 | 100% 파라미터 바인딩 |
+| 8 | API 키 하드코딩 | 안전 | **Info** | — | 미발견 |
+| 9 | Path Traversal | 안전 | **Info** | `movement/commands.rs:177` | 파일명 sanitization 적용 |
+| 10 | npm 취약점 | 안전 | **Info** | — | 0 vulnerabilities |
+| 11 | Tauri Permissions | 안전 | **Info** | `capabilities/default.json` | core:default만 허용 |
 
 ---
 
 ## 권장 조치
 
-### High Priority
-1. **CSP 설정 활성화** — `tauri.conf.json`에서 `"csp": "default-src 'self'; script-src 'self'"` 등 적절한 정책 설정
+### High Priority — 해결 완료
+1. ~~**CSP 설정 활성화**~~ — Phase 1에서 해결 (strict CSP 적용)
+2. ~~**IPC 입력 검증 강화**~~ — Phase 2에서 해결 (validate.rs + PublicError 패턴)
 
 ### Medium Priority
-2. **IPC 입력 검증 강화** — 문자열 길이 상한 (예: raw_metrics 10MB, error_message 10KB)
 3. **cargo-audit 설치 및 CI 연동** — `cargo install cargo-audit && cargo audit`
 
 ### Low Priority
