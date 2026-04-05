@@ -135,6 +135,14 @@
   --color-silver: #D0D7E0;
   --color-bronze: #cd7f32;
 
+  /* 게임 카테고리 색상 — Onboarding 아바타 등 */
+  --color-cat-fps: #60a5fa;
+  --color-cat-tactical: #34d399;
+  --color-cat-br: #fbbf24;
+  --color-cat-tps: #FFB81C;
+  --color-cat-arena: #a78bfa;
+  --color-cat-trainer: #22d3ee;
+
   /* font-weight 체계 */
   --fw-normal: 400;
   --fw-medium: 500;
@@ -198,6 +206,14 @@
   --color-gold: #ca8a04;
   --color-silver: #9ca3af;
   --color-bronze: #a16207;
+
+  /* 게임 카테고리 색상 — 라이트 테마 */
+  --color-cat-fps: #3b82f6;
+  --color-cat-tactical: #10b981;
+  --color-cat-br: #d97706;
+  --color-cat-tps: #ca8a04;
+  --color-cat-arena: #8b5cf6;
+  --color-cat-trainer: #0891b2;
 
   /* 상태별 glow — 라이트 테마 */
   --glow-accent-sm: 0 0 8px var(--accent-glow);
@@ -5994,73 +6010,63 @@ body {
   margin: 0;
 }
 
-/* 기능 카드 3열 그리드 */
-.welcome-features-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+/* 스펙 스트립 — 수평 인라인 3개 (프로 게이밍 느낌) */
+.welcome-specs {
+  display: flex;
+  gap: 32px;
   width: 100%;
-  margin-bottom: 48px;
+  justify-content: center;
+  margin-bottom: 40px;
+  padding: 20px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.welcome-feature-card {
+.welcome-spec-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.welcome-spec-icon {
+  color: var(--accent-light);
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.welcome-spec-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.welcome-spec-value {
+  font-size: var(--font-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  letter-spacing: 0.2px;
+}
+
+.welcome-spec-label {
+  font-size: var(--font-xs);
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* CTA 그룹 — 버튼 + 보조 힌트 */
+.welcome-cta-group {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
-  padding: 28px 20px 24px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: var(--radius-xl);
-  text-align: center;
-  transition: all var(--transition-base);
-  cursor: default;
+  gap: 10px;
 }
-
-.welcome-feature-card:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 184, 28, 0.3);
-  box-shadow: 0 8px 32px rgba(255, 184, 28, 0.1), 0 0 0 1px rgba(255, 184, 28, 0.1);
-}
-
-/* 아이콘 원형 배지 */
-.welcome-icon-circle {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(255, 184, 28, 0.15) 0%, rgba(255, 184, 28, 0.05) 100%);
-  border: 1px solid rgba(255, 184, 28, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--accent-light);
-  flex-shrink: 0;
-}
-.welcome-icon-circle svg {
-  width: 24px;
-  height: 24px;
-}
-
-.welcome-feature-title {
-  font-size: var(--font-base);
-  font-weight: var(--fw-semibold);
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.welcome-feature-desc {
-  font-size: var(--font-sm);
-  color: var(--text-secondary);
-  margin: 0;
-  line-height: 1.6;
-}
-
-/* CTA 버튼 — 넓고 눈에 띄는 gradient */
-/* 웰컴 CTA — 단색 골드 */
 .welcome-cta {
-  min-width: 240px;
-  padding: 16px 48px;
-  font-size: var(--font-md);
+  min-width: 220px;
+  padding: 14px 44px;
+  font-size: var(--font-base);
   font-weight: var(--fw-semibold);
   border-radius: var(--radius-xl);
   background: var(--accent-primary);
@@ -6073,12 +6079,18 @@ body {
   box-shadow: 0 8px 40px rgba(255, 184, 28, 0.4), 0 0 0 1px var(--accent-light);
   transform: translateY(-2px);
 }
+.welcome-cta-hint {
+  font-size: var(--font-xs);
+  color: var(--text-muted);
+}
 
-/* 반응형 — 모바일에서 1열 */
+/* 반응형 — 모바일 */
 @media (max-width: 680px) {
-  .welcome-features-grid {
-    grid-template-columns: 1fr;
-    gap: 14px;
+  .welcome-specs {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 16px 20px;
   }
   .welcome-title {
     font-size: var(--font-2xl);

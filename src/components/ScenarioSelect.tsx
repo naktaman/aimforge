@@ -400,12 +400,11 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
               {/* 좌측 25% — 현재 감도 프로파일 */}
               <div className="dash-col-left">
                 <div className="dash-section-label">{t('dash.currentProfile')}</div>
-                {/* cm/360 대형 카드 + 자연어 설명 */}
+                {/* 게임 감도 — 히어로 카드 (accent) */}
                 <div className="dash-stat-card dash-stat-accent">
-                  <span className="dash-stat-label">cm/360</span>
-                  <span className="dash-stat-value">{cm360 ? cm360.toFixed(1) : '—'}</span>
+                  <span className="dash-stat-label">{t('settings.sensitivity')}</span>
+                  <span className="dash-stat-value">{sensitivity}</span>
                   <span className="dash-stat-sub">{selectedGame ? selectedGame.name : t('dash.noGame')}</span>
-                  {cm360 && <span className="dash-sens-desc">{getSensitivityLevel(cm360, t)}</span>}
                 </div>
                 {/* DPI 카드 */}
                 <div className="dash-stat-card">
@@ -413,11 +412,11 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
                   <span className="dash-stat-value">{dpi}</span>
                   <span className="dash-stat-sub">{t('dash.mouseHardware')}</span>
                 </div>
-                {/* 게임 감도 카드 */}
+                {/* cm/360 서브 카드 */}
                 <div className="dash-stat-card">
-                  <span className="dash-stat-label">{t('settings.sensitivity')}</span>
-                  <span className="dash-stat-value">{sensitivity}</span>
-                  <span className="dash-stat-sub">{t('dash.inGameValue')}</span>
+                  <span className="dash-stat-label">cm/360</span>
+                  <span className="dash-stat-value">{cm360 ? cm360.toFixed(1) : '—'}</span>
+                  <span className="dash-stat-sub">{cm360 ? getSensitivityLevel(cm360, t) : t('dash.noGame')}</span>
                 </div>
 
                 {/* 사격 설정 컴팩트 */}
@@ -502,6 +501,14 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
                     <span className="dash-chart-title">{t('dash.calibrationTrend')}</span>
                   </div>
                   <div className="dash-empty-state">
+                    {/* 캘리브레이션 차트 empty SVG */}
+                    <svg className="dash-empty-icon" width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.25">
+                      <rect x="4" y="4" width="32" height="32" rx="4" />
+                      <polyline points="10,28 16,20 22,24 28,14 34,18" />
+                      <circle cx="16" cy="20" r="1.5" fill="currentColor" />
+                      <circle cx="22" cy="24" r="1.5" fill="currentColor" />
+                      <circle cx="28" cy="14" r="1.5" fill="currentColor" />
+                    </svg>
                     <span className="dash-empty-text">{t('empty.calibrationData')}</span>
                     <button className="btn-secondary btn-sm" onClick={onCalibration}>
                       {t('empty.calibrationAction')}
@@ -608,22 +615,16 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
               {/* 좌측 25% — 훈련 요약 */}
               <div className="dash-col-left">
                 <div className="dash-section-label">{t('dash.trainingStats')}</div>
-                {/* 오늘 훈련 통계 */}
+                {/* 오늘 훈련 통계 — 실데이터 없으면 "데이터 없음" 서브라벨 */}
                 <div className="dash-stat-card">
                   <span className="dash-stat-label">{t('dash.todaySessions')}</span>
                   <span className="dash-stat-value">—</span>
-                  <span className="dash-stat-sub">{t('dash.todayNoTraining')}</span>
+                  <span className="dash-stat-sub">{t('dash.noDataYet')}</span>
                 </div>
                 <div className="dash-stat-card">
                   <span className="dash-stat-label">{t('dash.avgScore')}</span>
                   <span className="dash-stat-value">—</span>
-                  <span className="dash-stat-sub">{t('dash.recentAvg')}</span>
-                </div>
-
-                {/* AI 추천 시나리오 */}
-                <div className="dash-ai-card">
-                  <span className="dash-ai-label">{t('dash.aiRecommend')}</span>
-                  <span className="dash-ai-text">{t('dash.aiRecommendText')}</span>
+                  <span className="dash-stat-sub">{t('dash.noDataYet')}</span>
                 </div>
 
                 {/* 배터리 테스트 진입 */}
@@ -743,17 +744,26 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
                 <div className="dash-recent-list">
                   {/* 실데이터 연동 전 empty state */}
                   <div className="dash-empty-state">
+                    {/* 리스트 empty SVG */}
+                    <svg className="dash-empty-icon" width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.25">
+                      <rect x="6" y="4" width="24" height="28" rx="3" />
+                      <line x1="11" y1="12" x2="25" y2="12" /><line x1="11" y1="18" x2="22" y2="18" /><line x1="11" y1="24" x2="19" y2="24" />
+                    </svg>
                     <span className="dash-empty-text">{t('empty.sessionData')}</span>
                   </div>
                 </div>
 
-                {/* 미니 차트 */}
                 {/* 점수 트렌드 — 데이터 없으면 empty state */}
                 <div className="dash-chart">
                   <div className="dash-chart-header">
                     <span className="dash-chart-title">{t('dash.scoreTrend')}</span>
                   </div>
                   <div className="dash-empty-state">
+                    {/* 차트 empty SVG */}
+                    <svg className="dash-empty-icon" width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.25">
+                      <line x1="6" y1="30" x2="6" y2="6" /><line x1="6" y1="30" x2="30" y2="30" />
+                      <polyline points="10,24 16,18 20,22 26,12" />
+                    </svg>
                     <span className="dash-empty-text">{t('empty.sessionData')}</span>
                   </div>
                 </div>
@@ -816,6 +826,11 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
                     <span className="dash-chart-title">{t('dash.last90days')}</span>
                   </div>
                   <div className="dash-empty-state">
+                    {/* 트렌드라인 empty SVG */}
+                    <svg className="dash-empty-icon" width="48" height="32" viewBox="0 0 48 32" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.2">
+                      <line x1="4" y1="28" x2="44" y2="28" />
+                      <polyline points="4,22 12,18 20,20 28,12 36,16 44,8" strokeDasharray="3 3" />
+                    </svg>
                     <span className="dash-empty-text">{t('empty.sessionData')}</span>
                   </div>
                 </div>
@@ -868,6 +883,11 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
                 <div className="dash-recent-list">
                   {/* 실데이터 연동 전 empty state */}
                   <div className="dash-empty-state">
+                    {/* 리스트 empty SVG */}
+                    <svg className="dash-empty-icon" width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.25">
+                      <rect x="6" y="4" width="24" height="28" rx="3" />
+                      <line x1="11" y1="12" x2="25" y2="12" /><line x1="11" y1="18" x2="22" y2="18" /><line x1="11" y1="24" x2="19" y2="24" />
+                    </svg>
                     <span className="dash-empty-text">{t('empty.sessionData')}</span>
                   </div>
                 </div>

@@ -1,6 +1,6 @@
 # AimForge 구현 진행 현황
 
-> 마지막 업데이트: 2026-04-05 (v0.2.0 릴리즈 준비)
+> 마지막 업데이트: 2026-04-05 (UX 라운드2: 품질+시각 밀도 개선)
 
 ---
 
@@ -436,6 +436,39 @@ i18n 키 6개 추가: empty.calibrationData/Action/Dashboard, empty.sessionData,
 
 수정 파일 7개: App.tsx, ScenarioSelect.tsx, DisplaySettings.tsx, SteamLogin.tsx, styles.css, ko.json, en.json
 빌드 검증: npm build 성공 (1,481 kB), TS 에러 0
+
+---
+
+### UX 라운드2: 품질 + 시각 밀도 개선 ✅ (2026-04-05) [claude/ecstatic-black]
+
+#### 1. WelcomeScreen 프로 게이밍 재디자��
+- feature-card 3열 → 스펙 스트립 (수평 인라인 3개: GP Bayesian / 8-Axis Profile / 50+ Games)
+- whileHover 제거 (클릭불가 요소), motion.div → 순수 div
+- CTA 그룹 (버튼 + 보조 힌트 텍스트)
+- CSS: welcome-features-grid/card/icon-circle 삭제 → welcome-specs/spec-item/spec-icon/spec-text/cta-group/cta-hint
+
+#### 2. ScenarioSelect 히어로스탯 교체
+- 좌측 컬럼 순서: cm/360(accent) → 게임감도(accent) > DPI > cm/360(sub)
+- cm/360 서브 라벨에 자연어 감도 분류 유지
+
+#### 3. Empty State SVG 일러스트
+- 대시보드 dash-empty-state 5곳에 인라인 SVG 추가 (차트/리스트/트렌드라인)
+- dash-empty-icon 클래스 활용 (opacity 0.2~0.25)
+
+#### 4. Onboarding CATEGORY_COLORS CSS변수화
+- 6개 하드코딩 hex → var(--color-cat-fps/tactical/br/tps/arena/trainer)
+- :root + [data-theme="light"] 양쪽 ��의
+
+#### 5. whileHover 전체 점검
+- 전체 2건 (WelcomeScreen만): feature-card(onClick 없음) 제거, CTA button(onClick 있음) 유지
+
+#### 6. 의미없는 정보 제거
+- 훈련 탭 통계 서브라벨: "오늘 아직 훈련 없음"/"최근 평균" → "데이터 없음"
+- AI 추천 카드 제거 (실데이터 없는 상태에서 의미없는 텍스트)
+
+수정 파일: WelcomeScreen.tsx, ScenarioSelect.tsx, Onboarding.tsx, styles.css, en.json, ko.json, roadmap.md
+i18n 키 4개 추가: welcome.specGP/specDNA/specCross/ctaHint
+빌드 검증: npm build 성공 (1,483 kB), TS 에러 0
 
 ---
 

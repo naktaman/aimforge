@@ -30,6 +30,7 @@ Infrastructure, Three.js 엔진, GP Calibration, Go/No-Go 검증
 - 보안 개선 Phase 1 ✅ (2026-04-05) — CSP 강화, Capabilities 세분화, devTools 확인, audit 실행
 - 보안 개선 Phase 2 ✅ (2026-04-05) — IPC 입력 검증 (DPI/sens/FOV/ID), PublicError 패턴 (내부 에러 차단), 주석 정리
 - v0.2.0 릴리즈 준비 ✅ (2026-04-05) — CI 보안 감사 (cargo audit + npm audit), 버전 0.2.0 업데이트, CHANGELOG.md
+- UX 라운드2 ✅ (2026-04-05) — WelcomeScreen 프로 게이밍 재디자인(스펙 스트립), 히어로스탯 게임감도 교체, Empty State SVG 일러스트, CATEGORY_COLORS CSS변수화, whileHover 정리, 의미없는 정보 제거
 
 ---
 
