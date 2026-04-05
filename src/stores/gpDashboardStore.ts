@@ -146,41 +146,9 @@ export const useGPDashboardStore = create<GPDashboardState>((set, get) => ({
     observations: parseObservations(result.observations, 0),
   }),
 
+  /** mock 데이터 제거됨 — empty state로 대체 */
   loadMockData: () => {
-    /** 포물선 형태 mock GP 곡선 (최적점 ~32 cm/360) */
-    const curve: GPCurvePoint[] = [];
-    for (let x = 20; x <= 50; x += 0.5) {
-      const mean = -(((x - 32) / 12) ** 2) + 0.85;
-      const variance = 0.01 + 0.003 * Math.abs(x - 32);
-      curve.push({ x, mean, variance });
-    }
-
-    const obs: Observation[] = [
-      { cm360: 25, score: 0.55, isLatest: false },
-      { cm360: 30, score: 0.78, isLatest: false },
-      { cm360: 32, score: 0.84, isLatest: false },
-      { cm360: 35, score: 0.80, isLatest: false },
-      { cm360: 28, score: 0.70, isLatest: false },
-      { cm360: 33, score: 0.83, isLatest: false },
-      { cm360: 31.5, score: 0.85, isLatest: true },
-    ];
-
-    set({
-      view: 'optimizing',
-      stage: 'Calibration',
-      convergenceMode: 'quick',
-      iteration: 7,
-      maxIterations: 15,
-      gpCurve: curve,
-      observations: obs,
-      bestCm360: 31.5,
-      bestScore: 0.85,
-      convergenceProgress: 0.62,
-      initialMaxSigma: 0.18,
-      eiRecommendation: { cm360: 31.0, ei: 0.003 },
-      finalResult: null,
-      sensConversions: [],
-    });
+    // no-op: 실제 캘리브레이션 데이터가 없으면 empty state 표시
   },
 
   reset: () => set({

@@ -14,7 +14,7 @@
   "nav.recoilEditor": "Recoil Editor",
   "nav.conversion": "Sens Converter",
 
-  "tool.quickCal": "Quick Calibration",
+  "tool.quickCal": "Find My Sensitivity",
   "tool.zoomCal": "Zoom Calibration",
   "tool.history": "Session History",
   "tool.prescription": "Training Prescription",
@@ -127,7 +127,7 @@
   "scenario.tabTraining": "Training",
   "scenario.tabAnalysis": "Analysis",
   "scenario.crosshairSettings": "Crosshair Settings",
-  "scenario.findOptimalSens": "Find Your Optimal Sensitivity",
+  "scenario.findOptimalSens": "Find My Sensitivity",
   "scenario.findOptimalSensDesc": "AI finds the perfect sensitivity for you. Play multiple scenarios while it auto-adjusts.",
   "scenario.startCalibration": "Start Sensitivity Calibration",
   "scenario.zoomCalibration": "Zoom Sensitivity Calibration",
@@ -872,5 +872,13 @@
   "empty.prescriptionTitle": "No Prescriptions",
   "empty.prescriptionDesc": "Complete Aim DNA analysis first to get personalized training prescriptions.",
   "empty.dnaTitle": "No DNA Data",
-  "empty.dnaDesc": "Complete enough training sessions to generate your Aim DNA profile."
+  "empty.dnaDesc": "Complete enough training sessions to generate your Aim DNA profile.",
+
+  "empty.calibrationData": "No calibration data yet",
+  "empty.calibrationAction": "Find My Sensitivity",
+  "empty.calibrationDashboard": "Start calibration to see results here",
+  "empty.sessionData": "No data yet",
+  "empty.noSearchResults": "No search results",
+
+  "sensitivity.title": "Sensitivity Optimization"
 }
