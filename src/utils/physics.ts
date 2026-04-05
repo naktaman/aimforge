@@ -163,4 +163,40 @@ export function snapSensitivity(
   return { floorSens, floorCm360, ceilSens, ceilCm360 };
 }
 
+// ── 에이밍 타입별 k 분리 (P1.5 — Rust k_fitting.rs 미러) ──
+
+/** 에이밍 타입 */
+export type AimType = 'tracking' | 'flicking' | 'combined';
+
+/** 에이밍 타입별 k 값 */
+export interface AimTypeKResult {
+  kTracking: number;
+  kFlicking: number;
+  kCombined: number;
+}
+
+/** 게임별 줌 사용 패턴 (tracking/flicking 비율) */
+export interface GameZoomProfile {
+  id: string;
+  trackingRatio: number;
+  flickingRatio: number;
+}
+
+/** 기본 게임별 줌 사용 패턴 */
+export const DEFAULT_GAME_ZOOM_PROFILES: GameZoomProfile[] = [
+  { id: 'cs2_awp', trackingRatio: 0.0, flickingRatio: 1.0 },
+  { id: 'apex_3x', trackingRatio: 0.7, flickingRatio: 0.3 },
+  { id: 'ow2_ana', trackingRatio: 0.9, flickingRatio: 0.1 },
+  { id: 'r6_acog', trackingRatio: 0.4, flickingRatio: 0.6 },
+  { id: 'cod_ads', trackingRatio: 0.8, flickingRatio: 0.2 },
+];
+
+/**
+ * 게임 줌 프로파일에 따른 유효 k값 계산
+ * k_effective = k_tracking × tracking_ratio + k_flicking × flicking_ratio
+ */
+export function getEffectiveK(aimK: AimTypeKResult, profile: GameZoomProfile): number {
+  return aimK.kTracking * profile.trackingRatio + aimK.kFlicking * profile.flickingRatio;
+}
+
 export { DEG2RAD, RAD2DEG };

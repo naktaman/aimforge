@@ -139,6 +139,7 @@ pub fn run() {
             crossgame::commands::record_crossgame_progress,
             crossgame::commands::get_cross_game_history_cmd,
             crossgame::commands::generate_crossgame_prescriptions_cmd,
+            crossgame::commands::convert_crossgame_zoom_sensitivity,
             trajectory::commands::analyze_trajectory_cmd,
             trajectory::commands::get_click_vectors_cmd,
             // Phase 5: 신규 커맨드

@@ -25,6 +25,8 @@ export class ZoomMultiFlickScenario extends Scenario {
   private weapon: WeaponSystem;
   private results: TrialResult[] = [];
   private completed = false;
+  /** 동적 이동범위 제한 — min(fov/2 * 0.8, 30) */
+  private maxYawRange: number;
 
   private activeTargets: Array<{
     id: string;
@@ -53,6 +55,9 @@ export class ZoomMultiFlickScenario extends Scenario {
     this.difficulty = difficulty;
     this.weapon = new WeaponSystem(WEAPON_PRESETS[zoomPreset] ?? WEAPON_PRESETS.zoom_4x);
     this.totalWaves = Math.ceil(difficulty.targetCount / 3);
+    // 동적 이동범위: FOV 기반 제한 (줌이 높을수록 좁은 범위)
+    const fov = this.weapon.getConfig().zoomFov;
+    this.maxYawRange = Math.min((fov / 2) * 0.8, 30);
   }
 
   setOnComplete(cb: (results: unknown) => void): void {
@@ -178,8 +183,9 @@ export class ZoomMultiFlickScenario extends Scenario {
     const distance = 30 + Math.random() * 40; // 30~70m
 
     for (let i = 0; i < count; i++) {
-      const yaw = (Math.random() - 0.5) * 40; // 줌 상태이므로 좁은 범위
-      const pitch = (Math.random() - 0.5) * 20;
+      // 동적 이동범위 — FOV에 비례하여 스폰 영역 제한
+      const yaw = (Math.random() - 0.5) * (this.maxYawRange * 2);
+      const pitch = (Math.random() - 0.5) * this.maxYawRange;
       const moving = Math.random() > 0.4; // 60% 이동 타겟
 
       const pos = new THREE.Vector3(

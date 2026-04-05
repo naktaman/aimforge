@@ -260,10 +260,43 @@
 - **버전 업데이트**: 0.1.0 → 0.2.0 (Cargo.toml, tauri.conf.json, package.json)
 - **CHANGELOG.md**: 0.1.0 이후 변경사항 요약 (코드품질, UI디자인, 보안, 기능, CI)
 
+### 줌 캘리브레이션 P2 + P1.5 + P1 (2026-04-05) [claude/jovial-chatterjee]
+
+#### P2: ZoomTier 확장 + 테스트환경 개선
+- **ZoomTier 7단계**: `1x/2x/4x/6x/8x/10x/12x` — 각 단계별 거리/타겟크기/속도 그라데이션
+- **WeaponSystem 프리셋 추가**: `zoom_6x`(FOV 17°, sens 0.42), `zoom_10x`(FOV 10.3°, sens 0.3), `zoom_12x`(FOV 8.6°, sens 0.25)
+- **ZoomMultiFlickScenario**: 4x 고정 → 배율 파라미터로 받도록 수정 (`zoomPreset` 생성자 인자)
+- **동적 이동범위 제한**: ±30° 고정 → `min(fov/2 × 0.8, 30)` — ZoomSteady + ZoomMultiFlick 양쪽 적용
+
+#### P1.5: 에이밍 타입별 k 분리
+- **Rust k_fitting.rs**: `AimType` enum (Tracking/Flicking/Combined) + `GameZoomProfile` struct + `get_effective_k()` 가중 평균
+- **기본 게임 줌 패턴 5종**: CS2 AWP(0/100), Apex 3x(70/30), OW2 아나(90/10), R6 ACOG(40/60), CoD ADS(80/20)
+- **fit_k_parameter_with_aim_type()**: aim_type 파라미터 추가 (backward compatible)
+- **TS 미러**: `physics.ts`에 `AimType`, `AimTypeKResult`, `GameZoomProfile`, `getEffectiveK()` 추가
+
+#### P1: 크로스게임 줌 감도 변환
+- **Rust 커맨드**: `convert_crossgame_zoom_sensitivity` — 소스/타겟 게임, 옵틱, piecewise_k/aim_type_k 지원
+- **CrossGameConverter.tsx**: 소스/타겟 게임 선택 + 감도 입력 + 7단계 줌 배율 → 개인 k로 변환 결과 표시
+- **ZoomProfileChart.tsx**: 배율 vs k값 SVG 차트 (GPChart 패턴 따름, 측정/보간 포인트 + piecewise 구간 + tracking/flicking k 참조선)
+
+#### 캘리브레이션 모드 네이밍 + 데이터 품질 종료조건
+- **ZoomCalibrationMode enum**: Light(3배율/글로벌k) | Standard(5배율/tracking+flicking/piecewise_k) | Deep(7배율/완전 piecewise_k+에이밍타입별)
+- **DataQualityStatus**: 전체 정밀도(%), 배율별 "sufficient/needs_more/pending" 상태, GP EI 수렴 + k 분산 임계값 기반
+- **ZoomCalibrationStatus 확장**: `calibration_mode` + `data_quality` 필드 추가
+- **StartZoomCalibrationParams**: `calibration_mode` 파라미터 추가 ("light"/"standard"/"deep")
+
+수정 파일 11개:
+- Rust: `k_fitting.rs`, `zoom_calibration/mod.rs`, `zoom_calibration/commands.rs`, `crossgame/commands.rs`, `lib.rs`
+- TS: `types.ts`, `physics.ts`, `ZoomSteadyScenario.ts`, `ZoomMultiFlickScenario.ts`, `WeaponSystem.ts`
+- React: `CrossGameConverter.tsx` (신규), `ZoomProfileChart.tsx` (신규)
+
+빌드 검증: Rust 147/147 통과, npm build 성공 (1,447 kB), TS 에러 0
+
 ## 다음 작업
 
 - 사용자 테스트 피드백 반영
 - v0.2.0 .msi 빌드 + GitHub 릴리즈
+- 줌 캘리브레이션 UI에 정밀도 게이지 + 배율별 상태 표시 프론트엔드 적용
 
 ---
 
@@ -276,4 +309,4 @@
 | CSS | 102 kB |
 | 타입 에러 | 0 |
 
-> 빌드 시점: 2026-04-05 (v0.2.0 릴리즈 준비 후)
+> 빌드 시점: 2026-04-05 (줌 캘리브레이션 P2+P1.5+P1 후)

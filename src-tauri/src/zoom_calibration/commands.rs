@@ -9,8 +9,9 @@ use tauri::State;
 
 use super::comparator::{ComparatorEngine, ComparatorTrialData, ComparatorTrialFeedback, ComparatorResult};
 use super::{
-    AdjustedPredictions, ZoomCalibrationEngine, ZoomCalibrationResult, ZoomCalibrationStatus,
-    ZoomPhase, ZoomPhaseWeights, ZoomProfileInfo, ZoomTrialAction, ZoomTrialFeedback,
+    AdjustedPredictions, ZoomCalibrationEngine, ZoomCalibrationMode, ZoomCalibrationResult,
+    ZoomCalibrationStatus, ZoomPhase, ZoomPhaseWeights, ZoomProfileInfo, ZoomTrialAction,
+    ZoomTrialFeedback,
 };
 use crate::gp::ConvergenceMode;
 
@@ -25,6 +26,8 @@ pub struct StartZoomCalibrationParams {
     pub selected_profile_ids: Vec<i64>,
     /// 수렴 모드 ("quick" | "deep" | "obsessive")
     pub convergence_mode: Option<String>,
+    /// 캘리브레이션 모드 ("light" | "standard" | "deep")
+    pub calibration_mode: Option<String>,
 }
 
 /// 트라이얼 제출 파라미터
@@ -123,13 +126,21 @@ pub fn start_zoom_calibration(
         _ => ConvergenceMode::Quick,
     };
 
-    let engine = ZoomCalibrationEngine::new(
+    // 캘리브레이션 모드 파싱 (Light/Standard/Deep)
+    let cal_mode = match params.calibration_mode.as_deref() {
+        Some("standard") => ZoomCalibrationMode::Standard,
+        Some("deep") => ZoomCalibrationMode::Deep,
+        _ => ZoomCalibrationMode::Light,
+    };
+
+    let engine = ZoomCalibrationEngine::new_with_mode(
         params.profile_id,
         params.base_cm360,
         params.hipfire_fov,
         selected_profiles,
         all_profiles,
         mode,
+        cal_mode,
     );
 
     drop(db);

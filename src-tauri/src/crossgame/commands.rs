@@ -242,3 +242,134 @@ pub fn generate_crossgame_prescriptions_cmd(
 
     Ok(prescriptions)
 }
+
+// ── 크로스게임 줌 감도 변환 (P1) ──
+
+/// 크로스게임 줌 감도 변환 파라미터
+#[derive(Deserialize)]
+pub struct ConvertCrossgameZoomParams {
+    /// 소스 게임 ID (예: "cs2")
+    pub source_game: String,
+    /// 타겟 게임 ID (예: "apex")
+    pub target_game: String,
+    /// 소스 게임 감도 값
+    pub source_sens: f64,
+    /// 옵틱/스코프 이름 (예: "3x")
+    pub optic: String,
+    /// 소스 줌 배율 (예: 4.0)
+    pub zoom_ratio: f64,
+    /// 개인 k 값 (None이면 MDM 0% 기본값)
+    pub k_value: Option<f64>,
+    /// piecewise k 프로파일 (None이면 글로벌 k 사용)
+    pub piecewise_k: Option<Vec<crate::zoom_calibration::k_fitting::PiecewiseK>>,
+    /// 에이밍 타입별 k (tracking/flicking 분리)
+    pub aim_type_k: Option<crate::zoom_calibration::k_fitting::AimTypeKResult>,
+    /// 게임 줌 프로파일 (tracking/flicking 비율)
+    pub game_zoom_profile: Option<crate::zoom_calibration::k_fitting::GameZoomProfile>,
+}
+
+/// 크로스게임 줌 감도 변환 결과
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CrossgameZoomResult {
+    /// 소스 게임 cm/360
+    pub source_cm360: f64,
+    /// 소스 줌 cm/360 (k 적용)
+    pub source_zoom_cm360: f64,
+    /// 타겟 게임 감도
+    pub target_sens: f64,
+    /// 타겟 줌 cm/360
+    pub target_zoom_cm360: f64,
+    /// 사용된 k 값
+    pub k_used: f64,
+    /// 소스 줌 배율
+    pub source_multiplier: f64,
+    /// 타겟 줌 배율
+    pub target_multiplier: f64,
+    /// 배율 차이
+    pub multiplier_diff: f64,
+}
+
+/// 크로스게임 줌 감도 변환
+/// 소스 게임의 줌 감도를 타겟 게임의 동일 배율 줌으로 변환
+#[tauri::command]
+pub fn convert_crossgame_zoom_sensitivity(
+    state: State<AppState>,
+    params: ConvertCrossgameZoomParams,
+) -> Result<CrossgameZoomResult, PublicError> {
+    // 입력 검증
+    validate::non_empty_str(&params.source_game, "source_game")?;
+    validate::non_empty_str(&params.target_game, "target_game")?;
+    validate::sensitivity(params.source_sens)?;
+    validate::zoom_ratio(params.zoom_ratio)?;
+
+    // 게임 프리셋 로드
+    let presets = crate::game_db::get_default_presets();
+    let src_preset = presets.iter().find(|g| g.id == params.source_game)
+        .ok_or_else(|| AppError::NotFound(format!("소스 게임 없음: {}", params.source_game)))?;
+    let dst_preset = presets.iter().find(|g| g.id == params.target_game)
+        .ok_or_else(|| AppError::NotFound(format!("타겟 게임 없음: {}", params.target_game)))?;
+
+    // 소스 cm/360 계산
+    let src_cm360 = crate::game_db::conversion::game_sens_to_cm360(
+        params.source_sens, 800, src_preset.yaw,
+    );
+
+    // k 값 결정 (우선순위: aim_type_k > piecewise_k > k_value > 기본값 1.0)
+    let k = if let (Some(aim_k), Some(profile)) = (&params.aim_type_k, &params.game_zoom_profile) {
+        crate::zoom_calibration::k_fitting::get_effective_k(aim_k, profile)
+    } else if let Some(pieces) = &params.piecewise_k {
+        // piecewise에서 해당 구간 k 찾기
+        pieces.iter()
+            .find(|p| params.zoom_ratio >= p.ratio_start && params.zoom_ratio <= p.ratio_end)
+            .map(|p| p.k)
+            .unwrap_or(params.k_value.unwrap_or(1.0))
+    } else {
+        params.k_value.unwrap_or(1.0)
+    };
+
+    // 소스 FOV 계산
+    let src_fov = crate::game_db::conversion::game_fov_to_hfov(
+        src_preset.default_fov, &src_preset.fov_type, src_preset.default_aspect_ratio,
+    );
+    let dst_fov = crate::game_db::conversion::game_fov_to_hfov(
+        dst_preset.default_fov, &dst_preset.fov_type, dst_preset.default_aspect_ratio,
+    );
+
+    // 줌 스코프 FOV 근사: scope_fov ≈ 2 × atan(tan(hipfire/2) / zoom_ratio)
+    let src_scope_fov = scope_fov_from_ratio(src_fov, params.zoom_ratio);
+    let dst_scope_fov = scope_fov_from_ratio(dst_fov, params.zoom_ratio);
+
+    // 줌 배율 (k-parameter 모델)
+    let src_mult = crate::game_db::conversion::zoom_multiplier(src_fov, src_scope_fov, k);
+    let dst_mult = crate::game_db::conversion::zoom_multiplier(dst_fov, dst_scope_fov, k);
+
+    // 소스 줌 cm/360 = 힙파이어 cm/360 / 배율
+    let src_zoom_cm360 = src_cm360 / src_mult;
+
+    // 타겟 줌 cm/360은 동일한 체감을 유지
+    let dst_zoom_cm360 = src_zoom_cm360;
+    // 타겟 힙파이어 cm/360 = 줌 cm/360 × 배율
+    let dst_cm360 = dst_zoom_cm360 * dst_mult;
+    // 타겟 감도 역산
+    let dst_sens = crate::game_db::conversion::cm360_to_sens(dst_cm360, 800, dst_preset.yaw);
+
+    Ok(CrossgameZoomResult {
+        source_cm360: src_cm360,
+        source_zoom_cm360: src_zoom_cm360,
+        target_sens: dst_sens,
+        target_zoom_cm360: dst_zoom_cm360,
+        k_used: k,
+        source_multiplier: src_mult,
+        target_multiplier: dst_mult,
+        multiplier_diff: (dst_mult - src_mult).abs(),
+    })
+}
+
+/// 줌 비율로 스코프 FOV 근사 계산
+/// scope_fov = 2 × atan(tan(hipfire_fov/2) / zoom_ratio)
+fn scope_fov_from_ratio(hipfire_fov: f64, zoom_ratio: f64) -> f64 {
+    let hip_half_rad = (hipfire_fov.to_radians() / 2.0).tan();
+    let scope_half_rad = (hip_half_rad / zoom_ratio).atan();
+    (scope_half_rad * 2.0).to_degrees()
+}

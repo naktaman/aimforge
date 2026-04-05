@@ -22,6 +22,38 @@ use crate::gp::{
 use k_fitting::{fit_k_parameter, interpolate_multiplier, KDataPoint, KFitResult};
 use serde::{Deserialize, Serialize};
 
+/// 줌 캘리브레이션 모드 — 측정 배율 수 + k 분리 수준
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ZoomCalibrationMode {
+    /// Light: 3배율, 글로벌 k
+    Light,
+    /// Standard: 5배율, tracking/flicking 분리, piecewise_k
+    Standard,
+    /// Deep: 7배율, 완전한 piecewise_k + 에이밍 타입별
+    Deep,
+}
+
+impl ZoomCalibrationMode {
+    /// 모드별 측정 배율 수
+    pub fn ratio_count(&self) -> usize {
+        match self {
+            ZoomCalibrationMode::Light => 3,
+            ZoomCalibrationMode::Standard => 5,
+            ZoomCalibrationMode::Deep => 7,
+        }
+    }
+
+    /// 모드별 k 피팅 정밀도 임계값 (분산 ±이내)
+    pub fn k_variance_threshold(&self) -> f64 {
+        match self {
+            ZoomCalibrationMode::Light => 0.10,
+            ZoomCalibrationMode::Standard => 0.05,
+            ZoomCalibrationMode::Deep => 0.03,
+        }
+    }
+}
+
 /// 줌 캘리브레이션 페이즈
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -32,6 +64,36 @@ pub enum ZoomPhase {
     Correction,
     /// Phase C — 줌 해제 후 재획득
     Zoomout,
+}
+
+/// 데이터 품질 상태 — 배율별 측정 충분/부족 판정
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DataQualityStatus {
+    /// 전체 프로파일 정밀도 (0~100%)
+    pub precision_pct: f64,
+    /// 배율별 데이터 충분 여부
+    pub per_ratio_quality: Vec<RatioDataQuality>,
+    /// 수렴 완료 여부
+    pub converged: bool,
+    /// 유저가 중단해도 안전한지 여부
+    pub safe_to_stop: bool,
+}
+
+/// 배율별 데이터 품질
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RatioDataQuality {
+    /// 줌 비율
+    pub ratio: f64,
+    /// 스코프 이름
+    pub scope_name: String,
+    /// 관측 수
+    pub observation_count: usize,
+    /// GP EI 값 (낮을수록 수렴)
+    pub ei_value: f64,
+    /// 데이터 상태: "sufficient" | "needs_more" | "pending"
+    pub status: String,
 }
 
 /// 줌 프로파일 정보 (DB에서 로드)
@@ -173,6 +235,8 @@ pub struct ZoomCalibrationEngine {
     base_cm360: f64,
     /// 힙파이어 hFOV
     hipfire_fov: f64,
+    /// 캘리브레이션 모드 (Light/Standard/Deep)
+    calibration_mode: ZoomCalibrationMode,
     /// 선택된 줌 프로파일 (캘리브레이션 대상)
     selected_profiles: Vec<ZoomProfileInfo>,
     /// 전체 줌 프로파일 (보간 대상 포함)
@@ -199,6 +263,8 @@ pub struct ZoomCalibrationEngine {
     current_multiplier: f64,
     /// 마지막 K 피팅 결과 (finalize 후 저장)
     last_k_fit: Option<KFitResult>,
+    /// 비율별 마지막 EI 값 (데이터 품질 추적용)
+    last_ei: Vec<f64>,
 }
 
 /// 페이즈별 점수 축적기
@@ -244,6 +310,23 @@ impl ZoomCalibrationEngine {
         all_profiles: Vec<ZoomProfileInfo>,
         convergence_mode: ConvergenceMode,
     ) -> Self {
+        Self::new_with_mode(
+            profile_id, base_cm360, hipfire_fov,
+            selected_profiles, all_profiles,
+            convergence_mode, ZoomCalibrationMode::Light,
+        )
+    }
+
+    /// 캘리브레이션 모드 지정 생성자
+    pub fn new_with_mode(
+        profile_id: i64,
+        base_cm360: f64,
+        hipfire_fov: f64,
+        selected_profiles: Vec<ZoomProfileInfo>,
+        all_profiles: Vec<ZoomProfileInfo>,
+        convergence_mode: ConvergenceMode,
+        calibration_mode: ZoomCalibrationMode,
+    ) -> Self {
         let n = selected_profiles.len();
 
         // 비율별 GP 초기화
@@ -266,6 +349,7 @@ impl ZoomCalibrationEngine {
             profile_id,
             base_cm360,
             hipfire_fov,
+            calibration_mode,
             selected_profiles,
             all_profiles,
             per_ratio_gp,
@@ -279,6 +363,7 @@ impl ZoomCalibrationEngine {
             current_phase: ZoomPhase::Steady,
             current_multiplier: first_mult,
             last_k_fit: None,
+            last_ei: vec![f64::MAX; n],
         }
     }
 
@@ -381,6 +466,9 @@ impl ZoomCalibrationEngine {
                 0.02, // 배율 탐색 간격 (cm360보다 정밀)
                 0.01,
             );
+
+            // EI 추적 (데이터 품질 상태용)
+            self.last_ei[idx] = candidate.ei;
 
             let convergence = check_convergence(
                 candidate.ei,
@@ -506,6 +594,7 @@ impl ZoomCalibrationEngine {
                 quality: k_fitting::KQuality::Medium,
                 data_points: k_data,
                 piecewise_k: None,
+                aim_type: None,
             }
         } else {
             KFitResult {
@@ -514,6 +603,7 @@ impl ZoomCalibrationEngine {
                 quality: k_fitting::KQuality::High,
                 data_points: Vec::new(),
                 piecewise_k: None,
+                aim_type: None,
             }
         };
 
@@ -636,6 +726,63 @@ impl ZoomCalibrationEngine {
             current_phase: self.current_phase,
             iterations: self.iterations.clone(),
             ratio_completed: self.ratio_results.iter().map(|r| r.is_some()).collect(),
+            calibration_mode: self.calibration_mode,
+            data_quality: self.get_data_quality(),
+        }
+    }
+
+    /// 데이터 품질 상태 계산 — 배율별 수렴도 + 전체 정밀도
+    pub fn get_data_quality(&self) -> DataQualityStatus {
+        let k_threshold = self.calibration_mode.k_variance_threshold();
+        let ei_threshold = 0.01; // EI 수렴 임계값
+
+        let mut per_ratio_quality = Vec::new();
+        let mut converged_count = 0;
+
+        for (i, profile) in self.selected_profiles.iter().enumerate() {
+            let obs_count = self.per_ratio_gp[i].n_observations();
+            let ei = self.last_ei[i];
+            let is_complete = self.ratio_results[i].is_some();
+
+            let status = if is_complete {
+                converged_count += 1;
+                "sufficient".to_string()
+            } else if obs_count >= 3 && ei < ei_threshold {
+                converged_count += 1;
+                "sufficient".to_string()
+            } else if obs_count >= 1 {
+                "needs_more".to_string()
+            } else {
+                "pending".to_string()
+            };
+
+            per_ratio_quality.push(RatioDataQuality {
+                ratio: profile.zoom_ratio,
+                scope_name: profile.scope_name.clone(),
+                observation_count: obs_count,
+                ei_value: ei,
+                status,
+            });
+        }
+
+        // 전체 정밀도 = 수렴된 비율 / 전체 비율 × 100
+        let total = self.selected_profiles.len().max(1) as f64;
+        let precision_pct = (converged_count as f64 / total) * 100.0;
+
+        // k 분산이 임계값 이내인지 확인
+        let k_converged = self.last_k_fit.as_ref()
+            .map(|f| f.k_variance <= k_threshold)
+            .unwrap_or(false);
+
+        let converged = converged_count == self.selected_profiles.len();
+        // 최소 2개 비율 완료 시 중단해도 안전
+        let safe_to_stop = converged_count >= 2;
+
+        DataQualityStatus {
+            precision_pct,
+            per_ratio_quality,
+            converged: converged && k_converged,
+            safe_to_stop,
         }
     }
 }
@@ -649,6 +796,10 @@ pub struct ZoomCalibrationStatus {
     pub current_phase: ZoomPhase,
     pub iterations: Vec<usize>,
     pub ratio_completed: Vec<bool>,
+    /// 캘리브레이션 모드 (Light/Standard/Deep)
+    pub calibration_mode: ZoomCalibrationMode,
+    /// 데이터 품질 상태
+    pub data_quality: DataQualityStatus,
 }
 
 #[cfg(test)]

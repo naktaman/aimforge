@@ -124,6 +124,18 @@ export const WEAPON_PRESETS: Record<string, WeaponConfig> = {
     bulletDropGravity: 9.81,
     bulletVelocity: 900,
   },
+  /** 줌 6x */
+  zoom_6x: {
+    fireRateRpm: 0,
+    recoilPattern: [],
+    recoilResetMs: 500,
+    zoomMultiplier: 6,
+    zoomFov: 17,
+    zoomSensMultiplier: 0.42,
+    bulletDropEnabled: true,
+    bulletDropGravity: 9.81,
+    bulletVelocity: 900,
+  },
   /** 줌 8x */
   zoom_8x: {
     fireRateRpm: 0,
@@ -132,6 +144,30 @@ export const WEAPON_PRESETS: Record<string, WeaponConfig> = {
     zoomMultiplier: 8,
     zoomFov: 13,
     zoomSensMultiplier: 0.35,
+    bulletDropEnabled: true,
+    bulletDropGravity: 9.81,
+    bulletVelocity: 900,
+  },
+  /** 줌 10x (FOV ~10.3°, sens 0.3) */
+  zoom_10x: {
+    fireRateRpm: 0,
+    recoilPattern: [],
+    recoilResetMs: 500,
+    zoomMultiplier: 10,
+    zoomFov: 10.3,
+    zoomSensMultiplier: 0.3,
+    bulletDropEnabled: true,
+    bulletDropGravity: 9.81,
+    bulletVelocity: 900,
+  },
+  /** 줌 12x (FOV ~8.6°, sens 0.25) */
+  zoom_12x: {
+    fireRateRpm: 0,
+    recoilPattern: [],
+    recoilResetMs: 500,
+    zoomMultiplier: 12,
+    zoomFov: 8.6,
+    zoomSensMultiplier: 0.25,
     bulletDropEnabled: true,
     bulletDropGravity: 9.81,
     bulletVelocity: 900,

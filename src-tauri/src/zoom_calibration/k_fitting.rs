@@ -6,6 +6,59 @@
 
 use serde::{Deserialize, Serialize};
 
+/// 에이밍 타입 — tracking vs flicking 분리
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum AimType {
+    /// 순수 트래킹 (지속 추적)
+    Tracking,
+    /// 순수 플릭 (순간 조준)
+    Flicking,
+    /// 복합 (가중 평균)
+    Combined,
+}
+
+/// 게임별 줌 사용 패턴 — tracking/flicking 비율
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GameZoomProfile {
+    /// 게임+옵틱 식별 (예: "cs2_awp", "apex_3x")
+    pub id: String,
+    /// 트래킹 비율 (0.0~1.0)
+    pub tracking_ratio: f64,
+    /// 플릭 비율 (1.0 - tracking_ratio)
+    pub flicking_ratio: f64,
+}
+
+/// 기본 게임별 줌 사용 패턴
+pub fn default_game_zoom_profiles() -> Vec<GameZoomProfile> {
+    vec![
+        GameZoomProfile { id: "cs2_awp".into(), tracking_ratio: 0.0, flicking_ratio: 1.0 },
+        GameZoomProfile { id: "apex_3x".into(), tracking_ratio: 0.7, flicking_ratio: 0.3 },
+        GameZoomProfile { id: "ow2_ana".into(), tracking_ratio: 0.9, flicking_ratio: 0.1 },
+        GameZoomProfile { id: "r6_acog".into(), tracking_ratio: 0.4, flicking_ratio: 0.6 },
+        GameZoomProfile { id: "cod_ads".into(), tracking_ratio: 0.8, flicking_ratio: 0.2 },
+    ]
+}
+
+/// 에이밍 타입별 k 분리 결과
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AimTypeKResult {
+    /// 트래킹 전용 k
+    pub k_tracking: f64,
+    /// 플릭 전용 k
+    pub k_flicking: f64,
+    /// 복합 k (글로벌)
+    pub k_combined: f64,
+}
+
+/// 게임 줌 프로파일에 따른 유효 k값 계산
+/// k_effective = k_tracking × tracking_ratio + k_flicking × flicking_ratio
+pub fn get_effective_k(aim_k: &AimTypeKResult, profile: &GameZoomProfile) -> f64 {
+    aim_k.k_tracking * profile.tracking_ratio + aim_k.k_flicking * profile.flicking_ratio
+}
+
 /// K 피팅 결과
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -20,6 +73,8 @@ pub struct KFitResult {
     pub data_points: Vec<KDataPoint>,
     /// 높은 분산일 때 구간별 k (low/high zoom)
     pub piecewise_k: Option<Vec<PiecewiseK>>,
+    /// 에이밍 타입 (None = Combined/글로벌)
+    pub aim_type: Option<AimType>,
 }
 
 /// 피팅 품질 등급
@@ -69,9 +124,20 @@ const K_VARIANCE_HIGH: f64 = 0.15;
 /// 모델: mult = (tan(hipfire_fov/2) / tan(scope_fov/2))^k
 /// 로그 변환: log(mult) = k × log(tan(h/2) / tan(s/2))
 /// 이는 y = k·x 형태 → k = Σ(x·y) / Σ(x²)
+///
+/// aim_type: 에이밍 타입별 분리 피팅 시 지정 (None = Combined/글로벌)
 pub fn fit_k_parameter(
     hipfire_fov: f64,
     data: &[KDataPoint],
+) -> KFitResult {
+    fit_k_parameter_with_aim_type(hipfire_fov, data, None)
+}
+
+/// aim_type을 명시적으로 지정하여 k 피팅
+pub fn fit_k_parameter_with_aim_type(
+    hipfire_fov: f64,
+    data: &[KDataPoint],
+    aim_type: Option<AimType>,
 ) -> KFitResult {
     assert!(data.len() >= 2, "k 피팅에는 최소 2개 데이터 필요");
 
@@ -145,6 +211,7 @@ pub fn fit_k_parameter(
         quality,
         data_points: data.to_vec(),
         piecewise_k,
+        aim_type,
     }
 }
 
