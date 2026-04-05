@@ -33,6 +33,8 @@ npm run build          # 프론트엔드 빌드만
   - [status.md](docs/progress/status.md) — Day별 완료 현황 + 다음 작업
   - [v1-feedback-changes.md](docs/progress/v1-feedback-changes.md) — v1 피드백 이후 8대 변경사항 상세
   - [incident-log.md](docs/progress/incident-log.md) — 출시 후 이슈 및 수정 기록
+- **@docs/security/** — 보안 감사
+  - [security-audit.md](docs/security-audit.md) — 보안 코드 감사 보고서 (11개 항목, Phase 1-2 해결 현황)
 - **@docs/quality/** — 코드 규칙
   - [coding-rules.md](docs/quality/coding-rules.md) — 코딩 규칙, 빌드 명령어, 세션 관리
   - [troubleshooting.md](docs/quality/troubleshooting.md) — 트러블슈팅 가이드
@@ -43,8 +45,10 @@ npm run build          # 프론트엔드 빌드만
 
 ## 프로젝트 구조 (요약)
 - Rust: `src-tauri/src/{input, game_db, db, gp, calibration}/`
+- Rust 보안: `src-tauri/src/error.rs` (AppError→PublicError), `src-tauri/src/validate.rs` (IPC 입력 검증)
 - React: `src/{components, stores, utils}/`
 - Engine: `src/engine/{scenarios, metrics}/`
+- 보안 감사: `docs/security-audit.md` — 코드 감사 보고서 + 해결 현황
 - 로드맵 원본: `C:\Users\ned78\Downloads\AIMPRO2\`
 
 ---
