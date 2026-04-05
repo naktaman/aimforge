@@ -139,6 +139,8 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
   const [mainTab, setMainTab] = useState<MainTab>('sensitivity');
   const [trainingSub, setTrainingSub] = useState<TrainingSub>('catalog');
   const [showCrosshair, setShowCrosshair] = useState(false);
+  /** 고급 도구 카드 토글 — 기본값 숨김 */
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const { mode } = useUiStore();
   const { t } = useTranslation();
   const { recoilEnabled, recoilPreset, toggleRecoil, setRecoilPreset, fireMode, fireRpm, setFireMode, setFireRpm } = useEngineStore();
@@ -495,30 +497,42 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
           <div className="sensitivity-tools">
             <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('game-profiles')}>
               <span className="tool-card-title">{t('nav.gameProfile')}</span>
-              <span className="tool-card-desc">{t('scenario.gameProfileDesc')}</span>
+              <span className="tool-card-desc description-text">{t('scenario.gameProfileDesc')}</span>
             </button>
             <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('conversion-selector')}>
               <span className="tool-card-title">{t('nav.conversion')}</span>
-              <span className="tool-card-desc">{t('scenario.conversionDesc')}</span>
+              <span className="tool-card-desc description-text">{t('scenario.conversionDesc')}</span>
             </button>
             {mode === 'advanced' && (
               <>
-                <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('fov-comparison')}>
-                  <span className="tool-card-title">{t('tool.fovComparison')}</span>
-                  <span className="tool-card-desc">{t('scenario.fovDesc')}</span>
+                {/* 고급 도구 토글 버튼 */}
+                <button
+                  className="advanced-toggle"
+                  onClick={() => setShowAdvanced(prev => !prev)}
+                  aria-expanded={showAdvanced}
+                >
+                  고급 도구 {showAdvanced ? '▲' : '▼'}
                 </button>
-                <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('hardware-compare')}>
-                  <span className="tool-card-title">{t('tool.hardwareCompare')}</span>
-                  <span className="tool-card-desc">{t('scenario.hardwareDesc')}</span>
-                </button>
-                <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('dual-landscape')}>
-                  <span className="tool-card-title">{t('tool.dualLandscape')}</span>
-                  <span className="tool-card-desc">{t('scenario.dualLandscapeDesc')}</span>
-                </button>
-                <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('movement-editor')}>
-                  <span className="tool-card-title">{t('tool.movementEditor')}</span>
-                  <span className="tool-card-desc">{t('scenario.movementDesc')}</span>
-                </button>
+                {showAdvanced && (
+                  <>
+                    <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('fov-comparison')}>
+                      <span className="tool-card-title">{t('tool.fovComparison')}</span>
+                      <span className="tool-card-desc description-text">{t('scenario.fovDesc')}</span>
+                    </button>
+                    <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('hardware-compare')}>
+                      <span className="tool-card-title">{t('tool.hardwareCompare')}</span>
+                      <span className="tool-card-desc description-text">{t('scenario.hardwareDesc')}</span>
+                    </button>
+                    <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('dual-landscape')}>
+                      <span className="tool-card-title">{t('tool.dualLandscape')}</span>
+                      <span className="tool-card-desc description-text">{t('scenario.dualLandscapeDesc')}</span>
+                    </button>
+                    <button className="tool-card" onClick={() => useEngineStore.getState().setScreen('movement-editor')}>
+                      <span className="tool-card-title">{t('tool.movementEditor')}</span>
+                      <span className="tool-card-desc description-text">{t('scenario.movementDesc')}</span>
+                    </button>
+                  </>
+                )}
               </>
             )}
           </div>

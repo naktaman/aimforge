@@ -346,6 +346,31 @@
 - **컴포넌트 14개**: 블루 hex 31곳 → 골드/네이비/메탈크롬 교체
 - 빌드 검증: npm build 성공 (1,448 kB), TS 에러 0
 
+### 긴급 UI 수정 4건 ✅ (2026-04-05) [claude/loving-dewdney]
+
+#### 수정 1: 설정/종료 버튼
+- `App.tsx` 헤더 `header-controls`에 기어(⚙) 아이콘 버튼(→display-settings)과 X 아이콘 종료 버튼 추가
+- `@tauri-apps/api/window` `getCurrentWindow().close()` 연결
+- `.icon-btn` / `.icon-btn-close` CSS 신규 추가
+
+#### 수정 2: 고급 도구 기본 숨김
+- `ScenarioSelect.tsx` 감도 탭에 `showAdvanced` state (기본 false) 추가
+- FOVComparison / HardwareCompare / DualLandscape / MovementEditor 4개 카드 → "고급 도구 ▼" 토글 아래 숨김
+- `.advanced-toggle` CSS 신규
+
+#### 수정 3: 골드 일관성
+- `.tool-card:hover` 골드 border/shadow → 뉴트럴 (rgba(255,255,255,0.15))
+- `.quick-nav .btn-secondary:hover` 골드 border/shadow → 뉴트럴
+- CTA 버튼 + 활성 탭 골드 유지
+
+#### 수정 4: 클릭 불가 텍스트 명시
+- `.info-text`, `.description-text` CSS (cursor:default, pointer-events:none, hover background/border transparent)
+- `tool-card-desc` 스팬에 `description-text` 클래스 적용
+
+빌드 검증: npm build 성공 (1,464 kB), TS 에러 0
+
+---
+
 ## 다음 작업
 
 - Silver Forge Phase 2: 금속 패널, 버튼, 컴포넌트 스타일링
