@@ -12,7 +12,7 @@ import type { DnaSnapshot, DnaChangeEvent, SnapshotComparison } from '../utils/t
 
 // 5축 색상 팔레트
 const AXIS_COLORS: Record<string, string> = {
-  flickPower:         '#4A9EDE',
+  flickPower:         '#FFB81C',
   trackingPrecision:  '#4ecdc4',
   motorControl:       '#ffe66d',
   speed:              '#a29bfe',
@@ -137,7 +137,7 @@ function TimelineChart({ snapshots, changeEvents, selectedIds, onSelectSnapshot,
       g.append('line')
         .attr('x1', x).attr('x2', x)
         .attr('y1', 0).attr('y2', innerH)
-        .attr('stroke', '#6B8DB5')
+        .attr('stroke', '#8A9AB5')
         .attr('stroke-width', 1.5)
         .attr('stroke-dasharray', '4,3')
         .attr('opacity', 0.8);
@@ -145,7 +145,7 @@ function TimelineChart({ snapshots, changeEvents, selectedIds, onSelectSnapshot,
       g.append('text')
         .attr('x', x + 3)
         .attr('y', 12)
-        .attr('fill', '#6B8DB5')
+        .attr('fill', '#8A9AB5')
         .attr('font-size', '10px')
         .text(changeTypeLabels[ev.changeType] ?? ev.changeType);
     });
@@ -242,8 +242,8 @@ function CompareRadar({ comparison }: CompareRadarProps) {
     });
     g.append('polygon')
       .attr('points', afterPts.map(p => p.join(',')).join(' '))
-      .attr('fill', '#4A9EDE').attr('fill-opacity', 0.2)
-      .attr('stroke', '#4A9EDE').attr('stroke-width', 2);
+      .attr('fill', '#FFB81C').attr('fill-opacity', 0.2)
+      .attr('stroke', '#FFB81C').attr('stroke-width', 2);
   }, [comparison]);
 
   return <svg ref={svgRef} />;
@@ -409,7 +409,7 @@ export function AimDnaHistory({ profileId }: Props) {
                   <span style={{ color: 'var(--info)' }}>{t('dnaHistory.before')}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <div style={{ width: 12, height: 12, background: '#4A9EDE', borderRadius: 2, opacity: 0.6 }} />
+                  <div style={{ width: 12, height: 12, background: '#FFB81C', borderRadius: 2, opacity: 0.6 }} />
                   <span style={{ color: 'var(--accent)' }}>{t('dnaHistory.after')}</span>
                 </div>
               </div>

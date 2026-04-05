@@ -58,7 +58,7 @@ interface PerformanceLandscapeProps {
 /** 시나리오별 색상 */
 const SCENARIO_COLORS: Record<string, string> = {
   flick: '#f97316',           // 주황
-  tracking: '#3b82f6',        // 파랑
+  tracking: '#D4960A',        // 파랑
   circular_tracking: '#8b5cf6', // 보라
   stochastic: '#ec4899',      // 분홍
   counter_strafe: '#14b8a6',  // 청록

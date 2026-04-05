@@ -326,14 +326,30 @@
 - 13개 파일 (309+/115-): styles.css, 11개 컴포넌트, status.md
 - 빌드 검증: npm build 성공 (1,448 kB), TS 에러 0
 
+### Silver Forge 컬러 재조정 머지 ✅ (2026-04-05) [claude/naughty-germain → master]
+
+#### :root 전면 재조정 — Silver Forge 다크 테마
+- **배경**: Cold Forge→Silver Forge 네이비 (#0F1419/#141B23/#1A2635/#1E2A38/#1E3A52/#243B55)
+- **액센트 블루→골드**: --accent-primary(#FFB81C), --accent-cyan→틸그린(#00D084)
+- **Metal & Chrome**: 네이비 계열로 조정 (#1E2A38~#FFFFFF)
+- **Semantic**: --success→#00D084, --warning→#FFB81C (골드=경고 겸용)
+- **그라디언트 5종**: Silver Forge 네이비 톤으로 재조정
+- **border-radius**: 2-3px 거의 직각으로 축소
+
+#### 스타일 규칙 추가
+- **활성 탭**: 배경색 대신 하단 2px solid #FFB81C 골드 언더라인
+- **큰 숫자**: font-variant-numeric: tabular-nums 전역 적용
+- **카드**: border-radius 2-3px (거의 직각)
+
+#### 하드코딩 색상 일괄 교체
+- **styles.css**: rgba(74,158,222,...) → rgba(255,184,28,...) 35+곳, hex #4A9EDE→#FFB81C 등
+- **컴포넌트 14개**: 블루 hex 31곳 → 골드/네이비/메탈크롬 교체
+- 빌드 검증: npm build 성공 (1,448 kB), TS 에러 0
+
 ## 다음 작업
 
-- Cold Forge Phase 2: 레이아웃, 금속 패널, 버튼 스타일링
+- Silver Forge Phase 2: 금속 패널, 버튼, 컴포넌트 스타일링
 - 사용자 테스트 피드백 반영
-- font-size 하드코딩 → 9단계 폰트 스케일 변수 (--font-xs ~ --font-display) 110+ 곳 교체
-- font-weight 산발적 사용 → 변수 체계 (--fw-normal ~ --fw-black) 80+ 곳 통일
-- 탭 컴포넌트 ARIA 접근성: role="tablist"/"tab", aria-selected 8개 탭그룹 (AimDnaResult, ScenarioSelect, ProgressDashboard 등)
-- 아이콘 버튼 aria-label: 테마 토글, 스왑 버튼, 뒤로가기 버튼
 - state별 glow 변수 (--glow-accent-sm/md/lg/focus, --glow-success-sm/lg, --glow-danger-sm, --glow-info-sm) 통합
 - SessionHeatmap: 밀도 색상 범례 바 (blue→green→yellow→red) + 히트/미스 마커 범례 추가
 - 인라인 스타일 하드코딩 색상 CSS 변수화 (AimDnaHistory, DualLandscape, MultiplierCurve 등 15개 컴포넌트)
@@ -444,4 +460,4 @@
 | CSS | 104 kB |
 | 타입 에러 | 0 |
 
-> 빌드 시점: 2026-04-05 (Cold Forge Phase 1 컬러 교체 후)
+> 빌드 시점: 2026-04-05 (Silver Forge 컬러 재조정 후)

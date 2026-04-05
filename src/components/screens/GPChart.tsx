@@ -231,7 +231,7 @@ export function GPChart({
 
       {/* 범례 */}
       <g transform={`translate(${PADDING.left + 10}, ${PADDING.top + 10})`}>
-        <rect x={0} y={0} width={12} height={3} fill="#3B82F6" rx={1} />
+        <rect x={0} y={0} width={12} height={3} fill="#D4960A" rx={1} />
         <text x={16} y={5} className="gp-chart-legend">예측 곡선</text>
         <circle cx={6} cy={16} r={4} className="gp-chart-obs" />
         <text x={16} y={19} className="gp-chart-legend">관측점</text>

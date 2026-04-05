@@ -1,73 +1,74 @@
 :root {
-  /* ── Cold Forge 다크 테마 — Core Palette ── */
-  --bg-deep: #0A0E14;
-  --bg-base: #0F1318;
-  --bg-elevated: #161B22;
-  --surface-low: #1C2128;
-  --surface-mid: #242A33;
-  --surface-high: #2D3540;
-  --border-subtle: #2A3140;
-  --border-default: #3B4455;
-  --border-strong: #4E5A6E;
+  /* ── Silver Forge 다크 테마 — Core Palette ── */
+  --bg-deep: #0F1419;
+  --bg-base: #141B23;
+  --bg-elevated: #1A2635;
+  --surface-low: #1E2A38;
+  --surface-mid: #1E3A52;
+  --surface-high: #243B55;
+  --border-subtle: #1E2A38;
+  --border-default: #2A3F5F;
+  --border-strong: #3A5070;
 
-  /* 기존 변수 호환 — Cold Forge 값으로 매핑 */
+  /* 기존 변수 호환 — Silver Forge 값으로 매핑 */
   --bg-primary: var(--bg-deep);
   --bg-secondary: var(--bg-base);
   --bg-card: var(--bg-elevated);
-  --bg-glass: rgba(15, 19, 24, 0.75);
-  --bg-glass-hover: rgba(28, 33, 40, 0.85);
+  --bg-glass: rgba(20, 27, 35, 0.75);
+  --bg-glass-hover: rgba(30, 42, 56, 0.85);
   --border: var(--border-subtle);
   --border-light: var(--border-default);
 
   /* ── Metal & Chrome 팔레트 ── */
-  --metal-steel-dark: #3A4556;
-  --metal-steel-mid: #5A6A7E;
-  --metal-steel-light: #7E8FA3;
-  --metal-chrome: #A8B8CC;
-  --metal-chrome-bright: #C8D5E6;
-  --metal-silver-white: #E2E8F0;
+  --metal-steel-dark: #1E2A38;
+  --metal-steel-mid: #2A3F5F;
+  --metal-steel-light: #3A5070;
+  --metal-chrome: #8A9AB5;
+  --metal-chrome-bright: #D0D7E0;
+  --metal-silver-white: #FFFFFF;
 
-  /* ── Accent — Frost Blue + Cyan Glow ── */
-  --accent-primary: #4A9EDE;
-  --accent-primary-hover: #5BB0F0;
-  --accent-primary-muted: rgba(74, 158, 222, 0.15);
-  --accent-secondary: #6B8DB5;
-  --accent-cyan: #00D4FF;
-  --accent-cyan-muted: rgba(0, 212, 255, 0.1);
-  --accent-ice: #B8E6FF;
+  /* ── Accent — Gold + Teal Green ── */
+  --accent-primary: #FFB81C;
+  --accent-primary-hover: #FFC940;
+  --accent-primary-muted: rgba(255, 184, 28, 0.15);
+  --accent-secondary: #2A3F5F;
+  --accent-cyan: #00D084;
+  --accent-cyan-muted: rgba(0, 208, 132, 0.1);
+  --accent-ice: #D0D7E0;
 
   /* 기존 accent 변수 호환 매핑 */
   --accent: var(--accent-primary);
   --accent-dim: var(--accent-secondary);
   --accent-glow: var(--accent-primary-muted);
-  --accent-subtle: rgba(74, 158, 222, 0.07);
+  --accent-subtle: rgba(255, 184, 28, 0.07);
   --accent-light: var(--accent-primary-hover);
 
   /* ── Text Colors ── */
-  --text-primary: #E2E8F0;
-  --text-secondary: #94A3B8;
-  --text-tertiary: #64748B;
-  --text-accent: #4A9EDE;
+  --text-primary: #FFFFFF;
+  --text-secondary: #D0D7E0;
+  --text-tertiary: #8A9AB5;
+  --text-muted: #5A6B85;
+  --text-accent: #FFB81C;
 
   /* ── Semantic Colors ── */
-  --success: #34D399;
-  --success-glow: rgba(52, 211, 153, 0.25);
-  --semantic-success-bg: rgba(52, 211, 153, 0.08);
+  --success: #00D084;
+  --success-glow: rgba(0, 208, 132, 0.25);
+  --semantic-success-bg: rgba(0, 208, 132, 0.08);
   --info: #60A5FA;
   --info-glow: rgba(96, 165, 250, 0.25);
   --semantic-info-bg: rgba(96, 165, 250, 0.08);
-  --warning: #FBBF24;
-  --warning-glow: rgba(251, 191, 36, 0.25);
-  --semantic-warning-bg: rgba(251, 191, 36, 0.08);
+  --warning: #FFB81C;
+  --warning-glow: rgba(255, 184, 28, 0.25);
+  --semantic-warning-bg: rgba(255, 184, 28, 0.08);
   --danger: #F87171;
   --semantic-error-bg: rgba(248, 113, 113, 0.08);
 
-  /* ── Gradients — Cold Forge 금속 그라디언트 5종 ── */
-  --gradient-metal-panel: linear-gradient(180deg, #242A33 0%, #1C2128 40%, #161B22 100%);
-  --gradient-chrome-edge: linear-gradient(90deg, transparent 0%, rgba(126, 143, 163, 0.31) 30%, rgba(168, 184, 204, 0.5) 50%, rgba(126, 143, 163, 0.31) 70%, transparent 100%);
-  --gradient-cyan-glow: linear-gradient(180deg, rgba(0, 212, 255, 0.25) 0%, rgba(0, 212, 255, 0) 100%);
-  --gradient-metal-button: linear-gradient(180deg, #2D3540 0%, #242A33 50%, #1C2128 100%);
-  --gradient-metal-button-pressed: linear-gradient(180deg, #1C2128 0%, #242A33 50%, #2D3540 100%);
+  /* ── Gradients — Silver Forge 금속 그라디언트 5종 ── */
+  --gradient-metal-panel: linear-gradient(180deg, #1E3A52 0%, #1E2A38 40%, #1A2635 100%);
+  --gradient-chrome-edge: linear-gradient(90deg, transparent 0%, rgba(58, 80, 112, 0.31) 30%, rgba(138, 154, 181, 0.5) 50%, rgba(58, 80, 112, 0.31) 70%, transparent 100%);
+  --gradient-cyan-glow: linear-gradient(180deg, rgba(0, 208, 132, 0.25) 0%, rgba(0, 208, 132, 0) 100%);
+  --gradient-metal-button: linear-gradient(180deg, #243B55 0%, #1E3A52 50%, #1E2A38 100%);
+  --gradient-metal-button-pressed: linear-gradient(180deg, #1E2A38 0%, #1E3A52 50%, #243B55 100%);
 
   /* ── 금속 노이즈 텍스처 ── */
   --noise-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
@@ -96,18 +97,18 @@
   --space-10: 40px;
 
   /* 테두리 곡률 */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
-  --radius-2xl: 16px;
+  --radius-sm: 2px;
+  --radius-md: 3px;
+  --radius-lg: 4px;
+  --radius-xl: 6px;
+  --radius-2xl: 8px;
   --radius-full: 9999px;
 
-  /* 그림자 — Cold Forge 블루 글로우 */
+  /* 그림자 — Silver Forge 골드 글로우 */
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
   --shadow-md: 0 4px 16px rgba(0,0,0,0.5);
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
-  --shadow-glow: 0 0 20px var(--accent-glow), 0 0 60px rgba(74, 158, 222, 0.08);
+  --shadow-glow: 0 0 20px var(--accent-glow), 0 0 60px rgba(255, 184, 28, 0.08);
   --shadow-glow-success: 0 0 20px var(--success-glow);
 
   /* 전환 */
@@ -120,18 +121,18 @@
   --blur-md: 16px;
 
   /* 시맨틱 색상 — 하드코딩 색상 대체용 */
-  --color-hit: #4ade80;
-  --color-miss: #f87171;
-  --color-headshot: #facc15;
-  --color-fire: #4A9EDE;
-  --color-fire-text: #5BB0F0;
-  --color-on-dark: #0A0E14;
-  --color-teal: #4ecdc4;
-  --color-amber: #FBBF24;
-  --color-sky: #38bdf8;
-  --color-ref-blue: #4A9EDE;
-  --color-gold: #ffd700;
-  --color-silver: #c0c0c0;
+  --color-hit: #00D084;
+  --color-miss: #F87171;
+  --color-headshot: #FFB81C;
+  --color-fire: #FFB81C;
+  --color-fire-text: #FFC940;
+  --color-on-dark: #0F1419;
+  --color-teal: #00D084;
+  --color-amber: #FFB81C;
+  --color-sky: #60A5FA;
+  --color-ref-blue: #60A5FA;
+  --color-gold: #FFB81C;
+  --color-silver: #D0D7E0;
   --color-bronze: #cd7f32;
 
   /* font-weight 체계 */
@@ -142,10 +143,10 @@
   --fw-extrabold: 800;
   --fw-black: 900;
 
-  /* 상태별 glow 변수 — Cold Forge 블루 글로우 */
+  /* 상태별 glow 변수 — Silver Forge 골드 글로우 */
   --glow-accent-sm: 0 0 8px var(--accent-glow);
   --glow-accent-md: 0 0 12px var(--accent-glow);
-  --glow-accent-lg: 0 0 20px var(--accent-glow), 0 0 60px rgba(74, 158, 222, 0.08);
+  --glow-accent-lg: 0 0 20px var(--accent-glow), 0 0 60px rgba(255, 184, 28, 0.08);
   --glow-accent-focus: 0 0 0 3px var(--accent-glow);
   --glow-success-sm: 0 0 12px var(--success-glow);
   --glow-success-lg: 0 0 20px var(--success-glow);
@@ -163,11 +164,11 @@
   --bg-glass-hover: rgba(248, 247, 245, 0.9);
   --text-primary: #1a1a1f;
   --text-secondary: #6b6d7a;
-  --accent: #3B82F6;
-  --accent-dim: #5B8DB5;
-  --accent-glow: rgba(59, 130, 246, 0.22);
-  --accent-subtle: rgba(59, 130, 246, 0.06);
-  --accent-light: #60A5FA;
+  --accent: #D4960A;
+  --accent-dim: #1E2A38;
+  --accent-glow: rgba(212, 150, 10, 0.22);
+  --accent-subtle: rgba(212, 150, 10, 0.06);
+  --accent-light: #E8A820;
   --success: #22c55e;
   --success-glow: rgba(34, 197, 94, 0.22);
   --info: #3b82f6;
@@ -187,13 +188,13 @@
   --color-hit: #22c55e;
   --color-miss: #ef4444;
   --color-headshot: #eab308;
-  --color-fire: #3B82F6;
-  --color-fire-text: #2563EB;
+  --color-fire: #D4960A;
+  --color-fire-text: #B87D08;
   --color-on-dark: #0a0a0f;
   --color-teal: #0d9488;
   --color-amber: #d97706;
   --color-sky: #0284c7;
-  --color-ref-blue: #3B82F6;
+  --color-ref-blue: #2563EB;
   --color-gold: #ca8a04;
   --color-silver: #9ca3af;
   --color-bronze: #a16207;
@@ -226,6 +227,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── Silver Forge 전역 스타일 규칙 ── */
+
+/* 큰 숫자: tabular-nums로 정렬 */
+.stat-value, .score-value, .metric-value, [class*="number"], [class*="score"], [class*="value"] {
+  font-variant-numeric: tabular-nums;
+}
+
 .app {
   display: flex;
   flex-direction: column;
@@ -235,7 +243,7 @@ body {
 .app-header {
   padding: 16px 32px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(10, 14, 20, 0.85);
+  background: rgba(15, 20, 25, 0.85);
   backdrop-filter: blur(var(--blur-md));
   -webkit-backdrop-filter: blur(var(--blur-md));
 }
@@ -1036,7 +1044,7 @@ body {
   cursor: pointer;
   transition: all var(--transition-base);
   text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-  box-shadow: 0 2px 8px rgba(74, 158, 222, 0.15);
+  box-shadow: 0 2px 8px rgba(255, 184, 28, 0.15);
 }
 .btn-primary:hover {
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
@@ -1490,7 +1498,7 @@ body {
 
 .scenario-item.current {
   border-color: var(--accent);
-  background: rgba(74, 158, 222, 0.1);
+  background: rgba(255, 184, 28, 0.1);
 }
 
 .scenario-item.completed {
@@ -1651,7 +1659,7 @@ body {
 
 .session-row { cursor: pointer; }
 .session-row:hover { background: var(--accent-subtle); }
-.session-row.expanded { background: rgba(74, 158, 222, 0.1); }
+.session-row.expanded { background: rgba(255, 184, 28, 0.1); }
 
 .trial-list {
   display: flex;
@@ -1744,8 +1752,8 @@ body {
 .sensitivity-hub { display: flex; flex-direction: column; gap: 24px; }
 
 .sensitivity-hero {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(74, 158, 222, 0.06) 100%);
-  border: 1px solid rgba(74, 158, 222, 0.15);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 184, 28, 0.06) 100%);
+  border: 1px solid rgba(255, 184, 28, 0.15);
   border-radius: var(--radius-2xl);
   padding: 32px 28px;
   text-align: center;
@@ -1802,10 +1810,10 @@ body {
   color: var(--text-primary);
 }
 .tool-card:hover {
-  border-color: rgba(74, 158, 222, 0.3);
+  border-color: rgba(255, 184, 28, 0.3);
   background: rgba(255, 255, 255, 0.06);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(74, 158, 222, 0.1);
+  box-shadow: 0 8px 24px rgba(255, 184, 28, 0.1);
 }
 .tool-card-title {
   font-weight: var(--fw-semibold);
@@ -2004,7 +2012,7 @@ body {
 
 .preset-btn:hover {
   border-color: var(--accent);
-  background: rgba(74, 158, 222, 0.1);
+  background: rgba(255, 184, 28, 0.1);
 }
 
 .settings-row {
@@ -2033,7 +2041,7 @@ body {
 .shape-btn.active {
   border-color: var(--accent);
   color: var(--accent);
-  background: rgba(74, 158, 222, 0.1);
+  background: rgba(255, 184, 28, 0.1);
 }
 
 .crosshair-grid {
@@ -2237,11 +2245,11 @@ body {
 }
 .quick-nav .btn-secondary:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(74, 158, 222, 0.3);
-  box-shadow: 0 2px 12px rgba(74, 158, 222, 0.1);
+  border-color: rgba(255, 184, 28, 0.3);
+  box-shadow: 0 2px 12px rgba(255, 184, 28, 0.1);
 }
 .quick-nav .btn-primary {
-  box-shadow: 0 2px 12px rgba(74, 158, 222, 0.2);
+  box-shadow: 0 2px 12px rgba(255, 184, 28, 0.2);
 }
 
 /* ========== 공통: 섹션 헤더 ========== */
@@ -2766,7 +2774,7 @@ body {
 }
 
 .btn-danger:hover {
-  background: rgba(74, 158, 222, 0.1);
+  background: rgba(255, 184, 28, 0.1);
 }
 
 .text-secondary {
@@ -2793,7 +2801,7 @@ body {
 
 .theme-toggle:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(74, 158, 222, 0.3);
+  border-color: rgba(255, 184, 28, 0.3);
 }
 
 /* 언어 선택 드롭다운 */
@@ -2808,7 +2816,7 @@ body {
   transition: border-color var(--transition-fast);
 }
 .lang-select:hover {
-  border-color: rgba(74, 158, 222, 0.3);
+  border-color: rgba(255, 184, 28, 0.3);
 }
 
 /* Simple/Advanced 모드 필 스위치 */
@@ -2858,7 +2866,7 @@ body {
   border-radius: var(--radius-2xl);
   padding: 48px 44px;
   text-align: center;
-  box-shadow: var(--shadow-lg), 0 0 80px rgba(74, 158, 222, 0.05);
+  box-shadow: var(--shadow-lg), 0 0 80px rgba(255, 184, 28, 0.05);
   backdrop-filter: blur(var(--blur-md));
 }
 
@@ -2935,7 +2943,7 @@ body {
 .onboarding-field select:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(74, 158, 222, 0.1);
+  box-shadow: 0 0 0 3px rgba(255, 184, 28, 0.1);
 }
 
 .onboarding-field .cm360-preview {
@@ -3043,16 +3051,16 @@ body {
 }
 
 .game-card:hover {
-  border-color: rgba(74, 158, 222, 0.3);
+  border-color: rgba(255, 184, 28, 0.3);
   background: rgba(255, 255, 255, 0.06);
   transform: translateY(-1px);
 }
 
 .game-card.selected {
   border-color: var(--accent);
-  background: rgba(74, 158, 222, 0.1);
+  background: rgba(255, 184, 28, 0.1);
   color: var(--accent-light);
-  box-shadow: 0 0 16px rgba(74, 158, 222, 0.15), 0 0 0 1px rgba(74, 158, 222, 0.2);
+  box-shadow: 0 0 16px rgba(255, 184, 28, 0.15), 0 0 0 1px rgba(255, 184, 28, 0.2);
 }
 
 /* 게임 이니셜 아바타 */
@@ -3433,8 +3441,10 @@ body {
   background: var(--bg-card);
 }
 .tab-item.active {
-  color: #fff;
-  background: var(--accent);
+  color: var(--text-primary);
+  background: transparent;
+  border-bottom: 2px solid var(--accent-primary);
+  border-radius: 0;
 }
 
 /* ── 통계 디스플레이 ── */
@@ -3665,7 +3675,7 @@ body {
   flex-shrink: 0;
 }
 .prescription-priority--high {
-  background: rgba(74, 158, 222, 0.13);
+  background: rgba(255, 184, 28, 0.13);
   border: 2px solid var(--accent);
   color: var(--accent);
 }
@@ -3834,7 +3844,7 @@ body {
   color: var(--text-secondary);
 }
 .fov-recommendation {
-  background: var(--bg-elevated, #1C2128);
+  background: var(--bg-elevated, #1E2A38);
   padding: var(--space-4);
   border-radius: var(--radius-lg);
   margin-bottom: var(--space-4);
@@ -3860,7 +3870,7 @@ body {
   background: transparent;
 }
 .fov-bar--recommended {
-  background: var(--bg-elevated, #1C2128);
+  background: var(--bg-elevated, #1E2A38);
   border-color: var(--accent);
 }
 .fov-bar__label {
@@ -3957,7 +3967,7 @@ body {
   margin-left: var(--space-2);
 }
 .movement-editor__rec-result {
-  background: var(--bg-elevated, #1C2128);
+  background: var(--bg-elevated, #1E2A38);
   padding: var(--space-4);
   border-radius: var(--radius-lg);
 }
@@ -3981,15 +3991,15 @@ body {
   font-size: var(--font-sm);
 }
 .movement-editor__status-msg--success {
-  background: var(--bg-elevated, #1C2128);
+  background: var(--bg-elevated, #1E2A38);
   color: var(--success);
 }
 .movement-editor__status-msg--error {
-  background: var(--bg-elevated, #1C2128);
+  background: var(--bg-elevated, #1E2A38);
   color: var(--danger);
 }
 .movement-preview {
-  background: var(--bg-secondary, #0F1318);
+  background: var(--bg-secondary, #141B23);
   border-radius: var(--radius-lg);
   padding: var(--space-2);
   width: 260px;
@@ -4013,7 +4023,7 @@ body {
   width: 100%;
 }
 .data-table .row-selected {
-  background: var(--bg-elevated, #1C2128);
+  background: var(--bg-elevated, #1E2A38);
 }
 .data-table td {
   text-align: center;
@@ -4607,7 +4617,7 @@ body {
 
 .pw-game-card.selected {
   border-color: var(--accent);
-  background: rgba(74, 158, 222, 0.1);
+  background: rgba(255, 184, 28, 0.1);
 }
 
 .pw-game-name {
@@ -5060,12 +5070,12 @@ body {
 .splash-logo {
   font-size: 52px;
   font-weight: var(--fw-extrabold);
-  background: linear-gradient(135deg, #5BB0F0 0%, #4A9EDE 50%, #3B82F6 100%);
+  background: linear-gradient(135deg, #FFC940 0%, #FFB81C 50%, #D4960A 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   letter-spacing: 4px;
-  filter: drop-shadow(0 0 30px rgba(74, 158, 222, 0.4)) drop-shadow(0 0 60px rgba(74, 158, 222, 0.15));
+  filter: drop-shadow(0 0 30px rgba(255, 184, 28, 0.4)) drop-shadow(0 0 60px rgba(255, 184, 28, 0.15));
   margin: 0;
 }
 
@@ -5106,7 +5116,7 @@ body {
   top: -200px;
   left: 50%;
   transform: translateX(-50%);
-  background: radial-gradient(circle, rgba(74, 158, 222, 0.25) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 184, 28, 0.25) 0%, transparent 70%);
 }
 .welcome-bg-glow--bottom {
   width: 500px;
@@ -5156,7 +5166,7 @@ body {
 }
 
 .welcome-accent {
-  background: linear-gradient(135deg, var(--accent-light) 0%, var(--accent) 50%, #3B8FCC 100%);
+  background: linear-gradient(135deg, var(--accent-light) 0%, var(--accent) 50%, #CC8E08 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -5201,8 +5211,8 @@ body {
 
 .welcome-feature-card:hover {
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(74, 158, 222, 0.3);
-  box-shadow: 0 8px 32px rgba(74, 158, 222, 0.1), 0 0 0 1px rgba(74, 158, 222, 0.1);
+  border-color: rgba(255, 184, 28, 0.3);
+  box-shadow: 0 8px 32px rgba(255, 184, 28, 0.1), 0 0 0 1px rgba(255, 184, 28, 0.1);
 }
 
 /* 아이콘 원형 배지 */
@@ -5210,8 +5220,8 @@ body {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(74, 158, 222, 0.15) 0%, rgba(74, 158, 222, 0.05) 100%);
-  border: 1px solid rgba(74, 158, 222, 0.2);
+  background: linear-gradient(135deg, rgba(255, 184, 28, 0.15) 0%, rgba(255, 184, 28, 0.05) 100%);
+  border: 1px solid rgba(255, 184, 28, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5244,13 +5254,13 @@ body {
   font-size: var(--font-md);
   font-weight: var(--fw-semibold);
   border-radius: var(--radius-xl);
-  background: linear-gradient(135deg, var(--accent-light) 0%, var(--accent) 60%, #3585C4 100%);
-  box-shadow: 0 4px 24px rgba(74, 158, 222, 0.3);
+  background: linear-gradient(135deg, var(--accent-light) 0%, var(--accent) 60%, #B87D08 100%);
+  box-shadow: 0 4px 24px rgba(255, 184, 28, 0.3);
   letter-spacing: 0.3px;
   transition: all var(--transition-base);
 }
 .welcome-cta:hover {
-  box-shadow: 0 8px 40px rgba(74, 158, 222, 0.4), 0 0 0 1px var(--accent-light);
+  box-shadow: 0 8px 40px rgba(255, 184, 28, 0.4), 0 0 0 1px var(--accent-light);
   transform: translateY(-2px);
 }
 
@@ -5982,7 +5992,7 @@ body {
   transition: all 0.15s;
 }
 .grip-tab:hover { border-color: var(--accent); color: var(--text-primary); }
-.grip-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: var(--fw-semibold); }
+.grip-tab.active { background: transparent; border-color: transparent; border-bottom: 2px solid var(--accent-primary); color: var(--text-primary); font-weight: var(--fw-semibold); }
 .grip-tab.suggested:not(.active) { border-color: var(--accent); color: var(--accent); }
 .grip-tab-star { margin-left: 4px; font-size: 10px; }
 
@@ -6069,7 +6079,7 @@ body {
   padding: 2px 8px;
 }
 .expert-banner {
-  background: #1C2835;
+  background: #1A2635;
   border: 1px solid var(--color-amber);
   border-radius: 6px;
   padding: 10px 14px;
@@ -6087,8 +6097,8 @@ body {
 }
 .insight-info   { background: var(--bg-secondary); border-color: var(--info); }
 .insight-warn   { background: rgba(248, 113, 113, 0.08); border-color: var(--danger); }
-.insight-tip    { background: #1C2832; border-color: var(--color-teal); }
-.insight-expert { background: #1E2A35; border-color: var(--color-amber); }
+.insight-tip    { background: #1A2635; border-color: var(--color-teal); }
+.insight-expert { background: #1E2A38; border-color: var(--color-amber); }
 
 .insight-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .insight-icon { font-size: var(--font-base); flex-shrink: 0; }
@@ -6151,7 +6161,7 @@ body {
 
 /* 선택 텍스트 색상 — forge 테마 */
 ::selection {
-  background: rgba(74, 158, 222, 0.3);
+  background: rgba(255, 184, 28, 0.3);
   color: #fff;
 }
 

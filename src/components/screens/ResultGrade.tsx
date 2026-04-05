@@ -14,7 +14,7 @@ interface GradeInfo {
 const GRADES: GradeInfo[] = [
   { letter: 'S', color: '#FFD700', minAccuracy: 0.9 },
   { letter: 'A', color: '#10B981', minAccuracy: 0.75 },
-  { letter: 'B', color: '#3B82F6', minAccuracy: 0.6 },
+  { letter: 'B', color: '#D4960A', minAccuracy: 0.6 },
   { letter: 'C', color: '#F59E0B', minAccuracy: 0.45 },
   { letter: 'D', color: '#6B7280', minAccuracy: 0 },
 ];
