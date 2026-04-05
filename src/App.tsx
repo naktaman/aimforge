@@ -1077,21 +1077,6 @@ function App() {
             </div>
           </header>
           <main className="app-main">
-            {/* 부가 메뉴 — 감도/게임 프로필은 감도 탭으로 이동됨 */}
-            <div className="quick-nav">
-              <button className="btn-secondary btn-sm" onClick={() => setScreen('display-settings')}>{t('nav.display')}</button>
-              {mode === 'advanced' && (
-                <button className="btn-secondary btn-sm" onClick={() => setScreen('routines')}>{t('nav.routines')}</button>
-              )}
-              {mode === 'advanced' && (
-                <button className="btn-secondary btn-sm" onClick={() => setScreen('recoil-editor')}>{t('nav.recoilEditor')}</button>
-              )}
-              <button className="btn-secondary btn-sm" onClick={() => setScreen('conversion-selector')}>{t('nav.conversion')}</button>
-              <button className="btn-primary btn-sm" onClick={() => {
-                useProfileWizardStore.getState().startWizard();
-                setScreen('profile-wizard');
-              }}>Profile</button>
-            </div>
             <ScenarioSelect
               onStart={handleStart}
               onTrainingStart={handleTrainingStart}
@@ -1137,12 +1122,13 @@ function App() {
         </main>
       )}
 
-      {/* 캘리브레이션 결과 */}
+      {/* 캘리브레이션 결과 — 줌 감도 이어가기 버튼 포함 */}
       {currentScreen === 'calibration-result' && (
         <main className="app-main">
           <CalibrationResult
             onBack={() => { resetCalibration(); setScreen('settings'); }}
             onApply={handleCalibrationApply}
+            onNextZoom={() => { resetCalibration(); setScreen('zoom-calibration-setup'); }}
           />
         </main>
       )}

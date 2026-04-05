@@ -8,6 +8,8 @@ import { useTranslation } from '../i18n';
 interface CalibrationResultProps {
   onBack: () => void;
   onApply: (cm360: number) => void;
+  /** 줌 감도 설정으로 이어가기 (옵션 — 없으면 버튼 미표시) */
+  onNextZoom?: () => void;
 }
 
 /** 유의성 라벨 — i18n 키 매핑 */
@@ -17,7 +19,7 @@ const SIGNIFICANCE_LABELS = {
   Keep: { textKey: 'cal.sigKeep', color: 'var(--info)', descKey: 'cal.sigKeepDesc' },
 };
 
-export function CalibrationResult({ onBack, onApply }: CalibrationResultProps) {
+export function CalibrationResult({ onBack, onApply, onNextZoom }: CalibrationResultProps) {
   const { result } = useCalibrationStore();
   const { t } = useTranslation();
 
@@ -134,6 +136,12 @@ export function CalibrationResult({ onBack, onApply }: CalibrationResultProps) {
         >
           {t('cal.applySens')}
         </button>
+        {/* 줌 감도 설정 이어가기 — 통합 플로우 */}
+        {onNextZoom && (
+          <button className="btn-secondary" onClick={onNextZoom}>
+            다음: 줌 감도 설정 →
+          </button>
+        )}
       </div>
     </div>
   );

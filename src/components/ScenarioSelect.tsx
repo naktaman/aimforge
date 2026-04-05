@@ -135,7 +135,7 @@ type MainTab = 'sensitivity' | 'training' | 'analysis';
 /** 훈련 서브탭 */
 type TrainingSub = 'catalog' | 'custom' | 'battery';
 
-export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoomCalibration, onBattery, onHistory }: ScenarioSelectProps) {
+export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onBattery, onHistory }: ScenarioSelectProps) {
   const [mainTab, setMainTab] = useState<MainTab>('sensitivity');
   const [trainingSub, setTrainingSub] = useState<TrainingSub>('catalog');
   const [showCrosshair, setShowCrosshair] = useState(false);
@@ -465,7 +465,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
           ══════════════════════════════════════════ */}
       {mainTab === 'sensitivity' && (
         <section className="sensitivity-hub">
-          {/* 메인 CTA — 감도 캘리브레이션 */}
+          {/* 메인 CTA — 감도 찾기 (일반 + 줌 통합 진입점) */}
           <div className="sensitivity-hero">
             <h3>{t('scenario.findOptimalSens')}</h3>
             <p className="sensitivity-desc">
@@ -478,16 +478,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
                   onClick={onCalibration}
                   disabled={!selectedGame}
                 >
-                  {t('scenario.startCalibration')}
-                </button>
-              )}
-              {onZoomCalibration && mode === 'advanced' && (
-                <button
-                  className="btn-secondary btn-lg"
-                  onClick={onZoomCalibration}
-                  disabled={!selectedGame}
-                >
-                  {t('scenario.zoomCalibration')}
+                  내 감도 찾기
                 </button>
               )}
             </div>

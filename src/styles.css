@@ -915,14 +915,15 @@ body {
   box-shadow: 0 2px 8px var(--accent-glow);
 }
 
+/* 시나리오 시작 버튼 — 단색 골드 */
 .start-button {
   width: 100%;
   padding: 14px;
   margin-top: var(--space-4);
-  background: linear-gradient(135deg, var(--accent-light) 0%, var(--accent) 100%);
+  background: var(--accent-primary);
   border: none;
   border-radius: var(--radius-lg);
-  color: white;
+  color: #000;
   font-size: var(--font-md);
   font-weight: var(--fw-semibold);
   font-family: inherit;
@@ -1032,22 +1033,22 @@ body {
 }
 
 /* ── 캘리브레이션 공통 ── */
+/* CTA 버튼 — 단색 골드 (그라데이션 제거) */
 .btn-primary {
   padding: 10px 24px;
-  background: linear-gradient(135deg, var(--accent-light) 0%, var(--accent) 100%);
+  background: var(--accent-primary);
   border: none;
   border-radius: var(--radius-lg);
-  color: #fff;
+  color: #000;
   font-size: var(--font-base);
   font-family: inherit;
   font-weight: var(--fw-semibold);
   cursor: pointer;
   transition: all var(--transition-base);
-  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
   box-shadow: 0 2px 8px rgba(255, 184, 28, 0.15);
 }
 .btn-primary:hover {
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
+  background: var(--accent-primary-hover);
   box-shadow: var(--shadow-glow);
   transform: translateY(-1px);
 }
@@ -1707,10 +1708,11 @@ body {
 
 .main-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
 
+/* 활성 탭 — 단색 골드 배경 (파란 그라데이션 제거) */
 .main-tab.active {
-  color: #fff;
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dim) 100%);
-  box-shadow: 0 4px 16px var(--accent-glow);
+  color: #000;
+  background: var(--accent-primary);
+  box-shadow: 0 2px 8px var(--accent-glow);
 }
 
 /* 크로스헤어 토글 — 작은 보조 탭 */
@@ -2840,9 +2842,10 @@ body {
   transition: all 0.15s;
 }
 
+/* 모드 전환 활성 — 단색 골드 */
 .mode-pill button.active {
-  background: linear-gradient(135deg, var(--accent), var(--accent-dim));
-  color: #fff;
+  background: var(--accent-primary);
+  color: #000;
   font-weight: var(--fw-semibold);
 }
 
@@ -5250,13 +5253,15 @@ body {
 }
 
 /* CTA 버튼 — 넓고 눈에 띄는 gradient */
+/* 웰컴 CTA — 단색 골드 */
 .welcome-cta {
   min-width: 240px;
   padding: 16px 48px;
   font-size: var(--font-md);
   font-weight: var(--fw-semibold);
   border-radius: var(--radius-xl);
-  background: linear-gradient(135deg, var(--accent-light) 0%, var(--accent) 60%, #B87D08 100%);
+  background: var(--accent-primary);
+  color: #000;
   box-shadow: 0 4px 24px rgba(255, 184, 28, 0.3);
   letter-spacing: 0.3px;
   transition: all var(--transition-base);
