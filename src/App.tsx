@@ -48,6 +48,7 @@ import DualLandscape from './components/DualLandscape';
 import RecoilEditor from './components/RecoilEditor';
 import ConversionSelector from './components/ConversionSelector';
 import { Toast } from './components/Toast';
+import { useToastStore } from './stores/toastStore';
 import { Onboarding } from './components/Onboarding';
 import { SplashScreen } from './components/screens/SplashScreen';
 import { WelcomeScreen } from './components/screens/WelcomeScreen';
@@ -96,7 +97,7 @@ const soundEngine = new SoundEngine();
 function App() {
   const { currentScreen, setScreen, fps, pointerLocked } = useEngineStore();
   const { variants: pageVariants } = usePageTransition(currentScreen);
-  const { mode, theme, locale, onboardingCompleted, loaded: uiLoaded, toggleTheme, toggleMode, setLocale, loadFromDb } = useUiStore();
+  const { mode, locale, onboardingCompleted, loaded: uiLoaded, toggleMode, setLocale, loadFromDb } = useUiStore();
   const { t } = useTranslation();
 
   /** 앱 시작 시 UI 설정 로드 + 테마 적용 */
@@ -509,7 +510,6 @@ function App() {
           avgOvershootDeg?: number; avgUndershootDeg?: number;
           trackingMad?: number; mad?: number;
         };
-        console.log('[Training]', r.stageType, 'score:', r.score, 'accuracy:', r.accuracy);
         endScenario();
         useGameMetricsStore.getState().endSession();
         engine.setScenario(null);
@@ -890,9 +890,13 @@ function App() {
         setScreen('calibration-progress');
       } catch (e) {
         console.error('캘리브레이션 시작 실패:', e);
+        useToastStore.getState().addToast(
+          t('cal.startFailed') + ': ' + String(e),
+          'error',
+        );
       }
     },
-    [cmPer360, startCalibration, setScreen],
+    [cmPer360, startCalibration, setScreen, t],
   );
 
   /** 캘리브레이션 취소 */
@@ -937,8 +941,12 @@ function App() {
       setScreen('zoom-calibration-progress');
     } catch (e) {
       console.error('줌 캘리브레이션 시작 실패:', e);
+      useToastStore.getState().addToast(
+        t('cal.startFailed') + ': ' + String(e),
+        'error',
+      );
     }
-  }, [cmPer360, selectedProfileIds, zoomConvergenceMode, availableProfiles, startZoomCal, setScreen]);
+  }, [cmPer360, selectedProfileIds, zoomConvergenceMode, availableProfiles, startZoomCal, setScreen, t]);
 
   /** 줌 캘리브레이션 취소 */
   const handleZoomCalibrationCancel = useCallback(() => {
@@ -1036,11 +1044,7 @@ function App() {
                   <button className={mode === 'simple' ? 'active' : ''} onClick={() => mode !== 'simple' && toggleMode()}>Simple</button>
                   <button className={mode === 'advanced' ? 'active' : ''} onClick={() => mode !== 'advanced' && toggleMode()}>Advanced</button>
                 </div>
-                {/* 테마 토글 */}
-                <button className="theme-toggle" onClick={toggleTheme} title={theme === 'dark' ? t('theme.light') : t('theme.dark')} aria-label={theme === 'dark' ? t('theme.light') : t('theme.dark')}>
-                  {theme === 'dark' ? '\u2600' : '\u263E'}
-                </button>
-                {/* 언어 전환 */}
+                {/* 언어 전환 — ko/en만 지원 */}
                 <select
                   className="lang-select"
                   value={locale}

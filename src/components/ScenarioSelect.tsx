@@ -12,7 +12,6 @@ import { useUiStore } from '../stores/uiStore';
 import { useTranslation } from '../i18n';
 import { useTabKeyboard } from '../utils/useTabKeyboard';
 import type { GamePreset, ScenarioType, BatteryPreset, StageType } from '../utils/types';
-import { ConversionPanel } from './ConversionPanel';
 import { CrosshairSettings } from './CrosshairSettings';
 
 /** 시나리오 시작에 필요한 모든 파라미터 */
@@ -83,28 +82,29 @@ const CategoryIcons: Record<string, React.ReactNode> = {
 };
 
 /** 9개 세분류 훈련 카탈로그 */
+/** 9개 세분류 훈련 카탈로그 — 색상은 CSS 변수 사용 */
 const TRAINING_CATALOG = [
   {
     category: 'Flick',
     items: [
-      { type: 'flick_micro' as StageType, name: 'Micro Flick', descKey: 'training.flickMicroDesc', color: '#ff6b6b' },
-      { type: 'flick_medium' as StageType, name: 'Medium Flick', descKey: 'training.flickMediumDesc', color: '#ffa500', star: true },
-      { type: 'flick_macro' as StageType, name: 'Macro Flick', descKey: 'training.flickMacroDesc', color: '#e74c3c' },
+      { type: 'flick_micro' as StageType, name: 'Micro Flick', descKey: 'training.flickMicroDesc', color: 'var(--danger)' },
+      { type: 'flick_medium' as StageType, name: 'Medium Flick', descKey: 'training.flickMediumDesc', color: 'var(--warning)', star: true },
+      { type: 'flick_macro' as StageType, name: 'Macro Flick', descKey: 'training.flickMacroDesc', color: 'var(--danger)' },
     ],
   },
   {
     category: 'Tracking',
     items: [
-      { type: 'tracking_close' as StageType, name: 'Close Range', descKey: 'training.trackCloseDesc', color: '#00b894' },
-      { type: 'tracking_mid' as StageType, name: 'Mid Range', descKey: 'training.trackMidDesc', color: '#0984e3' },
-      { type: 'tracking_long' as StageType, name: 'Long Range', descKey: 'training.trackLongDesc', color: '#6c5ce7' },
+      { type: 'tracking_close' as StageType, name: 'Close Range', descKey: 'training.trackCloseDesc', color: 'var(--success)' },
+      { type: 'tracking_mid' as StageType, name: 'Mid Range', descKey: 'training.trackMidDesc', color: 'var(--info)' },
+      { type: 'tracking_long' as StageType, name: 'Long Range', descKey: 'training.trackLongDesc', color: 'var(--accent-cyan)' },
     ],
   },
   {
     category: 'Switching',
     items: [
-      { type: 'switching_close' as StageType, name: 'Close Multi', descKey: 'training.switchCloseDesc', color: '#fdcb6e' },
-      { type: 'switching_wide' as StageType, name: 'Wide Multi', descKey: 'training.switchWideDesc', color: '#e17055' },
+      { type: 'switching_close' as StageType, name: 'Close Multi', descKey: 'training.switchCloseDesc', color: 'var(--warning)' },
+      { type: 'switching_wide' as StageType, name: 'Wide Multi', descKey: 'training.switchWideDesc', color: 'var(--accent-primary)' },
     ],
   },
 ];
@@ -141,20 +141,7 @@ function getSensitivityLevel(cm360: number, t: (key: string) => string): string 
 
 /* MiniBarChart 삭제됨 — 더미 바 차트 대신 empty state 사용 */
 
-/** 프로그레스 바 아이템 — 우측 리스트용 */
-function ProgressItem({ name, value, color }: { name: string; value: number; color: string }) {
-  return (
-    <div className="dash-progress-item">
-      <div className="dash-progress-label">
-        <span className="dash-progress-name">{name}</span>
-        <span className="dash-progress-value">{value.toFixed(1)}%</span>
-      </div>
-      <div className="dash-progress-track">
-        <div className="dash-progress-fill" style={{ width: `${value}%`, background: color }} />
-      </div>
-    </div>
-  );
-}
+/* ProgressItem 삭제됨 — 더미 데이터 전부 제거, empty state 사용 */
 
 export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoomCalibration, onBattery, onHistory }: ScenarioSelectProps) {
   const [mainTab, setMainTab] = useState<MainTab>('sensitivity');
@@ -580,11 +567,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
                     </>
                   )}
                 </div>
-                {/* 인라인 감도 변환 패널 */}
-                <div className="dash-section-label" style={{ marginTop: 'var(--space-3)' }}>{t('nav.conversion')}</div>
-                <div className="dash-conversion-wrap">
-                  <ConversionPanel games={games} />
-                </div>
+                {/* 감도 변환 — 전용 화면으로 이동 (인라인 패널 제거) */}
               </div>
 
               {/* 하단: 카테고리 카드 3개 */}
@@ -758,15 +741,10 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
               <div className="dash-col-right">
                 <div className="dash-section-label">{t('dash.recentPlays')}</div>
                 <div className="dash-recent-list">
-                  {/* 더미 데이터 — 시각적 채움 (실제 히스토리 연동 시 교체) */}
-                  <ProgressItem name="Medium Flick" value={78.5} color="var(--accent-primary)" />
-                  <ProgressItem name="Close Range" value={65.2} color="var(--success)" />
-                  <ProgressItem name="Micro Flick" value={82.1} color="var(--color-sky)" />
-                  <ProgressItem name="Mid Range" value={71.8} color="var(--info)" />
-                  <ProgressItem name="Wide Multi" value={59.4} color="var(--warning)" />
-                  <ProgressItem name="Long Range" value={68.9} color="var(--accent-cyan)" />
-                  <ProgressItem name="Close Multi" value={74.3} color="var(--accent-primary)" />
-                  <ProgressItem name="Macro Flick" value={61.7} color="var(--danger)" />
+                  {/* 실데이터 연동 전 empty state */}
+                  <div className="dash-empty-state">
+                    <span className="dash-empty-text">{t('empty.sessionData')}</span>
+                  </div>
                 </div>
 
                 {/* 미니 차트 */}
@@ -888,15 +866,10 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
               <div className="dash-col-right">
                 <div className="dash-section-label">{t('dash.recentScenarios')}</div>
                 <div className="dash-recent-list">
-                  {/* 더미 데이터 — Silver Forge 우측 패널 스타일 */}
-                  <ProgressItem name="Medium Flick" value={91.3} color="var(--success)" />
-                  <ProgressItem name="Close Range Tracking" value={85.7} color="var(--success)" />
-                  <ProgressItem name="Micro Flick" value={78.4} color="var(--accent-primary)" />
-                  <ProgressItem name="Mid Range" value={72.1} color="var(--info)" />
-                  <ProgressItem name="Wide Multi" value={68.5} color="var(--warning)" />
-                  <ProgressItem name="Counter-Strafe" value={64.2} color="var(--warning)" />
-                  <ProgressItem name="Macro Flick" value={59.8} color="var(--danger)" />
-                  <ProgressItem name="Stochastic Track" value={55.1} color="var(--danger)" />
+                  {/* 실데이터 연동 전 empty state */}
+                  <div className="dash-empty-state">
+                    <span className="dash-empty-text">{t('empty.sessionData')}</span>
+                  </div>
                 </div>
               </div>
 

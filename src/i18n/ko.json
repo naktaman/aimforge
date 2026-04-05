@@ -307,6 +307,18 @@
   "result.underCorrection": "저보정 비율",
   "result.savingResult": "결과 저장 중",
 
+  "settings.title": "설정",
+  "settings.sectionDisplay": "디스플레이",
+  "settings.sectionLanguage": "언어",
+  "settings.sectionSound": "사운드",
+  "settings.sectionData": "데이터 관리",
+  "settings.sectionAbout": "앱 정보",
+  "settings.soundEffects": "효과음",
+  "settings.aboutDesc": "FPS 에임 캘리브레이션 & 훈련 데스크탑 앱",
+  "settings.loadFailed": "설정 로드 실패",
+  "settings.saveFailed": "설정 저장 실패",
+  "cal.startFailed": "캘리브레이션 시작 실패",
+
   "display.title": "디스플레이 설정",
   "display.mode": "디스플레이 모드",
   "display.windowed": "창 모드",
