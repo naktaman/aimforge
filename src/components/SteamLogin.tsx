@@ -17,7 +17,7 @@ export function SteamLogin() {
   const handleLogin = useCallback(() => {
     // Steam OpenID URL로 리다이렉트 — 서버 콜백에서 JWT 수신
     // 실제 구현은 Tauri shell open + 로컬 콜백 서버 필요
-    console.log('[SteamLogin] Steam OpenID 로그인 시작');
+    /* Steam OpenID 로그인 — Tauri shell open + 로컬 콜백 서버 필요 (미구현) */
   }, []);
 
   if (!isOnline) {

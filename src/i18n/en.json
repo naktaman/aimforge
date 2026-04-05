@@ -307,6 +307,18 @@
   "result.underCorrection": "Under-Correction Ratio",
   "result.savingResult": "Saving result",
 
+  "settings.title": "Settings",
+  "settings.sectionDisplay": "Display",
+  "settings.sectionLanguage": "Language",
+  "settings.sectionSound": "Sound",
+  "settings.sectionData": "Data Management",
+  "settings.sectionAbout": "About",
+  "settings.soundEffects": "Sound Effects",
+  "settings.aboutDesc": "FPS Aim Calibration & Training Desktop App",
+  "settings.loadFailed": "Failed to load settings",
+  "settings.saveFailed": "Failed to save settings",
+  "cal.startFailed": "Failed to start calibration",
+
   "display.title": "Display Settings",
   "display.mode": "Display Mode",
   "display.windowed": "Windowed",

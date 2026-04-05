@@ -400,30 +400,49 @@ i18n 키 6개 추가: empty.calibrationData/Action/Dashboard, empty.sessionData,
 
 ---
 
+### UI 전수검사 2차 — 7대 이슈 수정 + 전수검사 ✅ (2026-04-05) [claude/vigilant-morse]
+
+#### P0-1: 캘리브레이션 시작 버튼 에러 피드백
+- `App.tsx`: handleCalibrationStart/handleZoomCalibrationStart catch에 Toast 에러 알림 추가
+- `useToastStore` import 추가, i18n `cal.startFailed` 키 추가 (ko/en)
+
+#### P0-2: 훈련 탭 + 분석 탭 더미 ProgressItem 제거
+- `ScenarioSelect.tsx`: ProgressItem 컴포넌트 삭제, 더미 데이터 16건 제거
+- 훈련/분석 탭 우측 패널 → `dash-empty-state` + `empty.sessionData` 텍스트
+
+#### P1-1: 감도 변환 인라인 패널 제거
+- `ScenarioSelect.tsx`: 감도 탭 우측 ConversionPanel 인라인 렌더링 제거
+- ConversionPanel import 제거 (전용 화면 conversion-selector로만 접근)
+
+#### P1-2: 설정 화면 섹션 분리 (5-탭 통합 설정)
+- `DisplaySettings.tsx`: 전면 개편 → 5섹션 탭 (디스플레이/언어/사운드/데이터 관리/앱 정보)
+- 사운드 on/off 토글 + user_settings DB 저장
+- DataManagement 기능 인라인 통합 (JSON 내보내기)
+- 앱 정보 섹션 (앱명 + 버전 + 설명)
+- i18n 11키 추가: settings.title/sectionDisplay/sectionLanguage/sectionSound/sectionData/sectionAbout/soundEffects/aboutDesc/loadFailed/saveFailed, cal.startFailed
+
+#### P2-1: 라이트 모드 토글 제거
+- `App.tsx`: 헤더 테마 토글 버튼 제거 (라이트 모드 CSS 미완성 → 혼란 방지)
+- `toggleTheme`/`theme` destructuring 제거
+
+#### P2-2: TRAINING_CATALOG 하드코딩 색상 → CSS 변수
+- 8개 색상 (`#ff6b6b` 등) → `var(--danger)`, `var(--warning)`, `var(--success)` 등
+
+#### 전수검사
+- `console.log` 2건 제거: App.tsx Training 디버그 로그, SteamLogin.tsx 로그인 로그
+- dummy/mock 데이터: gpDashboardStore loadMockData 이미 no-op, 그 외 잔존 없음
+- 빈 onClick 버튼: 없음
+- 언어 옵션: ko/en만 (다른 언어 없음 확인)
+
+수정 파일 7개: App.tsx, ScenarioSelect.tsx, DisplaySettings.tsx, SteamLogin.tsx, styles.css, ko.json, en.json
+빌드 검증: npm build 성공 (1,481 kB), TS 에러 0
+
+---
+
 ## 다음 작업
 
 - Silver Forge Phase 2: 금속 패널, 버튼, 컴포넌트 스타일링
 - 사용자 테스트 피드백 반영
-- state별 glow 변수 (--glow-accent-sm/md/lg/focus, --glow-success-sm/lg, --glow-danger-sm, --glow-info-sm) 통합
-- SessionHeatmap: 밀도 색상 범례 바 (blue→green→yellow→red) + 히트/미스 마커 범례 추가
-- 인라인 스타일 하드코딩 색상 CSS 변수화 (AimDnaHistory, DualLandscape, MultiplierCurve 등 15개 컴포넌트)
-- 수정 파일: styles.css, App.tsx, 15개 컴포넌트 (17파일 508+/378-)
-
-### 보안 코드 감사 (2026-04-05) [claude/brave-mccarthy]
-- 7개 항목 정적 분석 (읽기 전용): IPC, SQLite, XSS, 시크릿, 파일시스템, 의존성, 프라이버시
-- **High 1건**: CSP 비활성화 (`tauri.conf.json` `"csp": null`)
-- **Medium 1건**: IPC String 파라미터 길이 제한 없음
-- **Low 2건**: innerHTML 1건 (숫자 데이터), 크래시 로그 경로 노출 가능
-- **안전**: SQL 인젝션 0건 (100% 파라미터 바인딩), API키 하드코딩 0건, npm 취약점 0건, path traversal 방어 적용
-- 상세: `docs/security-audit.md`
-
-### 보안 개선 Phase 1 ✅ (2026-04-05) [claude/thirsty-gagarin → master]
-- **CSP 강화**: `tauri.conf.json` `"csp": null` → strict 정책 (default-src 'self', unsafe-eval 미포함)
-- **devTools**: Release 빌드 기본 비활성화 확인 (Tauri 2 기본값, 추가수정 불필요)
-- **Capabilities 세분화**: `core:default` + `log:default` 최소 권한 설정, 설명 한국어화
-- **npm audit**: 취약점 0건
-- **cargo audit**: 18건 warning — 전부 Tauri 업스트림 전이적 의존성 (GTK3 unmaintained 11건, unic-* unmaintained 5건, proc-macro-error unmaintained 1건, glib unsound 1건). 직접 수정 불가, Tauri 업데이트 시 해소 예정
-- 수정 파일: `src-tauri/tauri.conf.json`, `src-tauri/capabilities/default.json`
 
 ### 보안 개선 Phase 2 ✅ (2026-04-05) [claude/stoic-poitras → master]
 - **error.rs 신규**: `AppError` (내부 에러 5변형: Validation/Database/Lock/NotFound/Internal) + `PublicError` (프론트 전달용: message+code)
