@@ -78,7 +78,9 @@ export function Onboarding() {
   const [dpi, setDpi] = useState(800);
   const [games, setGames] = useState<GamePreset[]>([]);
   const [selectedGame, setSelectedGame] = useState<GamePreset | null>(null);
-  const [sensitivity, setSensitivity] = useState(1.0);
+  /* 감도 입력 — string으로 관리해야 타이핑 도중 빈 값 허용 */
+  const [sensText, setSensText] = useState('1.0');
+  const sensitivity = parseFloat(sensText) || 0;
   const [mode, setMode] = useState<AppMode>('simple');
 
   /** P0-1: 검색 + 필터 상태 */
@@ -329,12 +331,13 @@ export function Onboarding() {
                     step="0.01"
                     min={0.01}
                     max={100}
-                    value={sensitivity}
+                    value={sensText}
                     className={sensError ? 'input-error' : ''}
                     onChange={(e) => {
-                      const v = Number(e.target.value) || 1.0;
-                      setSensitivity(v);
-                      validateSens(v);
+                      /* 타이핑 도중 빈 문자열/소수점 입력 허용 */
+                      setSensText(e.target.value);
+                      const v = parseFloat(e.target.value);
+                      if (!isNaN(v)) validateSens(v);
                     }}
                   />
                   {sensError && <div className="field-error">{sensError}</div>}

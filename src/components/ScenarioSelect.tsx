@@ -147,6 +147,11 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
     setDpi, setSensitivity, selectGame,
   } = useSettingsStore();
 
+  /* 감도 입력 — string으로 관리해야 타이핑 도중 빈 값/소수점 허용 */
+  const [sensText, setSensText] = useState(String(sensitivity));
+  /* store에서 감도가 외부 변경되면 sensText 동기화 */
+  useEffect(() => { setSensText(String(sensitivity)); }, [sensitivity]);
+
   const [games, setGames] = useState<GamePreset[]>([]);
   const [scenarioType, setScenarioType] = useState<ScenarioType>('flick');
 
@@ -333,8 +338,18 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
             {t('settings.sensitivity')}
             <input
               type="number"
-              value={sensitivity}
-              onChange={(e) => setSensitivity(Number(e.target.value))}
+              value={sensText}
+              onChange={(e) => {
+                /* 타이핑 도중 빈 값 허용, 유효한 숫자일 때만 store 업데이트 */
+                setSensText(e.target.value);
+                const v = parseFloat(e.target.value);
+                if (!isNaN(v) && v > 0) setSensitivity(v);
+              }}
+              onBlur={() => {
+                /* 포커스 해제 시 유효하지 않으면 store 값으로 복원 */
+                const v = parseFloat(sensText);
+                if (isNaN(v) || v <= 0) setSensText(String(sensitivity));
+              }}
               step={0.01}
               min={0.01}
             />
