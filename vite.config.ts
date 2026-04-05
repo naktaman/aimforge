@@ -11,6 +11,23 @@ export default defineConfig(async () => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // 프로덕션 보안: 소스맵 숨김 + terser 난독화
+  build: {
+    sourcemap: "hidden",
+    minify: "terser",
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+      },
+      mangle: {
+        toplevel: true,
+      },
+      format: {
+        comments: false,
+      },
+    },
+  },
   clearScreen: false,
   server: {
     port: 5173,

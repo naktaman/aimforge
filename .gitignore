@@ -21,5 +21,8 @@ Thumbs.db
 src-tauri/WixTools/
 src-tauri/NSIS/
 
+# Source maps (프로덕션 보안)
+*.map
+
 # Claude session data
 .claude/
