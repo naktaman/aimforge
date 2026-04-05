@@ -1,6 +1,6 @@
 # AimForge 구현 진행 현황
 
-> 마지막 업데이트: 2026-04-05 (P2 디자인 개선 — CSS 변수 체계화, 접근성, 히트맵 범례)
+> 마지막 업데이트: 2026-04-05 (보안 개선 Phase 1 — CSP 강화, Capabilities 세분화, audit 실행)
 
 ---
 
@@ -223,6 +223,14 @@
 - **Low 2건**: innerHTML 1건 (숫자 데이터), 크래시 로그 경로 노출 가능
 - **안전**: SQL 인젝션 0건 (100% 파라미터 바인딩), API키 하드코딩 0건, npm 취약점 0건, path traversal 방어 적용
 - 상세: `docs/security-audit.md`
+
+### 보안 개선 Phase 1 ✅ (2026-04-05) [claude/thirsty-gagarin → master]
+- **CSP 강화**: `tauri.conf.json` `"csp": null` → strict 정책 (default-src 'self', unsafe-eval 미포함)
+- **devTools**: Release 빌드 기본 비활성화 확인 (Tauri 2 기본값, 추가수정 불필요)
+- **Capabilities 세분화**: `core:default` + `log:default` 최소 권한 설정, 설명 한국어화
+- **npm audit**: 취약점 0건
+- **cargo audit**: 18건 warning — 전부 Tauri 업스트림 전이적 의존성 (GTK3 unmaintained 11건, unic-* unmaintained 5건, proc-macro-error unmaintained 1건, glib unsound 1건). 직접 수정 불가, Tauri 업데이트 시 해소 예정
+- 수정 파일: `src-tauri/tauri.conf.json`, `src-tauri/capabilities/default.json`
 
 ---
 
