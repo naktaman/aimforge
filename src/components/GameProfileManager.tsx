@@ -9,8 +9,8 @@ interface GameProfileManagerProps {
   onBack: () => void;
 }
 
-/** 빈 폼 초기값 */
-const EMPTY_FORM = { gameName: '', dpi: 800, sensitivity: 1.0, fov: 103, scopeMultiplier: 1.0 };
+/** 빈 폼 초기값 — sensitivity/scopeMultiplier는 string으로 관리 (타이핑 도중 빈 값 허용) */
+const EMPTY_FORM = { gameName: '', dpi: 800, sensitivity: '1.0', fov: 103, scopeMultiplier: '1.0' };
 
 export function GameProfileManager({ onBack }: GameProfileManagerProps) {
   const { profiles, loading, loadProfiles, createProfile, updateProfile, deleteProfile, setActive } = useGameProfileStore();
@@ -34,9 +34,9 @@ export function GameProfileManager({ onBack }: GameProfileManagerProps) {
     setForm({
       gameName: profile.gameName,
       dpi: profile.dpi,
-      sensitivity: profile.sensitivity,
+      sensitivity: String(profile.sensitivity),
       fov: profile.fov,
-      scopeMultiplier: profile.scopeMultiplier,
+      scopeMultiplier: String(profile.scopeMultiplier),
     });
     setShowForm(true);
   }, []);
@@ -44,10 +44,13 @@ export function GameProfileManager({ onBack }: GameProfileManagerProps) {
   /** 저장 (생성 또는 수정) */
   const handleSave = useCallback(async () => {
     if (!form.gameName.trim()) return;
+    /* 저장 시에만 숫자 변환 — 빈 값이면 기본값 사용 */
+    const sens = parseFloat(form.sensitivity) || 1;
+    const scope = parseFloat(form.scopeMultiplier) || 1;
     if (editing !== null) {
-      await updateProfile(editing, form.gameName, form.dpi, form.sensitivity, form.fov, form.scopeMultiplier);
+      await updateProfile(editing, form.gameName, form.dpi, sens, form.fov, scope);
     } else {
-      await createProfile(form.gameName, form.dpi, form.sensitivity, form.fov, form.scopeMultiplier);
+      await createProfile(form.gameName, form.dpi, sens, form.fov, scope);
     }
     setShowForm(false);
     setEditing(null);
@@ -125,7 +128,7 @@ export function GameProfileManager({ onBack }: GameProfileManagerProps) {
                 type="number"
                 step="0.01"
                 value={form.sensitivity}
-                onChange={(e) => setForm(f => ({ ...f, sensitivity: parseFloat(e.target.value) || 1 }))}
+                onChange={(e) => setForm(f => ({ ...f, sensitivity: e.target.value }))}
               />
             </label>
             <label>
@@ -143,7 +146,7 @@ export function GameProfileManager({ onBack }: GameProfileManagerProps) {
                 type="number"
                 step="0.01"
                 value={form.scopeMultiplier}
-                onChange={(e) => setForm(f => ({ ...f, scopeMultiplier: parseFloat(e.target.value) || 1 }))}
+                onChange={(e) => setForm(f => ({ ...f, scopeMultiplier: e.target.value }))}
               />
             </label>
           </div>
