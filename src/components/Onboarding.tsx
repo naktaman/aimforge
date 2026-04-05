@@ -21,7 +21,7 @@ const CATEGORY_COLORS: Record<GameCategory | 'default', string> = {
   fps: '#60a5fa',
   tactical: '#34d399',
   'battle-royale': '#fbbf24',
-  tps: '#f0913a',
+  tps: '#4A9EDE',
   arena: '#a78bfa',
   trainer: '#22d3ee',
   default: '#a78bfa',

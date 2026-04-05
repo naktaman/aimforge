@@ -101,9 +101,9 @@ function RadarChart({ axes }: { axes: RadarAxis[] }) {
 
     const polygon = g.append('polygon')
       .attr('points', zeroPoints.map(p => p.join(',')).join(' '))
-      .attr('fill', '#f0913a')
+      .attr('fill', '#4A9EDE')
       .attr('fill-opacity', 0.25)
-      .attr('stroke', '#f0913a')
+      .attr('stroke', '#4A9EDE')
       .attr('stroke-width', 2);
 
     // 중심→실제값 트랜지션 (600ms, easeOutCubic)
@@ -117,7 +117,7 @@ function RadarChart({ axes }: { axes: RadarAxis[] }) {
       g.append('circle')
         .attr('cx', 0).attr('cy', 0)
         .attr('r', 4)
-        .attr('fill', '#f0913a')
+        .attr('fill', '#4A9EDE')
         .attr('opacity', 0)
         .transition()
         .duration(600)
@@ -140,7 +140,7 @@ function RadarChart({ axes }: { axes: RadarAxis[] }) {
         .attr('x', labelR * Math.cos(angle))
         .attr('y', labelR * Math.sin(angle) + 14)
         .attr('text-anchor', 'middle')
-        .attr('fill', '#f0913a')
+        .attr('fill', '#4A9EDE')
         .attr('font-size', '11px')
         .attr('font-weight', 'bold')
         .text(`${axes[i].value.toFixed(0)}`);

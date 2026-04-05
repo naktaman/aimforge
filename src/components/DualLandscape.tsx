@@ -97,7 +97,7 @@ export default function DualLandscape({ onBack }: Props) {
 
     // 무빙 커브 (주황색)
     ctx.beginPath();
-    ctx.strokeStyle = '#f5a623';
+    ctx.strokeStyle = '#6B8DB5';
     ctx.lineWidth = 2;
     movingCurve.forEach(([x, y], i) => {
       const px = toX(x), py = toY(y);
@@ -109,7 +109,7 @@ export default function DualLandscape({ onBack }: Props) {
     if (recommendation) {
       const wx = toX(recommendation.finalCm360);
       ctx.beginPath();
-      ctx.strokeStyle = '#f0913a';
+      ctx.strokeStyle = '#4A9EDE';
       ctx.lineWidth = 2;
       ctx.setLineDash([5, 5]);
       ctx.moveTo(wx, pad.top);
@@ -119,11 +119,11 @@ export default function DualLandscape({ onBack }: Props) {
 
       // 최적점 마커
       ctx.beginPath();
-      ctx.fillStyle = '#f0913a';
+      ctx.fillStyle = '#4A9EDE';
       ctx.arc(wx, toY(80), 6, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = '#f0913a';
+      ctx.fillStyle = '#4A9EDE';
       ctx.font = 'bold 13px monospace';
       ctx.textAlign = 'center';
       ctx.fillText(`${recommendation.finalCm360.toFixed(1)}`, wx, pad.top - 8);
@@ -135,7 +135,7 @@ export default function DualLandscape({ onBack }: Props) {
     ctx.arc(toX(staticOpt), toY(100), 5, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = '#f5a623';
+    ctx.fillStyle = '#6B8DB5';
     ctx.beginPath();
     ctx.arc(toX(movingOpt), toY(100), 5, 0, Math.PI * 2);
     ctx.fill();
@@ -157,10 +157,10 @@ export default function DualLandscape({ onBack }: Props) {
     ctx.fillStyle = '#38bdf8';
     ctx.fillRect(pad.left + 10, legendY - 8, 12, 3);
     ctx.fillText(t('landscape.static'), pad.left + 28, legendY);
-    ctx.fillStyle = '#f5a623';
+    ctx.fillStyle = '#6B8DB5';
     ctx.fillRect(pad.left + 80, legendY - 8, 12, 3);
     ctx.fillText(t('landscape.moving'), pad.left + 98, legendY);
-    ctx.fillStyle = '#f0913a';
+    ctx.fillStyle = '#4A9EDE';
     ctx.fillRect(pad.left + 150, legendY - 8, 12, 3);
     ctx.fillText(t('landscape.weighted'), pad.left + 168, legendY);
   }, [staticOpt, movingOpt, ratio, recommendation, t]);

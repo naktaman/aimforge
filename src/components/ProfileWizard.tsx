@@ -65,7 +65,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
   /** 카테고리 → 아바타 배경색 */
   const CATEGORY_COLORS: Record<string, string> = {
     fps: '#60a5fa', tactical: '#34d399', 'battle-royale': '#fbbf24',
-    tps: '#f0913a', arena: '#a78bfa', default: '#a78bfa',
+    tps: '#4A9EDE', arena: '#a78bfa', default: '#a78bfa',
   };
   const FILTER_CATEGORIES = ['all', 'fps', 'tactical', 'battle-royale', 'tps', 'arena'] as const;
   const CATEGORY_LABEL_KEYS: Record<string, string> = {

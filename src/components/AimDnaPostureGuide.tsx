@@ -230,7 +230,7 @@ interface Props {
 
 const BAND_COLOR: Record<SensBand, string> = {
   high: '#f87171',
-  mid:  '#f5a623',
+  mid:  '#6B8DB5',
   low:  '#4ecdc4',
 };
 

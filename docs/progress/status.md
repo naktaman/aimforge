@@ -304,6 +304,151 @@
 - **Onboarding.tsx**: `CATEGORY_COLORS`에 trainer 색상(`#22d3ee`) 추가 (TS 컴파일 에러 수정)
 - 빌드 검증: Rust 147/147 통과, npm build 성공 (1,448 kB), TS 에러 0
 
+### Cold Forge UI Phase 1: CSS 변수 + 컬러 팔레트 교체 (2026-04-05) [claude/naughty-germain]
+
+#### :root 전면 교체 — Cold Forge 다크 테마
+- **Core Palette**: --bg-deep(#0A0E14), --bg-base(#0F1318), --bg-elevated(#161B22), --surface-low/mid/high, --border-subtle/default/strong
+- **Metal & Chrome 6단계**: --metal-steel-dark ~ --metal-silver-white
+- **Accent 오렌지→블루**: --accent-primary(#4A9EDE), --accent-cyan(#00D4FF), --accent-ice(#B8E6FF)
+- **기존 변수 호환 매핑**: --bg-primary/--bg-secondary/--accent 등 → Cold Forge 토큰 참조 (하위호환)
+- **그라디언트 5종**: gradient-metal-panel, gradient-chrome-edge, gradient-cyan-glow, gradient-metal-button, gradient-metal-button-pressed
+- **금속 노이즈 텍스처**: SVG feTurbulence 기반 --noise-texture
+- **라이트 테마**: accent 오렌지→블루(#3B82F6) 교체
+
+#### 하드코딩 오렌지 색상 일괄 교체
+- **styles.css**: rgba(240,145,58,...) 35+곳 → rgba(74,158,222,...), hex #f0913a/#fbbf6a 등 교체
+- **컴포넌트 11개**: #f0913a(18곳) → #4A9EDE, #f5a623(9곳) → #6B8DB5 교체
+  - AimDnaHistory, AimDnaResult, CrossGameComparison, DualLandscape, Onboarding, ProfileWizard, RecoilEditor, RoutineBuilder, AimDnaPostureGuide, ReadinessWidget, TrajectoryAnalysis
+- 빌드 검증: npm build 성공 (1,448 kB), TS 에러 0
+
+## 다음 작업
+
+- Cold Forge Phase 2: 레이아웃, 금속 패널, 버튼 스타일링
+- 사용자 테스트 피드백 반영
+
+### P0 디자인 감사 수정 ✅ (2026-04-05) [claude/fervent-dewdney → master]
+
+#### P0-1: 게임 선택 그리드 개선
+- **이니셜 아바타**: 48×48 원형, 게임명 첫 2글자, 카테고리별 색상 (FPS=#60a5fa, 전술=#34d399, 배틀로얄=#fbbf24, TPS=#f0913a, 기타=#a78bfa)
+- **검색 필드**: 다크 인풋, 한/영 실시간 필터링 (GAME_DATABASE의 nameKo 포함)
+- **카테고리 필터 칩**: [전체/FPS/전술 FPS/배틀로얄/TPS/기타] 가로 스크롤, 색상 도트
+- **적용 위치**: Onboarding.tsx + ProfileWizard.tsx 양쪽
+
+#### P0-2: 온보딩 단계 전환 애니메이션
+- **AnimatePresence + motion**: 다음=좌→우 슬라이드, 이전=우→좌, 0.25s easeInOut
+- **DPI 유효성**: 100~32000 범위 밖이면 빨간 테두리 + 에러 메시지
+- **감도 유효성**: 0 이하면 에러 표시
+- **게임 미선택**: "게임을 선택해주세요" 안내
+
+수정 파일: Onboarding.tsx, ProfileWizard.tsx, styles.css, en.json, ko.json
+
+### P1 디자인 개선 ✅ (2026-04-05) [claude/xenodochial-merkle → master]
+- ScenarioSelect: 텍스트 아이콘('///', '~~~', '<->') → 인라인 SVG 아이콘 (18px, currentColor)
+- AimDnaResult 레이더 차트: d3.transition() 600ms draw 애니메이션 (중심→실제값, easeOutCubic)
+- AimDnaResult + ScenarioSelect: AnimatePresence motion fade 탭 전환 (0.2s)
+- EmptyState.tsx 범용 컴포넌트 신규 생성 (icon, title, description, action props + CSS)
+- 라이트 테마 glow 변수 opacity 0.15→0.22 (accent, success, info, warning)
+- 수정 파일: ScenarioSelect.tsx, AimDnaResult.tsx, EmptyState.tsx (신규), styles.css
+
+### P2 디자인 개선 ✅ (2026-04-05) [claude/funny-kirch → master]
+- 하드코딩 색상 → CSS 시맨틱 변수 (--color-hit, --color-miss, --color-amber 등 13개) + 라이트 테마 대응값
+- font-size 하드코딩 → 9단계 폰트 스케일 변수 (--font-xs ~ --font-display) 110+ 곳 교체
+- font-weight 산발적 사용 → 변수 체계 (--fw-normal ~ --fw-black) 80+ 곳 통일
+- 탭 컴포넌트 ARIA 접근성: role="tablist"/"tab", aria-selected 8개 탭그룹 (AimDnaResult, ScenarioSelect, ProgressDashboard 등)
+- 아이콘 버튼 aria-label: 테마 토글, 스왑 버튼, 뒤로가기 버튼
+- state별 glow 변수 (--glow-accent-sm/md/lg/focus, --glow-success-sm/lg, --glow-danger-sm, --glow-info-sm) 통합
+- SessionHeatmap: 밀도 색상 범례 바 (blue→green→yellow→red) + 히트/미스 마커 범례 추가
+- 인라인 스타일 하드코딩 색상 CSS 변수화 (AimDnaHistory, DualLandscape, MultiplierCurve 등 15개 컴포넌트)
+- 수정 파일: styles.css, App.tsx, 15개 컴포넌트 (17파일 508+/378-)
+
+### 보안 코드 감사 (2026-04-05) [claude/brave-mccarthy]
+- 7개 항목 정적 분석 (읽기 전용): IPC, SQLite, XSS, 시크릿, 파일시스템, 의존성, 프라이버시
+- **High 1건**: CSP 비활성화 (`tauri.conf.json` `"csp": null`)
+- **Medium 1건**: IPC String 파라미터 길이 제한 없음
+- **Low 2건**: innerHTML 1건 (숫자 데이터), 크래시 로그 경로 노출 가능
+- **안전**: SQL 인젝션 0건 (100% 파라미터 바인딩), API키 하드코딩 0건, npm 취약점 0건, path traversal 방어 적용
+- 상세: `docs/security-audit.md`
+
+### 보안 개선 Phase 1 ✅ (2026-04-05) [claude/thirsty-gagarin → master]
+- **CSP 강화**: `tauri.conf.json` `"csp": null` → strict 정책 (default-src 'self', unsafe-eval 미포함)
+- **devTools**: Release 빌드 기본 비활성화 확인 (Tauri 2 기본값, 추가수정 불필요)
+- **Capabilities 세분화**: `core:default` + `log:default` 최소 권한 설정, 설명 한국어화
+- **npm audit**: 취약점 0건
+- **cargo audit**: 18건 warning — 전부 Tauri 업스트림 전이적 의존성 (GTK3 unmaintained 11건, unic-* unmaintained 5건, proc-macro-error unmaintained 1건, glib unsound 1건). 직접 수정 불가, Tauri 업데이트 시 해소 예정
+- 수정 파일: `src-tauri/tauri.conf.json`, `src-tauri/capabilities/default.json`
+
+### 보안 개선 Phase 2 ✅ (2026-04-05) [claude/stoic-poitras → master]
+- **error.rs 신규**: `AppError` (내부 에러 5변형: Validation/Database/Lock/NotFound/Internal) + `PublicError` (프론트 전달용: message+code)
+- **validate.rs 신규**: 입력값 범위 검증 헬퍼 10개 — DPI(100-32000), sensitivity(>0), FOV(1-179), 문자열(비어있지않음), ID(>=0), score(0-1), cm360(>0), positive_f64, non_negative_f64, zoom_ratio(≥1)
+- **PublicError 패턴**: 전체 13개 commands.rs의 반환 타입을 `Result<T, String>` → `Result<T, PublicError>`로 전환
+  - DB 경로, SQL 에러 텍스트, 시스템 경로 프론트엔드 노출 차단
+  - 내부 에러는 log::error!/log::warn!으로만 기록
+  - Validation/NotFound 에러는 사용자 메시지 그대로 전달 (입력 교정 가능)
+- **IPC 입력 검증**: 모든 `#[tauri::command]` 진입점에 입력값 범위 검증 추가
+- **lock_state() 헬퍼**: Mutex lock 에러 처리 통일 (PoisonError → AppError::Lock)
+- **주석 정리**: calibration/screening.rs 방치 TODO 1건 정리
+- 수정 파일: 15개 수정 + 2개 신규 (error.rs, validate.rs), 928+/379-
+
+### P3 디자인 감사: 키보드 접근성 + EmptyState + 반응형 ✅
+- **키보드 접근성**: `useTabKeyboard` 훅 신규 (ArrowLeft/Right/Home/End + tabIndex 로빙, WAI-ARIA Tabs 패턴)
+  - 7개 tablist 적용: AimDnaResult, ScenarioSelect×2, AimDnaGripGuide, ProgressDashboard×2, TrainingPrescription
+- **EmptyState 적용**: SessionHistory, ProgressDashboard, TrainingPrescription, AimDnaResult에 아이콘+제목+설명+액션 빈 상태 UI
+  - i18n 키 8개 추가 (en.json + ko.json)
+- **반응형 레이아웃**: `@media (max-width: 1100px/1000px)` — 그리드 1열 전환, 탭 스크롤, 카드 span 해제
+  - tauri.conf.json minWidth 1280→960, minHeight 720→640
+- 수정 파일: 10개 수정 + 1개 신규 (useTabKeyboard.ts), 238+/22-
+
+---
+
+### v0.2.0 릴리즈 준비 ✅ (2026-04-05) [claude/sleepy-bardeen → master]
+- **CI 보안 감사**: `.github/workflows/security-audit.yml` — cargo audit + npm audit (push/PR/주간 자동 실행)
+- **버전 업데이트**: 0.1.0 → 0.2.0 (Cargo.toml, tauri.conf.json, package.json)
+- **CHANGELOG.md**: 0.1.0 이후 변경사항 요약 (코드품질, UI디자인, 보안, 기능, CI)
+
+### 줌 캘리브레이션 P2 + P1.5 + P1 (2026-04-05) [claude/jovial-chatterjee]
+
+#### P2: ZoomTier 확장 + 테스트환경 개선
+- **ZoomTier 7단계**: `1x/2x/4x/6x/8x/10x/12x` — 각 단계별 거리/타겟크기/속도 그라데이션
+- **WeaponSystem 프리셋 추가**: `zoom_6x`(FOV 17°, sens 0.42), `zoom_10x`(FOV 10.3°, sens 0.3), `zoom_12x`(FOV 8.6°, sens 0.25)
+- **ZoomMultiFlickScenario**: 4x 고정 → 배율 파라미터로 받도록 수정 (`zoomPreset` 생성자 인자)
+- **동적 이동범위 제한**: ±30° 고정 → `min(fov/2 × 0.8, 30)` — ZoomSteady + ZoomMultiFlick 양쪽 적용
+
+#### P1.5: 에이밍 타입별 k 분리
+- **Rust k_fitting.rs**: `AimType` enum (Tracking/Flicking/Combined) + `GameZoomProfile` struct + `get_effective_k()` 가중 평균
+- **기본 게임 줌 패턴 5종**: CS2 AWP(0/100), Apex 3x(70/30), OW2 아나(90/10), R6 ACOG(40/60), CoD ADS(80/20)
+- **fit_k_parameter_with_aim_type()**: aim_type 파라미터 추가 (backward compatible)
+- **TS 미러**: `physics.ts`에 `AimType`, `AimTypeKResult`, `GameZoomProfile`, `getEffectiveK()` 추가
+
+#### P1: 크로스게임 줌 감도 변환
+- **Rust 커맨드**: `convert_crossgame_zoom_sensitivity` — 소스/타겟 게임, 옵틱, piecewise_k/aim_type_k 지원
+- **CrossGameConverter.tsx**: 소스/타겟 게임 선택 + 감도 입력 + 7단계 줌 배율 → 개인 k로 변환 결과 표시
+- **ZoomProfileChart.tsx**: 배율 vs k값 SVG 차트 (GPChart 패턴 따름, 측정/보간 포인트 + piecewise 구간 + tracking/flicking k 참조선)
+
+#### 캘리브레이션 모드 네이밍 + 데이터 품질 종료조건
+- **ZoomCalibrationMode enum**: Light(3배율/글로벌k) | Standard(5배율/tracking+flicking/piecewise_k) | Deep(7배율/완전 piecewise_k+에이밍타입별)
+- **DataQualityStatus**: 전체 정밀도(%), 배율별 "sufficient/needs_more/pending" 상태, GP EI 수렴 + k 분산 임계값 기반
+- **ZoomCalibrationStatus 확장**: `calibration_mode` + `data_quality` 필드 추가
+- **StartZoomCalibrationParams**: `calibration_mode` 파라미터 추가 ("light"/"standard"/"deep")
+
+수정 파일 11개:
+- Rust: `k_fitting.rs`, `zoom_calibration/mod.rs`, `zoom_calibration/commands.rs`, `crossgame/commands.rs`, `lib.rs`
+- TS: `types.ts`, `physics.ts`, `ZoomSteadyScenario.ts`, `ZoomMultiFlickScenario.ts`, `WeaponSystem.ts`
+- React: `CrossGameConverter.tsx` (신규), `ZoomProfileChart.tsx` (신규)
+
+빌드 검증: Rust 147/147 통과, npm build 성공 (1,447 kB), TS 에러 0
+
+### 줌 캘리브레이션 머지 + 에임 트레이너 DB 추가 ✅ (2026-04-05) [dazzling-moore]
+
+#### Step 1: jovial-chatterjee 워크트리 머지 → master
+- 미커밋 변경사항 커밋 후 `claude/jovial-chatterjee` → master no-ff 머지
+- 13개 파일 (504+/14-): k_fitting.rs, zoom_calibration/mod.rs, commands.rs, crossgame/commands.rs, lib.rs, CrossGameConverter.tsx, ZoomProfileChart.tsx, WeaponSystem.ts, ZoomSteadyScenario.ts, ZoomMultiFlickScenario.ts, physics.ts, types.ts, status.md
+
+#### Step 2: 에임 트레이너 3개 DB 추가
+- **game_db/mod.rs**: Tier1(KovaaK's 2.0, Aim Lab), Tier2(Aiming.Pro) — yaw=0.022, fov=103.0, horizontal
+- **gameDatabase.ts**: 동일 3개 + `GameCategory`에 `'trainer'` 타입 추가
+- **Onboarding.tsx**: `CATEGORY_COLORS`에 trainer 색상(`#22d3ee`) 추가 (TS 컴파일 에러 수정)
+- 빌드 검증: Rust 147/147 통과, npm build 성공 (1,448 kB), TS 에러 0
+
 ## 다음 작업
 
 - 사용자 테스트 피드백 반영
@@ -317,8 +462,8 @@
 | 항목 | 상태 |
 |------|------|
 | Rust tests | 147/147 통과 |
-| npm build | 성공 (1,447 kB) |
-| CSS | 102 kB |
+| npm build | 성공 (1,448 kB) |
+| CSS | 104 kB |
 | 타입 에러 | 0 |
 
-> 빌드 시점: 2026-04-05 (줌 캘리브레이션 P2+P1.5+P1 후)
+> 빌드 시점: 2026-04-05 (Cold Forge Phase 1 컬러 교체 후)
