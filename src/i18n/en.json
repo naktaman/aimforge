@@ -112,6 +112,10 @@
   "welcome.dnaDesc": "Measure 8 aim elements to precisely analyze strengths and weaknesses",
   "welcome.crossGameTitle": "Cross-Game Conversion",
   "welcome.crossGameDesc": "Accurately convert sensitivity across 50+ games",
+  "welcome.specGP": "GP Bayesian",
+  "welcome.specDNA": "8-Axis Profile",
+  "welcome.specCross": "50+ Games",
+  "welcome.ctaHint": "Takes about 2 minutes to set up",
 
   "scenario.basicSettings": "Basic Settings",
   "scenario.recoil": "Recoil",

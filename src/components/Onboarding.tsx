@@ -16,15 +16,15 @@ import type { GamePreset } from '../utils/types';
 
 const TOTAL_STEPS = 5;
 
-/** 카테고리 → 아바타 배경색 매핑 */
+/** 카테고리 → 아바타 배경색 매핑 (CSS 변수 사용) */
 const CATEGORY_COLORS: Record<GameCategory | 'default', string> = {
-  fps: '#60a5fa',
-  tactical: '#34d399',
-  'battle-royale': '#fbbf24',
-  tps: '#FFB81C',
-  arena: '#a78bfa',
-  trainer: '#22d3ee',
-  default: '#a78bfa',
+  fps: 'var(--color-cat-fps)',
+  tactical: 'var(--color-cat-tactical)',
+  'battle-royale': 'var(--color-cat-br)',
+  tps: 'var(--color-cat-tps)',
+  arena: 'var(--color-cat-arena)',
+  trainer: 'var(--color-cat-trainer)',
+  default: 'var(--color-cat-arena)',
 };
 
 /** 카테고리 → i18n 키 매핑 */

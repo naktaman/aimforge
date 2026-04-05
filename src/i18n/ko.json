@@ -112,6 +112,10 @@
   "welcome.dnaDesc": "8가지 에임 요소를 측정하여 강점과 약점을 정밀 분석합니다",
   "welcome.crossGameTitle": "크로스게임 변환",
   "welcome.crossGameDesc": "50+ 게임 간 감도를 정확하게 변환합니다",
+  "welcome.specGP": "GP 베이지안",
+  "welcome.specDNA": "8축 프로파일",
+  "welcome.specCross": "50+ 게임",
+  "welcome.ctaHint": "설정에 약 2분 소요",
 
   "scenario.basicSettings": "기본 설정",
   "scenario.recoil": "반동 (리코일)",
