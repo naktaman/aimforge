@@ -7,7 +7,9 @@ import * as d3 from 'd3';
 import { useProgressStore } from '../stores/progressStore';
 import { useTrainingStore } from '../stores/trainingStore';
 import { useTranslation } from '../i18n';
+import { useTabKeyboard } from '../utils/useTabKeyboard';
 import ReadinessWidget from './ReadinessWidget';
+import { EmptyState } from './EmptyState';
 import type { AimDnaHistoryEntry, SkillProgressRow } from '../utils/types';
 
 interface Props {
@@ -169,6 +171,13 @@ export default function ProgressDashboard({ onBack, profileId }: Props) {
   const [selectedFeature, setSelectedFeature] = useState<string>(KEY_FEATURES[0].key);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('30d');
 
+  /** 시간 범위 탭 키보드 네비게이션 */
+  const TIME_KEYS = ['7d', '30d', '90d'] as const;
+  const { containerRef: timeTabRef, onKeyDown: timeTabKeyDown } = useTabKeyboard(TIME_KEYS, (k) => setTimeRange(k as typeof timeRange));
+  /** 피처 탭 키보드 네비게이션 */
+  const FEATURE_KEYS = KEY_FEATURES.map(f => f.key);
+  const { containerRef: featureTabRef, onKeyDown: featureTabKeyDown } = useTabKeyboard(FEATURE_KEYS, setSelectedFeature);
+
   // 초기 데이터 로드
   useEffect(() => {
     const days = TIME_RANGES.find(r => r.key === timeRange)?.days ?? 30;
@@ -211,12 +220,13 @@ export default function ProgressDashboard({ onBack, profileId }: Props) {
       <div className="glass-card page-section">
         <div className="chart-section__header">
           <h3>{t('progress.dnaChangeTrend')}</h3>
-          <div className="tab-group" role="tablist" aria-label={t('progress.dnaChangeTrend')}>
+          <div className="tab-group" role="tablist" aria-label={t('progress.dnaChangeTrend')} ref={timeTabRef} onKeyDown={timeTabKeyDown}>
             {TIME_RANGES.map(r => (
               <button
                 key={r.key}
                 role="tab"
                 aria-selected={timeRange === r.key}
+                tabIndex={timeRange === r.key ? 0 : -1}
                 onClick={() => setTimeRange(r.key as typeof timeRange)}
                 className={`tab-item${timeRange === r.key ? ' active' : ''}`}
               >
@@ -227,12 +237,13 @@ export default function ProgressDashboard({ onBack, profileId }: Props) {
         </div>
 
         {/* 피처 선택 탭 */}
-        <div className="feature-tabs" role="tablist" aria-label="Feature">
+        <div className="feature-tabs" role="tablist" aria-label="Feature" ref={featureTabRef} onKeyDown={featureTabKeyDown}>
           {KEY_FEATURES.map(f => (
             <button
               key={f.key}
               role="tab"
               aria-selected={selectedFeature === f.key}
+              tabIndex={selectedFeature === f.key ? 0 : -1}
               onClick={() => setSelectedFeature(f.key)}
               className={`feature-tab${selectedFeature === f.key ? ' active' : ''}`}
             >
@@ -253,9 +264,16 @@ export default function ProgressDashboard({ onBack, profileId }: Props) {
       <div className="page-section">
         <h3 className="page-section__title">{t('progress.skillProgress')}</h3>
         {skillProgress.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state__text">{t('progress.noTrainingData')}</div>
-          </div>
+          <EmptyState
+            icon={
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <polyline points="8,36 18,24 28,30 40,12" />
+                <polyline points="32,12 40,12 40,20" />
+              </svg>
+            }
+            title={t('empty.progressTitle')}
+            description={t('empty.progressDesc')}
+          />
         ) : (
           <div className="skill-grid">
             {skillProgress.map(s => (

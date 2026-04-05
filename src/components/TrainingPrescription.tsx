@@ -5,6 +5,8 @@
 import { useState, useEffect } from 'react';
 import { useTrainingStore } from '../stores/trainingStore';
 import { useTranslation } from '../i18n';
+import { useTabKeyboard } from '../utils/useTabKeyboard';
+import { EmptyState } from './EmptyState';
 
 interface Props {
   onBack: () => void;
@@ -43,6 +45,9 @@ export default function TrainingPrescription({ onBack, onTrainingStart, profileI
   const { t } = useTranslation();
   const { prescriptions, isLoading, loadPrescriptions, selectPrescription } = useTrainingStore();
   const [sourceFilter, setSourceFilter] = useState<'all' | 'single_game' | 'cross_game'>('all');
+  /** 소스 필터 탭 키보드 네비게이션 */
+  const SOURCE_KEYS = ['all', 'single_game', 'cross_game'] as const;
+  const { containerRef: sourceTabRef, onKeyDown: sourceTabKeyDown } = useTabKeyboard(SOURCE_KEYS, (k) => setSourceFilter(k as typeof sourceFilter));
 
   /** 초기 로드 */
   useEffect(() => {
@@ -64,12 +69,13 @@ export default function TrainingPrescription({ onBack, onTrainingStart, profileI
 
       {/* 소스 필터 탭 + 새로고침 버튼 */}
       <div className="page-header">
-        <div className="tab-group" role="tablist" aria-label={t('prescription.title')}>
+        <div className="tab-group" role="tablist" aria-label={t('prescription.title')} ref={sourceTabRef} onKeyDown={sourceTabKeyDown}>
           {(['all', 'single_game', 'cross_game'] as const).map(tab => (
             <button
               key={tab}
               role="tab"
               aria-selected={sourceFilter === tab}
+              tabIndex={sourceFilter === tab ? 0 : -1}
               className={`tab-item${sourceFilter === tab ? ' active' : ''}`}
               onClick={() => setSourceFilter(tab)}
             >
@@ -88,11 +94,17 @@ export default function TrainingPrescription({ onBack, onTrainingStart, profileI
 
       {/* 빈 상태 */}
       {filtered.length === 0 && !isLoading && (
-        <div className="empty-state">
-          <p className="empty-state__text">
-            {t('prescription.noData')}
-          </p>
-        </div>
+        <EmptyState
+          icon={
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <circle cx="24" cy="24" r="16" />
+              <line x1="24" y1="16" x2="24" y2="26" />
+              <circle cx="24" cy="32" r="1.5" fill="currentColor" stroke="none" />
+            </svg>
+          }
+          title={t('empty.prescriptionTitle')}
+          description={t('empty.prescriptionDesc')}
+        />
       )}
 
       {/* 처방 목록 */}

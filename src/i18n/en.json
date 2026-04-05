@@ -820,5 +820,15 @@
   "posture.liftOffFrequency": "Lift-off Frequency",
   "posture.armMovement": "Arm Movement Range",
   "posture.tips": "Improvement Tips",
-  "posture.watchOut": "Watch Out"
+  "posture.watchOut": "Watch Out",
+
+  "empty.historyTitle": "No Session Records",
+  "empty.historyDesc": "Complete a training session to see your history here.",
+  "empty.historyAction": "Start Training",
+  "empty.progressTitle": "No Training Data",
+  "empty.progressDesc": "Complete training sessions to track your skill progress.",
+  "empty.prescriptionTitle": "No Prescriptions",
+  "empty.prescriptionDesc": "Complete Aim DNA analysis first to get personalized training prescriptions.",
+  "empty.dnaTitle": "No DNA Data",
+  "empty.dnaDesc": "Complete enough training sessions to generate your Aim DNA profile."
 }

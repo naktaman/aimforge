@@ -5,6 +5,7 @@
  */
 import { useState } from 'react';
 import { useTranslation } from '../i18n';
+import { useTabKeyboard } from '../utils/useTabKeyboard';
 import type { AimDnaProfile } from '../utils/types';
 
 type GripType = 'palm' | 'claw' | 'fingertip' | 'relaxed-claw';
@@ -325,6 +326,9 @@ export function AimDnaGripGuide({ dna }: Props) {
   const { t, locale } = useTranslation();
   const suggested = suggestGrip(dna ?? null);
   const [selected, setSelected] = useState<GripType>(suggested ?? 'claw');
+  /** 그립 탭 키보드 네비게이션 */
+  const GRIP_KEYS = ['palm', 'claw', 'fingertip', 'relaxed-claw'] as const;
+  const { containerRef: gripTabRef, onKeyDown: gripTabKeyDown } = useTabKeyboard<GripType>(GRIP_KEYS, setSelected);
 
   const grip = GRIPS.find(g => g.id === selected)!;
   /** 현재 로케일에 맞는 텍스트 선택 헬퍼 */
@@ -344,12 +348,13 @@ export function AimDnaGripGuide({ dna }: Props) {
       )}
 
       {/* 그립 탭 선택 */}
-      <div className="grip-tabs" role="tablist" aria-label={t('dna.gripGuide')}>
+      <div className="grip-tabs" role="tablist" aria-label={t('dna.gripGuide')} ref={gripTabRef} onKeyDown={gripTabKeyDown}>
         {GRIPS.map(g => (
           <button
             key={g.id}
             role="tab"
             aria-selected={selected === g.id}
+            tabIndex={selected === g.id ? 0 : -1}
             className={`grip-tab ${selected === g.id ? 'active' : ''} ${suggested === g.id ? 'suggested' : ''}`}
             onClick={() => setSelected(g.id)}
           >

@@ -6105,3 +6105,56 @@ body {
   background: rgba(240, 145, 58, 0.3);
   color: #fff;
 }
+
+/* ══════════════════════════════════════════════════════
+   반응형 레이아웃 — 윈도우 리사이즈 대응 (minWidth: 960px)
+   ══════��═══════════════════════════════════════════════ */
+
+/* 1100px 이하: 그리드 2열 → 1열 전환 */
+@media (max-width: 1100px) {
+  /* DNA 상세 카드 1열 */
+  .feature-cards {
+    grid-template-columns: 1fr;
+  }
+  /* 도구 카드 wide 항목 span 해제 */
+  .tool-card-wide {
+    grid-column: span 1;
+  }
+  /* 감도 도구 그리드 최소폭 축소 */
+  .sensitivity-tools, .analysis-cards {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+  /* 스킬 그리드 최소폭 축��� */
+  .skill-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  }
+  /* 진행 대시보드 상단 세로 배��� */
+  .progress-top {
+    flex-direction: column;
+  }
+  .progress-top__readiness {
+    flex: 0 0 auto;
+  }
+}
+
+/* 1000px 이하: 탭 스크롤 + 설정 그리드 축소 */
+@media (max-width: 1000px) {
+  /* 탭 바 스크롤 가능 */
+  .main-tabs, .dna-tabs, .feature-tabs, .sub-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  /* 탭 버튼 축소 방지 */
+  .main-tab, .dna-tab, .feature-tab, .sub-tab, .tab-item {
+    flex-shrink: 0;
+  }
+  /* 설정 그리드 2열 */
+  .settings-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+  /* 감도 대시보드 상태 카드 2열 */
+  .sd-status-cards {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

@@ -15,8 +15,8 @@
         "title": "AimForge",
         "width": 1920,
         "height": 1080,
-        "minWidth": 1280,
-        "minHeight": 720,
+        "minWidth": 960,
+        "minHeight": 640,
         "resizable": true,
         "fullscreen": false,
         "decorations": true

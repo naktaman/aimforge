@@ -11,12 +11,14 @@ import { useTranslation } from '../i18n';
 import { useAimDnaStore } from '../stores/aimDnaStore';
 import { useEngineStore } from '../stores/engineStore';
 import { computeRadarAxes } from '../utils/radarUtils';
+import { useTabKeyboard } from '../utils/useTabKeyboard';
 import type { AimDnaProfile, RadarAxis, FeatureSufficiency } from '../utils/types';
 import { AimDnaSensitivitySelector } from './AimDnaSensitivitySelector';
 import { AimDnaGripGuide } from './AimDnaGripGuide';
 import { AimDnaPostureGuide } from './AimDnaPostureGuide';
 import { AimDnaInsights } from './AimDnaInsights';
 import { AimDnaHistory } from './AimDnaHistory';
+import { EmptyState } from './EmptyState';
 import type { GearSelection } from './AimDnaSensitivitySelector';
 
 /** 탭 목록 */
@@ -196,6 +198,10 @@ export function AimDnaResult({ onBack }: Props) {
   /** 기어 선택 상태 — 인사이트와 공유 */
   const [gear, setGear] = useState<GearSelection>({ mouse: null, mousepad: null });
 
+  /** 탭 키보드 네비게이션 */
+  const DNA_TAB_KEYS = ['overview', 'gear', 'grip', 'posture', 'insights', 'history'] as const;
+  const { containerRef: dnaTabRef, onKeyDown: dnaTabKeyDown } = useTabKeyboard<DnaTab>(DNA_TAB_KEYS, setTab);
+
   // 추세 분석 로드
   useEffect(() => {
     if (currentDna) {
@@ -206,8 +212,19 @@ export function AimDnaResult({ onBack }: Props) {
   if (!currentDna) {
     return (
       <main className="app-main">
-        <p>{t('dna.noData')}</p>
-        <button className="btn-secondary" onClick={onBack}>{t('common.back')}</button>
+        <EmptyState
+          icon={
+            <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <circle cx="24" cy="24" r="16" />
+              <path d="M18 18 L30 30 M30 18 L18 30" />
+            </svg>
+          }
+          title={t('empty.dnaTitle')}
+          description={t('empty.dnaDesc')}
+          action={
+            <button className="btn-secondary" onClick={onBack}>{t('common.back')}</button>
+          }
+        />
       </main>
     );
   }
@@ -220,7 +237,7 @@ export function AimDnaResult({ onBack }: Props) {
         <h2>Aim DNA</h2>
 
         {/* 탭 네비게이션 */}
-        <div className="dna-tabs" role="tablist" aria-label="Aim DNA">
+        <div className="dna-tabs" role="tablist" aria-label="Aim DNA" ref={dnaTabRef} onKeyDown={dnaTabKeyDown}>
           {([
             { id: 'overview',  labelKey: 'dna.analysisResult' },
             { id: 'gear',      labelKey: 'dna.gearSelect' },
@@ -233,6 +250,7 @@ export function AimDnaResult({ onBack }: Props) {
               key={item.id}
               role="tab"
               aria-selected={tab === item.id}
+              tabIndex={tab === item.id ? 0 : -1}
               className={`dna-tab ${tab === item.id ? 'active' : ''}`}
               onClick={() => setTab(item.id)}
             >

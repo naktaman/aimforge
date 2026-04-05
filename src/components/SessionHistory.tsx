@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useTranslation } from '../i18n';
+import { EmptyState } from './EmptyState';
 import type { SessionSummary, SessionDetail } from '../utils/types';
 
 interface Props {
@@ -72,7 +73,23 @@ export function SessionHistory({ onBack }: Props) {
         {loading ? (
           <p>{t('common.loading')}</p>
         ) : sessions.length === 0 ? (
-          <p>{t('history.empty')}</p>
+          <EmptyState
+            icon={
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <rect x="8" y="6" width="32" height="36" rx="3" />
+                <line x1="16" y1="16" x2="32" y2="16" />
+                <line x1="16" y1="24" x2="28" y2="24" />
+                <line x1="16" y1="32" x2="24" y2="32" />
+              </svg>
+            }
+            title={t('empty.historyTitle')}
+            description={t('empty.historyDesc')}
+            action={
+              <button className="btn-primary" onClick={onBack}>
+                {t('empty.historyAction')}
+              </button>
+            }
+          />
         ) : (
           <table className="history-table">
             <thead>

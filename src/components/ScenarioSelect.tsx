@@ -10,6 +10,7 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { useEngineStore, RECOIL_PRESETS, type RecoilPreset, type FireMode } from '../stores/engineStore';
 import { useUiStore } from '../stores/uiStore';
 import { useTranslation } from '../i18n';
+import { useTabKeyboard } from '../utils/useTabKeyboard';
 import type { GamePreset, ScenarioType, BatteryPreset, StageType } from '../utils/types';
 import { ConversionPanel } from './ConversionPanel';
 import { CrosshairSettings } from './CrosshairSettings';
@@ -148,6 +149,13 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
 
   const [games, setGames] = useState<GamePreset[]>([]);
   const [scenarioType, setScenarioType] = useState<ScenarioType>('flick');
+
+  /** 메인 탭 키보드 네비게이션 */
+  const MAIN_TAB_KEYS = ['sensitivity', 'training', 'analysis'] as const;
+  const { containerRef: mainTabRef, onKeyDown: mainTabKeyDown } = useTabKeyboard<MainTab>(MAIN_TAB_KEYS, setMainTab);
+  /** 훈련 서브탭 키보드 네비게이션 */
+  const SUB_TAB_KEYS = ['catalog', 'custom', 'battery'] as const;
+  const { containerRef: subTabRef, onKeyDown: subTabKeyDown } = useTabKeyboard<TrainingSub>(SUB_TAB_KEYS, setTrainingSub);
 
   // 공통
   const [targetSize, setTargetSize] = useState(3);
@@ -391,7 +399,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
       </section>
 
       {/* ── 메인 탭 네비게이션 (재설계) ── */}
-      <div className="main-tabs" role="tablist" aria-label={t('scenario.tabSensitivity')}>
+      <div className="main-tabs" role="tablist" aria-label={t('scenario.tabSensitivity')} ref={mainTabRef} onKeyDown={mainTabKeyDown}>
         {([
           { key: 'sensitivity' as MainTab, label: t('scenario.tabSensitivity'), emoji: '' },
           { key: 'training' as MainTab, label: t('scenario.tabTraining'), emoji: '' },
@@ -401,6 +409,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
             key={key}
             role="tab"
             aria-selected={mainTab === key}
+            tabIndex={mainTab === key ? 0 : -1}
             className={`main-tab ${mainTab === key ? 'active' : ''}`}
             onClick={() => setMainTab(key)}
           >
@@ -510,7 +519,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
       {mainTab === 'training' && (
         <>
           {/* 훈련 서브 탭 */}
-          <div className="sub-tabs" role="tablist" aria-label={t('scenario.tabTraining')}>
+          <div className="sub-tabs" role="tablist" aria-label={t('scenario.tabTraining')} ref={subTabRef} onKeyDown={subTabKeyDown}>
             {([
               { key: 'catalog' as TrainingSub, label: t('scenario.catalog') },
               { key: 'custom' as TrainingSub, label: t('scenario.customPlay') },
@@ -520,6 +529,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
                 key={key}
                 role="tab"
                 aria-selected={trainingSub === key}
+                tabIndex={trainingSub === key ? 0 : -1}
                 className={`sub-tab ${trainingSub === key ? 'active' : ''}`}
                 onClick={() => setTrainingSub(key)}
               >
