@@ -1094,7 +1094,7 @@ body {
 .calibration-button:disabled { opacity: 0.45; cursor: not-allowed; }
 
 /* ── CalibrationSetup ── */
-.calibration-setup { max-width: 560px; margin: 0 auto; }
+.calibration-setup { max-width: 960px; margin: 0 auto; }
 .calibration-setup h2 { margin-bottom: 4px; }
 .setup-subtitle { color: var(--text-secondary); margin-bottom: 20px; font-size: var(--font-base); }
 
@@ -1146,7 +1146,7 @@ body {
 .setup-actions { display: flex; gap: 12px; justify-content: flex-end; }
 
 /* ── CalibrationProgress ── */
-.calibration-progress { max-width: 560px; margin: 0 auto; text-align: center; }
+.calibration-progress { max-width: 960px; margin: 0 auto; text-align: center; }
 
 .stage-badge { display: flex; gap: 8px; justify-content: center; margin: 12px 0 20px; }
 .badge {
@@ -1214,7 +1214,7 @@ body {
 }
 
 /* ── CalibrationResult ── */
-.calibration-result { max-width: 600px; margin: 0 auto; }
+.calibration-result { max-width: 960px; margin: 0 auto; }
 .calibration-result h2 { margin-bottom: 20px; }
 
 .result-recommendation {
@@ -6505,6 +6505,29 @@ body {
 
 .sd-cta-next {
   min-width: 180px;
+}
+
+/* 감도 대시보드 empty state */
+.sd-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  padding: var(--space-12) var(--space-4);
+  text-align: center;
+  flex: 1;
+}
+.sd-empty-text {
+  color: var(--text-muted);
+  font-size: var(--font-base);
+}
+
+/* 커뮤니티 empty state */
+.share-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: var(--space-8) 0;
 }
 
 /* 최종 결과 */

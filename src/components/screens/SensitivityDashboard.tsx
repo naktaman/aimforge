@@ -1,8 +1,8 @@
 /**
  * 감도 최적화 대시보드 — 메인 컨테이너
  * 5층 구조: 헤더 → GP차트 → 수렴바 → 상태카드 → CTA
+ * 데이터 없으면 empty state 표시
  */
-import { useEffect } from 'react';
 import { motion } from 'motion/react';
 import { useGPDashboardStore } from '../../stores/gpDashboardStore';
 import { useEngineStore } from '../../stores/engineStore';
@@ -10,6 +10,7 @@ import { GPChart } from './GPChart';
 import { ConvergenceBar } from './ConvergenceBar';
 import { OptimalResult } from './OptimalResult';
 import { CONVERGENCE_MODE_CONFIG } from '../../utils/gpTypes';
+import { useTranslation } from '../../i18n';
 
 /** 스테이지 표시 라벨 */
 const STAGE_LABELS: Record<string, string> = {
@@ -21,13 +22,10 @@ const STAGE_LABELS: Record<string, string> = {
 export function SensitivityDashboard() {
   const store = useGPDashboardStore();
   const setScreen = useEngineStore(s => s.setScreen);
+  const { t } = useTranslation();
 
-  /** 컴포넌트 마운트 시 mock 데이터 로드 (실데이터 없으면) */
-  useEffect(() => {
-    if (store.observations.length === 0 && !store.finalResult) {
-      store.loadMockData();
-    }
-  }, []);
+  /** 데이터 존재 여부 */
+  const hasData = store.observations.length > 0 || store.finalResult !== null;
 
   /** 뒤로가기 */
   const handleBack = () => setScreen('settings');
@@ -52,6 +50,40 @@ export function SensitivityDashboard() {
 
   const modeConfig = CONVERGENCE_MODE_CONFIG[store.convergenceMode];
 
+  /** 다음 라운드 시작 — 캘리브레이션 진행 화면으로 이동 */
+  const handleNextRound = () => {
+    setScreen('calibration-progress');
+  };
+
+  /* 데이터 없을 때 empty state */
+  if (!hasData) {
+    return (
+      <motion.div
+        className="sensitivity-dashboard"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="sd-header">
+          <button className="sd-back-btn" onClick={handleBack} title="뒤로" aria-label="뒤로">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path d="M12 4L6 10L12 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+          <div className="sd-header-text">
+            <h1 className="sd-title">{t('sensitivity.title')}</h1>
+          </div>
+        </div>
+        <div className="sd-empty-state">
+          <p className="sd-empty-text">{t('empty.calibrationDashboard')}</p>
+          <button className="btn-primary" onClick={() => setScreen('calibration-setup')}>
+            {t('empty.calibrationAction')}
+          </button>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       className="sensitivity-dashboard"
@@ -67,7 +99,7 @@ export function SensitivityDashboard() {
           </svg>
         </button>
         <div className="sd-header-text">
-          <h1 className="sd-title">감도 최적화</h1>
+          <h1 className="sd-title">{t('sensitivity.title')}</h1>
           <div className="sd-subtitle">
             <span className="sd-mode-badge">{modeConfig.label}</span>
             <span className="sd-stage">{STAGE_LABELS[store.stage] ?? store.stage}</span>
@@ -132,7 +164,7 @@ export function SensitivityDashboard() {
         </div>
       </div>
 
-      {/* 5층: CTA */}
+      {/* 5층: CTA — 다음 라운드 시작 핸들러 연결 */}
       <div className="sd-cta">
         <button className="btn-secondary sd-cta-back" onClick={handleBack}>
           나가기
@@ -140,6 +172,7 @@ export function SensitivityDashboard() {
         <button
           className="btn-primary sd-cta-next"
           disabled={store.stage === 'Complete'}
+          onClick={handleNextRound}
         >
           {store.stage === 'Complete' ? '수렴 완료' : '다음 라운드 시작'}
         </button>

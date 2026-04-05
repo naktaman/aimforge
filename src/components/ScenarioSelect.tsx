@@ -139,27 +139,7 @@ function getSensitivityLevel(cm360: number, t: (key: string) => string): string 
   return t('dash.sensVeryHigh');
 }
 
-/** 미니 바 차트 — 데이터 없을 때 더미 데이터로 시각적 채움 */
-function MiniBarChart({ data, label }: { data: number[]; label: string }) {
-  const max = Math.max(...data, 1);
-  return (
-    <div className="dash-chart">
-      <div className="dash-chart-header">
-        <span className="dash-chart-title">{label}</span>
-      </div>
-      <div className="dash-chart-bars">
-        {data.map((v, i) => (
-          <div key={i} className="dash-chart-bar-wrap">
-            <div
-              className="dash-chart-bar"
-              style={{ height: `${Math.max((v / max) * 100, 4)}%` }}
-            />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
+/* MiniBarChart 삭제됨 — 더미 바 차트 대신 empty state 사용 */
 
 /** 프로그레스 바 아이템 — 우측 리스트용 */
 function ProgressItem({ name, value, color }: { name: string; value: number; color: string }) {
@@ -235,8 +215,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
   /* cm/360 계산 */
   const cm360 = selectedGame ? calcCm360(dpi, sensitivity, selectedGame.yaw) : null;
 
-  /** 더미 차트 데이터 — 실제 데이터가 없을 때 시각적 틀 유지용 */
-  const dummyChartData = [35, 42, 38, 55, 48, 60, 52, 65, 58, 70, 62, 68];
+  /* 더미 차트 데이터 제거됨 — 실데이터 없으면 empty state 표시 */
 
   /** 시나리오 시작 핸들러 */
   const handleStart = () => {
@@ -530,8 +509,18 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
                   )}
                 </div>
 
-                {/* 미니 차트 — 캘리브레이션 히스토리 */}
-                <MiniBarChart data={dummyChartData} label={t('dash.calibrationTrend')} />
+                {/* 캘리브레이션 히스토리 — 데이터 없으면 empty state */}
+                <div className="dash-chart">
+                  <div className="dash-chart-header">
+                    <span className="dash-chart-title">{t('dash.calibrationTrend')}</span>
+                  </div>
+                  <div className="dash-empty-state">
+                    <span className="dash-empty-text">{t('empty.calibrationData')}</span>
+                    <button className="btn-secondary btn-sm" onClick={onCalibration}>
+                      {t('empty.calibrationAction')}
+                    </button>
+                  </div>
+                </div>
               </div>
 
               {/* 우측 30% — 도구 & 프로파일 */}
@@ -781,7 +770,15 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
                 </div>
 
                 {/* 미니 차트 */}
-                <MiniBarChart data={[45, 52, 60, 48, 55, 63, 58, 70, 65, 72, 68, 75]} label={t('dash.scoreTrend')} />
+                {/* 점수 트렌드 — 데이터 없으면 empty state */}
+                <div className="dash-chart">
+                  <div className="dash-chart-header">
+                    <span className="dash-chart-title">{t('dash.scoreTrend')}</span>
+                  </div>
+                  <div className="dash-empty-state">
+                    <span className="dash-empty-text">{t('empty.sessionData')}</span>
+                  </div>
+                </div>
               </div>
 
               {/* 하단: 카테고리 카드 */}
@@ -835,7 +832,15 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
               {/* 중앙 45% — 세션 트렌드 + 분석 도구 */}
               <div className="dash-col-center">
                 <div className="dash-section-label">{t('dash.sessionTrendline')}</div>
-                <MiniBarChart data={dummyChartData} label={t('dash.last90days')} />
+                {/* 세션 트렌드 — 데이터 없으면 empty state */}
+                <div className="dash-chart">
+                  <div className="dash-chart-header">
+                    <span className="dash-chart-title">{t('dash.last90days')}</span>
+                  </div>
+                  <div className="dash-empty-state">
+                    <span className="dash-empty-text">{t('empty.sessionData')}</span>
+                  </div>
+                </div>
 
                 {/* 분석 도구 서브탭 카드 그리드 */}
                 <div className="dash-section-label" style={{ marginTop: 'var(--space-4)' }}>{t('dash.analysisTools')}</div>

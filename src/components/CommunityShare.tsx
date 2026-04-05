@@ -136,17 +136,22 @@ export function CommunityShare({ onBack }: CommunityShareProps) {
 
       {/* 공유 아이템 그리드 */}
       <div className="share-grid">
-        {filtered.map(item => (
-          <div key={item.id} className="share-card">
-            <div className="share-type-badge">{item.contentType === 'crosshair' ? t('share.crosshairLabel') : t('share.routineLabel')}</div>
-            <div className="share-code">{item.shareCode}</div>
-            <div className="share-author">by {item.authorName}</div>
-            <div className="share-stats">
-              <span>♥ {item.likes}</span>
-              <span>↓ {item.downloads}</span>
+        {filtered.length === 0 && !loading ? (
+          /* 검색 결과 없을 때 empty state */
+          <p className="text-secondary share-empty">{t('empty.noSearchResults')}</p>
+        ) : (
+          filtered.map(item => (
+            <div key={item.id} className="share-card">
+              <div className="share-type-badge">{item.contentType === 'crosshair' ? t('share.crosshairLabel') : t('share.routineLabel')}</div>
+              <div className="share-code">{item.shareCode}</div>
+              <div className="share-author">by {item.authorName}</div>
+              <div className="share-stats">
+                <span>♥ {item.likes}</span>
+                <span>↓ {item.downloads}</span>
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

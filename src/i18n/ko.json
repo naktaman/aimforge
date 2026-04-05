@@ -14,7 +14,7 @@
   "nav.recoilEditor": "반동 편집기",
   "nav.conversion": "감도 변환",
 
-  "tool.quickCal": "Quick Calibration",
+  "tool.quickCal": "내 감도 찾기",
   "tool.zoomCal": "Zoom Calibration",
   "tool.history": "세션 히스토리",
   "tool.prescription": "훈련 처방",
@@ -127,7 +127,7 @@
   "scenario.tabTraining": "훈련",
   "scenario.tabAnalysis": "분석",
   "scenario.crosshairSettings": "크로스헤어 설정",
-  "scenario.findOptimalSens": "나만의 최적 감도 찾기",
+  "scenario.findOptimalSens": "내 감도 찾기",
   "scenario.findOptimalSensDesc": "AI가 당신에게 딱 맞는 감도를 찾아드립니다. 여러 시나리오를 플레이하며 자동으로 조정합니다.",
   "scenario.startCalibration": "감도 캘리브레이션 시작",
   "scenario.zoomCalibration": "줌 감도 캘리브레이션",
@@ -872,5 +872,13 @@
   "empty.prescriptionTitle": "처방 없음",
   "empty.prescriptionDesc": "맞춤형 훈련 처방을 받으려면 먼저 Aim DNA 분석을 완료하세요.",
   "empty.dnaTitle": "DNA 데이터 없음",
-  "empty.dnaDesc": "Aim DNA 프로필을 생성하려면 충분한 훈련 세션을 완료하세요."
+  "empty.dnaDesc": "Aim DNA 프로필을 생성하려면 충분한 훈련 세션을 완료하세요.",
+
+  "empty.calibrationData": "아직 캘리브레이션 데이터가 없습니다",
+  "empty.calibrationAction": "내 감도 찾기",
+  "empty.calibrationDashboard": "캘리브레이션을 시작하면 여기에 결과가 표시됩니다",
+  "empty.sessionData": "아직 데이터가 없습니다",
+  "empty.noSearchResults": "검색 결과가 없습니다",
+
+  "sensitivity.title": "감도 최적화"
 }

@@ -371,6 +371,35 @@
 
 ---
 
+### UI 전수검사 P0+P1+P3 긴급 수정 ✅ (2026-04-05) [claude/magical-einstein]
+
+#### P0-1: 더미 차트 데이터 제거 + empty state
+- `ScenarioSelect.tsx`: dummyChartData 변수 삭제, MiniBarChart 컴포넌트 삭제
+- 캘리브레이션 트렌드/세션 트렌드/점수 트렌드 3곳 → empty state ("아직 데이터가 없습니다" + CTA)
+- `gpDashboardStore.ts`: loadMockData() 함수 no-op화 (mock 데이터 생성 코드 삭제)
+- `SensitivityDashboard.tsx`: mock 데이터 로드 useEffect 삭제, 데이터 없을 때 empty state 표시
+
+#### P0-2: '다음 라운드 시작' onClick 연결
+- `SensitivityDashboard.tsx`: 버튼에 handleNextRound onClick 추가 → calibration-progress 화면 이동
+
+#### P1-1: 캘리브레이션 네이밍 통일
+- `tool.quickCal`: "Quick Calibration" → "내 감도 찾기" / "Find My Sensitivity"
+- `scenario.findOptimalSens`: "나만의 최적 감도 찾기" → "내 감도 찾기" / "Find My Sensitivity"
+
+#### P1-2: CommunityShare empty state
+- `CommunityShare.tsx`: filtered.length === 0 시 "검색 결과가 없습니다" empty state
+
+#### P3: 캘리브레이션 화면 max-width 확장
+- `.calibration-setup`: 560px → 960px
+- `.calibration-progress`: 560px → 960px
+- `.calibration-result`: 600px → 960px
+
+수정 파일 7개: ScenarioSelect.tsx, SensitivityDashboard.tsx, CommunityShare.tsx, gpDashboardStore.ts, ko.json, en.json, styles.css
+i18n 키 6개 추가: empty.calibrationData/Action/Dashboard, empty.sessionData, empty.noSearchResults, sensitivity.title
+빌드 검증: npm build 성공 (1,483 kB), TS 에러 0
+
+---
+
 ## 다음 작업
 
 - Silver Forge Phase 2: 금속 패널, 버튼, 컴포넌트 스타일링
