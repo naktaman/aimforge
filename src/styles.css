@@ -2068,19 +2068,18 @@ body {
 /* 메인 콘텐츠 영역 — 나머지 높이 전부 사용 */
 .dash-content {
   flex: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: var(--space-3);
+  overflow: hidden;
 }
 
-/* 3열 그리드 레이아웃 */
+/* 3열 그리드 레이아웃 — 25% / 45% / 30% 비율 */
 .dash-grid-3col {
   display: grid;
-  grid-template-columns: 240px 1fr 260px;
+  grid-template-columns: 1fr 1.8fr 1.2fr;
   grid-template-rows: 1fr auto;
-  gap: var(--space-3);
-  height: 100%;
+  gap: var(--space-4);
+  height: calc(100vh - 120px);
   min-height: 0;
+  padding: var(--space-4);
 }
 
 /* 좌측 컬럼 */
@@ -2609,6 +2608,121 @@ body {
 }
 .dash-analysis-name {
   font-weight: var(--fw-medium);
+}
+
+/* ── 감도 레벨 자연어 설명 ── */
+.dash-sens-desc {
+  font-size: var(--font-xs);
+  color: var(--accent-primary);
+  font-weight: var(--fw-medium);
+  padding: var(--space-1) var(--space-2);
+  background: var(--accent-primary-muted);
+  border-radius: var(--radius-md);
+  display: inline-block;
+  margin-top: var(--space-1);
+}
+
+/* ── 줌 캘리브레이션 섹션 ── */
+.dash-zoom-section {
+  background: var(--surface-low);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.dash-zoom-title {
+  font-size: var(--font-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.dash-zoom-desc {
+  font-size: var(--font-xs);
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+
+/* ── 카탈로그 카테고리 헤더 ── */
+.dash-catalog-category {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  margin-top: var(--space-2);
+}
+.dash-catalog-category:first-child {
+  margin-top: 0;
+}
+.dash-catalog-category-icon {
+  display: inline-flex;
+  color: var(--accent-primary);
+  opacity: 0.8;
+}
+.dash-catalog-category-name {
+  font-size: var(--font-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ── AI 추천 카드 ── */
+.dash-ai-card {
+  background: linear-gradient(135deg, var(--surface-low) 0%, rgba(0, 208, 132, 0.05) 100%);
+  border: 1px solid rgba(0, 208, 132, 0.15);
+  border-radius: var(--radius-xl);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.dash-ai-label {
+  font-size: var(--font-xs);
+  color: var(--accent-cyan);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.dash-ai-text {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ── Empty State ── */
+.dash-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-4);
+  color: var(--text-muted);
+  text-align: center;
+  flex: 1;
+}
+.dash-empty-icon {
+  opacity: 0.3;
+  color: var(--text-tertiary);
+}
+.dash-empty-text {
+  font-size: var(--font-sm);
+  color: var(--text-muted);
+}
+
+/* ── 종합 점수 대형 카드 ── */
+.dash-stat-card.dash-stat-hero {
+  padding: var(--space-5);
+  border-color: var(--accent-primary-muted);
+  background: linear-gradient(135deg, var(--surface-low) 0%, rgba(255, 184, 28, 0.08) 100%);
+}
+.dash-stat-card.dash-stat-hero .dash-stat-value {
+  font-size: var(--font-display);
+  color: var(--accent-primary);
 }
 
 /* ── 크로스헤어 설정 ── */

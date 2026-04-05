@@ -1,7 +1,7 @@
 /**
- * 메인 허브 UI — 레퍼런스 기반 3열 대시보드 레이아웃
+ * 메인 허브 UI — Silver Forge 레퍼런스 기반 3열 대시보드
  * 탭 구조: 감도 프로파일 | 훈련 | 분석
- * 100vh 꽉 채움, 공백 없는 프로페셔널 대시보드
+ * 100vh 꽉 채움, 스크롤 없는 프로페셔널 게이밍 대시보드
  */
 import { useState, useEffect } from 'react';
 import { invoke } from '@tauri-apps/api/core';
@@ -130,6 +130,15 @@ function calcCm360(dpi: number, sens: number, yaw: number): number {
   return (countsPerRev / dpi) * 2.54;
 }
 
+/** cm/360 → 자연어 감도 분류 */
+function getSensitivityLevel(cm360: number, t: (key: string) => string): string {
+  if (cm360 >= 60) return t('dash.sensVeryLow');
+  if (cm360 >= 40) return t('dash.sensLow');
+  if (cm360 >= 25) return t('dash.sensMedium');
+  if (cm360 >= 15) return t('dash.sensHigh');
+  return t('dash.sensVeryHigh');
+}
+
 /** 미니 바 차트 — 데이터 없을 때 더미 데이터로 시각적 채움 */
 function MiniBarChart({ data, label }: { data: number[]; label: string }) {
   const max = Math.max(...data, 1);
@@ -167,7 +176,7 @@ function ProgressItem({ name, value, color }: { name: string; value: number; col
   );
 }
 
-export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onBattery, onHistory }: ScenarioSelectProps) {
+export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoomCalibration, onBattery, onHistory }: ScenarioSelectProps) {
   const [mainTab, setMainTab] = useState<MainTab>('sensitivity');
   const [trainingSub, setTrainingSub] = useState<TrainingSub>('catalog');
   const [showCrosshair, setShowCrosshair] = useState(false);
@@ -194,7 +203,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onBatt
   const SUB_TAB_KEYS = ['catalog', 'custom', 'battery'] as const;
   const { containerRef: subTabRef, onKeyDown: subTabKeyDown } = useTabKeyboard<TrainingSub>(SUB_TAB_KEYS, setTrainingSub);
 
-  // 시나리오 파라미터 상태들
+  /* 시나리오 파라미터 상태 */
   const [targetSize, setTargetSize] = useState(3);
   const [numTargets, setNumTargets] = useState(20);
   const [timeout, setTimeout] = useState(3000);
@@ -422,14 +431,15 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onBatt
               ══════════════════════════════════════════ */}
           {mainTab === 'sensitivity' && (
             <div className="dash-grid-3col">
-              {/* 좌측: 프로파일 통계 카드 */}
+              {/* 좌측 25% — 현재 감도 프로파일 */}
               <div className="dash-col-left">
                 <div className="dash-section-label">{t('dash.currentProfile')}</div>
-                {/* 감도 cm/360 카드 */}
-                <div className="dash-stat-card">
+                {/* cm/360 대형 카드 + 자연어 설명 */}
+                <div className="dash-stat-card dash-stat-accent">
                   <span className="dash-stat-label">cm/360</span>
                   <span className="dash-stat-value">{cm360 ? cm360.toFixed(1) : '—'}</span>
                   <span className="dash-stat-sub">{selectedGame ? selectedGame.name : t('dash.noGame')}</span>
+                  {cm360 && <span className="dash-sens-desc">{getSensitivityLevel(cm360, t)}</span>}
                 </div>
                 {/* DPI 카드 */}
                 <div className="dash-stat-card">
@@ -437,7 +447,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onBatt
                   <span className="dash-stat-value">{dpi}</span>
                   <span className="dash-stat-sub">{t('dash.mouseHardware')}</span>
                 </div>
-                {/* 감도 카드 */}
+                {/* 게임 감도 카드 */}
                 <div className="dash-stat-card">
                   <span className="dash-stat-label">{t('settings.sensitivity')}</span>
                   <span className="dash-stat-value">{sensitivity}</span>
@@ -476,7 +486,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onBatt
                 </div>
               </div>
 
-              {/* 중앙: 캘리브레이션 히어로 + 차트 */}
+              {/* 중앙 45% — 캘리브레이션 허브 */}
               <div className="dash-col-center">
                 <div className="dash-section-label">{t('dash.sensitivityCalibration')}</div>
                 {/* 히어로 CTA */}
@@ -502,14 +512,32 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onBatt
                     )}
                   </div>
                 </div>
-                {/* 미니 차트 — 캘리브레이션 히스토리 또는 더미 */}
+
+                {/* 줌 감도 설정 섹션 */}
+                <div className="dash-zoom-section">
+                  <div className="dash-zoom-title">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                      <circle cx="8" cy="8" r="5" />
+                      <line x1="12" y1="12" x2="16" y2="16" />
+                    </svg>
+                    {t('dash.zoomSensitivity')}
+                  </div>
+                  <p className="dash-zoom-desc">{t('dash.zoomSensDesc')}</p>
+                  {onZoomCalibration && (
+                    <button className="btn-secondary" onClick={onZoomCalibration} disabled={!selectedGame}>
+                      {t('scenario.zoomCalibration')}
+                    </button>
+                  )}
+                </div>
+
+                {/* 미니 차트 — 캘리브레이션 히스토리 */}
                 <MiniBarChart data={dummyChartData} label={t('dash.calibrationTrend')} />
               </div>
 
-              {/* 우측: 도구 바로가기 + 인라인 변환 */}
+              {/* 우측 30% — 도구 & 프로파일 */}
               <div className="dash-col-right">
-                <div className="dash-section-label">{t('dash.quickTools')}</div>
-                {/* 도구 리스트 — 프로그레스 바 스타일 */}
+                {/* 게임 프로파일 리스트 */}
+                <div className="dash-section-label">{t('nav.gameProfile')}</div>
                 <div className="dash-tool-list">
                   <button className="dash-tool-item" onClick={() => useEngineStore.getState().setScreen('game-profiles')}>
                     <span className="dash-tool-icon">
@@ -605,24 +633,38 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onBatt
               ══════════════════════════════════════════ */}
           {mainTab === 'training' && (
             <div className="dash-grid-3col">
-              {/* 좌측: 훈련 통계 */}
+              {/* 좌측 25% — 훈련 요약 */}
               <div className="dash-col-left">
                 <div className="dash-section-label">{t('dash.trainingStats')}</div>
+                {/* 오늘 훈련 통계 */}
                 <div className="dash-stat-card">
-                  <span className="dash-stat-label">{t('dash.totalSessions')}</span>
+                  <span className="dash-stat-label">{t('dash.todaySessions')}</span>
                   <span className="dash-stat-value">—</span>
-                  <span className="dash-stat-sub">{t('dash.allTime')}</span>
+                  <span className="dash-stat-sub">{t('dash.todayNoTraining')}</span>
                 </div>
                 <div className="dash-stat-card">
                   <span className="dash-stat-label">{t('dash.avgScore')}</span>
                   <span className="dash-stat-value">—</span>
                   <span className="dash-stat-sub">{t('dash.recentAvg')}</span>
                 </div>
-                <div className="dash-stat-card">
-                  <span className="dash-stat-label">{t('dash.bestScenario')}</span>
-                  <span className="dash-stat-value">—</span>
-                  <span className="dash-stat-sub">{t('dash.personalBest')}</span>
+
+                {/* AI 추천 시나리오 */}
+                <div className="dash-ai-card">
+                  <span className="dash-ai-label">{t('dash.aiRecommend')}</span>
+                  <span className="dash-ai-text">{t('dash.aiRecommendText')}</span>
                 </div>
+
+                {/* 배터리 테스트 진입 */}
+                {onBattery && (
+                  <button
+                    className="btn-secondary"
+                    style={{ width: '100%', marginTop: 'var(--space-2)' }}
+                    onClick={() => onBattery({ preset: 'TACTICAL' })}
+                    disabled={!selectedGame}
+                  >
+                    {t('scenario.batteryTest')}
+                  </button>
+                )}
 
                 {/* 서브탭: 카탈로그/커스텀/배터리 전환 */}
                 <div className="dash-section-label" style={{ marginTop: 'var(--space-3)' }}>{t('dash.mode')}</div>
@@ -646,29 +688,41 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onBatt
                 </div>
               </div>
 
-              {/* 중앙: 카탈로그/커스텀/배터리 콘텐츠 */}
+              {/* 중앙 45% — 카탈로그/커스텀/배터리 콘텐츠 */}
               <div className="dash-col-center">
                 <div className="dash-section-label">
                   {trainingSub === 'catalog' ? t('scenario.catalog') : trainingSub === 'custom' ? t('scenario.customScenario') : t('scenario.battery')}
                 </div>
 
-                {/* 카탈로그 — 2열 그리드 */}
+                {/* 카탈로그 — 카테고리 헤더 + 아이콘 + 2열 그리드 */}
                 {trainingSub === 'catalog' && (
-                  <div className="dash-catalog-grid">
-                    {TRAINING_CATALOG.flatMap(({ items }) => items).map((item) => (
-                      <button
-                        key={item.type}
-                        className="dash-catalog-card"
-                        disabled={!selectedGame}
-                        onClick={() => onTrainingStart?.({ stageType: item.type })}
-                      >
-                        <div className="dash-catalog-color" style={{ background: item.color }} />
-                        <span className="dash-catalog-name">
-                          {item.name}
-                          {'star' in item && item.star && <span className="star-badge">CORE</span>}
-                        </span>
-                        <span className="dash-catalog-desc">{t(item.descKey)}</span>
-                      </button>
+                  <div>
+                    {TRAINING_CATALOG.map(({ category, items }) => (
+                      <div key={category}>
+                        {/* 카테고리 헤더 */}
+                        <div className="dash-catalog-category">
+                          <span className="dash-catalog-category-icon">{CategoryIcons[category]}</span>
+                          <span className="dash-catalog-category-name">{category}</span>
+                        </div>
+                        {/* 시나리오 카드 그리드 */}
+                        <div className="dash-catalog-grid">
+                          {items.map((item) => (
+                            <button
+                              key={item.type}
+                              className="dash-catalog-card"
+                              disabled={!selectedGame}
+                              onClick={() => onTrainingStart?.({ stageType: item.type })}
+                            >
+                              <div className="dash-catalog-color" style={{ background: item.color }} />
+                              <span className="dash-catalog-name">
+                                {item.name}
+                                {'star' in item && item.star && <span className="star-badge">CORE</span>}
+                              </span>
+                              <span className="dash-catalog-desc">{t(item.descKey)}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -711,11 +765,11 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onBatt
                 )}
               </div>
 
-              {/* 우측: 최근 플레이 기록 */}
+              {/* 우측 30% — 최근 기록 */}
               <div className="dash-col-right">
                 <div className="dash-section-label">{t('dash.recentPlays')}</div>
                 <div className="dash-recent-list">
-                  {/* 더미 데이터 — 시각적 채움 (실제 히스토리 연동 가능) */}
+                  {/* 더미 데이터 — 시각적 채움 (실제 히스토리 연동 시 교체) */}
                   <ProgressItem name="Medium Flick" value={78.5} color="var(--accent-primary)" />
                   <ProgressItem name="Close Range" value={65.2} color="var(--success)" />
                   <ProgressItem name="Micro Flick" value={82.1} color="var(--color-sky)" />
@@ -745,23 +799,32 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onBatt
           )}
 
           {/* ══════════════════════════════════════════
-              탭 3: 분석 — 레퍼런스와 거의 동일한 3열 구조
+              탭 3: 분석 — 레퍼런스 기반 3열 구조
               ══════════════════════════════════════════ */}
           {mainTab === 'analysis' && (
             <div className="dash-grid-3col">
-              {/* 좌측: 종합 통계 카드 */}
+              {/* 좌측 25% — 종합 통계 카드 */}
               <div className="dash-col-left">
                 <div className="dash-section-label">{t('dash.globalMetrics')}</div>
+                {/* 종합 점수 — 대형 히어로 카드 */}
+                <div className="dash-stat-card dash-stat-hero">
+                  <span className="dash-stat-label">{t('dash.overallScore')}</span>
+                  <span className="dash-stat-value">—</span>
+                  <span className="dash-stat-sub">{t('dash.noDataYet')}</span>
+                </div>
+                {/* 정확도 */}
                 <div className="dash-stat-card dash-stat-accent">
                   <span className="dash-stat-label">{t('dash.overallAccuracy')}</span>
                   <span className="dash-stat-value">—</span>
                   <span className="dash-stat-sub">{t('dash.noDataYet')}</span>
                 </div>
+                {/* 평균 반응시간 */}
                 <div className="dash-stat-card">
                   <span className="dash-stat-label">{t('dash.reactionTime')}</span>
                   <span className="dash-stat-value">—</span>
                   <span className="dash-stat-sub">{t('dash.noDataYet')}</span>
                 </div>
+                {/* 크리티컬 히트율 */}
                 <div className="dash-stat-card">
                   <span className="dash-stat-label">{t('dash.criticalHitRatio')}</span>
                   <span className="dash-stat-value">—</span>
@@ -769,12 +832,12 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onBatt
                 </div>
               </div>
 
-              {/* 중앙: 세션 트렌드 차트 */}
+              {/* 중앙 45% — 세션 트렌드 + 분석 도구 */}
               <div className="dash-col-center">
                 <div className="dash-section-label">{t('dash.sessionTrendline')}</div>
                 <MiniBarChart data={dummyChartData} label={t('dash.last90days')} />
 
-                {/* 분석 도구 카드 그리드 */}
+                {/* 분석 도구 서브탭 카드 그리드 */}
                 <div className="dash-section-label" style={{ marginTop: 'var(--space-4)' }}>{t('dash.analysisTools')}</div>
                 <div className="dash-analysis-grid">
                   <button className="dash-analysis-card" onClick={() => useEngineStore.getState().setScreen('progress-dashboard')}>
@@ -816,11 +879,11 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onBatt
                 </div>
               </div>
 
-              {/* 우측: 최근 시나리오 리스트 + 점수 바 */}
+              {/* 우측 30% — 최근 시나리오 점수 리스트 */}
               <div className="dash-col-right">
                 <div className="dash-section-label">{t('dash.recentScenarios')}</div>
                 <div className="dash-recent-list">
-                  {/* 더미 데이터 (실제 히스토리 연동 가능) */}
+                  {/* 더미 데이터 — Silver Forge 우측 패널 스타일 */}
                   <ProgressItem name="Medium Flick" value={91.3} color="var(--success)" />
                   <ProgressItem name="Close Range Tracking" value={85.7} color="var(--success)" />
                   <ProgressItem name="Micro Flick" value={78.4} color="var(--accent-primary)" />

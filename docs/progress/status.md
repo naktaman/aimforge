@@ -468,6 +468,12 @@
 - **Onboarding.tsx**: `CATEGORY_COLORS`에 trainer 색상(`#22d3ee`) 추가 (TS 컴파일 에러 수정)
 - 빌드 검증: Rust 147/147 통과, npm build 성공 (1,448 kB), TS 에러 0
 
+#### 대시보드 3열 레이아웃 스펙 정밀 구현
+- **ScenarioSelect.tsx**: 감도탭 cm/360 자연어 설명, 줌 캘리브레이션 섹션, 훈련탭 카테고리 헤더+아이콘, AI 추천 카드, 분석탭 종합점수 히어로 카드
+- **styles.css**: 그리드 비율 1fr/1.8fr/1.2fr (25%/45%/30%), calc(100vh-120px) 풀하이트, 신규 CSS 클래스 12개 (sens-desc, zoom-section, catalog-category, ai-card, empty-state, stat-hero)
+- **i18n**: ko.json + en.json에 신규 키 13개 (감도 레벨 5단계, 줌 감도, 오늘 세션, AI 추천, 종합 점수)
+- 빌드 검증: npm build 성공 (1,481 kB)
+
 ## 다음 작업
 
 - 사용자 테스트 피드백 반영
@@ -481,7 +487,7 @@
 | 항목 | 상태 |
 |------|------|
 | Rust tests | 147/147 통과 |
-| npm build | 성공 (1,448 kB) |
+| npm build | 성공 (1,481 kB) |
 | CSS | 104 kB |
 | 타입 에러 | 0 |
 
