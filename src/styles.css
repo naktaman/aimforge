@@ -1810,10 +1810,11 @@ body {
   color: var(--text-primary);
 }
 .tool-card:hover {
-  border-color: rgba(255, 184, 28, 0.3);
+  /* 보조 카드 호버 — 골드 대신 뉴트럴 */
+  border-color: rgba(255, 255, 255, 0.15);
   background: rgba(255, 255, 255, 0.06);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(255, 184, 28, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
 }
 .tool-card-title {
   font-weight: var(--fw-semibold);
@@ -2244,9 +2245,10 @@ body {
   transition: all var(--transition-base);
 }
 .quick-nav .btn-secondary:hover {
+  /* 네비게이션 보조 버튼 호버 — 골드 대신 뉴트럴 */
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 184, 28, 0.3);
-  box-shadow: 0 2px 12px rgba(255, 184, 28, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: none;
 }
 .quick-nav .btn-primary {
   box-shadow: 0 2px 12px rgba(255, 184, 28, 0.2);
@@ -6216,4 +6218,73 @@ body {
   .sd-status-cards {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* ═══════════════════════════════════════════
+   정보성 텍스트 — 클릭 불가 명시
+   ═══════════════════════════════════════════ */
+/* 정보성 텍스트 — 호버/클릭 반응 없음 */
+.info-text,
+.description-text {
+  cursor: default;
+  pointer-events: none;
+}
+.info-text:hover,
+.description-text:hover {
+  background: transparent !important;
+  border-color: transparent !important;
+}
+
+/* ═══════════════════════════════════════════
+   헤더 아이콘 버튼 (설정 / 종료)
+   ═══════════════════════════════════════════ */
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+}
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+}
+/* 종료 버튼 — 위험 색상 호버 */
+.icon-btn-close:hover {
+  background: rgba(229, 57, 53, 0.15);
+  border-color: rgba(229, 57, 53, 0.4);
+  color: #e53935;
+}
+
+/* ═══════════════════════════════════════════
+   고급 도구 토글 버튼
+   ═══════════════════════════════════════════ */
+.advanced-toggle {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+  font-weight: var(--fw-medium);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  text-align: left;
+}
+.advanced-toggle:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
 }

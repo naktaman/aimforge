@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { invoke } from '@tauri-apps/api/core';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { safeInvoke } from './utils/ipc';
 import { useEngineStore } from './stores/engineStore';
 import { usePageTransition } from './hooks/usePageTransition';
@@ -1049,6 +1050,29 @@ function App() {
                   <option value="en">English</option>
                 </select>
                 <SteamLogin />
+                {/* 설정 버튼 — 디스플레이 설정으로 이동 */}
+                <button
+                  className="icon-btn"
+                  onClick={() => setScreen('display-settings')}
+                  title="설정"
+                  aria-label="설정"
+                >
+                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                    <path d="M10 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M16.17 7.24a1 1 0 0 0 .2-1.1l-.9-1.55a1 1 0 0 0-1-.49l-1.34.26a5.96 5.96 0 0 0-.95-.55l-.34-1.31A1 1 0 0 0 10.88 2h-1.76a1 1 0 0 0-.96.73l-.34 1.31a5.96 5.96 0 0 0-.95.55L5.53 4.1a1 1 0 0 0-1 .49l-.9 1.55a1 1 0 0 0 .2 1.1l.95.88a6.07 6.07 0 0 0 0 1.1l-.95.88a1 1 0 0 0-.2 1.1l.9 1.55a1 1 0 0 0 1 .49l1.34-.26c.3.2.62.38.95.55l.34 1.31c.18.43.6.73 1.07.73h1.76a1 1 0 0 0 .96-.73l.34-1.31a5.96 5.96 0 0 0 .95-.55l1.34.26a1 1 0 0 0 1-.49l.9-1.55a1 1 0 0 0-.2-1.1l-.95-.88a6.07 6.07 0 0 0 0-1.1l.95-.88Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                {/* 종료 버튼 — Tauri 창 닫기 */}
+                <button
+                  className="icon-btn icon-btn-close"
+                  onClick={() => getCurrentWindow().close()}
+                  title="종료"
+                  aria-label="종료"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M2 2L14 14M14 2L2 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </button>
               </div>
             </div>
           </header>
