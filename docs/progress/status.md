@@ -321,37 +321,15 @@
   - AimDnaHistory, AimDnaResult, CrossGameComparison, DualLandscape, Onboarding, ProfileWizard, RecoilEditor, RoutineBuilder, AimDnaPostureGuide, ReadinessWidget, TrajectoryAnalysis
 - 빌드 검증: npm build 성공 (1,448 kB), TS 에러 0
 
+### Cold Forge Phase 1 머지 ✅ (2026-04-05) [claude/naughty-germain → master]
+- `claude/naughty-germain` → master `--no-ff` 머지
+- 13개 파일 (309+/115-): styles.css, 11개 컴포넌트, status.md
+- 빌드 검증: npm build 성공 (1,448 kB), TS 에러 0
+
 ## 다음 작업
 
 - Cold Forge Phase 2: 레이아웃, 금속 패널, 버튼 스타일링
 - 사용자 테스트 피드백 반영
-
-### P0 디자인 감사 수정 ✅ (2026-04-05) [claude/fervent-dewdney → master]
-
-#### P0-1: 게임 선택 그리드 개선
-- **이니셜 아바타**: 48×48 원형, 게임명 첫 2글자, 카테고리별 색상 (FPS=#60a5fa, 전술=#34d399, 배틀로얄=#fbbf24, TPS=#f0913a, 기타=#a78bfa)
-- **검색 필드**: 다크 인풋, 한/영 실시간 필터링 (GAME_DATABASE의 nameKo 포함)
-- **카테고리 필터 칩**: [전체/FPS/전술 FPS/배틀로얄/TPS/기타] 가로 스크롤, 색상 도트
-- **적용 위치**: Onboarding.tsx + ProfileWizard.tsx 양쪽
-
-#### P0-2: 온보딩 단계 전환 애니메이션
-- **AnimatePresence + motion**: 다음=좌→우 슬라이드, 이전=우→좌, 0.25s easeInOut
-- **DPI 유효성**: 100~32000 범위 밖이면 빨간 테두리 + 에러 메시지
-- **감도 유효성**: 0 이하면 에러 표시
-- **게임 미선택**: "게임을 선택해주세요" 안내
-
-수정 파일: Onboarding.tsx, ProfileWizard.tsx, styles.css, en.json, ko.json
-
-### P1 디자인 개선 ✅ (2026-04-05) [claude/xenodochial-merkle → master]
-- ScenarioSelect: 텍스트 아이콘('///', '~~~', '<->') → 인라인 SVG 아이콘 (18px, currentColor)
-- AimDnaResult 레이더 차트: d3.transition() 600ms draw 애니메이션 (중심→실제값, easeOutCubic)
-- AimDnaResult + ScenarioSelect: AnimatePresence motion fade 탭 전환 (0.2s)
-- EmptyState.tsx 범용 컴포넌트 신규 생성 (icon, title, description, action props + CSS)
-- 라이트 테마 glow 변수 opacity 0.15→0.22 (accent, success, info, warning)
-- 수정 파일: ScenarioSelect.tsx, AimDnaResult.tsx, EmptyState.tsx (신규), styles.css
-
-### P2 디자인 개선 ✅ (2026-04-05) [claude/funny-kirch → master]
-- 하드코딩 색상 → CSS 시맨틱 변수 (--color-hit, --color-miss, --color-amber 등 13개) + 라이트 테마 대응값
 - font-size 하드코딩 → 9단계 폰트 스케일 변수 (--font-xs ~ --font-display) 110+ 곳 교체
 - font-weight 산발적 사용 → 변수 체계 (--fw-normal ~ --fw-black) 80+ 곳 통일
 - 탭 컴포넌트 ARIA 접근성: role="tablist"/"tab", aria-selected 8개 탭그룹 (AimDnaResult, ScenarioSelect, ProgressDashboard 등)
