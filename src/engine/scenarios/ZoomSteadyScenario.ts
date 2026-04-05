@@ -17,12 +17,16 @@ import type { GameEngine } from '../GameEngine';
 import type { TargetManager } from '../TargetManager';
 import type { ZoomPhaseConfig, ZoomPhaseResult } from '../../utils/types';
 
-/** 줌 티어별 기본 파라미터 */
-const TIER_PARAMS = {
-  '1x': { distRange: [5, 15], sizeDeg: 4, speedDeg: 50 },
-  '3x': { distRange: [15, 30], sizeDeg: 2, speedDeg: 30 },
-  '6x+': { distRange: [30, 50], sizeDeg: 1, speedDeg: 15 },
-} as const;
+/** 줌 티어별 기본 파라미터 — 7단계 그라데이션 */
+const TIER_PARAMS: Record<string, { distRange: [number, number]; sizeDeg: number; speedDeg: number }> = {
+  '1x':  { distRange: [5, 15],  sizeDeg: 4.0, speedDeg: 50 },
+  '2x':  { distRange: [10, 25], sizeDeg: 3.0, speedDeg: 40 },
+  '4x':  { distRange: [20, 40], sizeDeg: 2.0, speedDeg: 28 },
+  '6x':  { distRange: [30, 55], sizeDeg: 1.4, speedDeg: 20 },
+  '8x':  { distRange: [40, 70], sizeDeg: 1.0, speedDeg: 15 },
+  '10x': { distRange: [50, 85], sizeDeg: 0.8, speedDeg: 12 },
+  '12x': { distRange: [60, 100], sizeDeg: 0.6, speedDeg: 9 },
+};
 
 export class ZoomSteadyScenario extends Scenario {
   private config: ZoomPhaseConfig;
@@ -39,6 +43,8 @@ export class ZoomSteadyScenario extends Scenario {
   private targetDistance: number;
   private targetSpeedDegPerSec: number;
   private prevTargetPos: THREE.Vector3 | null = null;
+  /** 동적 이동범위 제한 — min(fov/2 * 0.8, 30) */
+  private maxMovementDeg: number;
 
   private onComplete: ((result: ZoomPhaseResult) => void) | null = null;
 
@@ -55,6 +61,8 @@ export class ZoomSteadyScenario extends Scenario {
     const [minDist, maxDist] = tier.distRange;
     this.targetDistance = minDist + Math.random() * (maxDist - minDist);
     this.targetSpeedDegPerSec = tier.speedDeg;
+    // 동적 이동범위: 줌 FOV에 비례하여 제한
+    this.maxMovementDeg = Math.min((config.scopeFov / 2) * 0.8, 30);
   }
 
   setOnComplete(cb: (result: ZoomPhaseResult) => void): void {
@@ -168,6 +176,16 @@ export class ZoomSteadyScenario extends Scenario {
       dt;
     this.prevTargetPos = target.position.clone();
     target.position.x += speedMs * this.moveDirection;
+
+    // 동적 이동범위 제한 — FOV 기반 최대 수평 편차
+    const maxOffsetM = this.targetDistance * Math.tan(this.maxMovementDeg * DEG2RAD);
+    const cameraX = this.engine.getCamera().position.x;
+    const offset = target.position.x - cameraX;
+    if (Math.abs(offset) > maxOffsetM) {
+      target.position.x = cameraX + Math.sign(offset) * maxOffsetM;
+      this.moveDirection *= -1; // 범위 도달 시 방향 전환
+    }
+
     target.mesh.position.copy(target.position);
   }
 

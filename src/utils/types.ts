@@ -250,8 +250,8 @@ export interface MicroFlickConfig extends ScenarioConfig {
   distance: number;
 }
 
-/** 줌 티어 (배율 단계) */
-export type ZoomTier = '1x' | '3x' | '6x+';
+/** 줌 티어 (배율 단계) — 7단계 그라데이션 */
+export type ZoomTier = '1x' | '2x' | '4x' | '6x' | '8x' | '10x' | '12x';
 
 /** Zoom Phase 공통 설정 */
 export interface ZoomPhaseConfig extends ScenarioConfig {
