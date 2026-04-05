@@ -5,7 +5,7 @@
  */
 
 /** 게임 카테고리 */
-export type GameCategory = 'fps' | 'tps' | 'battle-royale' | 'tactical' | 'arena';
+export type GameCategory = 'fps' | 'tps' | 'battle-royale' | 'tactical' | 'arena' | 'trainer';
 
 /** 게임 엔진 */
 export type GameEngine =
@@ -1111,6 +1111,61 @@ export const GAME_DATABASE: GameEntry[] = [
     category: 'fps',
     sensStep: 0.1,
     movementRatio: 0.25,
+    defaultAspectRatio: 16 / 9,
+    confidence: 'estimated',
+  },
+
+  // ─── Tier 1: 에임 트레이너 ───
+  {
+    id: 'kovaaks',
+    name: "KovaaK's 2.0",
+    nameKo: '코박스 2.0',
+    engine: 'Custom',
+    yaw: 0.022,
+    fovType: 'horizontal',
+    defaultFov: 103.0,
+    hasAds: false,
+    adsMultiplierDefault: null,
+    sensitivityFields: defaultSensField(0.001, 10, 0.001, 1.0),
+    category: 'trainer',
+    sensStep: 0.001,
+    movementRatio: 0.30,
+    defaultAspectRatio: 16 / 9,
+    confidence: 'verified',
+  },
+  {
+    id: 'aimlab',
+    name: 'Aim Lab',
+    nameKo: '에임 랩',
+    engine: 'Custom',
+    yaw: 0.022,
+    fovType: 'horizontal',
+    defaultFov: 103.0,
+    hasAds: false,
+    adsMultiplierDefault: null,
+    sensitivityFields: defaultSensField(0.001, 10, 0.001, 1.0),
+    category: 'trainer',
+    sensStep: 0.001,
+    movementRatio: 0.30,
+    defaultAspectRatio: 16 / 9,
+    confidence: 'verified',
+  },
+
+  // ─── Tier 2: 에임 트레이너 ───
+  {
+    id: 'aiming_pro',
+    name: 'Aiming.Pro',
+    nameKo: '에이밍 프로',
+    engine: 'Custom',
+    yaw: 0.022,
+    fovType: 'horizontal',
+    defaultFov: 103.0,
+    hasAds: false,
+    adsMultiplierDefault: null,
+    sensitivityFields: defaultSensField(0.001, 10, 0.001, 1.0),
+    category: 'trainer',
+    sensStep: 0.001,
+    movementRatio: 0.30,
     defaultAspectRatio: 16 / 9,
     confidence: 'estimated',
   },

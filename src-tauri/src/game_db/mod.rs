@@ -167,5 +167,12 @@ pub fn get_default_presets() -> Vec<GamePreset> {
         preset!("gta_online", "GTA Online", 0.0066, 80.0, "horizontal", ar16_9, Some(1.0), 0.30),
         preset!("arma_reforger", "Arma Reforger", 0.0003927, 74.0, "horizontal", ar16_9, Some(0.01), 0.20),
         preset!("prey", "Prey (2017)", 0.022, 95.0, "horizontal", ar16_9, Some(0.1), 0.25),
+
+        // ─── Tier 1: 에임 트레이너 ───
+        preset!("kovaaks", "KovaaK's 2.0", 0.022, 103.0, "horizontal", ar16_9, Some(0.001), 0.30),
+        preset!("aimlab", "Aim Lab", 0.022, 103.0, "horizontal", ar16_9, Some(0.001), 0.30),
+
+        // ─── Tier 2: 에임 트레이너 ───
+        preset!("aiming_pro", "Aiming.Pro", 0.022, 103.0, "horizontal", ar16_9, Some(0.001), 0.30),
     ]
 }

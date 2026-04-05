@@ -23,6 +23,7 @@ const CATEGORY_COLORS: Record<GameCategory | 'default', string> = {
   'battle-royale': '#fbbf24',
   tps: '#f0913a',
   arena: '#a78bfa',
+  trainer: '#22d3ee',
   default: '#a78bfa',
 };
 
