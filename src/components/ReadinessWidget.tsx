@@ -17,7 +17,7 @@ interface Props {
 const CATEGORY_COLORS: Record<string, string> = {
   peak: '#4ade80',
   ready: '#60a5fa',
-  moderate: '#6B8DB5',
+  moderate: '#8A9AB5',
   rest: '#f87171',
 };
 

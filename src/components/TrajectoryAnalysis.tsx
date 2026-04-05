@@ -18,7 +18,7 @@ interface Props {
 const MOTOR_COLORS: Record<string, string> = {
   finger: '#60a5fa',
   wrist: '#4ade80',
-  arm: '#6B8DB5',
+  arm: '#8A9AB5',
 };
 
 /** 클릭 벡터 산점도 — D3로 렌더링 */
@@ -166,7 +166,7 @@ function GmmHistogram({ vectors, gmm }: { vectors: ClickVector[]; gmm: GmmCluste
       };
 
       drawGaussian(gmm.clusterA.mean, gmm.clusterA.stdDev, gmm.clusterA.weight, '#4ade80');
-      drawGaussian(gmm.clusterB.mean, gmm.clusterB.stdDev, gmm.clusterB.weight, '#6B8DB5');
+      drawGaussian(gmm.clusterB.mean, gmm.clusterB.stdDev, gmm.clusterB.weight, '#8A9AB5');
     }
 
     // X축 라벨
@@ -294,7 +294,7 @@ export default function TrajectoryAnalysis({ onBack, trialId: initialTrialId }: 
                 <DiagCard
                   label="권장 조정"
                   value={`${result.diagnosis.recommendedAdjustment > 0 ? '+' : ''}${result.diagnosis.recommendedAdjustment.toFixed(1)} cm/360`}
-                  color={result.diagnosis.recommendedAdjustment > 0 ? '#6B8DB5' : '#60a5fa'}
+                  color={result.diagnosis.recommendedAdjustment > 0 ? '#8A9AB5' : '#60a5fa'}
                 />
               )}
             </div>

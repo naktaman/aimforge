@@ -274,7 +274,7 @@ export default function RecoilEditor({ onBack }: { onBack: () => void }) {
                 <line x1={SVG_W / 2} y1={0} x2={SVG_W / 2} y2={SVG_H} stroke="#1a1a2e" />
                 <line x1={0} y1={20} x2={SVG_W} y2={20} stroke="#1a1a2e" />
                 {/* 원점 표시 */}
-                <circle cx={SVG_W / 2} cy={20} r={4} fill="#4A9EDE" opacity={0.5} />
+                <circle cx={SVG_W / 2} cy={20} r={4} fill="#FFB81C" opacity={0.5} />
 
                 {/* 패턴 연결선 */}
                 {editPoints.length > 1 && (

@@ -321,9 +321,29 @@
   - AimDnaHistory, AimDnaResult, CrossGameComparison, DualLandscape, Onboarding, ProfileWizard, RecoilEditor, RoutineBuilder, AimDnaPostureGuide, ReadinessWidget, TrajectoryAnalysis
 - 빌드 검증: npm build 성공 (1,448 kB), TS 에러 0
 
+### Silver Forge 레퍼런스 기반 컬러 재조정 (2026-04-05) [claude/naughty-germain]
+
+#### :root 전면 재조정 — Silver Forge 다크 테마
+- **배경**: Cold Forge→Silver Forge 네이비 (#0F1419/#141B23/#1A2635/#1E2A38/#1E3A52/#243B55)
+- **액센트 블루→골드**: --accent-primary(#FFB81C), --accent-cyan→틸그린(#00D084)
+- **Metal & Chrome**: 네이비 계열로 조정 (#1E2A38~#FFFFFF)
+- **Semantic**: --success→#00D084, --warning→#FFB81C (골드=경고 겸용)
+- **그라디언트 5종**: Silver Forge 네이비 톤으로 재조정
+- **border-radius**: 2-3px 거의 직각으로 축소
+
+#### 스타일 규칙 추가
+- **활성 탭**: 배경색 대신 하단 2px solid #FFB81C 골드 언더라인
+- **큰 숫자**: font-variant-numeric: tabular-nums 전역 적용
+- **카드**: border-radius 2-3px (거의 직각)
+
+#### 하드코딩 색상 일괄 교체
+- **styles.css**: rgba(74,158,222,...) → rgba(255,184,28,...) 35+곳, hex #4A9EDE→#FFB81C 등
+- **컴포넌트 14개**: 블루 hex 31곳 → 골드/네이비/메탈크롬 교체
+- 빌드 검증: npm build 성공 (1,448 kB), TS 에러 0
+
 ## 다음 작업
 
-- Cold Forge Phase 2: 레이아웃, 금속 패널, 버튼 스타일링
+- Silver Forge Phase 2: 금속 패널, 버튼, 컴포넌트 스타일링
 - 사용자 테스트 피드백 반영
 
 ### P0 디자인 감사 수정 ✅ (2026-04-05) [claude/fervent-dewdney → master]
@@ -466,4 +486,4 @@
 | CSS | 104 kB |
 | 타입 에러 | 0 |
 
-> 빌드 시점: 2026-04-05 (Cold Forge Phase 1 컬러 교체 후)
+> 빌드 시점: 2026-04-05 (Silver Forge 컬러 재조정 후)

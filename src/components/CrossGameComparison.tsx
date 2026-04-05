@@ -103,11 +103,11 @@ function DualRadarChart({ refAxes, targetAxes }: { refAxes: RadarAxis[]; targetA
     };
 
     drawPoly(refAxes, '#4a9eff');   // Reference — 파랑
-    drawPoly(targetAxes, '#4A9EDE'); // Target — 오렌지(forge)
+    drawPoly(targetAxes, '#FFB81C'); // Target — 오렌지(forge)
 
     // 범례
     const legendY = -maxR - 15;
-    [{ color: '#4a9eff', label: 'Reference' }, { color: '#4A9EDE', label: 'Target' }].forEach((item, i) => {
+    [{ color: '#4a9eff', label: 'Reference' }, { color: '#FFB81C', label: 'Target' }].forEach((item, i) => {
       const x = -40 + i * 100;
       g.append('rect').attr('x', x).attr('y', legendY).attr('width', 12).attr('height', 12).attr('fill', item.color).attr('rx', 2);
       g.append('text').attr('x', x + 16).attr('y', legendY + 10).attr('fill', '#ccc').attr('font-size', '11px').text(item.label);
