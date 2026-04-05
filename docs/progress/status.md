@@ -1,6 +1,6 @@
 # AimForge 구현 진행 현황
 
-> 마지막 업데이트: 2026-04-05 (보안 개선 Phase 2 — IPC 입력 검증, PublicError 패턴, 주석 정리)
+> 마지막 업데이트: 2026-04-05 (P3 접근성 + EmptyState + 반응형 레이아웃)
 
 ---
 
@@ -244,14 +244,20 @@
 - **주석 정리**: calibration/screening.rs 방치 TODO 1건 정리
 - 수정 파일: 15개 수정 + 2개 신규 (error.rs, validate.rs), 928+/379-
 
+### P3 디자인 감사: 키보드 접근성 + EmptyState + 반응형 ✅
+- **키보드 접근성**: `useTabKeyboard` 훅 신규 (ArrowLeft/Right/Home/End + tabIndex 로빙, WAI-ARIA Tabs 패턴)
+  - 7개 tablist 적용: AimDnaResult, ScenarioSelect×2, AimDnaGripGuide, ProgressDashboard×2, TrainingPrescription
+- **EmptyState 적용**: SessionHistory, ProgressDashboard, TrainingPrescription, AimDnaResult에 아이콘+제목+설명+액션 빈 상태 UI
+  - i18n 키 8개 추가 (en.json + ko.json)
+- **반응형 레이아웃**: `@media (max-width: 1100px/1000px)` — 그리드 1열 전환, 탭 스크롤, 카드 span 해제
+  - tauri.conf.json minWidth 1280→960, minHeight 720→640
+- 수정 파일: 10개 수정 + 1개 신규 (useTabKeyboard.ts), 238+/22-
+
 ---
 
 ## 다음 작업
 
 - **cargo-audit 설치 및 CI 연동**
-- EmptyState 컴포넌트 실 적용 (SessionHistory, Leaderboard 등 빈 상태 교체)
-- 키보드 네비게이션 심화 (탭 방향키 이동, focus trap)
-- 반응형 레이아웃 (모바일 breakpoint)
 - 사용자 테스트 피드백 반영
 - v0.2.0 릴리즈 준비
 
@@ -262,8 +268,8 @@
 | 항목 | 상태 |
 |------|------|
 | Rust tests | 147/147 통과 |
-| npm build | 성공 (1,443 kB) |
-| CSS | 101 kB |
+| npm build | 성공 (1,447 kB) |
+| CSS | 102 kB |
 | 타입 에러 | 0 |
 
-> 빌드 시점: 2026-04-05 (보안 개선 Phase 2 후)
+> 빌드 시점: 2026-04-05 (P3 접근성 + EmptyState + 반응형 후)

@@ -26,7 +26,7 @@ Infrastructure, Three.js 엔진, GP Calibration, Go/No-Go 검증
 - P0 디자인 감사 ✅ (2026-04-05) — 게임 그리드 이니셜 아바타+검색+필터 칩, 온보딩 전환 애니메이션+유효성 피드백
 - P1 디자인 개선 ✅ (2026-04-05) — SVG 아이콘, 레이더 차트 d3 애니메이션, 탭 fade 전환, EmptyState 컴포넌트, 라이트 glow 강화
 - P2 디자인 개선 ✅ (2026-04-05) — CSS 변수 체계화 (색상+폰트+weight+glow), ARIA 접근성, 히트맵 범례
-- P3 디자인 감사 — 키보드 방향키 네비게이션, 반응형 레이아웃, focus trap 등 (예정)
+- P3 디자인 감사 ✅ (2026-04-05) — 키보드 방향키 네비게이션 (useTabKeyboard 훅, 7개 tablist), EmptyState 적용 (4개 화면), 반응형 레이아웃 (minWidth 960px, 2개 breakpoint)
 - 보안 개선 Phase 1 ✅ (2026-04-05) — CSP 강화, Capabilities 세분화, devTools 확인, audit 실행
 - 보안 개선 Phase 2 ✅ (2026-04-05) — IPC 입력 검증 (DPI/sens/FOV/ID), PublicError 패턴 (내부 에러 차단), 주석 정리
 
