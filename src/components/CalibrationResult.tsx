@@ -46,7 +46,7 @@ export function CalibrationResult({ onBack, onApply, onNextZoom }: CalibrationRe
 
     const id = await safeInvoke<number>('save_landscape', {
       params: {
-        profile_id: 1,
+        profile_id: 1, // 단일 사용자 — user profiles.id
         calibration_session_id: sessionId,
         gp_mean_curve: JSON.stringify(result.gpCurve),
         confidence_bands: JSON.stringify([]),

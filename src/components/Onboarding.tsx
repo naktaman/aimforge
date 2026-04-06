@@ -167,7 +167,7 @@ export function Onboarding() {
       // DB에 게임 프로필 생성 + active 설정
       try {
         const createdId = await useGameProfileStore.getState().createProfile({
-          profileId: 1,
+          profileId: 1, // 단일 사용자 — user profiles.id
           gameId: selectedGame.id,
           gameName: selectedGame.name,
           customSens: sensitivity,

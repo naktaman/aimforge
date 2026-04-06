@@ -124,7 +124,7 @@ export function useScenarioLauncher(deps: ScenarioLauncherDeps) {
 
       // 세션 생성
       safeInvoke<number>('start_session', { params: {
-        profile_id: 1, mode: 'quick_play', session_type: scenarioType,
+        profile_id: 1, /* 단일 사용자 — user profiles.id */ mode: 'quick_play', session_type: scenarioType,
       }}).then((sid) => { if (sid) useSessionStore.getState().setSessionId(sid); });
 
       // HUD 메트릭 세션 시작
@@ -327,7 +327,7 @@ export function useScenarioLauncher(deps: ScenarioLauncherDeps) {
 
         if (r.stageType) {
           safeInvoke('submit_stage_result', { params: { result: {
-            profile_id: 1, stage_type: r.stageType,
+            profile_id: 1, /* 단일 사용자 — user profiles.id */ stage_type: r.stageType,
             category: categoryFromStageType(r.stageType),
             difficulty: defaultDifficulty, accuracy: r.accuracy ?? 0,
             avg_ttk_ms: r.avgTtkMs ?? 0, avg_reaction_ms: r.avgReactionMs ?? 0,

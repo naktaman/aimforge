@@ -172,7 +172,7 @@ export function useCalibrationHandlers(deps: CalibrationHandlerDeps): {
       try {
         const sessionId = await invoke<number>('start_calibration', {
           params: {
-            profile_id: 1, mode, current_cm360: cmPer360,
+            profile_id: 1, /* 단일 사용자 — user profiles.id */ mode, current_cm360: cmPer360,
             game_category: 'tactical', convergence_mode: convergence,
           },
         });

@@ -169,7 +169,7 @@ export function GameProfileManager({ onBack }: GameProfileManagerProps): React.J
       });
     } else {
       await createProfile({
-        profileId: 1, // TODO: Phase 1-3에서 동적 profileId
+        profileId: 1, // 단일 사용자 — user profiles.id
         gameId: selectedGame.id,
         gameName: selectedGame.name,
         customSens: mainSens,

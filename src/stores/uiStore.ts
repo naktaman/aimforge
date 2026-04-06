@@ -32,7 +32,7 @@ interface UiState {
 /** DB에 설정 저장 (profileId=1 고정) */
 async function saveSetting(key: string, value: string) {
   await safeInvoke('save_user_setting', {
-    profileId: 1,
+    profileId: 1, // 단일 사용자 — user profiles.id
     key,
     value,
   }, true);
@@ -91,7 +91,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   loadFromDb: async () => {
     const rows = await safeInvoke<[string, string][]>(
       'get_all_user_settings',
-      { profileId: 1 },
+      { profileId: 1 }, // 단일 사용자 — user profiles.id
       true,
     );
     if (!rows) {
