@@ -6,6 +6,9 @@
 import { create } from 'zustand';
 import { storeInvoke } from './storeHelpers';
 import { safeInvoke } from '../utils/ipc';
+import { useSettingsStore } from './settingsStore';
+import { GAME_DATABASE } from '../data/gameDatabase';
+import type { GamePreset } from '../utils/types';
 
 /** 게임 프로필 — Rust GameProfileRow와 1:1 매핑 */
 export interface GameProfile {
@@ -78,6 +81,33 @@ interface GameProfileState {
   deleteProfile: (id: number) => Promise<void>;
   /** 활성 프로필 설정 */
   setActive: (id: number) => Promise<void>;
+  /** 활성 프로필 → settingsStore 동기화 */
+  syncActiveToSettings: () => void;
+}
+
+/** 게임 프로필 → settingsStore 동기화 (dpi, sensitivity, selectedGame) */
+function syncProfileToSettings(profile: GameProfile): void {
+  const gameEntry = GAME_DATABASE.find(g => g.id === profile.gameId);
+  if (!gameEntry) return;
+
+  // GameEntry → GamePreset 변환 (fovType 'diagonal' → 'horizontal' 폴백)
+  const fovType: GamePreset['fovType'] =
+    gameEntry.fovType === 'diagonal' ? 'horizontal' : gameEntry.fovType;
+  const preset: GamePreset = {
+    id: gameEntry.id,
+    name: gameEntry.name,
+    yaw: gameEntry.yaw,
+    defaultFov: gameEntry.defaultFov,
+    fovType,
+    defaultAspectRatio: gameEntry.defaultAspectRatio,
+    sensStep: gameEntry.sensStep,
+    movementRatio: gameEntry.movementRatio,
+  };
+
+  const settings = useSettingsStore.getState();
+  settings.selectGame(preset);
+  settings.setDpi(profile.customDpi);
+  settings.setSensitivity(profile.customSens);
 }
 
 /** Rust row → 프론트엔드 타입 변환 (keybindsJson → sensFieldsJson 매핑) */
@@ -172,7 +202,7 @@ export const useGameProfileStore = create<GameProfileState>((set, get) => ({
     }
   },
 
-  /** 활성 프로필 설정 — Rust set_active_game_profile(profile_id, game_profile_id) */
+  /** 활성 프로필 설정 — Rust set_active_game_profile + settingsStore 동기화 */
   setActive: async (id) => {
     const profileId = get().profiles.find(p => p.id === id)?.profileId ?? 1;
     const ok = await safeInvoke('set_active_game_profile', {
@@ -183,6 +213,15 @@ export const useGameProfileStore = create<GameProfileState>((set, get) => ({
       set((s) => ({
         profiles: s.profiles.map(p => ({ ...p, isActive: p.id === id })),
       }));
+      // 활성 프로필 → settingsStore 자동 반영
+      const profile = get().profiles.find(p => p.id === id);
+      if (profile) syncProfileToSettings(profile);
     }
+  },
+
+  /** 현재 활성 프로필로 settingsStore 동기화 (앱 초기화용) */
+  syncActiveToSettings: () => {
+    const active = get().profiles.find(p => p.isActive);
+    if (active) syncProfileToSettings(active);
   },
 }));
