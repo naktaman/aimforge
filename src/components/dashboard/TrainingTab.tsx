@@ -68,7 +68,7 @@ export function TrainingTab({
 
         {/* 서브탭: 카탈로그/커스텀/배터리 전환 */}
         <div className="dash-section-label" style={{ marginTop: 'var(--space-3)' }}>{t('dash.mode')}</div>
-        <div className="dash-sub-tabs" role="tablist" ref={subTabRef} onKeyDown={subTabKeyDown}>
+        <div className="dash-sub-tabs rail-tabs" role="tablist" ref={subTabRef} onKeyDown={subTabKeyDown}>
           {([
             { key: 'catalog' as TrainingSub, label: t('scenario.catalog') },
             { key: 'custom' as TrainingSub, label: t('scenario.customPlay') },
@@ -79,7 +79,7 @@ export function TrainingTab({
               role="tab"
               aria-selected={trainingSub === key}
               tabIndex={trainingSub === key ? 0 : -1}
-              className={`dash-sub-tab ${trainingSub === key ? 'active' : ''}`}
+              className={`dash-sub-tab rail-tab ${trainingSub === key ? 'active' : ''}`}
               onClick={() => setTrainingSub(key)}
             >
               {label}
