@@ -8,9 +8,10 @@ import { PerformanceLandscape } from './PerformanceLandscape';
 
 interface CalibrationProgressProps {
   onCancel: () => void;
+  onLaunchTrial: () => void;
 }
 
-export function CalibrationProgress({ onCancel }: CalibrationProgressProps) {
+export function CalibrationProgress({ onCancel, onLaunchTrial }: CalibrationProgressProps) {
   const {
     stage,
     mode,
@@ -21,6 +22,7 @@ export function CalibrationProgress({ onCancel }: CalibrationProgressProps) {
     currentBest,
     gpCurve,
     observations,
+    nextCm360,
     fatigueStopped,
   } = useCalibrationStore();
   const { t } = useTranslation();
@@ -93,10 +95,22 @@ export function CalibrationProgress({ onCancel }: CalibrationProgressProps) {
         </div>
       )}
 
+      {/* 다음 트라이얼 안내 */}
+      {nextCm360 !== null && (
+        <div className="next-trial-info">
+          {t('cal.nextTrial')}: <strong>{nextCm360.toFixed(1)} cm/360</strong>
+        </div>
+      )}
+
       {/* 안내 메시지 */}
       <div className="progress-hint">
         {stage === 'screening' ? t('cal.screeningHint') : t('cal.calHint')}
       </div>
+
+      {/* 트라이얼 시작 버튼 */}
+      <button className="btn-primary" onClick={onLaunchTrial}>
+        {t('cal.launchTrial')}
+      </button>
 
       <button className="btn-secondary" onClick={onCancel}>
         {t('common.cancel')}

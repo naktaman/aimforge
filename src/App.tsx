@@ -29,6 +29,7 @@ import { SoundEngine } from './engine/SoundEngine';
 import { isPointerLocked } from './engine/PointerLock';
 import { useScenarioLauncher } from './hooks/useScenarioLauncher';
 import { useBatteryHandlers } from './hooks/useBatteryHandlers';
+import { useCalibrationHandlers } from './hooks/useCalibrationHandlers';
 import { useProfileWizardStore } from './stores/profileWizardStore';
 import { useZoomCalibrationStore } from './stores/zoomCalibrationStore';
 import type { GameEngine } from './engine/GameEngine';
@@ -134,6 +135,9 @@ function App() {
     engineRef, targetManagerRef, lastScenarioRef, soundEngine,
   });
   const { handleBattery, handleBatteryLaunchScenario, handleBatteryCancel, handleBatteryComplete } = useBatteryHandlers({
+    engineRef, targetManagerRef, soundEngine, syncRecoilToEngine,
+  });
+  const { handleCalibrationLaunchTrial } = useCalibrationHandlers({
     engineRef, targetManagerRef, soundEngine, syncRecoilToEngine,
   });
 
@@ -345,7 +349,7 @@ function App() {
         <main className="app-main"><CalibrationSetup onStart={handleCalibrationStart} onBack={() => setScreen('settings')} /></main>
       )}
       {currentScreen === 'calibration-progress' && (
-        <main className="app-main"><CalibrationProgress onCancel={handleCalibrationCancel} /></main>
+        <main className="app-main"><CalibrationProgress onCancel={handleCalibrationCancel} onLaunchTrial={handleCalibrationLaunchTrial} /></main>
       )}
       {currentScreen === 'calibration-result' && (
         <main className="app-main">

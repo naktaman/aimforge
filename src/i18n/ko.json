@@ -322,6 +322,8 @@
   "settings.loadFailed": "설정 로드 실패",
   "settings.saveFailed": "설정 저장 실패",
   "cal.startFailed": "캘리브레이션 시작 실패",
+  "cal.launchTrial": "트라이얼 시작",
+  "cal.nextTrial": "다음 테스트 감도",
 
   "display.title": "디스플레이 설정",
   "display.mode": "디스플레이 모드",
