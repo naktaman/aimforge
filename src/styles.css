@@ -3251,6 +3251,68 @@ body {
   font-weight: var(--fw-semibold);
 }
 
+/* 설정 섹션 헤딩 */
+.settings-section-heading {
+  font-family: var(--font-heading);
+  margin-bottom: var(--space-2);
+}
+
+/* DPI 숫자 입력 */
+.dpi-input {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  width: 140px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: var(--font-base);
+}
+.dpi-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+/* 활성 프로필 카드 */
+.profile-card {
+  background: var(--gradient-metal-panel);
+  border-left: 3px solid var(--accent-primary);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+}
+.profile-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.profile-card-game {
+  font-weight: var(--fw-semibold);
+  font-size: var(--font-base);
+}
+.profile-card-sens {
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+}
+.profile-card-cm360 {
+  font-family: var(--font-mono);
+  font-size: var(--font-sm);
+  color: var(--accent-primary);
+}
+
+/* 프로필 없음 안내 */
+.profile-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.profile-empty p {
+  color: var(--text-tertiary);
+  font-size: var(--font-xs);
+}
+
 /* 앱 정보 섹션 */
 .about-section h3 {
   margin-bottom: var(--space-1);
