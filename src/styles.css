@@ -7481,3 +7481,699 @@ h1, h2, h3, .heading {
   letter-spacing: var(--tracking-widest);
   text-transform: uppercase;
 }
+
+/* ╔══════════════════════════════════════════════════════════════════════════╗
+   ║  Cold Forge 마이크로인터랙션 — §2.1~§2.11                              ║
+   ║  기획서: docs/planning/cold-forge-ui-redesign.md                       ║
+   ╚═══════════════════════════════════════════════════════════��══════════════╝ */
+
+/* ═══════════════ §2.1 Chrome Sweep (메뉴 호버) ═══════════════
+   브러시드 스틸 표면 위로 빛 줄기가 스치듯 지나가는 효과
+   ::before pseudo-element + translateX sweep */
+
+.menu-item {
+  position: relative;
+  overflow: hidden;
+  border-left: 2px solid transparent;
+  transition: border-color 200ms ease, color 150ms ease, background 150ms ease;
+}
+
+.menu-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    var(--metal-chrome-08, rgba(168, 184, 204, 0.08)) 50%,
+    transparent 60%
+  );
+  transform: translateX(-100%);
+  transition: transform 400ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  pointer-events: none;
+}
+
+.menu-item:hover::before {
+  transform: translateX(100%);
+}
+
+.menu-item:hover {
+  border-left-color: var(--accent-cyan);
+  color: var(--text-primary);
+  background: var(--surface-mid);
+}
+
+/* ═══════════════ §2.2 Press Stamp (메뉴 클릭/선택) ═══════════════
+   금속 프레스가 쾅 찍히는 임팩트 — active 눌림 + selected 시안 글로우 */
+
+.menu-item:active {
+  transform: scale(0.98) translateY(1px);
+  border-left-width: 3px;
+  border-left-color: var(--accent-cyan);
+  box-shadow: inset 0 0 0 1px var(--accent-cyan-muted);
+  transition: transform 80ms cubic-bezier(0.32, 0, 0.67, 0),
+              border-color 80ms cubic-bezier(0.32, 0, 0.67, 0),
+              box-shadow 80ms cubic-bezier(0.32, 0, 0.67, 0);
+}
+
+/* 선택된 메뉴 아이템 — 시안 글로우 확산 */
+.menu-item.selected {
+  transform: scale(1);
+  border-left: 3px solid var(--accent-primary);
+  background: var(--surface-mid);
+  box-shadow: -8px 0 16px -8px var(--accent-cyan-muted);
+  transition: transform 200ms cubic-bezier(0.33, 1, 0.68, 1),
+              border-color 200ms cubic-bezier(0.33, 1, 0.68, 1),
+              box-shadow 200ms cubic-bezier(0.33, 1, 0.68, 1),
+              background 200ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+/* ═══════════════ §2.3 버튼 인터랙션 — 4종 Variant ═══════════════ */
+
+/* ── Primary Button: "Forged Action" ── */
+.btn-forged,
+.btn-primary {
+  background: var(--gradient-metal-button);
+  border: 1px solid var(--accent-primary);
+  color: var(--text-on-accent);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(168, 184, 204, 0.1);
+  transition: background 200ms ease-out,
+              border-color 200ms ease-out,
+              box-shadow 200ms ease-out,
+              transform 200ms ease-out;
+}
+
+.btn-forged:hover,
+.btn-primary:hover {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary-hover);
+  box-shadow: 0 0 20px rgba(74, 158, 222, 0.3),
+              0 4px 8px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-forged:active,
+.btn-primary:active {
+  background: var(--accent-primary-hover);
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 0 8px rgba(74, 158, 222, 0.2),
+              inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition-duration: 60ms;
+  transition-timing-function: ease-in;
+}
+
+.btn-forged:disabled,
+.btn-primary:disabled {
+  background: var(--surface-low);
+  border-color: var(--border-subtle);
+  color: var(--text-tertiary);
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* ── Secondary Button: "Steel Press" ── */
+.btn-steel,
+.btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  transition: border-color 200ms ease-out,
+              color 200ms ease-out,
+              background 200ms ease-out,
+              box-shadow 200ms ease-out,
+              transform 200ms ease-out;
+}
+
+.btn-steel:hover,
+.btn-secondary:hover {
+  border-color: var(--metal-steel-light);
+  color: var(--text-primary);
+  background: var(--surface-mid);
+  box-shadow: 0 0 12px rgba(126, 143, 163, 0.1);
+}
+
+.btn-steel:active,
+.btn-secondary:active {
+  background: var(--surface-low);
+  transform: scale(0.98);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+  transition-duration: 60ms;
+}
+
+/* ── Ghost Button: "Etched" ── */
+.btn-ghost {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-tertiary);
+  transition: color 150ms ease-out,
+              border-color 150ms ease-out,
+              background 150ms ease-out;
+}
+
+.btn-ghost:hover {
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.btn-ghost:active {
+  background: rgba(255, 255, 255, 0.06);
+  transition-duration: 60ms;
+}
+
+/* ── Icon Button: "Rivet" ── */
+.btn-rivet,
+.icon-btn {
+  background: var(--surface-low);
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  transition: background 150ms ease,
+              border-color 150ms ease,
+              color 150ms ease,
+              transform 150ms ease;
+}
+
+.btn-rivet:hover,
+.icon-btn:hover {
+  background: var(--surface-mid);
+  border-color: var(--border-default);
+  color: var(--accent-cyan);
+  transform: scale(1.05);
+}
+
+.btn-rivet:active,
+.icon-btn:active {
+  transform: scale(0.95);
+  background: var(--surface-low);
+  transition-duration: 50ms;
+}
+
+/* ═══════════════ §2.4 Plate Slide (화면 전환) ═══════════════
+   금속판이 정밀하게 슬라이드되며 전환 — CSS fallback
+   (Framer Motion이 주 처리, 이 CSS는 비-JS 폴백 + 크롬 sweep) */
+
+.page-exit {
+  animation: plate-exit 200ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.page-enter {
+  animation: plate-enter 300ms cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+@keyframes plate-exit {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+    filter: brightness(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-20px);
+    filter: brightness(0.8);
+  }
+}
+
+@keyframes plate-enter {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 전환 중 크롬 라인 sweep — 진입 페이지 상단 */
+.page-enter::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--gradient-chrome-edge);
+  animation: chrome-line-sweep 400ms cubic-bezier(0, 0, 0.2, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes chrome-line-sweep {
+  from { transform: scaleX(0); transform-origin: left; }
+  to   { transform: scaleX(1); transform-origin: left; }
+}
+
+/* 전환 중 시안 플래시 오버레이 */
+.page-transition-flash {
+  position: fixed;
+  inset: 0;
+  background: var(--accent-cyan);
+  opacity: 0.02;
+  animation: transition-flash 20ms ease-out forwards;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+@keyframes transition-flash {
+  from { opacity: 0.02; }
+  to   { opacity: 0; }
+}
+
+/* ═══════════════ §2.5 Quenching Process (로딩) ═══════════════
+   금속 담금질 — 뜨거운 선이 식으며 형태를 잡아가는 로딩 애니메이션 */
+
+/* Phase 1: Heat Line — 시안 글로우 라인이 좌→우 이동 */
+@keyframes quench-heat-line {
+  0% {
+    width: 0%;
+    background: var(--accent-cyan);
+    box-shadow: 0 0 8px var(--accent-cyan);
+  }
+  60% {
+    width: 60%;
+    background: var(--accent-cyan);
+    box-shadow: 0 0 8px var(--accent-cyan);
+  }
+  /* Phase 2: Cool Down — 시안 → primary, 글로우 감소 */
+  85% {
+    width: 85%;
+    background: var(--accent-primary);
+    box-shadow: 0 0 3px var(--accent-primary);
+  }
+  100% {
+    width: 100%;
+    background: var(--accent-primary);
+    box-shadow: 0 0 3px var(--accent-primary);
+  }
+}
+
+/* 완료 시 pulse 효과 */
+@keyframes quench-complete-pulse {
+  0%   { transform: scaleX(1); }
+  50%  { transform: scaleX(1.02); }
+  100% { transform: scaleX(1); }
+}
+
+/* 로딩 바 컨테이너 */
+.quench-loader {
+  position: relative;
+  width: 100%;
+  height: 3px;
+  background: var(--surface-low);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+/* 로딩 바 채움 — 담금질 애니메이션 */
+.quench-loader-bar {
+  height: 100%;
+  border-radius: 2px;
+  animation: quench-heat-line 1200ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* 로딩 완료 상태 — pulse */
+.quench-loader-bar.complete {
+  animation: quench-complete-pulse 200ms ease-out;
+  width: 100%;
+  background: var(--accent-primary);
+}
+
+/* 무한 반복 로딩 (indeterminate) */
+@keyframes quench-indeterminate {
+  0%   { left: -30%; width: 30%; }
+  50%  { left: 50%; width: 40%; }
+  100% { left: 100%; width: 30%; }
+}
+
+.quench-loader-indeterminate {
+  position: absolute;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent-cyan);
+  box-shadow: 0 0 8px var(--accent-cyan);
+  animation: quench-indeterminate 1200ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* ═══════════════ §2.6 Steel Frame (토스트/알림) ═══════════════
+   금속 프레임 안에 메시지 — 우상단 slideIn + dismiss progress bar */
+
+/* 토스트 진입 — overshoot 이징 */
+@keyframes toast-slide-in {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* 토스트 퇴장 */
+@keyframes toast-slide-out {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
+/* 자동 dismiss 프로그레스 바 */
+@keyframes toast-dismiss-progress {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+.toast-steel {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(168, 184, 204, 0.05);
+  backdrop-filter: blur(8px);
+  animation: toast-slide-in 300ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 시맨틱 컬러 상단 보더 */
+.toast-steel--success { border-top: 2px solid var(--semantic-success); }
+.toast-steel--warning { border-top: 2px solid var(--semantic-warning); }
+.toast-steel--error   { border-top: 2px solid var(--semantic-error); }
+.toast-steel--info    { border-top: 2px solid var(--accent-primary); }
+
+/* 퇴장 클래스 */
+.toast-steel.exiting {
+  animation: toast-slide-out 200ms ease-in forwards;
+}
+
+/* 하단 dismiss 프로그레스 바 (1px 높이) */
+.toast-steel-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--accent-primary);
+  transform-origin: left;
+  animation: toast-dismiss-progress 5000ms linear forwards;
+}
+
+/* ═══════════════ §2.7 Precision Gear (커스텀 스크롤바) ═══════════════
+   정밀 기어 — 6px 폭, 금속 느낌 스크롤바 */
+
+/* Webkit 계열 (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-base);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--metal-steel-dark);
+  border-radius: 3px;
+  border: 1px solid var(--border-subtle);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--metal-steel-mid);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--metal-steel-light);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--metal-steel-dark) var(--bg-base);
+}
+
+/* 스크롤 가능 영역 상/하단 fade 그라디언트 */
+.scroll-fade {
+  position: relative;
+}
+
+.scroll-fade::before,
+.scroll-fade::after {
+  content: '';
+  position: sticky;
+  display: block;
+  height: 8px;
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.scroll-fade::before {
+  top: 0;
+  background: linear-gradient(var(--bg-elevated), transparent);
+}
+
+.scroll-fade::after {
+  bottom: 0;
+  background: linear-gradient(transparent, var(--bg-elevated));
+}
+
+/* 스무스 스크롤 */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ═══════════════ §2.8 Edge Ignition (입력 필드 포커스) ═══════════════
+   금속 테두리가 차갑게 발광 — 포커스 시 시안 글로우 + 보더 드로잉 */
+
+.input-ignition,
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+textarea {
+  background: var(--bg-base);
+  border: 1px solid var(--border-default);
+  border-radius: 4px;
+  color: var(--text-primary);
+  transition: border-color 150ms ease, box-shadow 200ms ease-out;
+}
+
+.input-ignition:hover,
+input[type="text"]:hover,
+input[type="number"]:hover,
+input[type="email"]:hover,
+input[type="password"]:hover,
+input[type="search"]:hover,
+textarea:hover {
+  border-color: var(--border-strong);
+}
+
+.input-ignition:focus,
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="search"]:focus,
+textarea:focus {
+  border-color: var(--accent-primary);
+  box-shadow:
+    0 0 0 3px var(--accent-primary-muted),
+    0 0 12px rgba(74, 158, 222, 0.1);
+  outline: none;
+}
+
+/* 에러 상태 */
+.input-ignition.error,
+.input-error {
+  border-color: var(--semantic-error);
+  box-shadow: 0 0 0 3px var(--semantic-error-bg);
+}
+
+/* ═══════════════ §2.9 Hatch Open (드롭다운) ═══════════════
+   해치 열림 — scaleY 원점 상단, 크롬 라인 sweep 동반 */
+
+.dropdown-hatch {
+  transform-origin: top center;
+  animation: hatch-open 200ms cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+@keyframes hatch-open {
+  from {
+    transform: scaleY(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+/* 드롭다운 닫기 */
+.dropdown-hatch.closing {
+  animation: hatch-close 150ms ease-in forwards;
+}
+
+@keyframes hatch-close {
+  from {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  to {
+    transform: scaleY(0.95);
+    opacity: 0;
+  }
+}
+
+/* 드롭다운 상단 크롬 라인 sweep */
+.dropdown-hatch::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--gradient-chrome-edge);
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: chrome-line-sweep 200ms cubic-bezier(0, 0, 0.2, 1) forwards;
+  pointer-events: none;
+}
+
+/* 드롭다운 옵션 호버 — Chrome Sweep 축소판 (200ms) */
+.dropdown-hatch-option {
+  position: relative;
+  overflow: hidden;
+  transition: color 150ms ease, background 150ms ease;
+}
+
+.dropdown-hatch-option::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    var(--metal-chrome-08, rgba(168, 184, 204, 0.08)) 50%,
+    transparent 60%
+  );
+  transform: translateX(-100%);
+  transition: transform 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  pointer-events: none;
+}
+
+.dropdown-hatch-option:hover::before {
+  transform: translateX(100%);
+}
+
+.dropdown-hatch-option:hover {
+  background: var(--surface-mid);
+  color: var(--text-primary);
+}
+
+/* ═══════════════ §2.10 Relay Switch (토글/스위치) ═══════════════
+   릴레이 스위치 — overshoot thumb 전환 + 시안 글로우 */
+
+.relay-switch {
+  position: relative;
+  display: inline-flex;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background: var(--surface-low);
+  border: 1px solid var(--border-default);
+  cursor: pointer;
+  transition: background 250ms cubic-bezier(0.34, 1.56, 0.64, 1),
+              border-color 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* 토글 thumb (원형 손잡이) */
+.relay-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--metal-steel-mid);
+  transition: transform 250ms cubic-bezier(0.34, 1.56, 0.64, 1),
+              background 250ms cubic-bezier(0.34, 1.56, 0.64, 1),
+              box-shadow 250ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ON 상태 */
+.relay-switch.on {
+  background: var(--accent-primary-muted);
+  border-color: var(--accent-primary);
+}
+
+.relay-switch.on .relay-switch-thumb {
+  /* translateX(20px) = 트랙 너비(44) - thumb(18) - padding(4) - border(2) */
+  transform: translateX(20px);
+  background: var(--accent-primary);
+  box-shadow: 0 0 8px var(--accent-primary-muted);
+}
+
+/* 전환 중 thumb 넓어짐 효과 — CSS로 근사 */
+.relay-switch:active .relay-switch-thumb {
+  transform: scaleX(1.1);
+}
+
+.relay-switch.on:active .relay-switch-thumb {
+  transform: translateX(20px) scaleX(1.1);
+}
+
+/* ═══════════════ §2.11 Rail Slide (탭 전환) ═══════════════
+   활성 탭 하단 바가 레일을 따라 슬라이드 — CSS transition 기반 */
+
+/* 탭 컨테이너 — 인디케이터 바의 기준 */
+.rail-tabs {
+  position: relative;
+  display: flex;
+}
+
+/* 하단 슬라이딩 바 — JS로 left/width 조절, CSS로 트랜지션 */
+.rail-tabs-indicator {
+  position: absolute;
+  bottom: 0;
+  height: 2px;
+  background: var(--accent-primary);
+  border-radius: 1px;
+  transition: left 250ms cubic-bezier(0.4, 0, 0.2, 1),
+              width 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 이동 중 바 너비 확장 — JS에서 .sliding 클래스 토글 */
+.rail-tabs-indicator.sliding {
+  /* 중간 지점에서 +20% 너비 — JS transition 이벤트로 제어 */
+  transition: left 250ms cubic-bezier(0.4, 0, 0.2, 1),
+              width 125ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 탭 텍스트 상태 */
+.rail-tab {
+  color: var(--text-tertiary);
+  font-weight: var(--fw-normal, 400);
+  transition: color 150ms ease, font-weight 150ms ease;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+
+.rail-tab:hover {
+  color: var(--text-secondary);
+}
+
+.rail-tab.active {
+  color: var(--text-primary);
+  font-weight: var(--fw-semibold, 600);
+}
