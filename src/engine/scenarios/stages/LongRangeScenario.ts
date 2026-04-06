@@ -11,6 +11,7 @@ import type { TargetManager } from '../../TargetManager';
 import { WeaponSystem, WEAPON_PRESETS } from '../../WeaponSystem';
 import type { DifficultyConfig } from '../../../utils/types';
 import { DEG2RAD } from '../../../utils/physics';
+import { STAGE_COLORS } from '../../../config/theme';
 
 /** 모드 타입 */
 type LongRangeMode = 'precision' | 'bulletdrop';
@@ -175,7 +176,7 @@ export class LongRangeScenario extends Scenario {
     const target = this.targetManager.spawnTarget(pos, {
       angularSizeDeg: this.difficulty.targetSizeDeg,
       distanceM: this.targetDistance,
-      color: this.mode === 'bulletdrop' ? 0xff9f43 : 0x54a0ff,
+      color: this.mode === 'bulletdrop' ? STAGE_COLORS.customDrill : STAGE_COLORS.longRange,
     });
 
     this.currentTargetId = target.id;

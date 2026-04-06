@@ -10,6 +10,7 @@ import type { TargetManager } from '../../TargetManager';
 import { WeaponSystem, WEAPON_PRESETS } from '../../WeaponSystem';
 import type { DifficultyConfig } from '../../../utils/types';
 import { DEG2RAD } from '../../../utils/physics';
+import { TARGET_COLORS, STAGE_COLORS } from '../../../config/theme';
 
 /** 개별 결과 */
 interface TrialResult {
@@ -197,7 +198,7 @@ export class ZoomMultiFlickScenario extends Scenario {
       const target = this.targetManager.spawnTarget(pos, {
         angularSizeDeg: this.difficulty.targetSizeDeg / this.weapon.getConfig().zoomMultiplier,
         distanceM: distance,
-        color: moving ? 0xff9f43 : 0xe94560,
+        color: moving ? STAGE_COLORS.customDrill : TARGET_COLORS.flickRed,
       });
 
       this.activeTargets.push({

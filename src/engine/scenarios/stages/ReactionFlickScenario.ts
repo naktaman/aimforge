@@ -10,6 +10,7 @@ import type { TargetManager } from '../../TargetManager';
 import { WeaponSystem, WEAPON_PRESETS } from '../../WeaponSystem';
 import type { DifficultyConfig } from '../../../utils/types';
 import { DEG2RAD } from '../../../utils/physics';
+import { TARGET_COLORS } from '../../../config/theme';
 
 /** 타겟 출현 이벤트 */
 interface PeekEvent {
@@ -189,7 +190,7 @@ export class ReactionFlickScenario extends Scenario {
       {
         angularSizeDeg: this.difficulty.targetSizeDeg,
         distanceM: distance,
-        color: 0xe94560,
+        color: TARGET_COLORS.flickRed,
       },
     );
 

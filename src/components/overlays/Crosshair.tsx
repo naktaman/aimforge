@@ -5,6 +5,7 @@
  * SVG로 정밀한 서브픽셀 렌더링
  */
 import { useSettingsStore } from '../../stores/settingsStore';
+import { CROSSHAIR_COLORS } from '../../config/theme';
 import type { CrosshairConfig } from '../../utils/types';
 
 interface CrosshairProps {
@@ -169,7 +170,7 @@ function renderLine(
 /** 레거시 호환: 기존 props 인터페이스 지원 */
 export function CrosshairLegacy({
   type = 'cross',
-  color = '#4ade80',
+  color = CROSSHAIR_COLORS.cs2Default,
   size = 20,
   thickness = 2,
   gap = 4,
@@ -190,7 +191,7 @@ export function CrosshairLegacy({
     opacity: 1,
     outlineEnabled: false,
     outlineThickness: 0,
-    outlineColor: '#000000',
+    outlineColor: CROSSHAIR_COLORS.outline,
     dotEnabled: type === 'dot',
     dotSize: thickness,
     dynamicEnabled: false,

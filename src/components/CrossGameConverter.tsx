@@ -8,6 +8,7 @@ import { ZoomProfileChart } from './ZoomProfileChart';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useZoomCalibrationStore } from '../stores/zoomCalibrationStore';
 import { DEFAULT_GAME_ZOOM_PROFILES } from '../utils/physics';
+import { UI_COLORS } from '../config/theme';
 
 /** 변환 결과 타입 (Rust CrossgameZoomResult 미러) */
 interface CrossgameZoomResult {
@@ -84,14 +85,14 @@ export function CrossGameConverter() {
   })) ?? [];
 
   return (
-    <div style={{ padding: 20, maxWidth: 800, color: '#e2e8f0' }}>
+    <div style={{ padding: 20, maxWidth: 800, color: UI_COLORS.textPrimary }}>
       <h2 style={{ marginBottom: 16 }}>크로스게임 줌 감도 변환</h2>
 
       {/* 입력 폼 */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
         {/* 소스 게임 */}
         <div>
-          <label style={{ fontSize: 12, color: '#94a3b8' }}>소스 게임</label>
+          <label style={{ fontSize: 12, color: UI_COLORS.textSecondary }}>소스 게임</label>
           <select
             value={sourceGame}
             onChange={e => setSourceGame(e.target.value)}
@@ -109,7 +110,7 @@ export function CrossGameConverter() {
 
         {/* 타겟 게임 */}
         <div>
-          <label style={{ fontSize: 12, color: '#94a3b8' }}>��겟 게임</label>
+          <label style={{ fontSize: 12, color: UI_COLORS.textSecondary }}>��겟 게임</label>
           <select
             value={targetGame}
             onChange={e => setTargetGame(e.target.value)}
@@ -127,7 +128,7 @@ export function CrossGameConverter() {
 
         {/* 소스 감도 */}
         <div>
-          <label style={{ fontSize: 12, color: '#94a3b8' }}>소스 감도</label>
+          <label style={{ fontSize: 12, color: UI_COLORS.textSecondary }}>소스 감도</label>
           <input
             type="number"
             step="0.01"
@@ -139,7 +140,7 @@ export function CrossGameConverter() {
 
         {/* 줌 배율 선택 */}
         <div>
-          <label style={{ fontSize: 12, color: '#94a3b8' }}>줌 배율</label>
+          <label style={{ fontSize: 12, color: UI_COLORS.textSecondary }}>줌 배율</label>
           <select
             value={zoomRatio}
             onChange={e => setZoomRatio(Number(e.target.value))}
@@ -154,8 +155,8 @@ export function CrossGameConverter() {
 
       {/* 개인 k 정보 */}
       {kFitResult && (
-        <div style={{ padding: '8px 12px', background: '#1e293b', borderRadius: 6, marginBottom: 12, fontSize: 13 }}>
-          개인 k: <strong style={{ color: '#38bdf8' }}>{kFitResult.kValue.toFixed(3)}</strong>
+        <div style={{ padding: '8px 12px', background: UI_COLORS.bgSurface, borderRadius: 6, marginBottom: 12, fontSize: 13 }}>
+          개인 k: <strong style={{ color: UI_COLORS.infoHighlight }}>{kFitResult.kValue.toFixed(3)}</strong>
           {' '}({kFitResult.quality})
           {kFitResult.piecewiseK && ` | Piecewise: ${kFitResult.piecewiseK.length}구간`}
         </div>
@@ -168,7 +169,7 @@ export function CrossGameConverter() {
         style={{
           padding: '10px 24px',
           background: loading ? '#475569' : '#2563eb',
-          color: '#fff',
+          color: UI_COLORS.textWhite,
           border: 'none',
           borderRadius: 6,
           cursor: loading ? 'wait' : 'pointer',
@@ -189,7 +190,7 @@ export function CrossGameConverter() {
 
       {/* 결과 */}
       {result && (
-        <div style={{ background: '#1e293b', borderRadius: 8, padding: 16, marginBottom: 16 }}>
+        <div style={{ background: UI_COLORS.bgSurface, borderRadius: 8, padding: 16, marginBottom: 16 }}>
           <h3 style={{ marginBottom: 12, fontSize: 16 }}>변환 결과</h3>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <tbody>
@@ -229,12 +230,12 @@ export function CrossGameConverter() {
 function ResultRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
     <tr style={{ borderBottom: '1px solid #334155' }}>
-      <td style={{ padding: '6px 8px', color: '#94a3b8' }}>{label}</td>
+      <td style={{ padding: '6px 8px', color: UI_COLORS.textSecondary }}>{label}</td>
       <td style={{
         padding: '6px 8px',
         textAlign: 'right',
         fontWeight: highlight ? 700 : 400,
-        color: highlight ? '#4ade80' : '#e2e8f0',
+        color: highlight ? UI_COLORS.successGreen : UI_COLORS.textPrimary,
         fontSize: highlight ? 15 : 13,
       }}>{value}</td>
     </tr>
@@ -244,8 +245,8 @@ function ResultRow({ label, value, highlight }: { label: string; value: string; 
 const selectStyle: React.CSSProperties = {
   width: '100%',
   padding: '8px 10px',
-  background: '#1e293b',
-  color: '#e2e8f0',
+  background: UI_COLORS.bgSurface,
+  color: UI_COLORS.textPrimary,
   border: '1px solid #334155',
   borderRadius: 6,
   fontSize: 13,
@@ -254,8 +255,8 @@ const selectStyle: React.CSSProperties = {
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '8px 10px',
-  background: '#1e293b',
-  color: '#e2e8f0',
+  background: UI_COLORS.bgSurface,
+  color: UI_COLORS.textPrimary,
   border: '1px solid #334155',
   borderRadius: 6,
   fontSize: 13,

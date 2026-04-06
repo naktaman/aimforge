@@ -3,6 +3,7 @@
  * 줌 레벨에 따라 CSS 마스크/비네팅/블러 적용
  * 1x: 레드닷, 2x~3x: 원형 마스크, 4x~6x: 좁은 마스크+비네팅, 6x+: 스나이퍼
  */
+import { UI_COLORS } from '../../config/theme';
 
 interface ScopeOverlayProps {
   zoomLevel: number; // 1, 2, 3, 4, 6, 8 등
@@ -45,8 +46,8 @@ function RedDotScope() {
           width: 6,
           height: 6,
           borderRadius: '50%',
-          backgroundColor: '#ff3333',
-          boxShadow: '0 0 8px #ff3333, 0 0 16px rgba(255,51,51,0.5)',
+          backgroundColor: UI_COLORS.scopeRedDot,
+          boxShadow: `0 0 8px ${UI_COLORS.scopeRedDot}, 0 0 16px rgba(255,51,51,0.5)`,
           position: 'absolute',
         }}
       />

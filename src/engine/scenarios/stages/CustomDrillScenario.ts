@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import { Scenario } from '../Scenario';
 import type { GameEngine } from '../../GameEngine';
 import type { TargetManager } from '../../TargetManager';
+import { TARGET_COLORS, STAGE_COLORS } from '../../../config/theme';
 
 /** 드릴 모드 — 단일 타입 또는 혼합 */
 type DrillMode = 'flick' | 'track' | 'switch' | 'mixed';
@@ -296,7 +297,7 @@ export class CustomDrillScenario extends Scenario {
     const target = this.targetManager.spawnTarget(pos, {
       angularSizeDeg: this.config.targetSizeDeg,
       distanceM: d,
-      color: 0xe94560,
+      color: TARGET_COLORS.flickRed,
     });
 
     this.currentTargetIds = [target.id];
@@ -309,7 +310,7 @@ export class CustomDrillScenario extends Scenario {
     const target = this.targetManager.spawnTarget(pos, {
       angularSizeDeg: this.config.targetSizeDeg,
       distanceM: this.config.distanceM,
-      color: 0x4ecdc4,
+      color: TARGET_COLORS.trackingTeal,
     });
 
     this.currentTargetIds = [target.id];
@@ -334,7 +335,7 @@ export class CustomDrillScenario extends Scenario {
       const target = this.targetManager.spawnTarget(pos, {
         angularSizeDeg: this.config.targetSizeDeg,
         distanceM: d,
-        color: 0xff9f43,
+        color: STAGE_COLORS.customDrill,
       });
       this.currentTargetIds.push(target.id);
     }

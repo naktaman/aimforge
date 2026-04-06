@@ -8,6 +8,7 @@ import { Scenario } from '../Scenario';
 import type { GameEngine } from '../../GameEngine';
 import type { TargetManager } from '../../TargetManager';
 import type { DifficultyConfig } from '../../../utils/types';
+import { TARGET_COLORS } from '../../../config/theme';
 
 /** 공중 궤적 타입 */
 type AerialTrajectory = 'parabolic' | 'hover' | 'dive' | 'zigzag';
@@ -86,7 +87,7 @@ export class AerialTrackingScenario extends Scenario {
       {
         angularSizeDeg: this.difficulty.targetSizeDeg,
         distanceM: this.trajectory.startPos.length(),
-        color: 0x4ecdc4,
+        color: TARGET_COLORS.trackingTeal,
       },
     );
     this.currentTargetId = target.id;

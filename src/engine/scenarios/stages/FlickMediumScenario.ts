@@ -10,6 +10,7 @@ import type { GameEngine } from '../../GameEngine';
 import type { TargetManager } from '../../TargetManager';
 import type { FlickStageConfig } from '../../../utils/types';
 import { DEG2RAD } from '../../../utils/physics';
+import { STAGE_COLORS } from '../../../config/theme';
 
 /** 개별 타겟 결과 */
 interface MediumFlickTrial {
@@ -182,7 +183,7 @@ export class FlickMediumScenario extends Scenario {
       {
         angularSizeDeg: this.config.difficulty.targetSizeDeg,
         distanceM: this.distance,
-        color: 0xffa500,
+        color: STAGE_COLORS.flickMedium,
       },
     );
     this.currentTargetId = target.id;

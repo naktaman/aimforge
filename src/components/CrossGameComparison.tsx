@@ -10,6 +10,7 @@ import { computeRadarAxes } from '../utils/radarUtils';
 import type { AimDnaProfile, RadarAxis, CrossGameComparison as ComparisonType } from '../utils/types';
 import { invoke } from '@tauri-apps/api/core';
 import { useTranslation } from '../i18n';
+import { UI_COLORS } from '../config/theme';
 
 interface Props {
   onBack: () => void;
@@ -69,7 +70,7 @@ function DualRadarChart({ refAxes, targetAxes }: { refAxes: RadarAxis[]; targetA
         .attr('x1', 0).attr('y1', 0)
         .attr('x2', maxR * Math.cos(angle))
         .attr('y2', maxR * Math.sin(angle))
-        .attr('stroke', '#444').attr('stroke-width', 0.5);
+        .attr('stroke', UI_COLORS.chartAxisLine).attr('stroke-width', 0.5);
 
       const labelR = maxR + 25;
       g.append('text')
@@ -103,11 +104,11 @@ function DualRadarChart({ refAxes, targetAxes }: { refAxes: RadarAxis[]; targetA
     };
 
     drawPoly(refAxes, '#4a9eff');   // Reference — 파랑
-    drawPoly(targetAxes, '#FFB81C'); // Target — 오렌지(forge)
+    drawPoly(targetAxes, UI_COLORS.accentGold); // Target — 오렌지(forge)
 
     // 범례
     const legendY = -maxR - 15;
-    [{ color: '#4a9eff', label: 'Reference' }, { color: '#FFB81C', label: 'Target' }].forEach((item, i) => {
+    [{ color: '#4a9eff', label: 'Reference' }, { color: UI_COLORS.accentGold, label: 'Target' }].forEach((item, i) => {
       const x = -40 + i * 100;
       g.append('rect').attr('x', x).attr('y', legendY).attr('width', 12).attr('height', 12).attr('fill', item.color).attr('rx', 2);
       g.append('text').attr('x', x + 16).attr('y', legendY + 10).attr('fill', '#ccc').attr('font-size', '11px').text(item.label);

@@ -9,6 +9,7 @@ import { MetricsCollector } from '../metrics/MetricsCollector';
 import { VelocityTracker } from '../metrics/VelocityTracker';
 import { angularDistance } from '../HitDetection';
 import { calculateZoomCorrectionScore } from '../metrics/CompositeScore';
+import { TARGET_COLORS } from '../../config/theme';
 import { DEG2RAD } from '../../utils/physics';
 import type { GameEngine } from '../GameEngine';
 import type { TargetManager } from '../TargetManager';
@@ -183,7 +184,7 @@ export class ZoomCorrectionScenario extends Scenario {
     const target = this.targetManager.spawnTarget(targetPos, {
       angularSizeDeg: this.config.targetSizeDeg,
       distanceM: distance,
-      color: 0xe94560,
+      color: TARGET_COLORS.flickRed,
     });
     this.currentTargetId = target.id;
 

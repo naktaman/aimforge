@@ -10,6 +10,7 @@ import type { GameEngine } from '../../GameEngine';
 import type { TargetManager } from '../../TargetManager';
 import type { FlickStageConfig } from '../../../utils/types';
 import { DEG2RAD } from '../../../utils/physics';
+import { STAGE_COLORS } from '../../../config/theme';
 
 /** 개별 타겟 결과 */
 interface MacroFlickTrial {
@@ -188,7 +189,7 @@ export class FlickMacroScenario extends Scenario {
         angularSizeDeg: this.config.difficulty.targetSizeDeg,
         distanceM: this.distance,
         // 매크로 타겟은 좀 더 크고 눈에 띄는 색
-        color: 0xe74c3c,
+        color: STAGE_COLORS.flickMacro,
       },
     );
     this.currentTargetId = target.id;

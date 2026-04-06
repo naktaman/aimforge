@@ -9,6 +9,7 @@ import type { GameEngine } from '../../GameEngine';
 import type { TargetManager } from '../../TargetManager';
 import type { DifficultyConfig } from '../../../utils/types';
 import { DEG2RAD } from '../../../utils/physics';
+import { TARGET_COLORS } from '../../../config/theme';
 
 /** 적 유형 */
 type EnemyBehavior = 'static_behind' | 'strafing' | 'jumping' | 'circling';
@@ -166,7 +167,7 @@ export class CloseRange180Scenario extends Scenario {
     const target = this.targetManager.spawnTarget(pos, {
       angularSizeDeg: this.difficulty.targetSizeDeg,
       distanceM: enemy.distance,
-      color: 0xff6b6b,
+      color: TARGET_COLORS.alertRed,
     });
 
     this.currentTargetId = target.id;

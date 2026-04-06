@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { useProgressStore } from '../stores/progressStore';
 import { BackButton } from './BackButton';
+import { UI_COLORS } from '../config/theme';
 import type { ClickVector, GmmClusterResult } from '../utils/types';
 
 interface Props {
@@ -53,20 +54,20 @@ function ClickVectorScatter({ vectors }: { vectors: ClickVector[] }) {
     g.append('g')
       .attr('transform', `translate(0, ${h})`)
       .call(d3.axisBottom(xScale).ticks(5))
-      .call(g => g.selectAll('text').attr('fill', '#888').attr('font-size', 10))
-      .call(g => g.selectAll('line, path').attr('stroke', '#444'));
+      .call(g => g.selectAll('text').attr('fill', UI_COLORS.chartAxisText).attr('font-size', 10))
+      .call(g => g.selectAll('line, path').attr('stroke', UI_COLORS.chartAxisLine));
 
     // Y축
     g.append('g')
       .call(d3.axisLeft(yScale).ticks(5))
-      .call(g => g.selectAll('text').attr('fill', '#888').attr('font-size', 10))
-      .call(g => g.selectAll('line, path').attr('stroke', '#444'));
+      .call(g => g.selectAll('text').attr('fill', UI_COLORS.chartAxisText).attr('font-size', 10))
+      .call(g => g.selectAll('line, path').attr('stroke', UI_COLORS.chartAxisLine));
 
     // 원점 십자선
     g.append('line').attr('x1', xScale(0)).attr('x2', xScale(0)).attr('y1', 0).attr('y2', h)
-      .attr('stroke', '#555').attr('stroke-dasharray', '4,4');
+      .attr('stroke', UI_COLORS.chartGrid).attr('stroke-dasharray', '4,4');
     g.append('line').attr('x1', 0).attr('x2', w).attr('y1', yScale(0)).attr('y2', yScale(0))
-      .attr('stroke', '#555').attr('stroke-dasharray', '4,4');
+      .attr('stroke', UI_COLORS.chartGrid).attr('stroke-dasharray', '4,4');
 
     // 데이터 포인트
     g.selectAll('.click-dot')
@@ -78,14 +79,14 @@ function ClickVectorScatter({ vectors }: { vectors: ClickVector[] }) {
       .attr('r', 4)
       .attr('fill', d => MOTOR_COLORS[d.motorRegion] || '#888')
       .attr('opacity', 0.7)
-      .attr('stroke', d => d.overshoot ? '#f87171' : 'none')
+      .attr('stroke', d => d.overshoot ? UI_COLORS.dangerRed : 'none')
       .attr('stroke-width', d => d.overshoot ? 2 : 0);
 
     // 축 라벨
     g.append('text').attr('x', w / 2).attr('y', h + 32).attr('text-anchor', 'middle')
-      .attr('fill', '#aaa').attr('font-size', 11).text('X 이동 (°)');
+      .attr('fill', UI_COLORS.chartLabel).attr('font-size', 11).text('X 이동 (°)');
     g.append('text').attr('x', -h / 2).attr('y', -35).attr('text-anchor', 'middle')
-      .attr('fill', '#aaa').attr('font-size', 11).attr('transform', 'rotate(-90)')
+      .attr('fill', UI_COLORS.chartLabel).attr('font-size', 11).attr('transform', 'rotate(-90)')
       .text('Y 이동 (°)');
   }, [vectors]);
 
@@ -125,14 +126,14 @@ function GmmHistogram({ vectors, gmm }: { vectors: ClickVector[]; gmm: GmmCluste
     // X축
     g.append('g').attr('transform', `translate(0, ${h})`)
       .call(d3.axisBottom(xScale).ticks(6))
-      .call(g => g.selectAll('text').attr('fill', '#888').attr('font-size', 10))
-      .call(g => g.selectAll('line, path').attr('stroke', '#444'));
+      .call(g => g.selectAll('text').attr('fill', UI_COLORS.chartAxisText).attr('font-size', 10))
+      .call(g => g.selectAll('line, path').attr('stroke', UI_COLORS.chartAxisLine));
 
     // Y축
     g.append('g')
       .call(d3.axisLeft(yScale).ticks(4))
-      .call(g => g.selectAll('text').attr('fill', '#888').attr('font-size', 10))
-      .call(g => g.selectAll('line, path').attr('stroke', '#444'));
+      .call(g => g.selectAll('text').attr('fill', UI_COLORS.chartAxisText).attr('font-size', 10))
+      .call(g => g.selectAll('line, path').attr('stroke', UI_COLORS.chartAxisLine));
 
     // 히스토그램 바
     g.selectAll('.bar')
@@ -143,8 +144,8 @@ function GmmHistogram({ vectors, gmm }: { vectors: ClickVector[]; gmm: GmmCluste
       .attr('y', d => yScale(d.length))
       .attr('width', d => Math.max(0, xScale(d.x1 ?? 0) - xScale(d.x0 ?? 0) - 1))
       .attr('height', d => h - yScale(d.length))
-      .attr('fill', '#60a5fa44')
-      .attr('stroke', '#60a5fa');
+      .attr('fill', `${UI_COLORS.infoBlue}44`)
+      .attr('stroke', UI_COLORS.infoBlue);
 
     // GMM 가우시안 오버레이
     if (gmm) {
@@ -165,13 +166,13 @@ function GmmHistogram({ vectors, gmm }: { vectors: ClickVector[]; gmm: GmmCluste
           .attr('stroke', color).attr('stroke-width', 2).attr('stroke-dasharray', '4,2');
       };
 
-      drawGaussian(gmm.clusterA.mean, gmm.clusterA.stdDev, gmm.clusterA.weight, '#4ade80');
-      drawGaussian(gmm.clusterB.mean, gmm.clusterB.stdDev, gmm.clusterB.weight, '#8A9AB5');
+      drawGaussian(gmm.clusterA.mean, gmm.clusterA.stdDev, gmm.clusterA.weight, UI_COLORS.successGreen);
+      drawGaussian(gmm.clusterB.mean, gmm.clusterB.stdDev, gmm.clusterB.weight, UI_COLORS.metalChrome);
     }
 
     // X축 라벨
     g.append('text').attr('x', w / 2).attr('y', h + 32).attr('text-anchor', 'middle')
-      .attr('fill', '#aaa').attr('font-size', 11).text('이동 크기 (°)');
+      .attr('fill', UI_COLORS.chartLabel).attr('font-size', 11).text('이동 크기 (°)');
   }, [vectors, gmm]);
 
   return <svg ref={svgRef} style={{ width: '100%', maxWidth: 400, height: 250 }} />;
@@ -294,7 +295,7 @@ export default function TrajectoryAnalysis({ onBack, trialId: initialTrialId }: 
                 <DiagCard
                   label="권장 조정"
                   value={`${result.diagnosis.recommendedAdjustment > 0 ? '+' : ''}${result.diagnosis.recommendedAdjustment.toFixed(1)} cm/360`}
-                  color={result.diagnosis.recommendedAdjustment > 0 ? '#8A9AB5' : '#60a5fa'}
+                  color={result.diagnosis.recommendedAdjustment > 0 ? UI_COLORS.metalChrome : UI_COLORS.infoBlue}
                 />
               )}
             </div>

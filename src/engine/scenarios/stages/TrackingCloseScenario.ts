@@ -10,6 +10,7 @@ import type { GameEngine } from '../../GameEngine';
 import type { TargetManager } from '../../TargetManager';
 import type { TrackingStageConfig, MovementPattern } from '../../../utils/types';
 import { RandomPatternScheduler, getCloseRangePatterns } from './MovementPatternSystem';
+import { STAGE_COLORS } from '../../../config/theme';
 
 /** 트래킹 샘플 */
 interface TrackingSample {
@@ -91,7 +92,7 @@ export class TrackingCloseScenario extends Scenario {
       {
         angularSizeDeg: this.config.difficulty.targetSizeDeg,
         distanceM: this.distance,
-        color: 0x00b894,
+        color: STAGE_COLORS.aerialTracking,
       },
     );
     this.currentTargetId = target.id;

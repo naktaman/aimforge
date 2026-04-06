@@ -3,6 +3,7 @@
  * S/A/B/C/D 등급을 정확도 기반으로 결정하고, scale+glow 애니메이션 표현
  */
 import { motion } from 'motion/react';
+import { GRADE_COLORS } from '../../config/theme';
 
 /** 등급 정의 — 정확도 기준 */
 interface GradeInfo {
@@ -12,11 +13,11 @@ interface GradeInfo {
 }
 
 const GRADES: GradeInfo[] = [
-  { letter: 'S', color: '#FFD700', minAccuracy: 0.9 },
-  { letter: 'A', color: '#10B981', minAccuracy: 0.75 },
-  { letter: 'B', color: '#D4960A', minAccuracy: 0.6 },
-  { letter: 'C', color: '#F59E0B', minAccuracy: 0.45 },
-  { letter: 'D', color: '#6B7280', minAccuracy: 0 },
+  { letter: 'S', color: GRADE_COLORS.S, minAccuracy: 0.9 },
+  { letter: 'A', color: GRADE_COLORS.A, minAccuracy: 0.75 },
+  { letter: 'B', color: GRADE_COLORS.B, minAccuracy: 0.6 },
+  { letter: 'C', color: GRADE_COLORS.C, minAccuracy: 0.45 },
+  { letter: 'D', color: GRADE_COLORS.D, minAccuracy: 0 },
 ];
 
 /** 정확도(0-1)에서 등급 정보 계산 */

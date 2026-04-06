@@ -10,6 +10,7 @@ import type { GameEngine } from '../../GameEngine';
 import type { TargetManager } from '../../TargetManager';
 import type { TrackingStageConfig, MovementPattern } from '../../../utils/types';
 import { RandomPatternScheduler, getMidRangePatterns } from './MovementPatternSystem';
+import { STAGE_COLORS } from '../../../config/theme';
 
 /** 트래킹 샘플 */
 interface TrackingSample {
@@ -89,7 +90,7 @@ export class TrackingMidScenario extends Scenario {
       {
         angularSizeDeg: this.config.difficulty.targetSizeDeg,
         distanceM: this.distance,
-        color: 0x0984e3,
+        color: STAGE_COLORS.trackingMid,
       },
     );
     this.currentTargetId = target.id;

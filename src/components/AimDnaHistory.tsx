@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { useTranslation } from '../i18n';
 import { useAimDnaStore } from '../stores/aimDnaStore';
+import { UI_COLORS } from '../config/theme';
 import type { DnaSnapshot, DnaChangeEvent, SnapshotComparison } from '../utils/types';
 
 // 5축 색상 팔레트
@@ -86,8 +87,8 @@ function TimelineChart({ snapshots, changeEvents, selectedIds, onSelectSnapshot,
     // 그리드
     g.append('g')
       .call(d3.axisLeft(yScale).ticks(5).tickSize(-innerW))
-      .call(ax => ax.selectAll('line').attr('stroke', '#2a2a2a').attr('stroke-dasharray', '2,3'))
-      .call(ax => ax.selectAll('text').attr('fill', '#666').attr('font-size', '11px'))
+      .call(ax => ax.selectAll('line').attr('stroke', UI_COLORS.borderSubtle).attr('stroke-dasharray', '2,3'))
+      .call(ax => ax.selectAll('text').attr('fill', UI_COLORS.chartTickText).attr('font-size', '11px'))
       .call(ax => ax.select('.domain').remove());
 
     // X축
@@ -97,8 +98,8 @@ function TimelineChart({ snapshots, changeEvents, selectedIds, onSelectSnapshot,
         const date = d as Date;
         return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
       }))
-      .call(ax => ax.selectAll('text').attr('fill', '#666').attr('font-size', '10px'))
-      .call(ax => ax.select('.domain').attr('stroke', '#333'));
+      .call(ax => ax.selectAll('text').attr('fill', UI_COLORS.chartTickText).attr('font-size', '10px'))
+      .call(ax => ax.select('.domain').attr('stroke', UI_COLORS.chartDomain));
 
     // 5축 라인 그리기
     AXIS_KEYS.forEach(key => {
@@ -137,7 +138,7 @@ function TimelineChart({ snapshots, changeEvents, selectedIds, onSelectSnapshot,
       g.append('line')
         .attr('x1', x).attr('x2', x)
         .attr('y1', 0).attr('y2', innerH)
-        .attr('stroke', '#8A9AB5')
+        .attr('stroke', UI_COLORS.metalChrome)
         .attr('stroke-width', 1.5)
         .attr('stroke-dasharray', '4,3')
         .attr('opacity', 0.8);
@@ -145,7 +146,7 @@ function TimelineChart({ snapshots, changeEvents, selectedIds, onSelectSnapshot,
       g.append('text')
         .attr('x', x + 3)
         .attr('y', 12)
-        .attr('fill', '#8A9AB5')
+        .attr('fill', UI_COLORS.metalChrome)
         .attr('font-size', '10px')
         .text(changeTypeLabels[ev.changeType] ?? ev.changeType);
     });
@@ -187,7 +188,7 @@ function CompareRadar({ comparison }: CompareRadarProps) {
     // 동심원 그리드
     for (let lv = 1; lv <= levels; lv++) {
       g.append('circle').attr('r', maxR / levels * lv)
-        .attr('fill', 'none').attr('stroke', '#2a2a2a').attr('stroke-width', 0.5);
+        .attr('fill', 'none').attr('stroke', UI_COLORS.borderSubtle).attr('stroke-width', 0.5);
     }
 
     // 축 라인 + 라벨
@@ -196,14 +197,14 @@ function CompareRadar({ comparison }: CompareRadarProps) {
       g.append('line')
         .attr('x1', 0).attr('y1', 0)
         .attr('x2', maxR * Math.cos(angle)).attr('y2', maxR * Math.sin(angle))
-        .attr('stroke', '#333').attr('stroke-width', 0.5);
+        .attr('stroke', UI_COLORS.chartDomain).attr('stroke-width', 0.5);
 
       const labelR = maxR + 22;
       g.append('text')
         .attr('x', labelR * Math.cos(angle))
         .attr('y', labelR * Math.sin(angle))
         .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle')
-        .attr('fill', '#999').attr('font-size', '11px')
+        .attr('fill', UI_COLORS.chartAxisText).attr('font-size', '11px')
         .text(AXIS_LABELS[key]);
     });
 
@@ -224,8 +225,8 @@ function CompareRadar({ comparison }: CompareRadarProps) {
     });
     g.append('polygon')
       .attr('points', beforePts.map(p => p.join(',')).join(' '))
-      .attr('fill', '#74b9ff').attr('fill-opacity', 0.15)
-      .attr('stroke', '#74b9ff').attr('stroke-width', 1.8);
+      .attr('fill', UI_COLORS.referenceBlue).attr('fill-opacity', 0.15)
+      .attr('stroke', UI_COLORS.referenceBlue).attr('stroke-width', 1.8);
 
     // after 폴리곤 (빨간색)
     const afterVals = [
@@ -242,8 +243,8 @@ function CompareRadar({ comparison }: CompareRadarProps) {
     });
     g.append('polygon')
       .attr('points', afterPts.map(p => p.join(',')).join(' '))
-      .attr('fill', '#FFB81C').attr('fill-opacity', 0.2)
-      .attr('stroke', '#FFB81C').attr('stroke-width', 2);
+      .attr('fill', UI_COLORS.accentGold).attr('fill-opacity', 0.2)
+      .attr('stroke', UI_COLORS.accentGold).attr('stroke-width', 2);
   }, [comparison]);
 
   return <svg ref={svgRef} />;
@@ -394,7 +395,7 @@ export function AimDnaHistory({ profileId }: Props) {
       {/* 비교 결과 */}
       {compareMode && comparison && (
         <div className="comparison-panel" style={{
-          background: '#141414', border: '1px solid #2a2a2a',
+          background: UI_COLORS.bgDeep, border: `1px solid ${UI_COLORS.borderSubtle}`,
           borderRadius: 10, padding: 20, marginTop: 8,
         }}>
           <h3 style={{ marginTop: 0, fontSize: 15, color: 'var(--text-primary)' }}>{t('dnaHistory.compareResult')}</h3>
@@ -405,11 +406,11 @@ export function AimDnaHistory({ profileId }: Props) {
               <CompareRadar comparison={comparison} />
               <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 8, fontSize: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <div style={{ width: 12, height: 12, background: '#74b9ff', borderRadius: 2, opacity: 0.6 }} />
+                  <div style={{ width: 12, height: 12, background: UI_COLORS.referenceBlue, borderRadius: 2, opacity: 0.6 }} />
                   <span style={{ color: 'var(--info)' }}>{t('dnaHistory.before')}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <div style={{ width: 12, height: 12, background: '#FFB81C', borderRadius: 2, opacity: 0.6 }} />
+                  <div style={{ width: 12, height: 12, background: UI_COLORS.accentGold, borderRadius: 2, opacity: 0.6 }} />
                   <span style={{ color: 'var(--accent)' }}>{t('dnaHistory.after')}</span>
                 </div>
               </div>
@@ -462,7 +463,7 @@ export function AimDnaHistory({ profileId }: Props) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {changeEvents.slice(0, 10).map(ev => (
               <div key={ev.id} style={{
-                background: '#1a1a1a', border: '1px solid #2a2a2a',
+                background: UI_COLORS.bgDeep, border: `1px solid ${UI_COLORS.borderSubtle}`,
                 borderRadius: 6, padding: '10px 14px', fontSize: 13,
                 display: 'flex', gap: 12, alignItems: 'flex-start',
               }}>

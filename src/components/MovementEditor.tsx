@@ -6,6 +6,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from '../i18n';
 import { useMovementStore } from '../stores/movementStore';
+import { UI_COLORS } from '../config/theme';
 
 interface Props {
   onBack: () => void;
@@ -400,7 +401,7 @@ function MovementPreviewPanel({ maxSpeed, stopTime, accelType, airControl, csBon
       ctx.fillRect(0, 0, W, H);
 
       // 바닥 라인
-      ctx.strokeStyle = '#333';
+      ctx.strokeStyle = UI_COLORS.chartDomain;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(10, H - 30);
@@ -408,24 +409,24 @@ function MovementPreviewPanel({ maxSpeed, stopTime, accelType, airControl, csBon
       ctx.stroke();
 
       // 이동 점 — 가속/감속/정지 색상 분기
-      const dotColor = phase === 0 ? '#4ade80' : phase === 1 ? '#fbbf24' : '#f87171';
+      const dotColor = phase === 0 ? UI_COLORS.successGreen : phase === 1 ? '#fbbf24' : UI_COLORS.dangerRed;
       ctx.fillStyle = dotColor;
       ctx.beginPath();
       ctx.arc(dotX, H - 30, 8, 0, Math.PI * 2);
       ctx.fill();
 
       // 속도 바
-      ctx.fillStyle = '#333';
+      ctx.fillStyle = UI_COLORS.chartDomain;
       ctx.fillRect(10, 10, W - 20, 8);
       const speedPct = (maxSpeed - 100) / 500;
       const gradient = ctx.createLinearGradient(10, 0, 10 + (W - 20) * speedPct, 0);
       gradient.addColorStop(0, '#38bdf8');
-      gradient.addColorStop(1, '#f87171');
+      gradient.addColorStop(1, UI_COLORS.dangerRed);
       ctx.fillStyle = gradient;
       ctx.fillRect(10, 10, (W - 20) * speedPct, 8);
 
       // 레이블
-      ctx.fillStyle = '#aaa';
+      ctx.fillStyle = UI_COLORS.chartLabel;
       ctx.font = '10px monospace';
       ctx.fillText(`${t('movement.speed')}: ${maxSpeed} u/s`, 10, 34);
       ctx.fillText(`${t('movement.stop')}: ${stopTime}s`, 10, 46);
@@ -434,15 +435,15 @@ function MovementPreviewPanel({ maxSpeed, stopTime, accelType, airControl, csBon
 
       // 공중 제어 바
       const airY = 70;
-      ctx.fillStyle = '#333';
+      ctx.fillStyle = UI_COLORS.chartDomain;
       ctx.fillRect(10, airY, 80, 6);
       ctx.fillStyle = '#c084fc';
       ctx.fillRect(10, airY, 80 * airControl, 6);
-      ctx.fillStyle = '#aaa';
+      ctx.fillStyle = UI_COLORS.chartLabel;
       ctx.fillText(`${t('movement.air')}: ${(airControl * 100).toFixed(0)}%`, 95, airY + 6);
 
       // CS 보너스 뱃지
-      const badgeColor = csBonus < 0.9 ? '#4ade80' : csBonus > 1.0 ? '#f87171' : '#666';
+      const badgeColor = csBonus < 0.9 ? UI_COLORS.successGreen : csBonus > 1.0 ? UI_COLORS.dangerRed : '#666';
       ctx.fillStyle = badgeColor;
       ctx.fillText(`${t('movement.csBonus')}: ${csBonus}x`, 10, airY + 20);
 

@@ -8,6 +8,7 @@ import { Scenario } from '../Scenario';
 import type { GameEngine } from '../../GameEngine';
 import type { TargetManager } from '../../TargetManager';
 import type { DifficultyConfig } from '../../../utils/types';
+import { STAGE_COLORS } from '../../../config/theme';
 
 /** 스트레이핑 패턴 타입 */
 type StrafePattern = 'adad' | 'wide_strafe' | 'jiggle_peek' | 'random_stop';
@@ -85,7 +86,7 @@ export class StrafeTrackingScenario extends Scenario {
       {
         angularSizeDeg: this.difficulty.targetSizeDeg,
         distanceM: this.basePos.length(),
-        color: 0xfdcb6e,
+        color: STAGE_COLORS.strafeTracking,
       },
     );
     this.currentTargetId = target.id;

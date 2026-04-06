@@ -13,6 +13,7 @@ import { classifyMotor, calculateMovementDistance } from '../metrics/MotorClassi
 import { angularDistance } from '../HitDetection';
 import { DEG2RAD, RAD2DEG } from '../../utils/physics';
 import { constrainedAzimuth } from '../SpawnUtils';
+import { TARGET_COLORS } from '../../config/theme';
 import type { GameEngine } from '../GameEngine';
 import type { TargetManager } from '../TargetManager';
 import type { MicroFlickConfig, Direction } from '../../utils/types';
@@ -127,7 +128,7 @@ export class MicroFlickScenario extends Scenario {
     const target = this.targetManager.spawnTarget(targetPos, {
       angularSizeDeg: this.config.targetSizeDeg,
       distanceM: this.targetDistance,
-      color: 0x4ade80,
+      color: TARGET_COLORS.trackingGreen,
       movementType: 'static',
     });
     this.mainTargetId = target.id;
@@ -431,7 +432,7 @@ export class MicroFlickScenario extends Scenario {
     const target = this.targetManager.spawnTarget(targetPos, {
       angularSizeDeg: this.config.targetSizeDeg * 0.8, // 인터럽트 타겟은 약간 작게
       distanceM: distance,
-      color: 0xff6b6b, // 밝은 빨강 (구분용)
+      color: TARGET_COLORS.alertRed, // 밝은 빨강 (구분용)
     });
     this.interruptTargetId = target.id;
     this.interruptAppearTime = performance.now();

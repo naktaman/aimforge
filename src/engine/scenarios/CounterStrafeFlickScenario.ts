@@ -13,6 +13,7 @@ import { classifyMotor, calculateMovementDistance } from '../metrics/MotorClassi
 import { DEG2RAD } from '../../utils/physics';
 import { constrainedAzimuth } from '../SpawnUtils';
 import { HIT_ZONE_MULTIPLIER, type HitZoneType } from '../HumanoidTarget';
+import { TARGET_COLORS } from '../../config/theme';
 import type { GameEngine } from '../GameEngine';
 import type { TargetManager } from '../TargetManager';
 import type { CounterStrafeFlickConfig, Direction, TargetType } from '../../utils/types';
@@ -369,7 +370,7 @@ export class CounterStrafeFlickScenario extends Scenario {
       const target = this.targetManager.spawnTarget(targetPos, {
         angularSizeDeg: this.config.targetSizeDeg,
         distanceM: distance,
-        color: 0xe94560,
+        color: TARGET_COLORS.flickRed,
       });
       this.currentTargetId = target.id;
     }

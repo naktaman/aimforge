@@ -10,6 +10,7 @@ import { useTranslation } from '../i18n';
 import { useTabKeyboard } from '../utils/useTabKeyboard';
 import ReadinessWidget from './ReadinessWidget';
 import { EmptyState } from './EmptyState';
+import { UI_COLORS } from '../config/theme';
 import type { AimDnaHistoryEntry, SkillProgressRow } from '../utils/types';
 
 interface Props {
@@ -76,13 +77,13 @@ function DnaLineChart({ data, label, unit, noDataLabel }: { data: AimDnaHistoryE
     g.append('g')
       .attr('transform', `translate(0, ${h})`)
       .call(d3.axisBottom(xScale).ticks(5).tickFormat(d3.timeFormat('%m/%d') as unknown as (v: d3.NumberValue) => string))
-      .call(g => g.selectAll('text').attr('fill', '#888').attr('font-size', 10))
-      .call(g => g.selectAll('line, path').attr('stroke', '#444'));
+      .call(g => g.selectAll('text').attr('fill', UI_COLORS.chartAxisText).attr('font-size', 10))
+      .call(g => g.selectAll('line, path').attr('stroke', UI_COLORS.chartAxisLine));
 
     g.append('g')
       .call(d3.axisLeft(yScale).ticks(4))
-      .call(g => g.selectAll('text').attr('fill', '#888').attr('font-size', 10))
-      .call(g => g.selectAll('line, path').attr('stroke', '#444'));
+      .call(g => g.selectAll('text').attr('fill', UI_COLORS.chartAxisText).attr('font-size', 10))
+      .call(g => g.selectAll('line, path').attr('stroke', UI_COLORS.chartAxisLine));
 
     // 라인
     const line = d3.line<typeof parsed[0]>()
@@ -93,7 +94,7 @@ function DnaLineChart({ data, label, unit, noDataLabel }: { data: AimDnaHistoryE
     g.append('path')
       .datum(parsed)
       .attr('fill', 'none')
-      .attr('stroke', '#60a5fa')
+      .attr('stroke', UI_COLORS.infoBlue)
       .attr('stroke-width', 2)
       .attr('d', line);
 
@@ -105,14 +106,14 @@ function DnaLineChart({ data, label, unit, noDataLabel }: { data: AimDnaHistoryE
       .attr('cx', d => xScale(d.date))
       .attr('cy', d => yScale(d.value))
       .attr('r', 3)
-      .attr('fill', '#60a5fa');
+      .attr('fill', UI_COLORS.infoBlue);
 
     // 라벨
     g.append('text')
       .attr('x', w / 2)
       .attr('y', -6)
       .attr('text-anchor', 'middle')
-      .attr('fill', '#ccc')
+      .attr('fill', UI_COLORS.chartLabel)
       .attr('font-size', 12)
       .attr('font-weight', 500)
       .text(`${label} (${unit})`);

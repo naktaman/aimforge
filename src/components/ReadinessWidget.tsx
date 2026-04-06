@@ -6,6 +6,7 @@ import { useRef, useEffect } from 'react';
 import * as d3 from 'd3';
 import type { ReadinessResult } from '../utils/types';
 import { useTranslation } from '../i18n';
+import { UI_COLORS } from '../config/theme';
 
 interface Props {
   result: ReadinessResult | null;
@@ -15,10 +16,10 @@ interface Props {
 
 /** 카테고리별 색상 */
 const CATEGORY_COLORS: Record<string, string> = {
-  peak: '#4ade80',
+  peak: UI_COLORS.successGreen,
   ready: '#60a5fa',
   moderate: '#8A9AB5',
-  rest: '#f87171',
+  rest: UI_COLORS.dangerRed,
 };
 
 /** 카테고리별 i18n 키 */

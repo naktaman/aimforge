@@ -6,6 +6,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useMovementStore } from '../stores/movementStore';
 import { useTranslation } from '../i18n';
+import { UI_COLORS } from '../config/theme';
 
 interface Props {
   onBack: () => void;
@@ -51,7 +52,7 @@ export default function DualLandscape({ onBack }: Props) {
     const chartH = H - pad.top - pad.bottom;
 
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = '#0a0a1a';
+    ctx.fillStyle = UI_COLORS.bgDeep;
     ctx.fillRect(0, 0, W, H);
 
     const staticCurve = generateDemoCurve(staticOpt, 8);
@@ -63,14 +64,14 @@ export default function DualLandscape({ onBack }: Props) {
     const toY = (v: number) => pad.top + chartH - (v / 100) * chartH;
 
     // 격자
-    ctx.strokeStyle = '#222';
+    ctx.strokeStyle = UI_COLORS.borderSubtle;
     ctx.lineWidth = 0.5;
     for (let y = 0; y <= 100; y += 20) {
       ctx.beginPath();
       ctx.moveTo(pad.left, toY(y));
       ctx.lineTo(pad.left + chartW, toY(y));
       ctx.stroke();
-      ctx.fillStyle = '#666';
+      ctx.fillStyle = UI_COLORS.chartTickText;
       ctx.font = '11px monospace';
       ctx.textAlign = 'right';
       ctx.fillText(y.toString(), pad.left - 6, toY(y) + 4);
@@ -80,14 +81,14 @@ export default function DualLandscape({ onBack }: Props) {
       ctx.moveTo(toX(x), pad.top);
       ctx.lineTo(toX(x), pad.top + chartH);
       ctx.stroke();
-      ctx.fillStyle = '#666';
+      ctx.fillStyle = UI_COLORS.chartTickText;
       ctx.textAlign = 'center';
       ctx.fillText(x.toString(), toX(x), pad.top + chartH + 16);
     }
 
     // 정적 커브 (파란색)
     ctx.beginPath();
-    ctx.strokeStyle = '#38bdf8';
+    ctx.strokeStyle = UI_COLORS.infoHighlight;
     ctx.lineWidth = 2;
     staticCurve.forEach(([x, y], i) => {
       const px = toX(x), py = toY(y);
@@ -97,7 +98,7 @@ export default function DualLandscape({ onBack }: Props) {
 
     // 무빙 커브 (주황색)
     ctx.beginPath();
-    ctx.strokeStyle = '#8A9AB5';
+    ctx.strokeStyle = UI_COLORS.metalChrome;
     ctx.lineWidth = 2;
     movingCurve.forEach(([x, y], i) => {
       const px = toX(x), py = toY(y);
@@ -109,7 +110,7 @@ export default function DualLandscape({ onBack }: Props) {
     if (recommendation) {
       const wx = toX(recommendation.finalCm360);
       ctx.beginPath();
-      ctx.strokeStyle = '#FFB81C';
+      ctx.strokeStyle = UI_COLORS.accentGold;
       ctx.lineWidth = 2;
       ctx.setLineDash([5, 5]);
       ctx.moveTo(wx, pad.top);
@@ -119,29 +120,29 @@ export default function DualLandscape({ onBack }: Props) {
 
       // 최적점 마커
       ctx.beginPath();
-      ctx.fillStyle = '#FFB81C';
+      ctx.fillStyle = UI_COLORS.accentGold;
       ctx.arc(wx, toY(80), 6, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.fillStyle = '#FFB81C';
+      ctx.fillStyle = UI_COLORS.accentGold;
       ctx.font = 'bold 13px monospace';
       ctx.textAlign = 'center';
       ctx.fillText(`${recommendation.finalCm360.toFixed(1)}`, wx, pad.top - 8);
     }
 
     // 정적/무빙 최적점 마커
-    ctx.fillStyle = '#38bdf8';
+    ctx.fillStyle = UI_COLORS.infoHighlight;
     ctx.beginPath();
     ctx.arc(toX(staticOpt), toY(100), 5, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = '#8A9AB5';
+    ctx.fillStyle = UI_COLORS.metalChrome;
     ctx.beginPath();
     ctx.arc(toX(movingOpt), toY(100), 5, 0, Math.PI * 2);
     ctx.fill();
 
     // 축 라벨
-    ctx.fillStyle = '#aaa';
+    ctx.fillStyle = UI_COLORS.chartLabel;
     ctx.font = '12px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('cm/360', pad.left + chartW / 2, H - 4);
@@ -154,13 +155,13 @@ export default function DualLandscape({ onBack }: Props) {
     // 범례
     const legendY = 14;
     ctx.font = '12px sans-serif';
-    ctx.fillStyle = '#38bdf8';
+    ctx.fillStyle = UI_COLORS.infoHighlight;
     ctx.fillRect(pad.left + 10, legendY - 8, 12, 3);
     ctx.fillText(t('landscape.static'), pad.left + 28, legendY);
-    ctx.fillStyle = '#8A9AB5';
+    ctx.fillStyle = UI_COLORS.metalChrome;
     ctx.fillRect(pad.left + 80, legendY - 8, 12, 3);
     ctx.fillText(t('landscape.moving'), pad.left + 98, legendY);
-    ctx.fillStyle = '#FFB81C';
+    ctx.fillStyle = UI_COLORS.accentGold;
     ctx.fillRect(pad.left + 150, legendY - 8, 12, 3);
     ctx.fillText(t('landscape.weighted'), pad.left + 168, legendY);
   }, [staticOpt, movingOpt, ratio, recommendation, t]);
@@ -177,12 +178,12 @@ export default function DualLandscape({ onBack }: Props) {
       </div>
 
       {/* 차트 */}
-      <div style={{ background: '#0a0a1a', borderRadius: 8, padding: 10, marginBottom: 20 }}>
+      <div style={{ background: UI_COLORS.bgDeep, borderRadius: 8, padding: 10, marginBottom: 20 }}>
         <canvas ref={canvasRef} width={800} height={400} style={{ width: '100%', height: 'auto' }} />
       </div>
 
       {/* 컨트롤 */}
-      <div style={{ background: '#1a1a2e', padding: 20, borderRadius: 8, marginBottom: 20 }}>
+      <div style={{ background: UI_COLORS.bgPanel, padding: 20, borderRadius: 8, marginBottom: 20 }}>
         <h3 style={{ marginTop: 0 }}>{t('landscape.paramAdjust')}</h3>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
           <div>

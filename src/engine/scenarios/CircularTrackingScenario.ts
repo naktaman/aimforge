@@ -9,6 +9,7 @@ import { MetricsCollector } from '../metrics/MetricsCollector';
 import { VelocityTracker } from '../metrics/VelocityTracker';
 import { angularDistance } from '../HitDetection';
 import { DEG2RAD, RAD2DEG } from '../../utils/physics';
+import { TARGET_COLORS } from '../../config/theme';
 import type { GameEngine } from '../GameEngine';
 import type { TargetManager } from '../TargetManager';
 import type { CircularTrackingConfig, TrackingTrialMetrics } from '../../utils/types';
@@ -88,7 +89,7 @@ export class CircularTrackingScenario extends Scenario {
     const target = this.targetManager.spawnTarget(targetPos, {
       angularSizeDeg: this.config.targetSizeDeg,
       distanceM: this.targetDistance,
-      color: 0x4ade80,
+      color: TARGET_COLORS.trackingGreen,
       movementType: 'static', // 이동은 직접 제어
     });
     this.currentTargetId = target.id;

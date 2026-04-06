@@ -21,6 +21,7 @@ import {
 } from '../stores/profileWizardStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useCalibrationStore } from '../stores/calibrationStore';
+import { UI_COLORS } from '../config/theme';
 import { gameSensToCm360, cm360ToSens } from '../utils/physics';
 import type { GamePreset, StageType, AimDnaProfile } from '../utils/types';
 
@@ -64,8 +65,8 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
 
   /** 카테고리 → 아바타 배경색 */
   const CATEGORY_COLORS: Record<string, string> = {
-    fps: '#60a5fa', tactical: '#34d399', 'battle-royale': '#fbbf24',
-    tps: '#FFB81C', arena: '#a78bfa', default: '#a78bfa',
+    fps: UI_COLORS.infoBlue, tactical: '#34d399', 'battle-royale': '#fbbf24',
+    tps: UI_COLORS.accentGold, arena: '#a78bfa', default: '#a78bfa',
   };
   const FILTER_CATEGORIES = ['all', 'fps', 'tactical', 'battle-royale', 'tps', 'arena'] as const;
   const CATEGORY_LABEL_KEYS: Record<string, string> = {

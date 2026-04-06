@@ -10,6 +10,7 @@ import type { GameEngine } from '../../GameEngine';
 import type { TargetManager } from '../../TargetManager';
 import type { FlickStageConfig } from '../../../utils/types';
 import { DEG2RAD } from '../../../utils/physics';
+import { TARGET_COLORS } from '../../../config/theme';
 
 /** 개별 타겟 결과 */
 interface MicroFlickTrial {
@@ -178,7 +179,7 @@ export class FlickMicroScenario extends Scenario {
       {
         angularSizeDeg: this.config.difficulty.targetSizeDeg,
         distanceM: this.distance,
-        color: 0xff6b6b,
+        color: TARGET_COLORS.alertRed,
       },
     );
     this.currentTargetId = target.id;

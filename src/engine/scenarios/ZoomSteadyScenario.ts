@@ -13,6 +13,7 @@ import { VelocityTracker } from '../metrics/VelocityTracker';
 import { angularDistance } from '../HitDetection';
 import { DEG2RAD, RAD2DEG } from '../../utils/physics';
 import { calculateTrackingScore } from '../metrics/CompositeScore';
+import { TARGET_COLORS } from '../../config/theme';
 import type { GameEngine } from '../GameEngine';
 import type { TargetManager } from '../TargetManager';
 import type { ZoomPhaseConfig, ZoomPhaseResult } from '../../utils/types';
@@ -95,7 +96,7 @@ export class ZoomSteadyScenario extends Scenario {
     const target = this.targetManager.spawnTarget(targetPos, {
       angularSizeDeg: tier.sizeDeg,
       distanceM: this.targetDistance,
-      color: 0x4ade80,
+      color: TARGET_COLORS.trackingGreen,
       movementType: 'static',
     });
     this.currentTargetId = target.id;

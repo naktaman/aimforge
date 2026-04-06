@@ -10,6 +10,7 @@ import type { TargetManager } from '../../TargetManager';
 import { WeaponSystem, WEAPON_PRESETS } from '../../WeaponSystem';
 import type { DifficultyConfig } from '../../../utils/types';
 import { DEG2RAD } from '../../../utils/physics';
+import { STAGE_COLORS } from '../../../config/theme';
 
 /** 줌 단계별 시행 */
 interface ZoomTrial {
@@ -166,7 +167,7 @@ export class ScopedFlickScenario extends Scenario {
     const target = this.targetManager.spawnTarget(pos, {
       angularSizeDeg: Math.max(adjustedSize, 0.3),
       distanceM: distance,
-      color: 0x6c5ce7,
+      color: STAGE_COLORS.scopedLongRange,
     });
 
     this.currentTargetId = target.id;

@@ -10,6 +10,7 @@ import { VelocityTracker } from '../metrics/VelocityTracker';
 import { PerlinNoise } from '../../utils/perlin';
 import { angularDistance } from '../HitDetection';
 import { DEG2RAD, RAD2DEG } from '../../utils/physics';
+import { TARGET_COLORS } from '../../config/theme';
 import type { GameEngine } from '../GameEngine';
 import type { TargetManager } from '../TargetManager';
 import type { StochasticTrackingConfig, TrackingTrialMetrics } from '../../utils/types';
@@ -83,7 +84,7 @@ export class StochasticTrackingScenario extends Scenario {
     const target = this.targetManager.spawnTarget(this.basePosition.clone(), {
       angularSizeDeg: this.config.targetSizeDeg,
       distanceM: this.targetDistance,
-      color: 0x4ade80,
+      color: TARGET_COLORS.trackingGreen,
       movementType: 'static', // 이동은 직접 제어
     });
     this.currentTargetId = target.id;

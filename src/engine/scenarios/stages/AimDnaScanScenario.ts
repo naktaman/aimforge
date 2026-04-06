@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { Scenario } from '../Scenario';
 import type { GameEngine } from '../../GameEngine';
 import type { TargetManager } from '../../TargetManager';
+import { TARGET_COLORS } from '../../../config/theme';
 
 /** 평가 단계 */
 type ScanPhase = 'flick' | 'tracking' | 'multi' | 'close' | 'done';
@@ -213,7 +214,7 @@ export class AimDnaScanScenario extends Scenario {
     const target = this.targetManager.spawnTarget(pos, {
       angularSizeDeg: 3.0,
       distanceM: d,
-      color: 0xe94560,
+      color: TARGET_COLORS.flickRed,
     });
     this.flickTargetId = target.id;
     this.flickTargetTime = performance.now();
@@ -233,7 +234,7 @@ export class AimDnaScanScenario extends Scenario {
     const target = this.targetManager.spawnTarget(pos, {
       angularSizeDeg: 5.0,
       distanceM: d,
-      color: 0xff6b6b,
+      color: TARGET_COLORS.alertRed,
     });
     this.closeTargetId = target.id;
     this.closeTargetTime = performance.now();
@@ -261,7 +262,7 @@ export class AimDnaScanScenario extends Scenario {
 
     const target = this.targetManager.spawnTarget(
       new THREE.Vector3(0, 1.6, -12),
-      { angularSizeDeg: 3.5, distanceM: 12, color: 0x4ecdc4 },
+      { angularSizeDeg: 3.5, distanceM: 12, color: TARGET_COLORS.trackingTeal },
     );
     this.trackingTargetId = target.id;
   }
@@ -297,7 +298,7 @@ export class AimDnaScanScenario extends Scenario {
       const target = this.targetManager.spawnTarget(pos, {
         angularSizeDeg: 3.0,
         distanceM: d,
-        color: 0xe94560,
+        color: TARGET_COLORS.flickRed,
       });
       this.multiTargetIds.push(target.id);
     }

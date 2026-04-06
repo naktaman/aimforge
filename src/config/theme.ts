@@ -63,14 +63,57 @@ export const STAGE_COLORS = {
 // ===== UI 색상 (CSS hex 문자열) =====
 
 export const UI_COLORS = {
+  // ── 텍스트 ──
   /** 주 텍스트 (밝은 회색) */
   textPrimary: '#e2e8f0',
   /** 보조 텍스트 (중간 회색) */
   textSecondary: '#94a3b8',
   /** 흰색 텍스트 */
   textWhite: '#fff',
+  /** 비활성/플레이스홀더 텍스트 */
+  textMuted: '#888',
+
+  // ── 시맨틱 색상 ──
   /** 정보 강조 (청색) */
   infoHighlight: '#38bdf8',
+  /** 정보 파랑 (60a5fa) */
+  infoBlue: '#60a5fa',
+  /** 성공/트래킹 초록 */
+  successGreen: '#4ade80',
+  /** 위험/미스 빨강 */
+  dangerRed: '#f87171',
+  /** 골드 액센트 */
+  accentGold: '#FFB81C',
+  /** 참조 블루 (연한) */
+  referenceBlue: '#74b9ff',
+  /** 메탈 크롬 (강조 회색) */
+  metalChrome: '#8A9AB5',
+
+  // ── 차트/D3 공통 ──
+  /** 차트 축 텍스트 */
+  chartAxisText: '#888',
+  /** 차트 축 라인/틱 */
+  chartAxisLine: '#444',
+  /** 차트 그리드 (점선) */
+  chartGrid: '#555',
+  /** 차트 축 레이블 */
+  chartLabel: '#aaa',
+  /** 차트 도메인 라인 */
+  chartDomain: '#333',
+  /** 차트 틱 텍스트 (어두운 회색) */
+  chartTickText: '#666',
+
+  // ── 표면/배경 ──
+  /** 가장 깊은 배경 */
+  bgDeep: '#0a0a1a',
+  /** 패널 배경 */
+  bgPanel: '#1a1a2e',
+  /** 카드/서피스 배경 */
+  bgSurface: '#1e293b',
+  /** 미묘한 테두리 */
+  borderSubtle: '#2a2a2a',
+
+  // ── 레이더/스코프 ──
   /** 레이더 차트 참조 색상 (파랑) */
   radarReference: '#4a9eff',
   /** 레이더 차트 타겟 색상 (골드) */

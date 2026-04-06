@@ -8,6 +8,7 @@ import { Scenario } from '../Scenario';
 import type { GameEngine } from '../../GameEngine';
 import type { TargetManager } from '../../TargetManager';
 import type { DifficultyConfig } from '../../../utils/types';
+import { STAGE_COLORS } from '../../../config/theme';
 
 /** 점프 패턴 타입 */
 type JumpPattern = 'single' | 'double' | 'bunny_hop' | 'wall_jump';
@@ -81,7 +82,7 @@ export class JumpTrackingScenario extends Scenario {
       {
         angularSizeDeg: this.difficulty.targetSizeDeg,
         distanceM: this.basePos.length(),
-        color: 0x00b894,
+        color: STAGE_COLORS.aerialTracking,
       },
     );
     this.currentTargetId = target.id;

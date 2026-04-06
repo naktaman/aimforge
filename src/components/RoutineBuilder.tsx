@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRoutineStore, type RoutineStep } from '../stores/routineStore';
 import type { ScenarioType } from '../utils/types';
 import { useTranslation } from '../i18n';
+import { UI_COLORS } from '../config/theme';
 
 /** 추가 가능한 시나리오 목록 */
 const AVAILABLE_SCENARIOS: { type: ScenarioType; name: string; defaultDuration: number }[] = [
@@ -18,8 +19,8 @@ const AVAILABLE_SCENARIOS: { type: ScenarioType; name: string; defaultDuration: 
 
 /** 시나리오별 색상 */
 const SCENARIO_COLORS: Record<string, string> = {
-  flick: '#FFB81C',
-  tracking: '#4ade80',
+  flick: UI_COLORS.accentGold,
+  tracking: UI_COLORS.successGreen,
   circular_tracking: '#38bdf8',
   stochastic_tracking: '#c084fc',
   counter_strafe_flick: '#fb923c',

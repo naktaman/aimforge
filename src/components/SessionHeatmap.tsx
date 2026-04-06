@@ -4,6 +4,7 @@
  * PNG 다운로드 기능 포함
  */
 import { useRef, useEffect, useCallback, useState } from 'react';
+import { UI_COLORS } from '../config/theme';
 
 /** 히트맵에 표시할 클릭 데이터 */
 export interface HeatmapClick {
@@ -165,11 +166,11 @@ export function SessionHeatmap({
       const y = click.ny * height;
       ctx.beginPath();
       ctx.arc(x, y, click.hit ? 4 : 5, 0, Math.PI * 2);
-      ctx.fillStyle = click.hit ? '#4ade80' : '#f87171';  /* 캔버스 컨텍스트 — CSS 변수 사용 불가 */
+      ctx.fillStyle = click.hit ? UI_COLORS.successGreen : UI_COLORS.dangerRed;  /* 캔버스 컨텍스트 — CSS 변수 사용 불가 */
       ctx.fill();
       if (!click.hit) {
         // 미스: X 마커
-        ctx.strokeStyle = '#f87171';  /* 캔버스 컨텍스트 */
+        ctx.strokeStyle = UI_COLORS.dangerRed;  /* 캔버스 컨텍스트 */
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(x - 4, y - 4); ctx.lineTo(x + 4, y + 4);
@@ -180,7 +181,7 @@ export function SessionHeatmap({
 
     // 통계 텍스트
     const hits = clicks.filter(c => c.hit).length;
-    ctx.fillStyle = '#e0e0e0';
+    ctx.fillStyle = UI_COLORS.textPrimary;
     ctx.font = '12px monospace';
     ctx.fillText(`Hits: ${hits}/${clicks.length} (${clicks.length > 0 ? ((hits / clicks.length) * 100).toFixed(1) : 0}%)`, 10, 20);
   }, [clicks, trajectory, width, height, showTrajectory, showDensity]);

@@ -10,6 +10,7 @@ import type { GameEngine } from '../../GameEngine';
 import type { TargetManager } from '../../TargetManager';
 import type { SwitchingStageConfig } from '../../../utils/types';
 import { DEG2RAD } from '../../../utils/physics';
+import { STAGE_COLORS } from '../../../config/theme';
 
 /** 개별 타겟 결과 */
 interface SwitchTarget {
@@ -206,7 +207,7 @@ export class SwitchingCloseScenario extends Scenario {
         {
           angularSizeDeg: this.config.difficulty.targetSizeDeg,
           distanceM: this.distance,
-          color: 0xfdcb6e,
+          color: STAGE_COLORS.strafeTracking,
         },
       );
       this.activeTargetIds.push(target.id);

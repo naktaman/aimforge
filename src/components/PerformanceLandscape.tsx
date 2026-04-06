@@ -7,6 +7,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
+import { UI_COLORS } from '../config/theme';
 
 /** GP 곡선 데이터 포인트 */
 interface GpCurvePoint {
@@ -182,14 +183,14 @@ export function PerformanceLandscape({
       .datum(gpCurve)
       .attr('d', meanLine)
       .attr('fill', 'none')
-      .attr('stroke', '#4ade80')
+      .attr('stroke', UI_COLORS.successGreen)
       .attr('stroke-width', 2.5);
 
     // ──── 레이어 3: 시나리오 오버레이 ────
     if (showOverlays && scenarioOverlays) {
       Object.entries(scenarioOverlays).forEach(([scenario, data]) => {
         if (data.length === 0) return;
-        const color = SCENARIO_COLORS[scenario] || '#888';
+        const color = SCENARIO_COLORS[scenario] || UI_COLORS.chartAxisText;
         const line = d3.line<{ x: number; score: number }>()
           .x((d) => xScale(d.x))
           .y((d) => yScale(d.score))
@@ -215,7 +216,7 @@ export function PerformanceLandscape({
       .attr('cx', (d) => xScale(d.cm360))
       .attr('cy', (d) => yScale(d.score))
       .attr('r', 4)
-      .attr('fill', '#60a5fa')
+      .attr('fill', UI_COLORS.infoBlue)
       .attr('stroke', '#1e3a5f')
       .attr('stroke-width', 1.5);
 
@@ -231,7 +232,7 @@ export function PerformanceLandscape({
       // 다이아몬드 마커
       peakGroup.append('path')
         .attr('d', d3.symbol().type(d3.symbolDiamond).size(80)())
-        .attr('fill', (d) => d.isPrimary ? '#f59e0b' : '#94a3b8')
+        .attr('fill', (d) => d.isPrimary ? UI_COLORS.accentGold : UI_COLORS.textSecondary)
         .attr('stroke', '#000')
         .attr('stroke-width', 1);
 
@@ -239,7 +240,7 @@ export function PerformanceLandscape({
       peakGroup.append('text')
         .attr('dy', -12)
         .attr('text-anchor', 'middle')
-        .attr('fill', '#e2e8f0')
+        .attr('fill', UI_COLORS.textPrimary)
         .attr('font-size', '10px')
         .text((d) => d.isPrimary ? '주 피크' : '부 피크');
     }
@@ -251,7 +252,7 @@ export function PerformanceLandscape({
         .attr('x2', xScale(selectedSens))
         .attr('y1', 0)
         .attr('y2', plotH)
-        .attr('stroke', '#f59e0b')
+        .attr('stroke', UI_COLORS.accentGold)
         .attr('stroke-width', 1.5)
         .attr('stroke-dasharray', '6,3');
 
@@ -259,7 +260,7 @@ export function PerformanceLandscape({
         .attr('x', xScale(selectedSens))
         .attr('y', -5)
         .attr('text-anchor', 'middle')
-        .attr('fill', '#f59e0b')
+        .attr('fill', UI_COLORS.accentGold)
         .attr('font-size', '11px')
         .text(`${selectedSens.toFixed(1)}`);
     }
@@ -313,15 +314,15 @@ export function PerformanceLandscape({
       .call(d3.axisLeft(yScale).ticks(6));
 
     // 축 스타일
-    svg.selectAll('.domain, .tick line').attr('stroke', '#444');
-    svg.selectAll('.tick text').attr('fill', '#aaa').attr('font-size', '10px');
+    svg.selectAll('.domain, .tick line').attr('stroke', UI_COLORS.chartAxisLine);
+    svg.selectAll('.tick text').attr('fill', UI_COLORS.chartLabel).attr('font-size', '10px');
 
     // X축 라벨
     svg.append('text')
       .attr('x', margin.left + plotW / 2)
       .attr('y', height - 5)
       .attr('text-anchor', 'middle')
-      .attr('fill', '#888')
+      .attr('fill', UI_COLORS.chartAxisText)
       .attr('font-size', '11px')
       .text('cm/360');
 
@@ -331,7 +332,7 @@ export function PerformanceLandscape({
       .attr('x', -(margin.top + plotH / 2))
       .attr('y', 15)
       .attr('text-anchor', 'middle')
-      .attr('fill', '#888')
+      .attr('fill', UI_COLORS.chartAxisText)
       .attr('font-size', '11px')
       .text('score');
 
@@ -388,7 +389,7 @@ export function PerformanceLandscape({
           borderRadius: '6px',
           padding: '6px 10px',
           fontSize: '11px',
-          color: '#e2e8f0',
+          color: UI_COLORS.textPrimary,
           pointerEvents: 'none',
           zIndex: 10,
         }}
@@ -399,7 +400,7 @@ export function PerformanceLandscape({
         <div className="convergence-badge" style={{
           position: 'absolute', top: 4, right: 8,
           background: convergenceMode === 'obsessive' ? '#7c3aed' : '#2563eb',
-          color: '#fff', borderRadius: '4px', padding: '2px 8px',
+          color: UI_COLORS.textWhite, borderRadius: '4px', padding: '2px 8px',
           fontSize: '10px', fontWeight: 600,
         }}>
           {convergenceMode === 'obsessive' ? 'Obsessive' : 'Deep'}

@@ -5,6 +5,7 @@
  */
 import { useMemo } from 'react';
 import { motion } from 'motion/react';
+import { UI_COLORS } from '../config/theme';
 
 /** 데이터 포인트 (측정 또는 보간) */
 interface ZoomKPoint {
@@ -140,10 +141,10 @@ export function ZoomProfileChart({
           <line
             x1={PADDING.left} y1={scaleY(globalK)}
             x2={PADDING.left + plotW} y2={scaleY(globalK)}
-            stroke="#fbbf24" strokeWidth={1.5} strokeDasharray="6 3"
+            stroke={UI_COLORS.accentGold} strokeWidth={1.5} strokeDasharray="6 3"
           />
           <text x={PADDING.left + plotW + 4} y={scaleY(globalK) + 4}
-            fill="#fbbf24" fontSize={10}>k={globalK.toFixed(2)}</text>
+            fill={UI_COLORS.accentGold} fontSize={10}>k={globalK.toFixed(2)}</text>
         </>
       )}
 
@@ -153,17 +154,17 @@ export function ZoomProfileChart({
           <line
             x1={PADDING.left} y1={scaleY(aimTypeK.kTracking)}
             x2={PADDING.left + plotW} y2={scaleY(aimTypeK.kTracking)}
-            stroke="#4ade80" strokeWidth={1} strokeDasharray="4 4"
+            stroke={UI_COLORS.successGreen} strokeWidth={1} strokeDasharray="4 4"
           />
           <text x={PADDING.left + 4} y={scaleY(aimTypeK.kTracking) - 4}
-            fill="#4ade80" fontSize={9}>Tracking k={aimTypeK.kTracking.toFixed(2)}</text>
+            fill={UI_COLORS.successGreen} fontSize={9}>Tracking k={aimTypeK.kTracking.toFixed(2)}</text>
           <line
             x1={PADDING.left} y1={scaleY(aimTypeK.kFlicking)}
             x2={PADDING.left + plotW} y2={scaleY(aimTypeK.kFlicking)}
-            stroke="#f87171" strokeWidth={1} strokeDasharray="4 4"
+            stroke={UI_COLORS.dangerRed} strokeWidth={1} strokeDasharray="4 4"
           />
           <text x={PADDING.left + 4} y={scaleY(aimTypeK.kFlicking) - 4}
-            fill="#f87171" fontSize={9}>Flicking k={aimTypeK.kFlicking.toFixed(2)}</text>
+            fill={UI_COLORS.dangerRed} fontSize={9}>Flicking k={aimTypeK.kFlicking.toFixed(2)}</text>
         </>
       )}
 
@@ -209,14 +210,14 @@ export function ZoomProfileChart({
           key={`lbl-${i}`}
           x={scaleX(p.zoomRatio)}
           y={scaleY(p.kValue) - 10}
-          fill="#e2e8f0" fontSize={9} textAnchor="middle"
+          fill={UI_COLORS.textPrimary} fontSize={9} textAnchor="middle"
         >{p.label}</text>
       ))}
 
       {/* X축 */}
       {xTicks.map(x => (
         <text key={`xt-${x}`} x={scaleX(x)} y={PADDING.top + plotH + 18}
-          fill="#94a3b8" fontSize={10} textAnchor="middle">{x}x</text>
+          fill={UI_COLORS.textSecondary} fontSize={10} textAnchor="middle">{x}x</text>
       ))}
       <text x={PADDING.left + plotW / 2} y={height - 4}
         fill="#cbd5e1" fontSize={11} textAnchor="middle">줌 배율</text>
@@ -224,7 +225,7 @@ export function ZoomProfileChart({
       {/* Y축 */}
       {yTicks.map(y => (
         <text key={`yt-${y}`} x={PADDING.left - 8} y={scaleY(y) + 4}
-          fill="#94a3b8" fontSize={10} textAnchor="end">{y.toFixed(1)}</text>
+          fill={UI_COLORS.textSecondary} fontSize={10} textAnchor="end">{y.toFixed(1)}</text>
       ))}
       <text x={14} y={PADDING.top + plotH / 2}
         fill="#cbd5e1" fontSize={11} textAnchor="middle"
@@ -233,13 +234,13 @@ export function ZoomProfileChart({
       {/* 범례 */}
       <g transform={`translate(${PADDING.left + 10}, ${PADDING.top + 10})`}>
         <circle cx={0} cy={0} r={4} fill="#38bdf8" stroke="#fff" strokeWidth={1.5} />
-        <text x={10} y={4} fill="#e2e8f0" fontSize={9}>측정</text>
-        <circle cx={60} cy={0} r={3} fill="#64748b" stroke="#94a3b8" strokeWidth={1} />
-        <text x={70} y={4} fill="#e2e8f0" fontSize={9}>보간</text>
+        <text x={10} y={4} fill={UI_COLORS.textPrimary} fontSize={9}>측정</text>
+        <circle cx={60} cy={0} r={3} fill="#64748b" stroke={UI_COLORS.textSecondary} strokeWidth={1} />
+        <text x={70} y={4} fill={UI_COLORS.textPrimary} fontSize={9}>보간</text>
         {piecewise && piecewise.length > 0 && (
           <>
             <line x1={120} y1={0} x2={140} y2={0} stroke="#c084fc" strokeWidth={2.5} />
-            <text x={145} y={4} fill="#e2e8f0" fontSize={9}>Piecewise</text>
+            <text x={145} y={4} fill={UI_COLORS.textPrimary} fontSize={9}>Piecewise</text>
           </>
         )}
       </g>

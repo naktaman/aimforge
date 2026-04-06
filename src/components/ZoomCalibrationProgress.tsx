@@ -4,6 +4,7 @@
  */
 import { useZoomCalibrationStore } from '../stores/zoomCalibrationStore';
 import { useTranslation } from '../i18n';
+import { UI_COLORS } from '../config/theme';
 
 interface ZoomCalibrationProgressProps {
   onCancel: () => void;
@@ -18,9 +19,9 @@ const PHASE_LABEL_KEYS: Record<string, string> = {
 
 /** 페이즈 색상 */
 const PHASE_COLORS: Record<string, string> = {
-  steady: '#4ade80',
+  steady: UI_COLORS.successGreen,
   correction: '#f59e0b',
-  zoomout: '#60a5fa',
+  zoomout: UI_COLORS.infoBlue,
 };
 
 export function ZoomCalibrationProgress({ onCancel }: ZoomCalibrationProgressProps) {

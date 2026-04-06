@@ -13,6 +13,7 @@ import type { GameEngine } from '../GameEngine';
 import type { TargetManager } from '../TargetManager';
 import type { TrackingConfig, TrackingTrialMetrics } from '../../utils/types';
 import { DEFAULT_TRACKING_DISTANCE_M } from '../../config/constants';
+import { TARGET_COLORS } from '../../config/theme';
 
 export class TrackingScenario extends Scenario {
   private config: TrackingConfig;
@@ -80,7 +81,7 @@ export class TrackingScenario extends Scenario {
     const target = this.targetManager.spawnTarget(targetPos, {
       angularSizeDeg: this.config.targetSizeDeg,
       distanceM: this.targetDistance,
-      color: 0x4ade80,
+      color: TARGET_COLORS.trackingGreen,
       movementType: 'static', // 이동은 직접 제어
     });
     this.currentTargetId = target.id;

@@ -9,6 +9,7 @@ import type { GameEngine } from '../../GameEngine';
 import type { TargetManager } from '../../TargetManager';
 import type { DifficultyConfig } from '../../../utils/types';
 import { DEG2RAD } from '../../../utils/physics';
+import { TARGET_COLORS } from '../../../config/theme';
 
 /** 웨이브 구성 */
 interface Wave {
@@ -131,7 +132,7 @@ export class MultiFlickScenario extends Scenario {
         {
           angularSizeDeg: this.difficulty.targetSizeDeg,
           distanceM: distance,
-          color: 0xe94560,
+          color: TARGET_COLORS.flickRed,
         },
       );
 

@@ -4,6 +4,7 @@
  * DNA의 wrist_arm_ratio, effective_range를 참고해 자동 분류
  */
 import { useTranslation } from '../i18n';
+import { UI_COLORS } from '../config/theme';
 import type { AimDnaProfile } from '../utils/types';
 
 /** 감도 대역 분류 */
@@ -229,8 +230,8 @@ interface Props {
 }
 
 const BAND_COLOR: Record<SensBand, string> = {
-  high: '#f87171',
-  mid:  '#8A9AB5',
+  high: UI_COLORS.dangerRed,
+  mid:  UI_COLORS.metalChrome,
   low:  '#4ecdc4',
 };
 

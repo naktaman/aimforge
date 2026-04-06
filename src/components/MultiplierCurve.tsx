@@ -6,6 +6,7 @@
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import type { KFitResult, PredictedMultiplier } from '../stores/zoomCalibrationStore';
+import { UI_COLORS } from '../config/theme';
 
 interface MultiplierCurveProps {
   /** K 피팅 결과 */
@@ -73,7 +74,7 @@ export function MultiplierCurve({
       .datum(curvePoints)
       .attr('d', curveLine)
       .attr('fill', 'none')
-      .attr('stroke', '#4ade80')
+      .attr('stroke', UI_COLORS.successGreen)
       .attr('stroke-width', 2.5);
 
     // ── 측정점 (●) ──
@@ -85,7 +86,7 @@ export function MultiplierCurve({
       .attr('cx', (d) => xScale(d.zoomRatio))
       .attr('cy', (d) => yScale(d.multiplier))
       .attr('r', 6)
-      .attr('fill', '#60a5fa')
+      .attr('fill', UI_COLORS.infoBlue)
       .attr('stroke', '#1e3a5f')
       .attr('stroke-width', 2);
 
@@ -99,7 +100,7 @@ export function MultiplierCurve({
       .attr('cy', (d) => yScale(d.multiplier))
       .attr('r', 5)
       .attr('fill', 'none')
-      .attr('stroke', '#94a3b8')
+      .attr('stroke', UI_COLORS.textSecondary)
       .attr('stroke-width', 2)
       .attr('stroke-dasharray', '3,2');
 
@@ -111,7 +112,7 @@ export function MultiplierCurve({
       .attr('x', (d) => xScale(d.zoomRatio))
       .attr('y', (d) => yScale(d.multiplier) - 10)
       .attr('text-anchor', 'middle')
-      .attr('fill', '#e2e8f0')
+      .attr('fill', UI_COLORS.textPrimary)
       .attr('font-size', '9px')
       .text((d) => d.scopeName);
 
@@ -124,15 +125,15 @@ export function MultiplierCurve({
       .call(d3.axisLeft(yScale).ticks(5));
 
     // 축 스타일
-    svg.selectAll('.domain, .tick line').attr('stroke', '#444');
-    svg.selectAll('.tick text').attr('fill', '#aaa').attr('font-size', '10px');
+    svg.selectAll('.domain, .tick line').attr('stroke', UI_COLORS.chartAxisLine);
+    svg.selectAll('.tick text').attr('fill', UI_COLORS.chartLabel).attr('font-size', '10px');
 
     // X축 라벨
     svg.append('text')
       .attr('x', margin.left + plotW / 2)
       .attr('y', height - 5)
       .attr('text-anchor', 'middle')
-      .attr('fill', '#888')
+      .attr('fill', UI_COLORS.chartAxisText)
       .attr('font-size', '11px')
       .text('Zoom Ratio');
 
@@ -142,7 +143,7 @@ export function MultiplierCurve({
       .attr('x', -(margin.top + plotH / 2))
       .attr('y', 15)
       .attr('text-anchor', 'middle')
-      .attr('fill', '#888')
+      .attr('fill', UI_COLORS.chartAxisText)
       .attr('font-size', '11px')
       .text('Multiplier');
 
