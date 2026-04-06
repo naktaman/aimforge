@@ -1,11 +1,14 @@
 /**
- * 설정 화면 — 디스플레이 / 언어 / 사운드 / 데이터 관리 / 앱 정보
+ * 설정 화면 — 하드웨어 / 감도&프로필 / 디스플레이 / 언어 / 사운드 / 데이터 관리 / 앱 정보
  * 섹션별로 분리된 통합 설정 UI
  */
 import { useState, useEffect, useCallback } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { useToastStore } from '../stores/toastStore';
 import { useUiStore, type AppLocale } from '../stores/uiStore';
+import { useSettingsStore } from '../stores/settingsStore';
+import { useGameProfileStore } from '../stores/gameProfileStore';
+import { useEngineStore } from '../stores/engineStore';
 import { useTranslation } from '../i18n';
 
 /** 디스플레이 모드 */
@@ -29,22 +32,39 @@ const DEFAULT_SETTINGS: DisplaySettingsState = {
 /** 일반적인 리프레시 레이트 옵션 */
 const REFRESH_RATES = [0, 60, 75, 120, 144, 165, 240, 360];
 
+/** 폴링레이트 옵션 (Hz) */
+const POLLING_RATES = [125, 250, 500, 1000, 2000, 4000, 8000];
+
+/** 감도 단위 옵션 */
+type SensUnit = 'cm360' | 'inch360' | 'edpi';
+
 /** 현재 활성 설정 섹션 */
-type SettingsSection = 'display' | 'language' | 'sound' | 'data' | 'about';
+type SettingsSection = 'hardware' | 'sensitivity' | 'display' | 'language' | 'sound' | 'data' | 'about';
 
 interface DisplaySettingsProps {
   onBack: () => void;
 }
 
-export function DisplaySettings({ onBack }: DisplaySettingsProps) {
+export function DisplaySettings({ onBack }: DisplaySettingsProps): React.JSX.Element {
   const [settings, setSettings] = useState<DisplaySettingsState>(DEFAULT_SETTINGS);
   const [saved, setSaved] = useState(false);
-  const [section, setSection] = useState<SettingsSection>('display');
+  const [section, setSection] = useState<SettingsSection>('hardware');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [exportStatus, setExportStatus] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [sensUnit, setSensUnit] = useState<SensUnit>('cm360');
+
+  /* 하드웨어 설정 — settingsStore에서 초기값, DB에서도 로드 */
+  const [mouseAccel, setMouseAccel] = useState(false);
+  const [rawInput, setRawInput] = useState(true);
+
   const { locale, setLocale } = useUiStore();
+  const { dpi, pollingRate, setDpi, setPollingRate } = useSettingsStore();
   const { t } = useTranslation();
+
+  /** 활성 프로필 구독 */
+  const profiles = useGameProfileStore(s => s.profiles);
+  const activeProfile = profiles.find(p => p.isActive) ?? null;
 
   /** 저장된 설정 로드 */
   useEffect(() => {
@@ -61,6 +81,11 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps) {
         /* 사운드 설정 로드 */
         const sound = map.get('sound_enabled');
         if (sound === 'false') setSoundEnabled(false);
+        /* 하드웨어 설정 로드 */
+        const accel = map.get('mouse_accel');
+        if (accel === 'true') setMouseAccel(true);
+        const raw = map.get('raw_input');
+        if (raw === 'false') setRawInput(false);
       } catch (e) {
         console.warn('[Settings] 설정 로드 실패:', e);
         useToastStore.getState().addToast(t('settings.loadFailed'), 'warning');
@@ -110,8 +135,50 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps) {
     }
   }, [t]);
 
+  /* ── 하드웨어 핸들러 (즉시 저장) ── */
+
+  /** DPI 변경 — settingsStore + DB 동시 저장 */
+  const handleDpiChange = useCallback((value: number) => {
+    const clamped = Math.max(100, Math.min(32000, value));
+    setDpi(clamped);
+    saveSetting('dpi', String(clamped));
+  }, [setDpi, saveSetting]);
+
+  /** 폴링레이트 변경 */
+  const handlePollingRateChange = useCallback((value: number) => {
+    setPollingRate(value);
+    saveSetting('polling_rate', String(value));
+  }, [setPollingRate, saveSetting]);
+
+  /** 마우스 가속 토글 */
+  const handleMouseAccelChange = useCallback((enabled: boolean) => {
+    setMouseAccel(enabled);
+    saveSetting('mouse_accel', String(enabled));
+  }, [saveSetting]);
+
+  /** Raw Input 토글 */
+  const handleRawInputChange = useCallback((enabled: boolean) => {
+    setRawInput(enabled);
+    saveSetting('raw_input', String(enabled));
+  }, [saveSetting]);
+
+  /** 감도 단위 변환 — cm/360 기준 */
+  const formatSensValue = useCallback((cm360: number): string => {
+    switch (sensUnit) {
+      case 'inch360': return (cm360 / 2.54).toFixed(2);
+      case 'edpi': return (2.54 * 360 / cm360).toFixed(0); // 근사 eDPI
+      default: return cm360.toFixed(2);
+    }
+  }, [sensUnit]);
+
+  /** 감도 단위 라벨 */
+  const sensUnitLabel = sensUnit === 'cm360' ? 'cm/360'
+    : sensUnit === 'inch360' ? 'inch/360' : 'eDPI';
+
   /** 섹션 탭 목록 */
   const SECTIONS: Array<{ key: SettingsSection; label: string }> = [
+    { key: 'hardware', label: t('settings.sectionHardware') },
+    { key: 'sensitivity', label: t('settings.sectionSensitivity') },
     { key: 'display', label: t('settings.sectionDisplay') },
     { key: 'language', label: t('settings.sectionLanguage') },
     { key: 'sound', label: t('settings.sectionSound') },
@@ -138,6 +205,120 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps) {
           </button>
         ))}
       </div>
+
+      {/* ─── 하드웨어 섹션 ─── */}
+      {section === 'hardware' && (
+        <div className="settings-grid">
+          <h3 className="settings-section-heading">{t('settings.sectionHardware')}</h3>
+
+          {/* DPI 입력 */}
+          <div className="setting-row">
+            <label>{t('hardware.dpi')}</label>
+            <input
+              type="number"
+              className="dpi-input"
+              min={100}
+              max={32000}
+              step={50}
+              value={dpi}
+              onChange={(e) => handleDpiChange(parseInt(e.target.value, 10) || 100)}
+            />
+          </div>
+
+          {/* 폴링레이트 드롭다운 */}
+          <div className="setting-row">
+            <label>{t('hardware.pollingRate')}</label>
+            <select
+              value={pollingRate}
+              onChange={(e) => handlePollingRateChange(parseInt(e.target.value, 10))}
+            >
+              {POLLING_RATES.map(rate => (
+                <option key={rate} value={rate}>{rate} Hz</option>
+              ))}
+            </select>
+          </div>
+
+          {/* 마우스 가속 체크박스 */}
+          <div className="setting-row">
+            <label>
+              <input
+                type="checkbox"
+                checked={mouseAccel}
+                onChange={(e) => handleMouseAccelChange(e.target.checked)}
+              />
+              {' '}{t('hardware.mouseAccel')}
+            </label>
+            <span className="setting-hint">{t('hardware.mouseAccelHint')}</span>
+          </div>
+
+          {/* Raw Input 체크박스 */}
+          <div className="setting-row">
+            <label>
+              <input
+                type="checkbox"
+                checked={rawInput}
+                onChange={(e) => handleRawInputChange(e.target.checked)}
+              />
+              {' '}{t('hardware.rawInput')}
+            </label>
+          </div>
+        </div>
+      )}
+
+      {/* ─── 감도 & 프로필 섹션 ─── */}
+      {section === 'sensitivity' && (
+        <div className="settings-grid">
+          <h3 className="settings-section-heading">{t('settings.sectionSensitivity')}</h3>
+
+          {/* 활성 프로필 카드 또는 생성 유도 */}
+          {activeProfile ? (
+            <div className="profile-card">
+              <div className="profile-card-info">
+                <span className="profile-card-game">{activeProfile.gameName}</span>
+                <span className="profile-card-sens">
+                  {t('sensitivity.sens')}: {activeProfile.customSens}
+                </span>
+                <span className="profile-card-cm360">
+                  {formatSensValue(activeProfile.customCm360)} {sensUnitLabel}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="profile-empty">
+              <p>{t('sensitivity.noProfile')}</p>
+              <button
+                className="btn-primary"
+                onClick={() => useEngineStore.getState().setScreen('game-profiles')}
+              >
+                {t('sensitivity.createProfile')}
+              </button>
+            </div>
+          )}
+
+          {/* 감도 단위 드롭다운 */}
+          <div className="setting-row">
+            <label>{t('sensitivity.unit')}</label>
+            <select
+              value={sensUnit}
+              onChange={(e) => setSensUnit(e.target.value as SensUnit)}
+            >
+              <option value="cm360">cm/360</option>
+              <option value="inch360">inch/360</option>
+              <option value="edpi">eDPI</option>
+            </select>
+          </div>
+
+          {/* 게임 프로필 관리 버튼 */}
+          <div className="settings-actions">
+            <button
+              className="btn-secondary"
+              onClick={() => useEngineStore.getState().setScreen('game-profiles')}
+            >
+              {t('sensitivity.manageProfiles')}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ─── 디스플레이 섹션 ─── */}
       {section === 'display' && (
