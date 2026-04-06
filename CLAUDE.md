@@ -1,63 +1,30 @@
 # AimForge — FPS 에임 교정/훈련 데스크탑 앱
 
-> Tauri 2 (Rust + React + Three.js) 기반.
-> GP Bayesian Optimization 감도 최적화, Aim DNA 분석, 크로스게임 변환.
-
----
+> Tauri 2 (Rust + React + Three.js). GP Bayesian Optimization 감도 최적화.
 
 ## 필독 규칙
-- 모든 함수, 복잡한 로직, 중요한 분기에 **한국어 주석** 필수
-- 커밋 메시지 **한국어**로 작성
+- **한국어 주석** 필수 (함수, 복잡한 로직, 분기)
+- 커밋 메시지 **한국어**
 - 파일 수정 전 변경 내용 먼저 보고
 - 돌이킬 수 없는 작업은 반드시 먼저 물어보기
-- 버그 대응: 추측으로 코드 수정 금지. **증거 먼저, 수정 나중. 한 번에 하나만 고치기**
-- **컨텍스트 70-80% 차면 세션 교체 권고** — 교체 전 MEMORY.md + `docs/progress/status.md` 업데이트 필수
+- 버그: **증거 먼저, 수정 나중. 한 번에 하나만**
+- 컨텍스트 70-80% 차면 세션 교체 — 교체 전 MEMORY.md + `docs/progress/status.md` 업데이트
 
 ## 빌드
-
 ```bash
-npx tauri dev          # 개발 서버
-npx tauri build        # 프로덕션 빌드
+npx tauri dev           # 개발 서버
+npx tauri build         # 프로덕션 빌드
 cd src-tauri && cargo test  # Rust 테스트
-npm run build          # 프론트엔드 빌드만
+npm run build           # 프론트엔드만
 ```
 
----
-
-## Docs Index
-- **@docs/architecture/** — 시스템 설계, DB 스키마, 시나리오 시스템
-  - [system-overview.md](docs/architecture/system-overview.md) — 기술 스택, 프로젝트 구조, 아키텍처 결정사항
-  - [db-schema.md](docs/architecture/db-schema.md) — 26개 테이블 + IPC 커맨드
-  - [scenarios.md](docs/architecture/scenarios.md) — 10종 시나리오, 메트릭 정의, 점수 공식
-- **@docs/progress/** — 구현 진행 현황
-  - [status.md](docs/progress/status.md) — Day별 완료 현황 + 다음 작업
-  - [v1-feedback-changes.md](docs/progress/v1-feedback-changes.md) — v1 피드백 이후 8대 변경사항 상세
-  - [incident-log.md](docs/progress/incident-log.md) — 출시 후 이슈 및 수정 기록
-- **@docs/security/** — 보안 감사
-  - [security-audit.md](docs/security-audit.md) — 보안 코드 감사 보고서 (11개 항목, Phase 1-2 해결 현황)
-- **@docs/quality/** — 코드 규칙
-  - [coding-rules.md](docs/quality/coding-rules.md) — 코딩 규칙, 빌드 명령어, 세션 관리
-  - [troubleshooting.md](docs/quality/troubleshooting.md) — 트러블슈팅 가이드
-- **@docs/planning/** — 로드맵
-  - [roadmap.md](docs/planning/roadmap.md) — 30일 로드맵 참조, 설계 원칙, 프로파일 5축
-- **@docs/research/** — 딥리서치 아카이브
-  - [AimForge_DeepResearch_Wiki.docx](docs/research/AimForge_DeepResearch_Wiki.docx) — 딥리서치 통합 문서 (22개 에임포지 + 3개 VooChu)
-- [CHANGELOG.md](CHANGELOG.md) — 버전별 변경사항 요약
-
----
-
-## 프로젝트 구조 (요약)
-- Rust: `src-tauri/src/{input, game_db, db, gp, calibration}/`
-- Rust 보안: `src-tauri/src/error.rs` (AppError→PublicError), `src-tauri/src/validate.rs` (IPC 입력 검증)
-- React: `src/{components, stores, utils}/`
-- Engine: `src/engine/{scenarios, metrics}/`
-- 보안 감사: `docs/security-audit.md` — 코드 감사 보고서 + 해결 현황
-- CI: `.github/workflows/security-audit.yml` (cargo audit + npm audit)
-- 로드맵 원본: `C:\Users\ned78\Downloads\AIMPRO2\`
-
----
+## Docs
+- `docs/architecture/` — 시스템 설계, DB 스키마, 시나리오
+- `docs/progress/` — 진행 현황, 인시던트 로그
+- `docs/quality/` — 코딩 규칙, 트러블슈팅, 감사 프레임워크
+- `docs/planning/` — 로드맵, UI 리디자인 기획
+- `docs/research/` — 딥리서치 아카이브 (docx)
+- `docs/security-audit.md` — 보안 감사 보고서
 
 ## 세션 종료 전
-- `docs/progress/status.md` 업데이트
-- MEMORY.md 업데이트
-- 변경된 docs/ 파일 목록 요약
+- `docs/progress/status.md` + MEMORY.md 업데이트
