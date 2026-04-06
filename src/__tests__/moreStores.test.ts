@@ -9,6 +9,26 @@ import { useProgressStore } from '../stores/progressStore';
 
 // setup.ts에서 @tauri-apps/api/core invoke가 이미 vi.fn()으로 모킹됨
 
+/** 테스트용 기본 GameProfile 생성 헬퍼 */
+function makeProfile(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    id: 1, profileId: 1, gameId: 'cs2', gameName: 'CS2',
+    customSens: 1.5, customDpi: 800, customFov: 106.26, customCm360: 30.0,
+    sensFieldsJson: '{}', isActive: true, createdAt: '2024-01-01',
+    ...overrides,
+  };
+}
+
+/** 테스트용 Rust GameProfileRow 생성 헬퍼 (keybindsJson 사용) */
+function makeRow(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    id: 1, profileId: 1, gameId: 'cs2', gameName: 'CS2',
+    customSens: 1.5, customDpi: 800, customFov: 106.26, customCm360: 30.0,
+    keybindsJson: '{}', isActive: true, createdAt: '2024-01-01',
+    ...overrides,
+  };
+}
+
 describe('gameProfileStore — 초기 상태', () => {
   beforeEach(() => {
     useGameProfileStore.setState({ profiles: [], isLoading: false });
@@ -21,6 +41,36 @@ describe('gameProfileStore — 초기 상태', () => {
   it('초기 isLoading은 false', () => {
     expect(useGameProfileStore.getState().isLoading).toBe(false);
   });
+
+  it('activeProfileId — 프로필 없으면 null', () => {
+    expect(useGameProfileStore.getState().activeProfileId()).toBeNull();
+  });
+
+  it('activeProfile — 프로필 없으면 null', () => {
+    expect(useGameProfileStore.getState().activeProfile()).toBeNull();
+  });
+});
+
+describe('gameProfileStore — activeProfileId / activeProfile', () => {
+  beforeEach(() => {
+    useGameProfileStore.setState({
+      profiles: [
+        makeProfile({ id: 1, isActive: false }) as any,
+        makeProfile({ id: 2, gameName: 'Apex', isActive: true }) as any,
+      ],
+      isLoading: false,
+    });
+  });
+
+  it('activeProfileId — 활성 프로필의 id 반환', () => {
+    expect(useGameProfileStore.getState().activeProfileId()).toBe(2);
+  });
+
+  it('activeProfile — 활성 프로필 객체 반환', () => {
+    const active = useGameProfileStore.getState().activeProfile();
+    expect(active?.id).toBe(2);
+    expect(active?.gameName).toBe('Apex');
+  });
 });
 
 describe('gameProfileStore — loadProfiles', () => {
@@ -29,13 +79,8 @@ describe('gameProfileStore — loadProfiles', () => {
     vi.mocked(invoke).mockResolvedValue(null);
   });
 
-  it('loadProfiles 성공 시 profiles 업데이트', async () => {
-    const fakeRows = [
-      {
-        id: 1, gameName: 'CS2', dpi: 800, sensitivity: 1.5,
-        fov: 106.26, scopeMultiplier: 1, isActive: 1, createdAt: '2024-01-01',
-      },
-    ];
+  it('loadProfiles 성공 시 profiles 업데이트 + keybindsJson→sensFieldsJson 변환', async () => {
+    const fakeRows = [makeRow()];
     vi.mocked(invoke).mockResolvedValueOnce(fakeRows);
 
     await useGameProfileStore.getState().loadProfiles();
@@ -43,7 +88,7 @@ describe('gameProfileStore — loadProfiles', () => {
     const { profiles } = useGameProfileStore.getState();
     expect(profiles).toHaveLength(1);
     expect(profiles[0].gameName).toBe('CS2');
-    // isActive: 1(숫자) → true(불리언) 변환 검증
+    expect(profiles[0].sensFieldsJson).toBe('{}');
     expect(profiles[0].isActive).toBe(true);
   });
 
@@ -65,16 +110,12 @@ describe('gameProfileStore — loadProfiles', () => {
 describe('gameProfileStore — createProfile', () => {
   beforeEach(() => {
     useGameProfileStore.setState({ profiles: [], isLoading: false });
-    // clearAllMocks 후 기본 null 반환 복구
     vi.mocked(invoke).mockResolvedValue(null);
   });
 
   it('createProfile 성공 후 목록 재로드', async () => {
     const fakeRows = [
-      {
-        id: 2, gameName: 'Valorant', dpi: 400, sensitivity: 0.8,
-        fov: 103, scopeMultiplier: 1, isActive: 0, createdAt: '2024-01-02',
-      },
+      makeRow({ id: 2, gameName: 'Valorant', customSens: 0.8, customDpi: 400, customFov: 103, isActive: false }),
     ];
     // create_game_profile → 생성된 ID 반환 (non-null이어야 ok !== null 조건 통과)
     // get_game_profiles → fakeRows 반환
@@ -82,8 +123,13 @@ describe('gameProfileStore — createProfile', () => {
       .mockResolvedValueOnce(2)         // create_game_profile → 생성 ID
       .mockResolvedValueOnce(fakeRows); // get_game_profiles 재로드
 
-    await useGameProfileStore.getState().createProfile('Valorant', 400, 0.8, 103, 1);
+    const result = await useGameProfileStore.getState().createProfile({
+      profileId: 1, gameId: 'valorant', gameName: 'Valorant',
+      customSens: 0.8, customDpi: 400, customFov: 103, customCm360: 45.0,
+      sensFieldsJson: '{}',
+    });
 
+    expect(result).toBe(2);
     const { profiles } = useGameProfileStore.getState();
     expect(profiles).toHaveLength(1);
     expect(profiles[0].gameName).toBe('Valorant');
@@ -94,8 +140,8 @@ describe('gameProfileStore — deleteProfile', () => {
   beforeEach(() => {
     useGameProfileStore.setState({
       profiles: [
-        { id: 1, gameName: 'CS2', dpi: 800, sensitivity: 1, fov: 106, scopeMultiplier: 1, isActive: true, createdAt: '' },
-        { id: 2, gameName: 'Apex', dpi: 800, sensitivity: 2, fov: 110, scopeMultiplier: 1, isActive: false, createdAt: '' },
+        makeProfile({ id: 1, isActive: true }) as any,
+        makeProfile({ id: 2, gameName: 'Apex', isActive: false }) as any,
       ],
       isLoading: false,
     });
@@ -103,7 +149,6 @@ describe('gameProfileStore — deleteProfile', () => {
   });
 
   it('deleteProfile 성공 시 로컬 상태에서 즉시 제거', async () => {
-    // delete_game_profile → non-null 반환이어야 ok !== null 조건 통과
     vi.mocked(invoke).mockResolvedValueOnce(true); // delete_game_profile 성공
     await useGameProfileStore.getState().deleteProfile(1);
     const { profiles } = useGameProfileStore.getState();
@@ -122,17 +167,15 @@ describe('gameProfileStore — setActive', () => {
   beforeEach(() => {
     useGameProfileStore.setState({
       profiles: [
-        { id: 1, gameName: 'CS2', dpi: 800, sensitivity: 1, fov: 106, scopeMultiplier: 1, isActive: true, createdAt: '' },
-        { id: 2, gameName: 'Apex', dpi: 800, sensitivity: 2, fov: 110, scopeMultiplier: 1, isActive: false, createdAt: '' },
+        makeProfile({ id: 1, isActive: true }) as any,
+        makeProfile({ id: 2, gameName: 'Apex', isActive: false }) as any,
       ],
       isLoading: false,
     });
-    // 기본 null 반환 복구 — safeInvoke가 null을 받아 ok !== null = true 처리
     vi.mocked(invoke).mockResolvedValue(null);
   });
 
   it('setActive 성공 시 해당 프로필만 isActive = true', async () => {
-    // set_active_game_profile → non-null 반환이어야 ok !== null 조건 통과
     vi.mocked(invoke).mockResolvedValueOnce(true);
     await useGameProfileStore.getState().setActive(2);
     const { profiles } = useGameProfileStore.getState();
