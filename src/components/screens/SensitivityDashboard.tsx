@@ -20,18 +20,29 @@ const STAGE_LABELS: Record<string, string> = {
 };
 
 export function SensitivityDashboard() {
-  const store = useGPDashboardStore();
+  /** Zustand 개별 셀렉터 — 전체 스토어 구독 방지 */
+  const {
+    observations, finalResult, view, sensConversions, convergenceMode,
+    stage, gpCurve, bestCm360, eiRecommendation, convergenceProgress,
+    iteration, maxIterations, bestScore,
+  } = useGPDashboardStore(s => ({
+    observations: s.observations, finalResult: s.finalResult, view: s.view,
+    sensConversions: s.sensConversions, convergenceMode: s.convergenceMode,
+    stage: s.stage, gpCurve: s.gpCurve, bestCm360: s.bestCm360,
+    eiRecommendation: s.eiRecommendation, convergenceProgress: s.convergenceProgress,
+    iteration: s.iteration, maxIterations: s.maxIterations, bestScore: s.bestScore,
+  }));
   const setScreen = useEngineStore(s => s.setScreen);
   const { t } = useTranslation();
 
   /** 데이터 존재 여부 */
-  const hasData = store.observations.length > 0 || store.finalResult !== null;
+  const hasData = observations.length > 0 || finalResult !== null;
 
   /** 뒤로가기 */
   const handleBack = () => setScreen('settings');
 
   /** 최종 결과 화면 */
-  if (store.view === 'result' && store.finalResult) {
+  if (view === 'result' && finalResult) {
     return (
       <motion.div
         className="sensitivity-dashboard"
@@ -40,15 +51,15 @@ export function SensitivityDashboard() {
         transition={{ duration: 0.3 }}
       >
         <OptimalResult
-          result={store.finalResult}
-          conversions={store.sensConversions}
+          result={finalResult}
+          conversions={sensConversions}
           onBack={() => useGPDashboardStore.getState().reset()}
         />
       </motion.div>
     );
   }
 
-  const modeConfig = CONVERGENCE_MODE_CONFIG[store.convergenceMode];
+  const modeConfig = CONVERGENCE_MODE_CONFIG[convergenceMode];
 
   /** 다음 라운드 시작 — 캘리브레이션 진행 화면으로 이동 */
   const handleNextRound = () => {
@@ -102,7 +113,7 @@ export function SensitivityDashboard() {
           <h1 className="sd-title">{t('sensitivity.title')}</h1>
           <div className="sd-subtitle">
             <span className="sd-mode-badge">{modeConfig.label}</span>
-            <span className="sd-stage">{STAGE_LABELS[store.stage] ?? store.stage}</span>
+            <span className="sd-stage">{STAGE_LABELS[stage] ?? stage}</span>
           </div>
         </div>
       </div>
@@ -110,19 +121,19 @@ export function SensitivityDashboard() {
       {/* 2층: GP 메인 차트 */}
       <div className="sd-chart-section">
         <GPChart
-          curve={store.gpCurve}
-          observations={store.observations}
-          bestCm360={store.bestCm360}
-          eiRecommendation={store.eiRecommendation}
+          curve={gpCurve}
+          observations={observations}
+          bestCm360={bestCm360}
+          eiRecommendation={eiRecommendation}
         />
       </div>
 
       {/* 3층: 수렴 진행률 바 */}
       <ConvergenceBar
-        progress={store.convergenceProgress}
-        mode={store.convergenceMode}
-        iteration={store.iteration}
-        maxIterations={store.maxIterations}
+        progress={convergenceProgress}
+        mode={convergenceMode}
+        iteration={iteration}
+        maxIterations={maxIterations}
       />
 
       {/* 4층: 상태 카드 */}
@@ -130,8 +141,8 @@ export function SensitivityDashboard() {
         <div className="sd-card">
           <div className="sd-card-label">현재 최적 감도</div>
           <div className="sd-card-value">
-            {store.bestCm360 !== null
-              ? `${store.bestCm360.toFixed(1)} cm/360`
+            {bestCm360 !== null
+              ? `${bestCm360.toFixed(1)} cm/360`
               : '—'
             }
           </div>
@@ -139,8 +150,8 @@ export function SensitivityDashboard() {
         <div className="sd-card">
           <div className="sd-card-label">최고 점수</div>
           <div className="sd-card-value">
-            {store.bestScore !== null
-              ? `${(store.bestScore * 100).toFixed(0)}점`
+            {bestScore !== null
+              ? `${(bestScore * 100).toFixed(0)}점`
               : '—'
             }
           </div>
@@ -148,9 +159,9 @@ export function SensitivityDashboard() {
         <div className="sd-card">
           <div className="sd-card-label">신뢰도</div>
           <div className="sd-card-value">
-            {store.convergenceProgress > 0.8
+            {convergenceProgress > 0.8
               ? '높음'
-              : store.convergenceProgress > 0.4
+              : convergenceProgress > 0.4
               ? '보통'
               : '탐색 중'
             }
@@ -159,7 +170,7 @@ export function SensitivityDashboard() {
         <div className="sd-card">
           <div className="sd-card-label">남은 라운드</div>
           <div className="sd-card-value">
-            ~{Math.max(0, store.maxIterations - store.iteration)}
+            ~{Math.max(0, maxIterations - iteration)}
           </div>
         </div>
       </div>
@@ -171,10 +182,10 @@ export function SensitivityDashboard() {
         </button>
         <button
           className="btn-primary sd-cta-next"
-          disabled={store.stage === 'Complete'}
+          disabled={stage === 'Complete'}
           onClick={handleNextRound}
         >
-          {store.stage === 'Complete' ? '수렴 완료' : '다음 라운드 시작'}
+          {stage === 'Complete' ? '수렴 완료' : '다음 라운드 시작'}
         </button>
       </div>
     </motion.div>

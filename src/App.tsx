@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState, useEffect } from 'react';
+import { useCallback, useRef, useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -11,49 +11,13 @@ import { useCalibrationStore, type CalibrationMode, type ConvergenceLevel } from
 import { useBatteryStore } from './stores/batteryStore';
 import { ScenarioSelect, type ScenarioParams } from './components/ScenarioSelect';
 import { Viewport } from './components/Viewport';
-import { TrialResults } from './components/TrialResults';
-import { ResultScreen } from './components/screens/ResultScreen';
-import { CalibrationSetup } from './components/CalibrationSetup';
-import { CalibrationProgress } from './components/CalibrationProgress';
-import { CalibrationResult } from './components/CalibrationResult';
-import { ZoomCalibrationSetup } from './components/ZoomCalibrationSetup';
-import { ZoomCalibrationProgress } from './components/ZoomCalibrationProgress';
-import { MultiplierCurve } from './components/MultiplierCurve';
-import { ComparatorResult } from './components/ComparatorResult';
-import { BatteryProgress } from './components/BatteryProgress';
-import { BatteryResult } from './components/BatteryResult';
-import { AimDnaResult } from './components/AimDnaResult';
-import { CrossGameComparison } from './components/CrossGameComparison';
-import { SessionHistory } from './components/SessionHistory';
 import { PerformanceOverlay } from './components/overlays/PerformanceOverlay';
-import { DisplaySettings } from './components/DisplaySettings';
-import { GameProfileManager } from './components/GameProfileManager';
-import { RoutineList } from './components/RoutineList';
-import { RoutineBuilder } from './components/RoutineBuilder';
-import { RoutinePlayer } from './components/RoutinePlayer';
 import { SteamLogin } from './components/SteamLogin';
-import { Leaderboard } from './components/Leaderboard';
-import { CommunityShare } from './components/CommunityShare';
-import { DataManagement } from './components/DataManagement';
-import TrainingPrescription from './components/TrainingPrescription';
-import ProgressDashboard from './components/ProgressDashboard';
-import TrajectoryAnalysis from './components/TrajectoryAnalysis';
-import StyleTransition from './components/StyleTransition';
-import MovementEditor from './components/MovementEditor';
-import FovComparison from './components/FovComparison';
-import HardwareCompare from './components/HardwareCompare';
-import DualLandscape from './components/DualLandscape';
-import RecoilEditor from './components/RecoilEditor';
-import ConversionSelector from './components/ConversionSelector';
 import { Toast } from './components/Toast';
 import { useToastStore } from './stores/toastStore';
 import { Onboarding } from './components/Onboarding';
 import { SplashScreen } from './components/screens/SplashScreen';
 import { WelcomeScreen } from './components/screens/WelcomeScreen';
-import { SensitivityDashboard } from './components/screens/SensitivityDashboard';
-import { ProfileWizard } from './components/ProfileWizard';
-import { useProfileWizardStore } from './stores/profileWizardStore';
-import { useZoomCalibrationStore } from './stores/zoomCalibrationStore';
 import { Crosshair } from './components/overlays/Crosshair';
 import { ScopeOverlay } from './components/overlays/ScopeOverlay';
 import { ShootingFeedback, triggerShootingFeedback, getComboState } from './components/overlays/ShootingFeedback';
@@ -65,9 +29,54 @@ import { SoundEngine } from './engine/SoundEngine';
 import { isPointerLocked } from './engine/PointerLock';
 import { useScenarioLauncher } from './hooks/useScenarioLauncher';
 import { useBatteryHandlers } from './hooks/useBatteryHandlers';
+import { useProfileWizardStore } from './stores/profileWizardStore';
+import { useZoomCalibrationStore } from './stores/zoomCalibrationStore';
 import type { GameEngine } from './engine/GameEngine';
 import type { ScenarioType, StageType } from './utils/types';
 import { useTranslation } from './i18n';
+
+// ── React.lazy 코드 스플리팅 — 화면별 지연 로딩 ──
+/** named export를 React.lazy로 감싸는 헬퍼 */
+function namedLazy<T extends Record<string, any>, K extends keyof T>(
+  loader: () => Promise<T>, name: K,
+): React.LazyExoticComponent<React.ComponentType<any>> {
+  return lazy(() => loader().then(m => ({ default: m[name] as React.ComponentType<any> })));
+}
+
+const TrialResults = namedLazy(() => import('./components/TrialResults'), 'TrialResults');
+const ResultScreen = namedLazy(() => import('./components/screens/ResultScreen'), 'ResultScreen');
+const CalibrationSetup = namedLazy(() => import('./components/CalibrationSetup'), 'CalibrationSetup');
+const CalibrationProgress = namedLazy(() => import('./components/CalibrationProgress'), 'CalibrationProgress');
+const CalibrationResult = namedLazy(() => import('./components/CalibrationResult'), 'CalibrationResult');
+const ZoomCalibrationSetup = namedLazy(() => import('./components/ZoomCalibrationSetup'), 'ZoomCalibrationSetup');
+const ZoomCalibrationProgress = namedLazy(() => import('./components/ZoomCalibrationProgress'), 'ZoomCalibrationProgress');
+const MultiplierCurve = namedLazy(() => import('./components/MultiplierCurve'), 'MultiplierCurve');
+const ComparatorResult = namedLazy(() => import('./components/ComparatorResult'), 'ComparatorResult');
+const BatteryProgress = namedLazy(() => import('./components/BatteryProgress'), 'BatteryProgress');
+const BatteryResult = namedLazy(() => import('./components/BatteryResult'), 'BatteryResult');
+const AimDnaResult = namedLazy(() => import('./components/AimDnaResult'), 'AimDnaResult');
+const CrossGameComparison = namedLazy(() => import('./components/CrossGameComparison'), 'CrossGameComparison');
+const SessionHistory = namedLazy(() => import('./components/SessionHistory'), 'SessionHistory');
+const DisplaySettings = namedLazy(() => import('./components/DisplaySettings'), 'DisplaySettings');
+const GameProfileManager = namedLazy(() => import('./components/GameProfileManager'), 'GameProfileManager');
+const RoutineList = namedLazy(() => import('./components/RoutineList'), 'RoutineList');
+const RoutineBuilder = namedLazy(() => import('./components/RoutineBuilder'), 'RoutineBuilder');
+const RoutinePlayer = namedLazy(() => import('./components/RoutinePlayer'), 'RoutinePlayer');
+const Leaderboard = namedLazy(() => import('./components/Leaderboard'), 'Leaderboard');
+const CommunityShare = namedLazy(() => import('./components/CommunityShare'), 'CommunityShare');
+const DataManagement = namedLazy(() => import('./components/DataManagement'), 'DataManagement');
+const SensitivityDashboard = namedLazy(() => import('./components/screens/SensitivityDashboard'), 'SensitivityDashboard');
+const ProfileWizard = namedLazy(() => import('./components/ProfileWizard'), 'ProfileWizard');
+const TrainingPrescription = lazy(() => import('./components/TrainingPrescription'));
+const ProgressDashboard = lazy(() => import('./components/ProgressDashboard'));
+const TrajectoryAnalysis = lazy(() => import('./components/TrajectoryAnalysis'));
+const StyleTransition = lazy(() => import('./components/StyleTransition'));
+const MovementEditor = lazy(() => import('./components/MovementEditor'));
+const FovComparison = lazy(() => import('./components/FovComparison'));
+const HardwareCompare = lazy(() => import('./components/HardwareCompare'));
+const DualLandscape = lazy(() => import('./components/DualLandscape'));
+const RecoilEditor = lazy(() => import('./components/RecoilEditor'));
+const ConversionSelector = lazy(() => import('./components/ConversionSelector'));
 
 /** 전역 사운드 엔진 (히트/헤드샷/콤보/UI 사운드 통합) */
 const soundEngine = new SoundEngine();
@@ -261,6 +270,7 @@ function App() {
       <Toast />
       <PerformanceOverlay />
 
+      <Suspense fallback={null}>
       <AnimatePresence mode="wait">
         {currentScreen !== 'viewport' && (
           <motion.div
@@ -378,12 +388,12 @@ function App() {
 
       {currentScreen === 'routines' && editingRoutineId === null && (
         <main className="app-main">
-          <RoutineList onBack={() => setScreen('settings')} onEdit={(id, name) => { setEditingRoutineId(id); setEditingRoutineName(name); }} onPlay={(id) => { setPlayingRoutineId(id); setScreen('routine-player'); }} />
+          <RoutineList onBack={() => setScreen('settings')} onEdit={(id: number, name: string) => { setEditingRoutineId(id); setEditingRoutineName(name); }} onPlay={(id: number) => { setPlayingRoutineId(id); setScreen('routine-player'); }} />
         </main>
       )}
       {currentScreen === 'routines' && editingRoutineId !== null && (
         <main className="app-main">
-          <RoutineBuilder routineId={editingRoutineId} routineName={editingRoutineName} onBack={() => setEditingRoutineId(null)} onPlay={(id) => { setPlayingRoutineId(id); setEditingRoutineId(null); setScreen('routine-player'); }} />
+          <RoutineBuilder routineId={editingRoutineId} routineName={editingRoutineName} onBack={() => setEditingRoutineId(null)} onPlay={(id: number) => { setPlayingRoutineId(id); setEditingRoutineId(null); setScreen('routine-player'); }} />
         </main>
       )}
       {currentScreen === 'routine-player' && playingRoutineId !== null && (
@@ -415,7 +425,7 @@ function App() {
           <ProfileWizard
             onClose={() => { useProfileWizardStore.getState().resetWizard(); setScreen('settings'); }}
             onStartCalibration={() => setScreen('calibration-setup')}
-            onStartTraining={(stageType) => { handleTrainingStart({ stageType }); }}
+            onStartTraining={(stageType: StageType) => { handleTrainingStart({ stageType }); }}
           />
         </main>
       )}
@@ -423,6 +433,7 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
+      </Suspense>
 
       {/* 뷰포트 (항상 마운트, 설정 화면에서는 숨김) */}
       <div className={`viewport-wrapper ${currentScreen === 'viewport' ? 'visible' : 'hidden'}`}>

@@ -92,8 +92,12 @@ export function Onboarding() {
   const [sensError, setSensError] = useState('');
   const [gameError, setGameError] = useState('');
 
-  const settingsStore = useSettingsStore();
-  const uiStore = useUiStore();
+  /** Zustand 개별 셀렉터 — 전체 스토어 구독 방지 */
+  const setStoreDpi = useSettingsStore(s => s.setDpi);
+  const selectGame = useSettingsStore(s => s.selectGame);
+  const setStoreSensitivity = useSettingsStore(s => s.setSensitivity);
+  const setMode_ = useUiStore(s => s.setMode);
+  const completeOnboarding = useUiStore(s => s.completeOnboarding);
   const { t } = useTranslation();
 
   /** 게임 목록 로드 */
@@ -135,13 +139,13 @@ export function Onboarding() {
 
   /** 완료 처리 — 설정 저장 후 메인 화면 전환 */
   const handleComplete = () => {
-    settingsStore.setDpi(dpi);
+    setStoreDpi(dpi);
     if (selectedGame) {
-      settingsStore.selectGame(selectedGame);
-      settingsStore.setSensitivity(sensitivity);
+      selectGame(selectedGame);
+      setStoreSensitivity(sensitivity);
     }
-    uiStore.setMode(mode);
-    uiStore.completeOnboarding();
+    setMode_(mode);
+    completeOnboarding();
   };
 
   /** DPI 유효성 체크 */
