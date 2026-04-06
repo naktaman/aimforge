@@ -68,6 +68,16 @@ impl Database {
             [],
         )?;
 
+        // CS2 기본 줌 프로파일 — 줌 캘리브레이션 UI가 game_id=1로 조회
+        self.conn.execute_batch(
+            "INSERT OR IGNORE INTO zoom_profiles (id, game_id, scope_name, zoom_ratio, steady_weight, transition_weight, zoomout_weight) \
+             VALUES (1, 1, 'AWP (2.25x)', 2.25, 0.5, 0.3, 0.2);
+             INSERT OR IGNORE INTO zoom_profiles (id, game_id, scope_name, zoom_ratio, steady_weight, transition_weight, zoomout_weight) \
+             VALUES (2, 1, 'AWP (4.5x)', 4.5, 0.5, 0.3, 0.2);
+             INSERT OR IGNORE INTO zoom_profiles (id, game_id, scope_name, zoom_ratio, steady_weight, transition_weight, zoomout_weight) \
+             VALUES (3, 1, 'Scout (2.5x)', 2.5, 0.5, 0.3, 0.2);"
+        )?;
+
         Ok(())
     }
 
