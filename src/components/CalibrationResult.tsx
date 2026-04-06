@@ -4,6 +4,8 @@
  */
 import { useCalibrationStore } from '../stores/calibrationStore';
 import { useTranslation } from '../i18n';
+import { safeInvoke } from '../utils/ipc';
+import { useToastStore } from '../stores/toastStore';
 
 interface CalibrationResultProps {
   onBack: () => void;
@@ -34,6 +36,28 @@ export function CalibrationResult({ onBack, onApply, onNextZoom }: CalibrationRe
 
   const sig = SIGNIFICANCE_LABELS[result.significance.label];
   const delta = result.recommendedCm360 - result.currentCm360;
+
+  /** Performance Landscape 저장 */
+  const handleSaveLandscape = async (): Promise<void> => {
+    const sessionId = useCalibrationStore.getState().sessionId;
+    const peaks = result.peaks.map((p) => ({
+      cm360: p.cm360, score: p.score, isPrimary: p.isPrimary,
+    }));
+
+    const id = await safeInvoke<number>('save_landscape', {
+      params: {
+        profile_id: 1,
+        calibration_session_id: sessionId,
+        gp_mean_curve: JSON.stringify(result.gpCurve),
+        confidence_bands: JSON.stringify([]),
+        scenario_overlays: JSON.stringify([]),
+        bimodal_peaks: JSON.stringify(peaks),
+      },
+    });
+    if (id !== null) {
+      useToastStore.getState().addToast(t('cal.landscapeSaved'), 'success');
+    }
+  };
 
   return (
     <div className="calibration-result">
@@ -129,6 +153,9 @@ export function CalibrationResult({ onBack, onApply, onNextZoom }: CalibrationRe
       <div className="result-actions">
         <button className="btn-secondary" onClick={onBack}>
           {t('common.back')}
+        </button>
+        <button className="btn-secondary" onClick={handleSaveLandscape}>
+          {t('cal.saveLandscape')}
         </button>
         <button
           className="btn-primary"
