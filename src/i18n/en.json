@@ -322,6 +322,8 @@
   "settings.loadFailed": "Failed to load settings",
   "settings.saveFailed": "Failed to save settings",
   "cal.startFailed": "Failed to start calibration",
+  "cal.launchTrial": "Launch Trial",
+  "cal.nextTrial": "Next test sensitivity",
 
   "display.title": "Display Settings",
   "display.mode": "Display Mode",
