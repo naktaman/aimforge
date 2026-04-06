@@ -5,6 +5,7 @@ import { useEngineStore } from './stores/engineStore';
 import { usePageTransition } from './hooks/usePageTransition';
 import { useSettingsStore } from './stores/settingsStore';
 import { useUiStore } from './stores/uiStore';
+import { useGameProfileStore } from './stores/gameProfileStore';
 import { isScreenAccessible } from './utils/screenAccess';
 import { useCalibrationStore } from './stores/calibrationStore';
 import { useBatteryStore } from './stores/batteryStore';
@@ -90,6 +91,15 @@ function App() {
 
   /** 앱 시작 시 UI 설정 로드 + 테마 적용 */
   useEffect(() => { loadFromDb(); }, [loadFromDb]);
+
+  /** 앱 시작 시 게임 프로필 로드 + active 프로필 → settingsStore 동기화 */
+  useEffect(() => {
+    const init = async (): Promise<void> => {
+      await useGameProfileStore.getState().loadProfiles();
+      useGameProfileStore.getState().syncActiveToSettings();
+    };
+    init().catch((e) => console.error('게임 프로필 초기화 실패:', e));
+  }, []);
 
   /** B키 — 발사 모드 순환 (포인터 잠금 상태에서만) */
   useEffect(() => {
