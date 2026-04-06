@@ -1,77 +1,88 @@
 :root {
-  /* ── Silver Forge 다크 테마 — Core Palette ── */
-  --bg-deep: #0F1419;
-  --bg-base: #141B23;
-  --bg-elevated: #1A2635;
-  --surface-low: #1E2A38;
-  --surface-mid: #1E3A52;
-  --surface-high: #243B55;
-  --border-subtle: #1E2A38;
-  --border-default: #2A3F5F;
-  --border-strong: #3A5070;
+  /* ── Cold Forge 다크 테마 — Core Palette (§1.1) ── */
+  --bg-deep: #0A0E14;
+  --bg-base: #0F1318;
+  --bg-elevated: #161B22;
+  --surface-low: #1C2128;
+  --surface-mid: #242A33;
+  --surface-high: #2D3540;
+  --border-subtle: #2A3140;
+  --border-default: #3B4455;
+  --border-strong: #4E5A6E;
 
-  /* 기존 변수 호환 — Silver Forge 값으로 매핑 */
+  /* 기존 변수 호환 — Cold Forge 값으로 매핑 */
   --bg-primary: var(--bg-deep);
   --bg-secondary: var(--bg-base);
   --bg-card: var(--bg-elevated);
-  --bg-glass: rgba(20, 27, 35, 0.75);
-  --bg-glass-hover: rgba(30, 42, 56, 0.85);
+  --bg-glass: rgba(15, 19, 24, 0.75);
+  --bg-glass-hover: rgba(28, 33, 40, 0.85);
   --border: var(--border-subtle);
   --border-light: var(--border-default);
 
-  /* ── Metal & Chrome 팔레트 ── */
-  --metal-steel-dark: #1E2A38;
-  --metal-steel-mid: #2A3F5F;
-  --metal-steel-light: #3A5070;
-  --metal-chrome: #8A9AB5;
-  --metal-chrome-bright: #D0D7E0;
-  --metal-silver-white: #FFFFFF;
+  /* ── Metal & Chrome 팔레트 (§1.2) ── */
+  --metal-steel-dark: #3A4556;
+  --metal-steel-mid: #5A6A7E;
+  --metal-steel-light: #7E8FA3;
+  --metal-chrome: #A8B8CC;
+  --metal-chrome-bright: #C8D5E6;
+  --metal-silver-white: #E2E8F0;
 
-  /* ── Accent — Gold + Teal Green ── */
-  --accent-primary: #FFB81C;
-  --accent-primary-hover: #FFC940;
-  --accent-primary-muted: rgba(255, 184, 28, 0.15);
-  --accent-secondary: #2A3F5F;
-  --accent-cyan: #00D084;
-  --accent-cyan-muted: rgba(0, 208, 132, 0.1);
-  --accent-ice: #D0D7E0;
+  /* ── Accent — Frost Blue + Cyan (§1.3) ── */
+  --accent-primary: #4A9EDE;
+  --accent-primary-hover: #5BB0F0;
+  --accent-primary-muted: #4A9EDE26;
+  --accent-secondary: #6B8DB5;
+  --accent-cyan: #00D4FF;
+  --accent-cyan-muted: #00D4FF1A;
+  --accent-ice: #B8E6FF;
 
-  /* 기존 accent 변수 호환 매핑 */
+  /* 기존 accent 변수 호환 매핑 — 프로스트 블루 기반 */
   --accent: var(--accent-primary);
   --accent-dim: var(--accent-secondary);
   --accent-glow: var(--accent-primary-muted);
-  --accent-subtle: rgba(255, 184, 28, 0.07);
+  --accent-subtle: rgba(74, 158, 222, 0.07);
   --accent-light: var(--accent-primary-hover);
 
-  /* ── Text Colors ── */
-  --text-primary: #FFFFFF;
-  --text-secondary: #D0D7E0;
-  --text-tertiary: #8A9AB5;
-  --text-muted: #5A6B85;
-  --text-accent: #FFB81C;
+  /* ── Text Colors (§1.5) ── */
+  --text-primary: #E2E8F0;
+  --text-secondary: #94A3B8;
+  --text-tertiary: #64748B;
+  --text-muted: var(--text-tertiary);
+  --text-accent: #4A9EDE;
+  --text-on-accent: #FFFFFF;
 
-  /* ── Semantic Colors ── */
-  --success: #00D084;
-  --success-glow: rgba(0, 208, 132, 0.25);
-  --semantic-success-bg: rgba(0, 208, 132, 0.08);
+  /* ── Semantic Colors (§1.4) ── */
+  --success: #34D399;
+  --success-glow: rgba(52, 211, 153, 0.25);
+  --semantic-success: #34D399;
+  --semantic-success-bg: #34D39915;
   --info: #60A5FA;
   --info-glow: rgba(96, 165, 250, 0.25);
-  --semantic-info-bg: rgba(96, 165, 250, 0.08);
-  --warning: #FFB81C;
-  --warning-glow: rgba(255, 184, 28, 0.25);
-  --semantic-warning-bg: rgba(255, 184, 28, 0.08);
+  --semantic-info: #60A5FA;
+  --semantic-info-bg: #60A5FA15;
+  --warning: #FBBF24;
+  --warning-glow: rgba(251, 191, 36, 0.25);
+  --semantic-warning: #FBBF24;
+  --semantic-warning-bg: #FBBF2415;
   --danger: #F87171;
-  --semantic-error-bg: rgba(248, 113, 113, 0.08);
+  --semantic-error: #F87171;
+  --semantic-error-bg: #F8717115;
 
-  /* ── Gradients — Silver Forge 금속 그라디언트 5종 ── */
-  --gradient-metal-panel: linear-gradient(180deg, #1E3A52 0%, #1E2A38 40%, #1A2635 100%);
-  --gradient-chrome-edge: linear-gradient(90deg, transparent 0%, rgba(58, 80, 112, 0.31) 30%, rgba(138, 154, 181, 0.5) 50%, rgba(58, 80, 112, 0.31) 70%, transparent 100%);
-  --gradient-cyan-glow: linear-gradient(180deg, rgba(0, 208, 132, 0.25) 0%, rgba(0, 208, 132, 0) 100%);
-  --gradient-metal-button: linear-gradient(180deg, #243B55 0%, #1E3A52 50%, #1E2A38 100%);
-  --gradient-metal-button-pressed: linear-gradient(180deg, #1E2A38 0%, #1E3A52 50%, #243B55 100%);
+  /* ── Gradients — Cold Forge 금속 그라디언트 5종 (§1.6) ── */
+  --gradient-metal-panel: linear-gradient(180deg, #242A33 0%, #1C2128 40%, #161B22 100%);
+  --gradient-chrome-edge: linear-gradient(90deg, transparent 0%, #7E8FA350 30%, #A8B8CC80 50%, #7E8FA350 70%, transparent 100%);
+  --gradient-cyan-glow: linear-gradient(180deg, #00D4FF40 0%, #00D4FF00 100%);
+  --gradient-metal-button: linear-gradient(180deg, #2D3540 0%, #242A33 50%, #1C2128 100%);
+  --gradient-metal-button-pressed: linear-gradient(180deg, #1C2128 0%, #242A33 50%, #2D3540 100%);
 
   /* ── 금속 노이즈 텍스처 ── */
   --noise-texture: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+
+  /* ── 타이포그래피 — Cold Forge (§3) ── */
+  --font-ui: 'Inter', 'Geist', -apple-system, sans-serif;
+  --font-heading: 'Chakra Petch', 'Rajdhani', sans-serif;
+  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+  --font-display: 'Orbitron', 'Michroma', sans-serif;
 
   /* 타이포그래피 스케일 */
   --font-xs: 11px;
@@ -81,8 +92,18 @@
   --font-lg: 20px;
   --font-xl: 24px;
   --font-2xl: 32px;
-  --font-display: 42px;
-  --font-mono: 'Consolas', 'Fira Code', monospace;
+
+  /* 라인 하이트 */
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-mono: 1.6;
+
+  /* 레터 스페이싱 */
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+  --tracking-wider: 0.05em;
+  --tracking-widest: 0.1em;
 
   /* 간격 스케일 (4px 기반) */
   --space-1: 4px;
@@ -104,11 +125,11 @@
   --radius-2xl: 8px;
   --radius-full: 9999px;
 
-  /* 그림자 — Silver Forge 골드 글로우 */
+  /* 그림자 — Cold Forge 블루 글로우 */
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.4);
   --shadow-md: 0 4px 16px rgba(0,0,0,0.5);
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
-  --shadow-glow: 0 0 20px var(--accent-glow), 0 0 60px rgba(255, 184, 28, 0.08);
+  --shadow-glow: 0 0 20px var(--accent-glow), 0 0 60px rgba(74, 158, 222, 0.08);
   --shadow-glow-success: 0 0 20px var(--success-glow);
 
   /* 전환 */
@@ -120,26 +141,27 @@
   --blur-sm: 8px;
   --blur-md: 16px;
 
-  /* 시맨틱 색상 — 하드코딩 색상 대체용 */
-  --color-hit: #00D084;
+  /* 시맨틱 색상 — Cold Forge 매핑 */
+  --color-hit: #34D399;
   --color-miss: #F87171;
-  --color-headshot: #FFB81C;
-  --color-fire: #FFB81C;
-  --color-fire-text: #FFC940;
-  --color-on-dark: #0F1419;
-  --color-teal: #00D084;
-  --color-amber: #FFB81C;
+  --color-headshot: #FBBF24;
+  --color-fire: #4A9EDE;
+  --color-fire-text: #5BB0F0;
+  --color-on-dark: #0A0E14;
+  --color-cyan: #00D4FF;
+  --color-teal: #00D4FF;
+  --color-amber: #FBBF24;
   --color-sky: #60A5FA;
   --color-ref-blue: #60A5FA;
-  --color-gold: #FFB81C;
-  --color-silver: #D0D7E0;
+  --color-gold: #FBBF24;
+  --color-silver: #C8D5E6;
   --color-bronze: #cd7f32;
 
   /* 게임 카테고리 색상 — Onboarding 아바타 등 */
   --color-cat-fps: #60a5fa;
   --color-cat-tactical: #34d399;
   --color-cat-br: #fbbf24;
-  --color-cat-tps: #FFB81C;
+  --color-cat-tps: #FBBF24;
   --color-cat-arena: #a78bfa;
   --color-cat-trainer: #22d3ee;
 
@@ -151,10 +173,10 @@
   --fw-extrabold: 800;
   --fw-black: 900;
 
-  /* 상태별 glow 변수 — Silver Forge 골드 글로우 */
+  /* 상태별 glow 변수 — Cold Forge 블루 글로우 */
   --glow-accent-sm: 0 0 8px var(--accent-glow);
   --glow-accent-md: 0 0 12px var(--accent-glow);
-  --glow-accent-lg: 0 0 20px var(--accent-glow), 0 0 60px rgba(255, 184, 28, 0.08);
+  --glow-accent-lg: 0 0 20px var(--accent-glow), 0 0 60px rgba(74, 158, 222, 0.08);
   --glow-accent-focus: 0 0 0 3px var(--accent-glow);
   --glow-success-sm: 0 0 12px var(--success-glow);
   --glow-success-lg: 0 0 20px var(--success-glow);
@@ -162,7 +184,7 @@
   --glow-info-sm: 0 0 12px var(--info-glow);
 }
 
-/* ── 라이트 테마 오버라이드 ── */
+/* ── 라이트 테마 오버라이드 — Cold Forge ── */
 [data-theme="light"] {
   --bg-primary: #f4f3f1;
   --bg-secondary: #e8e7e4;
@@ -172,34 +194,52 @@
   --bg-glass-hover: rgba(248, 247, 245, 0.9);
   --text-primary: #1a1a1f;
   --text-secondary: #6b6d7a;
-  --accent: #D4960A;
-  --accent-dim: #1E2A38;
-  --accent-glow: rgba(212, 150, 10, 0.22);
-  --accent-subtle: rgba(212, 150, 10, 0.06);
-  --accent-light: #E8A820;
+  --text-tertiary: #94a3b8;
+  --text-accent: #2563EB;
+  /* 프로스트 블루 기반 accent */
+  --accent: #2563EB;
+  --accent-primary: #2563EB;
+  --accent-primary-hover: #3B82F6;
+  --accent-primary-muted: rgba(37, 99, 235, 0.15);
+  --accent-dim: #4B6A9B;
+  --accent-glow: rgba(37, 99, 235, 0.22);
+  --accent-subtle: rgba(37, 99, 235, 0.06);
+  --accent-light: #3B82F6;
+  --accent-secondary: #4B6A9B;
+  --accent-cyan: #0891b2;
+  --accent-cyan-muted: rgba(8, 145, 178, 0.1);
+  --accent-ice: #93C5FD;
   --success: #22c55e;
   --success-glow: rgba(34, 197, 94, 0.22);
+  --semantic-success: #22c55e;
   --info: #3b82f6;
   --info-glow: rgba(59, 130, 246, 0.22);
+  --semantic-info: #3b82f6;
   --warning: #f59e0b;
   --warning-glow: rgba(245, 158, 11, 0.22);
+  --semantic-warning: #f59e0b;
   --danger: #ef4444;
+  --semantic-error: #ef4444;
   --border: #d5d4d1;
   --border-light: #e0dfdc;
+  --border-subtle: #e0dfdc;
+  --border-default: #d5d4d1;
+  --border-strong: #b0b0b0;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
   --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
   --shadow-glow: 0 0 20px var(--accent-glow);
   --shadow-glow-success: 0 0 20px var(--success-glow);
 
-  /* 시맨틱 색상 — 라이트 테마 */
+  /* 시맨틱 색상 — 라이트 테마 (Cold Forge 블루 기반) */
   --color-hit: #22c55e;
   --color-miss: #ef4444;
   --color-headshot: #eab308;
-  --color-fire: #D4960A;
-  --color-fire-text: #B87D08;
+  --color-fire: #2563EB;
+  --color-fire-text: #1D4ED8;
   --color-on-dark: #0a0a0f;
-  --color-teal: #0d9488;
+  --color-cyan: #0891b2;
+  --color-teal: #0891b2;
   --color-amber: #d97706;
   --color-sky: #0284c7;
   --color-ref-blue: #2563EB;
@@ -235,7 +275,7 @@
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'Inter', "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-family: var(--font-ui);
   overflow: hidden;
   user-select: none;
   transition: background-color 0.2s ease, color 0.2s ease;
@@ -243,7 +283,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Silver Forge 전역 스타일 규칙 ── */
+/* ── Cold Forge 전역 스타일 규칙 ── */
 
 /* 큰 숫자: tabular-nums로 정렬 */
 .stat-value, .score-value, .metric-value, [class*="number"], [class*="score"], [class*="value"] {
@@ -450,7 +490,7 @@ body {
   top: 45%;
   left: 50%;
   transform: translateX(-50%);
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-weight: var(--fw-extrabold);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
   animation: score-float 0.6s ease-out forwards;
@@ -492,7 +532,7 @@ body {
 }
 
 .combo-number {
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: 36px;
   font-weight: var(--fw-black);
   color: #ffffff;
@@ -501,7 +541,7 @@ body {
 }
 
 .combo-label {
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: var(--font-xs);
   font-weight: var(--fw-bold);
   color: rgba(255, 255, 255, 0.6);
@@ -516,7 +556,7 @@ body {
 }
 
 .combo-fire-text {
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: var(--font-sm);
   font-weight: var(--fw-black);
   color: var(--color-fire-text);
@@ -604,7 +644,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 6px;
   pointer-events: none;
-  font-family: monospace;
+  font-family: var(--font-mono);
 }
 .fire-mode-label {
   color: var(--accent);
@@ -636,7 +676,7 @@ body {
   background: rgba(0, 0, 0, 0.6);
   border-radius: 4px;
   font-size: var(--font-sm);
-  font-family: monospace;
+  font-family: var(--font-mono);
   color: var(--text-secondary);
 }
 
@@ -660,7 +700,7 @@ body {
   inset: 0;
   z-index: 28;
   pointer-events: none;
-  font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
   -webkit-font-smoothing: antialiased;
 }
@@ -1008,7 +1048,7 @@ body {
 .metric-value {
   font-size: var(--font-lg);
   font-weight: var(--fw-bold);
-  font-family: monospace;
+  font-family: var(--font-mono);
 }
 
 .breakdown-table {
@@ -1024,7 +1064,7 @@ body {
   background: var(--bg-secondary);
   border-radius: 4px;
   font-size: var(--font-sm);
-  font-family: monospace;
+  font-family: var(--font-mono);
 }
 
 .breakdown-row .label {
@@ -1052,39 +1092,42 @@ body {
 /* CTA 버튼 — 단색 골드 (그라데이션 제거) */
 .btn-primary {
   padding: 10px 24px;
-  background: var(--accent-primary);
-  border: none;
+  background: var(--gradient-metal-button);
+  border: 1px solid var(--accent-primary);
   border-radius: var(--radius-lg);
-  color: #000;
+  color: var(--text-primary);
   font-size: var(--font-base);
-  font-family: inherit;
+  font-family: var(--font-heading);
   font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-wide);
   cursor: pointer;
   transition: all var(--transition-base);
-  box-shadow: 0 2px 8px rgba(255, 184, 28, 0.15);
+  box-shadow: 0 2px 8px rgba(74, 158, 222, 0.15);
 }
 .btn-primary:hover {
-  background: var(--accent-primary-hover);
-  box-shadow: var(--shadow-glow);
+  background: var(--gradient-metal-button);
+  border-color: var(--accent-primary-hover);
+  box-shadow: var(--glow-accent-md);
   transform: translateY(-1px);
 }
 .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; filter: saturate(0.5); transform: none; }
 
 .btn-secondary {
   padding: 10px 24px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
   color: var(--text-primary);
   font-size: var(--font-base);
-  font-family: inherit;
+  font-family: var(--font-heading);
   font-weight: var(--fw-medium);
+  letter-spacing: var(--tracking-wide);
   cursor: pointer;
   transition: all var(--transition-base);
 }
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: var(--surface-low);
+  border-color: var(--border-strong);
   transform: translateY(-1px);
 }
 
@@ -1420,7 +1463,7 @@ body {
 .conversion-table td {
   padding: 8px;
   border-bottom: 1px solid rgba(30, 32, 48, 0.5);
-  font-family: "Consolas", "Fira Code", monospace;
+  font-family: var(--font-mono);
 }
 
 .conversion-table tr:last-child td {
@@ -1515,7 +1558,7 @@ body {
 
 .scenario-item.current {
   border-color: var(--accent);
-  background: rgba(255, 184, 28, 0.1);
+  background: rgba(74, 158, 222, 0.1);
 }
 
 .scenario-item.completed {
@@ -1524,7 +1567,7 @@ body {
 
 .scenario-status { font-size: var(--font-md); width: 20px; text-align: center; }
 .scenario-name { flex: 1; }
-.scenario-score { font-weight: var(--fw-bold); color: var(--accent); font-family: monospace; }
+.scenario-score { font-weight: var(--fw-bold); color: var(--accent); font-family: var(--font-mono); }
 
 .battery-actions { display: flex; gap: 12px; justify-content: flex-end; }
 
@@ -1578,7 +1621,7 @@ body {
   border-radius: 8px;
   transition: width 0.3s ease;
 }
-.bar-score { width: 50px; text-align: right; font-weight: var(--fw-bold); font-family: monospace; }
+.bar-score { width: 50px; text-align: right; font-weight: var(--fw-bold); font-family: var(--font-mono); }
 .bar-weight { width: 45px; font-size: var(--font-xs); color: var(--text-secondary); text-align: right; }
 
 /* ── Aim DNA Result ── */
@@ -1647,7 +1690,7 @@ body {
 }
 
 .feature-label { color: var(--text-secondary); }
-.feature-value { font-family: monospace; color: var(--text-primary); }
+.feature-value { font-family: var(--font-mono); color: var(--text-primary); }
 
 /* ── Session History ── */
 .session-history { max-width: 700px; margin: 0 auto; }
@@ -1676,7 +1719,7 @@ body {
 
 .session-row { cursor: pointer; }
 .session-row:hover { background: var(--accent-subtle); }
-.session-row.expanded { background: rgba(255, 184, 28, 0.1); }
+.session-row.expanded { background: rgba(74, 158, 222, 0.1); }
 
 .trial-list {
   display: flex;
@@ -1770,8 +1813,8 @@ body {
 .sensitivity-hub { display: flex; flex-direction: column; gap: 24px; }
 
 .sensitivity-hero {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 184, 28, 0.06) 100%);
-  border: 1px solid rgba(255, 184, 28, 0.15);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(74, 158, 222, 0.06) 100%);
+  border: 1px solid rgba(74, 158, 222, 0.15);
   border-radius: var(--radius-2xl);
   padding: 32px 28px;
   text-align: center;
@@ -1976,7 +2019,7 @@ body {
 
 /* ══════════════════════════════════════════════════
    대시보드 레이아웃 — 3열 풀스크린 대시보드
-   레퍼런스: Silver Forge Analysis 스타일
+   레퍼런스: Cold Forge Analysis 스타일
    ══════════════════════════════════════════════════ */
 
 /* 루트 — 100vh 꽉 채움 */
@@ -2147,7 +2190,7 @@ body {
 }
 .dash-stat-card.dash-stat-accent {
   border-color: var(--accent-primary-muted);
-  background: linear-gradient(135deg, var(--surface-low) 0%, rgba(255, 184, 28, 0.05) 100%);
+  background: linear-gradient(135deg, var(--surface-low) 0%, rgba(74, 158, 222, 0.05) 100%);
 }
 .dash-stat-label {
   font-size: var(--font-xs);
@@ -2171,8 +2214,8 @@ body {
 
 /* ── 히어로 CTA ── */
 .dash-hero {
-  background: linear-gradient(135deg, var(--surface-low) 0%, rgba(255, 184, 28, 0.06) 100%);
-  border: 1px solid rgba(255, 184, 28, 0.15);
+  background: linear-gradient(135deg, var(--surface-low) 0%, rgba(74, 158, 222, 0.06) 100%);
+  border: 1px solid rgba(74, 158, 222, 0.15);
   border-radius: var(--radius-2xl);
   padding: var(--space-6) var(--space-5);
   text-align: center;
@@ -2401,7 +2444,7 @@ body {
 }
 .dash-cat-card:hover {
   border-color: var(--accent-primary-muted);
-  background: rgba(255, 184, 28, 0.05);
+  background: rgba(74, 158, 222, 0.05);
   color: var(--text-primary);
 }
 .dash-cat-card:disabled {
@@ -2688,8 +2731,8 @@ body {
 
 /* ── AI 추천 카드 ── */
 .dash-ai-card {
-  background: linear-gradient(135deg, var(--surface-low) 0%, rgba(0, 208, 132, 0.05) 100%);
-  border: 1px solid rgba(0, 208, 132, 0.15);
+  background: linear-gradient(135deg, var(--surface-low) 0%, rgba(0, 212, 255, 0.05) 100%);
+  border: 1px solid rgba(0, 212, 255, 0.15);
   border-radius: var(--radius-xl);
   padding: var(--space-3);
   display: flex;
@@ -2734,7 +2777,7 @@ body {
 .dash-stat-card.dash-stat-hero {
   padding: var(--space-5);
   border-color: var(--accent-primary-muted);
-  background: linear-gradient(135deg, var(--surface-low) 0%, rgba(255, 184, 28, 0.08) 100%);
+  background: linear-gradient(135deg, var(--surface-low) 0%, rgba(74, 158, 222, 0.08) 100%);
 }
 .dash-stat-card.dash-stat-hero .dash-stat-value {
   font-size: var(--font-display);
@@ -2798,7 +2841,7 @@ body {
 
 .preset-btn:hover {
   border-color: var(--accent);
-  background: rgba(255, 184, 28, 0.1);
+  background: rgba(74, 158, 222, 0.1);
 }
 
 .settings-row {
@@ -2827,7 +2870,7 @@ body {
 .shape-btn.active {
   border-color: var(--accent);
   color: var(--accent);
-  background: rgba(255, 184, 28, 0.1);
+  background: rgba(74, 158, 222, 0.1);
 }
 
 .crosshair-grid {
@@ -2858,7 +2901,7 @@ body {
 }
 
 .crosshair-grid .value {
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: var(--font-xs);
   color: var(--text-primary);
   min-width: 36px;
@@ -2908,7 +2951,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--text-primary);
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
 }
 
@@ -2943,7 +2986,7 @@ body {
 
 .error-message {
   color: var(--text-secondary);
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: var(--font-sm);
   max-width: 500px;
 }
@@ -3005,7 +3048,7 @@ body {
   left: 8px;
   background: rgba(0, 0, 0, 0.7);
   color: var(--color-hit);
-  font-family: 'Consolas', 'Courier New', monospace;
+  font-family: var(--font-mono);
   font-size: 12px;
   padding: 8px 12px;
   border-radius: 6px;
@@ -3036,7 +3079,7 @@ body {
   box-shadow: none;
 }
 .quick-nav .btn-primary {
-  box-shadow: 0 2px 12px rgba(255, 184, 28, 0.2);
+  box-shadow: 0 2px 12px rgba(74, 158, 222, 0.2);
 }
 
 /* ========== 공통: 섹션 헤더 ========== */
@@ -3632,7 +3675,7 @@ body {
 }
 
 .share-code {
-  font-family: monospace;
+  font-family: var(--font-mono);
   font-size: var(--font-base);
   margin-bottom: 4px;
 }
@@ -3692,7 +3735,7 @@ body {
 }
 
 .btn-danger:hover {
-  background: rgba(255, 184, 28, 0.1);
+  background: rgba(74, 158, 222, 0.1);
 }
 
 .text-secondary {
@@ -3719,7 +3762,7 @@ body {
 
 .theme-toggle:hover {
   background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 184, 28, 0.3);
+  border-color: rgba(74, 158, 222, 0.3);
 }
 
 /* 언어 선택 드롭다운 */
@@ -3734,7 +3777,7 @@ body {
   transition: border-color var(--transition-fast);
 }
 .lang-select:hover {
-  border-color: rgba(255, 184, 28, 0.3);
+  border-color: rgba(74, 158, 222, 0.3);
 }
 
 /* Simple/Advanced 모드 필 스위치 */
@@ -3785,7 +3828,7 @@ body {
   border-radius: var(--radius-2xl);
   padding: 48px 44px;
   text-align: center;
-  box-shadow: var(--shadow-lg), 0 0 80px rgba(255, 184, 28, 0.05);
+  box-shadow: var(--shadow-lg), 0 0 80px rgba(74, 158, 222, 0.05);
   backdrop-filter: blur(var(--blur-md));
 }
 
@@ -3862,7 +3905,7 @@ body {
 .onboarding-field select:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(255, 184, 28, 0.1);
+  box-shadow: 0 0 0 3px rgba(74, 158, 222, 0.1);
 }
 
 .onboarding-field .cm360-preview {
@@ -3970,16 +4013,16 @@ body {
 }
 
 .game-card:hover {
-  border-color: rgba(255, 184, 28, 0.3);
+  border-color: rgba(74, 158, 222, 0.3);
   background: rgba(255, 255, 255, 0.06);
   transform: translateY(-1px);
 }
 
 .game-card.selected {
   border-color: var(--accent);
-  background: rgba(255, 184, 28, 0.1);
+  background: rgba(74, 158, 222, 0.1);
   color: var(--accent-light);
-  box-shadow: 0 0 16px rgba(255, 184, 28, 0.15), 0 0 0 1px rgba(255, 184, 28, 0.2);
+  box-shadow: 0 0 16px rgba(74, 158, 222, 0.15), 0 0 0 1px rgba(74, 158, 222, 0.2);
 }
 
 /* 게임 이니셜 아바타 */
@@ -4131,18 +4174,18 @@ body {
   outline-offset: 2px;
 }
 .btn--primary {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
+  background: var(--gradient-metal-button);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
 }
 .btn--primary:hover:not(:disabled) {
-  background: var(--accent-dim);
-  box-shadow: var(--shadow-glow);
+  border-color: var(--accent-primary-hover);
+  box-shadow: var(--glow-accent-md);
 }
 .btn--secondary {
-  background: var(--bg-secondary);
+  background: transparent;
   color: var(--text-primary);
-  border-color: var(--border);
+  border-color: var(--border-default);
 }
 .btn--secondary:hover:not(:disabled) {
   background: var(--bg-card);
@@ -4594,7 +4637,7 @@ body {
   flex-shrink: 0;
 }
 .prescription-priority--high {
-  background: rgba(255, 184, 28, 0.13);
+  background: rgba(74, 158, 222, 0.13);
   border: 2px solid var(--accent);
   color: var(--accent);
 }
@@ -5536,7 +5579,7 @@ body {
 
 .pw-game-card.selected {
   border-color: var(--accent);
-  background: rgba(255, 184, 28, 0.1);
+  background: rgba(74, 158, 222, 0.1);
 }
 
 .pw-game-name {
@@ -5927,7 +5970,7 @@ body {
   font-size: var(--font-base);
   font-weight: var(--fw-bold);
   color: var(--accent);
-  font-family: monospace;
+  font-family: var(--font-mono);
 }
 
 /* 재테스트 */
@@ -5989,12 +6032,12 @@ body {
 .splash-logo {
   font-size: 52px;
   font-weight: var(--fw-extrabold);
-  background: linear-gradient(135deg, #FFC940 0%, #FFB81C 50%, #D4960A 100%);
+  background: linear-gradient(135deg, var(--accent-primary-hover) 0%, var(--accent-primary) 50%, var(--accent-secondary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   letter-spacing: 4px;
-  filter: drop-shadow(0 0 30px rgba(255, 184, 28, 0.4)) drop-shadow(0 0 60px rgba(255, 184, 28, 0.15));
+  filter: drop-shadow(0 0 30px rgba(74, 158, 222, 0.4)) drop-shadow(0 0 60px rgba(74, 158, 222, 0.15));
   margin: 0;
 }
 
@@ -6035,7 +6078,7 @@ body {
   top: -200px;
   left: 50%;
   transform: translateX(-50%);
-  background: radial-gradient(circle, rgba(255, 184, 28, 0.25) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(74, 158, 222, 0.25) 0%, transparent 70%);
 }
 .welcome-bg-glow--bottom {
   width: 500px;
@@ -6166,12 +6209,12 @@ body {
   border-radius: var(--radius-xl);
   background: var(--accent-primary);
   color: #000;
-  box-shadow: 0 4px 24px rgba(255, 184, 28, 0.3);
+  box-shadow: 0 4px 24px rgba(74, 158, 222, 0.3);
   letter-spacing: 0.3px;
   transition: all var(--transition-base);
 }
 .welcome-cta:hover {
-  box-shadow: 0 8px 40px rgba(255, 184, 28, 0.4), 0 0 0 1px var(--accent-light);
+  box-shadow: 0 8px 40px rgba(74, 158, 222, 0.4), 0 0 0 1px var(--accent-light);
   transform: translateY(-2px);
 }
 .welcome-cta-hint {
@@ -6241,7 +6284,7 @@ body {
   font-size: 96px;
   font-weight: var(--fw-black);
   line-height: 1;
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-ui);
   letter-spacing: -4px;
   z-index: 1;
 }
@@ -6257,7 +6300,7 @@ body {
 .result-screen__score-number {
   font-size: 48px;
   font-weight: var(--fw-extrabold);
-  font-family: monospace;
+  font-family: var(--font-mono);
   color: var(--text-primary);
   letter-spacing: 2px;
 }
@@ -6315,7 +6358,7 @@ body {
 .result-stats__value {
   font-size: 18px;
   font-weight: var(--fw-bold);
-  font-family: monospace;
+  font-family: var(--font-mono);
   color: var(--text-primary);
 }
 
@@ -7053,14 +7096,14 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--bg-base);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.1);
+  background: var(--metal-steel-dark);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,0.18);
+  background: var(--metal-steel-mid);
 }
 
 /* ── EmptyState 컴포넌트 ── */
@@ -7101,7 +7144,7 @@ body {
 
 /* 선택 텍스트 색상 — forge 테마 */
 ::selection {
-  background: rgba(255, 184, 28, 0.3);
+  background: rgba(74, 158, 222, 0.3);
   color: #fff;
 }
 
@@ -7225,4 +7268,37 @@ body {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.12);
   color: var(--text-primary);
+}
+
+/* ══════════════════════════════════════════
+   Cold Forge 타이포 유틸리티 (§3.3)
+   ══════════════════════════════════════════ */
+
+/* 데이터 수치 스타일 — 대시보드, 스코어보드 등 */
+.data-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 헤딩 스타일 — Cold Forge Chakra Petch */
+h1, h2, h3, .heading {
+  font-family: var(--font-heading);
+  letter-spacing: var(--tracking-wide);
+  line-height: var(--leading-tight);
+}
+
+/* 메뉴/네비 레이블 — 업퍼케이스 메카닉 느낌 */
+.nav-label, .tab-label {
+  font-family: var(--font-heading);
+  font-size: var(--font-sm);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+/* 디스플레이 — 로고/히어로 전용 */
+.display-text {
+  font-family: var(--font-display);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
 }
