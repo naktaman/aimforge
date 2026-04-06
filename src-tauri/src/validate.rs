@@ -112,3 +112,30 @@ pub fn zoom_ratio(value: f64) -> Result<f64, AppError> {
     }
     Ok(value)
 }
+
+/// K 조정 delta 검증 (유한수, ±100 이내)
+pub fn k_delta(value: f64) -> Result<f64, AppError> {
+    if !value.is_finite() || value.abs() > 100.0 {
+        return Err(AppError::Validation(format!(
+            "K 조정값은 ±100 이내의 유한수여야 합니다. (입력값: {})", value
+        )));
+    }
+    Ok(value)
+}
+
+/// 배율 목록 검증 (비어있지 않음, 모든 원소 양수 유한수)
+pub fn multipliers(values: &[f64]) -> Result<(), AppError> {
+    if values.is_empty() {
+        return Err(AppError::Validation(
+            "배율 목록이 비어있습니다.".to_string()
+        ));
+    }
+    for (i, &v) in values.iter().enumerate() {
+        if !v.is_finite() || v <= 0.0 {
+            return Err(AppError::Validation(format!(
+                "배율[{}]은 양수 유한수여야 합니다. (입력값: {})", i, v
+            )));
+        }
+    }
+    Ok(())
+}

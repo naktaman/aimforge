@@ -70,7 +70,6 @@ pub struct NextCandidate {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::gp::kernel::Matern52Kernel;
 
     /// 최적점보다 좋은 예측이 있는 영역에서 EI > 0
     #[test]
@@ -92,7 +91,7 @@ mod tests {
         gp.add_observation(31.0, 0.85);
 
         let ei_near = expected_improvement(&gp, 30.5, 0.9, 0.01);
-        let ei_far = expected_improvement(&gp, 45.0, 0.9, 0.01);
+        let _ei_far = expected_improvement(&gp, 45.0, 0.9, 0.01);
 
         // 관측점 사이는 잘 알려져 있으므로 EI가 낮음
         // (항상 성립하진 않지만 일반적 경향)

@@ -202,6 +202,17 @@ pub enum SignificanceLabel {
     Keep,
 }
 
+impl SignificanceLabel {
+    /// DB 저장용 문자열 변환
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            SignificanceLabel::Recommend => "recommend",
+            SignificanceLabel::Marginal => "marginal",
+            SignificanceLabel::Keep => "keep",
+        }
+    }
+}
+
 /// 변경 유의성 검정
 /// z = (mean_optimal - mean_current) / sqrt(var_opt + var_cur)
 pub fn significance_test(

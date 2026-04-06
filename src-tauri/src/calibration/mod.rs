@@ -654,4 +654,123 @@ mod tests {
         assert_eq!(status.stage, CalibrationStage::Screening);
         assert_eq!(status.screening_progress, Some((0, 20)));
     }
+
+    /// DB seed + 캘리브레이션 세션 INSERT 통합 검증
+    /// 실제 IPC 흐름: start_calibration → DB 삽입 → 엔진 생성
+    #[test]
+    fn test_db_seed_and_calibration_session_insert() {
+        use crate::db::Database;
+
+        // 임시 DB 생성
+        let tmp = std::env::temp_dir().join("aimforge_test_cal.db");
+        let _ = std::fs::remove_file(&tmp);
+        let db = Database::new(&tmp).expect("DB 생성 실패");
+        db.initialize_schema().expect("스키마 초기화 실패");
+
+        // seed_defaults가 profiles + games에 id=1 넣었는지 검증
+        let profile_exists: bool = db.conn().query_row(
+            "SELECT COUNT(*) > 0 FROM profiles WHERE id = 1",
+            [],
+            |row| row.get(0),
+        ).expect("profiles 조회 실패");
+        assert!(profile_exists, "기본 프로필(id=1)이 seed되어야 함");
+
+        let game_exists: bool = db.conn().query_row(
+            "SELECT COUNT(*) > 0 FROM games WHERE id = 1",
+            [],
+            |row| row.get(0),
+        ).expect("games 조회 실패");
+        assert!(game_exists, "기본 게임(id=1)이 seed되어야 함");
+
+        // 캘리브레이션 세션 INSERT (FK 검증 — 이전 버그 재현 방지)
+        let session_id = db
+            .insert_calibration_session(1, "explore", 35.0, "tactical")
+            .expect("캘리브레이션 세션 INSERT 실패 — FK 위반 가능성");
+
+        assert!(session_id > 0, "세션 ID는 양수");
+
+        // GP 모델 INSERT
+        db.insert_gp_model(session_id, 5.0, 0.1, 0.015, None, None)
+            .expect("GP 모델 INSERT 실패");
+
+        // 엔진 생성 검증
+        let engine = CalibrationEngine::new(35.0, CalibrationMode::Explore, "tactical");
+        assert_eq!(engine.stage, CalibrationStage::Screening);
+
+        // 정리
+        let _ = std::fs::remove_file(&tmp);
+    }
+
+    /// E2E: 스크리닝 → 캘리브레이션 → finalize 전체 플로우
+    #[test]
+    fn test_full_calibration_e2e_with_db() {
+        use crate::db::Database;
+
+        let tmp = std::env::temp_dir().join("aimforge_test_cal_e2e.db");
+        let _ = std::fs::remove_file(&tmp);
+        let db = Database::new(&tmp).expect("DB 생성 실패");
+        db.initialize_schema().expect("스키마 초기화 실패");
+
+        // 1. start_calibration 흐름
+        let session_id = db
+            .insert_calibration_session(1, "explore", 35.0, "tactical")
+            .expect("세션 INSERT 실패");
+        db.insert_gp_model(session_id, 5.0, 0.1, 0.015, None, None)
+            .expect("GP 모델 INSERT 실패");
+
+        let mut engine = CalibrationEngine::new(35.0, CalibrationMode::Explore, "tactical");
+
+        // 2. get_next_trial_sens 흐름
+        let action = engine.get_next_sens();
+        assert!(action.cm360 > 0.0, "추천 cm360은 양수");
+
+        // 3. submit_calibration_trial — 스크리닝 통과
+        for _ in 0..20 {
+            engine.submit_trial(35.0, 0.7, None);
+        }
+        assert_eq!(engine.stage, CalibrationStage::Calibration);
+
+        // 4. get_calibration_status 흐름
+        let status = engine.get_status();
+        assert_eq!(status.stage, CalibrationStage::Calibration);
+
+        // 5. 캘리브레이션 트라이얼 몇 회
+        let score_fn = |x: f64| -> f64 { -((x - 35.0) / 10.0).powi(2) + 0.9 };
+        for _ in 0..10 {
+            let action = engine.get_next_sens();
+            engine.submit_trial(action.cm360, score_fn(action.cm360), None);
+        }
+
+        // 6. finalize_calibration 흐름 — 결과 생성 + DB 저장
+        let result = engine.finalize();
+        assert!(result.recommended_cm360 > 0.0, "추천값은 양수");
+
+        // DB에 결과 저장 (commands::finalize_calibration과 동일 흐름)
+        db.update_calibration_result(
+            session_id,
+            result.recommended_cm360,
+            result.bimodal_detected,
+            result.peaks.first().map(|p| p.cm360),
+            result.peaks.get(1).map(|p| p.cm360),
+            result.significance.p_value,
+            result.significance.label.as_str(),
+            result.total_iterations as i64,
+        )
+        .expect("캘리브레이션 결과 DB 저장 실패");
+
+        // DB에서 결과 확인
+        let is_complete: bool = db.conn().query_row(
+            "SELECT is_complete = 1 FROM calibration_sessions WHERE id = ?1",
+            rusqlite::params![session_id],
+            |row| row.get(0),
+        ).expect("결과 조회 실패");
+        assert!(is_complete, "finalize 후 is_complete=1이어야 함");
+
+        // 7. cancel_calibration 흐름 (엔진 리셋 시뮬레이션)
+        let mut engine_slot: Option<CalibrationEngine> = Some(engine);
+        engine_slot.take();
+        assert!(engine_slot.is_none(), "취소 후 엔진은 None");
+
+        let _ = std::fs::remove_file(&tmp);
+    }
 }

@@ -242,6 +242,8 @@ pub fn adjust_k(
     state: State<'_, AppState>,
     delta: f64,
 ) -> Result<AdjustedPredictions, PublicError> {
+    validate::k_delta(delta)?;
+
     let mut zoom_cal = lock_state(&state.zoom_calibration)?;
     let engine = zoom_cal
         .as_mut()
@@ -272,6 +274,7 @@ pub fn start_comparator(
 ) -> Result<(), PublicError> {
     validate::id(params.profile_id, "profile_id")?;
     validate::id(params.zoom_profile_id, "zoom_profile_id")?;
+    validate::multipliers(&params.multipliers)?;
 
     let engine = ComparatorEngine::new(params.profile_id, params.zoom_profile_id, 3, params.multipliers.clone());
     let mut comp = lock_state(&state.comparator)?;

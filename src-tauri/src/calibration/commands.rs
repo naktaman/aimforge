@@ -130,12 +130,48 @@ pub fn get_calibration_status(state: State<AppState>) -> Result<CalibrationStatu
 
 /// 캘리브레이션 최종 결과 생성 + DB 저장
 #[tauri::command]
-pub fn finalize_calibration(state: State<AppState>) -> Result<CalibrationResult, PublicError> {
+pub fn finalize_calibration(
+    state: State<AppState>,
+    session_id: i64,
+) -> Result<CalibrationResult, PublicError> {
+    validate::id(session_id, "session_id")?;
+
     let cal = lock_state(&state.calibration)?;
     let engine = cal.as_ref()
         .ok_or_else(|| AppError::NotFound("캘리브레이션이 시작되지 않음".to_string()))?;
 
-    Ok(engine.finalize())
+    let result = engine.finalize();
+
+    // DB에 캘리브레이션 결과 저장
+    let db = lock_state(&state.db)?;
+    db.update_calibration_result(
+        session_id,
+        result.recommended_cm360,
+        result.bimodal_detected,
+        result.peaks.first().map(|p| p.cm360),
+        result.peaks.get(1).map(|p| p.cm360),
+        result.significance.p_value,
+        result.significance.label.as_str(),
+        result.total_iterations as i64,
+    )
+    .map_err(|e| AppError::Database(e.to_string()))?;
+
+    // 부분 DNA 저장 (있으면)
+    if let Some(ref dna) = result.partial_dna {
+        db.insert_partial_aim_dna(
+            session_id,
+            Some(dna.wrist_arm_ratio),
+            Some(dna.avg_overshoot),
+            Some(dna.pre_aim_ratio),
+            Some(dna.direction_bias),
+            dna.tracking_smoothness,
+            result.adaptation_rate,
+            None,
+        )
+        .map_err(|e| AppError::Database(e.to_string()))?;
+    }
+
+    Ok(result)
 }
 
 /// 캘리브레이션 취소

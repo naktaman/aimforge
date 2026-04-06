@@ -809,7 +809,7 @@ mod tests {
     #[test]
     fn test_engine_basic_flow() {
         let profiles = make_test_profiles();
-        let mut engine = ZoomCalibrationEngine::new(
+        let engine = ZoomCalibrationEngine::new(
             1,
             30.0,
             103.0,
@@ -846,7 +846,7 @@ mod tests {
         let fb_b = engine.submit_trial(ZoomPhase::Correction, 0.7);
         assert!(!fb_b.ratio_converged, "2회 후 미수렴");
 
-        let fb_c = engine.submit_trial(ZoomPhase::Zoomout, 0.75);
+        let _fb_c = engine.submit_trial(ZoomPhase::Zoomout, 0.75);
         // 3-phase 완료 → GP에 1개 관측 추가됨
         assert_eq!(engine.per_ratio_gp[0].n_observations(), 1);
     }
@@ -974,6 +974,62 @@ mod tests {
             !adjusted.predictions.is_empty(),
             "조정 후 예측 존재"
         );
+    }
+
+    /// DB seed + 줌 캘리브레이션 통합 검증
+    /// 실제 IPC 흐름: get_zoom_profiles → start → trial → finalize
+    #[test]
+    fn test_zoom_calibration_db_integration() {
+        use crate::db::Database;
+
+        let tmp = std::env::temp_dir().join("aimforge_test_zoom_cal.db");
+        let _ = std::fs::remove_file(&tmp);
+        let db = Database::new(&tmp).expect("DB 생성 실패");
+        db.initialize_schema().expect("스키마 초기화 실패");
+
+        // 1. get_zoom_profiles — seed된 줌 프로파일 조회
+        let rows = db.get_zoom_profiles(1).expect("줌 프로파일 조회 실패");
+        assert!(rows.len() >= 3, "CS2 줌 프로파일 최소 3개 seed: got {}", rows.len());
+
+        // 2. start_zoom_calibration 흐름 — 프로파일로 엔진 생성
+        let profiles: Vec<ZoomProfileInfo> = rows.iter().map(|r| {
+            let scope_fov = r.fov_override.unwrap_or_else(|| {
+                let hip_rad = (106.26_f64).to_radians() / 2.0;
+                let scope_half = (hip_rad.tan() / r.zoom_ratio).atan();
+                (scope_half * 2.0).to_degrees()
+            });
+            ZoomProfileInfo {
+                id: r.id,
+                scope_name: r.scope_name.clone(),
+                zoom_ratio: r.zoom_ratio,
+                fov_override: r.fov_override,
+                scope_fov,
+                weights: ZoomPhaseWeights {
+                    steady: r.steady_weight,
+                    correction: r.transition_weight,
+                    zoomout: r.zoomout_weight,
+                },
+            }
+        }).collect();
+
+        let mut engine = ZoomCalibrationEngine::new(
+            1, 30.0, 106.26, profiles.clone(), profiles, ConvergenceMode::Quick,
+        );
+
+        // 3. get_next_zoom_trial
+        let trial = engine.get_next_trial();
+        assert!(trial.is_some(), "첫 트라이얼 존재");
+
+        // 4. submit_zoom_trial — 3-phase 사이클
+        let _fb1 = engine.submit_trial(ZoomPhase::Steady, 0.8);
+        let _fb2 = engine.submit_trial(ZoomPhase::Correction, 0.7);
+        let _fb3 = engine.submit_trial(ZoomPhase::Zoomout, 0.75);
+
+        // 5. get_zoom_calibration_status
+        let status = engine.get_status();
+        assert!(status.iterations.iter().sum::<usize>() > 0, "트라이얼 카운트 증가");
+
+        let _ = std::fs::remove_file(&tmp);
     }
 
     /// 테스트 프로파일 생성 (3개 비율)
