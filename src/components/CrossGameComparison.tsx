@@ -85,26 +85,47 @@ function DualRadarChart({ refAxes, targetAxes }: { refAxes: RadarAxis[]; targetA
 
     const rScale = d3.scaleLinear().domain([0, 100]).range([0, maxR]);
 
-    // 폴리곤 그리기 헬퍼
-    const drawPoly = (axes: RadarAxis[], color: string) => {
+    /* 원점 좌표 — 폴리곤 펼침 애니메이션 시작점 */
+    const originPts = refAxes.map((_, i) => {
+      const angle = angleSlice * i - Math.PI / 2;
+      return [0 * Math.cos(angle), 0 * Math.sin(angle)] as [number, number];
+    });
+    const originStr = originPts.map(p => p.join(',')).join(' ');
+
+    // 폴리곤 그리기 헬퍼 — 원점에서 확장 애니메이션 포함
+    const drawPoly = (axes: RadarAxis[], color: string, delayMs: number) => {
       const points = axes.map((a, i) => {
         const angle = angleSlice * i - Math.PI / 2;
         const r = rScale(a.value);
         return [r * Math.cos(angle), r * Math.sin(angle)] as [number, number];
       });
+
+      /* 폴리곤 — 원점 → 목표 확장 */
       g.append('polygon')
-        .attr('points', points.map(p => p.join(',')).join(' '))
+        .attr('points', originStr)
         .attr('fill', color)
         .attr('fill-opacity', 0.15)
         .attr('stroke', color)
-        .attr('stroke-width', 2);
-      points.forEach(p => {
-        g.append('circle').attr('cx', p[0]).attr('cy', p[1]).attr('r', 3).attr('fill', color);
+        .attr('stroke-width', 2)
+        .transition()
+        .duration(600)
+        .delay(delayMs)
+        .attr('points', points.map(p => p.join(',')).join(' '));
+
+      /* 꼭짓점 — 순차 등장 */
+      points.forEach((p, i) => {
+        g.append('circle')
+          .attr('cx', p[0]).attr('cy', p[1])
+          .attr('r', 0).attr('fill', color).attr('opacity', 0)
+          .transition()
+          .delay(delayMs + 300 + i * 60)
+          .duration(300)
+          .attr('r', 3).attr('opacity', 1);
       });
     };
 
-    drawPoly(refAxes, UI_COLORS.radarReference);   // Reference — 파랑
-    drawPoly(targetAxes, UI_COLORS.accentGold); // Target — 오렌지(forge)
+    drawPoly(refAxes, UI_COLORS.radarReference, 100);   // Reference — 파랑
+    drawPoly(targetAxes, UI_COLORS.accentGold, 300); // Target — 오렌지(forge)
 
     // 범례
     const legendY = -maxR - 15;

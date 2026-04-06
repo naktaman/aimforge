@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { UI_COLORS, SCENARIO_TYPE_COLORS } from '../config/theme';
+import { applyD3LineAnimation, applyD3PointAnimation, applyD3AreaFadeIn } from '../hooks/useChartAnimation';
 
 /** GP 곡선 데이터 포인트 */
 interface GpCurvePoint {
@@ -146,11 +147,14 @@ export function PerformanceLandscape({
       .y1((d) => yScale(d.mean + 2 * Math.sqrt(d.variance)))
       .curve(d3.curveBasis);
 
-    plotGroup.append('path')
+    const band2sigma = plotGroup.append('path')
       .datum(gpCurve)
       .attr('d', area2sigma)
       .attr('fill', 'rgba(74, 222, 128, 0.08)')
       .attr('stroke', 'none');
+
+    /* ±2σ 신뢰대역 — 페이드인 애니메이션 */
+    applyD3AreaFadeIn(band2sigma, 600, 0);
 
     // ±1σ 신뢰대역
     const area1sigma = d3.area<GpCurvePoint>()
@@ -159,11 +163,14 @@ export function PerformanceLandscape({
       .y1((d) => yScale(d.mean + Math.sqrt(d.variance)))
       .curve(d3.curveBasis);
 
-    plotGroup.append('path')
+    const band1sigma = plotGroup.append('path')
       .datum(gpCurve)
       .attr('d', area1sigma)
       .attr('fill', 'rgba(74, 222, 128, 0.15)')
       .attr('stroke', 'none');
+
+    /* ±1σ 신뢰대역 — 페이드인 애니메이션 (약간 딜레이) */
+    applyD3AreaFadeIn(band1sigma, 600, 100);
 
     // ──── 레이어 2: GP 평균 곡선 ────
     const meanLine = d3.line<GpCurvePoint>()
@@ -171,12 +178,15 @@ export function PerformanceLandscape({
       .y((d) => yScale(d.mean))
       .curve(d3.curveBasis);
 
-    plotGroup.append('path')
+    const meanPath = plotGroup.append('path')
       .datum(gpCurve)
       .attr('d', meanLine)
       .attr('fill', 'none')
       .attr('stroke', UI_COLORS.successGreen)
       .attr('stroke-width', 2.5);
+
+    /* GP 평균 곡선 — 선 그리기 애니메이션 */
+    applyD3LineAnimation(meanPath, 1000, 200);
 
     // ──── 레이어 3: 시나리오 오버레이 ────
     if (showOverlays && scenarioOverlays) {
@@ -199,18 +209,19 @@ export function PerformanceLandscape({
       });
     }
 
-    // ──── 레이어 4: 관측점 ────
-    plotGroup.selectAll('.obs-point')
+    // ──── 레이어 4: 관측점 — 순차 등장 애니메이션 ────
+    const obsPoints = plotGroup.selectAll('.obs-point')
       .data(observations)
       .enter()
       .append('circle')
       .attr('class', 'obs-point')
       .attr('cx', (d) => xScale(d.cm360))
       .attr('cy', (d) => yScale(d.score))
-      .attr('r', 4)
       .attr('fill', UI_COLORS.infoBlue)
       .attr('stroke', UI_COLORS.chartSubGrid)
       .attr('stroke-width', 1.5);
+
+    applyD3PointAnimation(obsPoints, 60, 600);
 
     // ──── 레이어 5: 이봉 피크 마커 ────
     if (peaks && peaks.length > 0) {
@@ -221,20 +232,30 @@ export function PerformanceLandscape({
         .attr('class', 'peak-marker')
         .attr('transform', (d) => `translate(${xScale(d.cm360)},${yScale(d.score)})`);
 
-      // 다이아몬드 마커
+      // 다이아몬드 마커 — 스케일업 애니메이션
       peakGroup.append('path')
         .attr('d', d3.symbol().type(d3.symbolDiamond).size(80)())
         .attr('fill', (d) => d.isPrimary ? UI_COLORS.accentGold : UI_COLORS.textSecondary)
         .attr('stroke', '#000')
-        .attr('stroke-width', 1);
+        .attr('stroke-width', 1)
+        .attr('transform', 'scale(0)')
+        .transition()
+        .delay(800)
+        .duration(400)
+        .attr('transform', 'scale(1)');
 
-      // 라벨
+      // 라벨 — 페이드인
       peakGroup.append('text')
         .attr('dy', -12)
         .attr('text-anchor', 'middle')
         .attr('fill', UI_COLORS.textPrimary)
         .attr('font-size', '10px')
-        .text((d) => d.isPrimary ? '주 피크' : '부 피크');
+        .text((d) => d.isPrimary ? '주 피크' : '부 피크')
+        .attr('opacity', 0)
+        .transition()
+        .delay(1000)
+        .duration(300)
+        .attr('opacity', 1);
     }
 
     // ──── 레이어 6: 선택 감도 수직선 ────

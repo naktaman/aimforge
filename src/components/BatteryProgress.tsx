@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { CountdownTransition } from './transitions';
 import { useBatteryStore } from '../stores/batteryStore';
 import { useTranslation } from '../i18n';
+import { useAnimatedValue } from '../hooks/useChartAnimation';
 import type { ScenarioType } from '../utils/types';
 
 /** 시나리오 타입 → 한글 이름 */
@@ -42,7 +43,9 @@ export function BatteryProgress({ onLaunchScenario, onCancel, onComplete }: Prop
 
   // 배터리 인스턴스에서 진행 정보 가져오기
   const progress = battery?.getProgressInfo() ?? { current: 0, total: 7 };
-  const progressPct = battery?.getProgress() ?? 0;
+  const progressPctRaw = battery?.getProgress() ?? 0;
+  /** 진행률 바 — 부드러운 상승 애니메이션 */
+  const progressPct = useAnimatedValue(progressPctRaw * 100, 600);
 
   // 시나리오 큐 상태 구성
   const scenarioStates = SCENARIO_ORDER.map((type) => {
@@ -104,7 +107,7 @@ export function BatteryProgress({ onLaunchScenario, onCancel, onComplete }: Prop
 
         {/* 진행률 바 */}
         <div className="progress-bar-container">
-          <div className="progress-bar" style={{ width: `${progressPct * 100}%` }} />
+          <div className="progress-bar" style={{ width: `${progressPct}%` }} />
           <span className="progress-label">{progress.current} / {progress.total}</span>
         </div>
 

@@ -9,6 +9,7 @@ import * as d3 from 'd3';
 import { useTranslation } from '../i18n';
 import { useAimDnaStore } from '../stores/aimDnaStore';
 import { DNA_AXIS_COLORS, UI_COLORS } from '../config/theme';
+import { applyD3LineAnimation, applyD3PointAnimation } from '../hooks/useChartAnimation';
 import type { DnaSnapshot, DnaChangeEvent, SnapshotComparison } from '../utils/types';
 
 // 5축 색상 팔레트 — theme.ts DNA_AXIS_COLORS 참조
@@ -95,32 +96,36 @@ function TimelineChart({ snapshots, changeEvents, selectedIds, onSelectSnapshot,
       .call(ax => ax.selectAll('text').attr('fill', UI_COLORS.chartTickText).attr('font-size', '10px'))
       .call(ax => ax.select('.domain').attr('stroke', UI_COLORS.chartDomain));
 
-    // 5축 라인 그리기
-    AXIS_KEYS.forEach(key => {
+    // 5축 라인 그리기 — 선 그리기 + 포인트 순차 등장 애니메이션
+    AXIS_KEYS.forEach((key, axisIdx) => {
       const lineGen = d3.line<DnaSnapshot>()
         .x(s => xScale(new Date(s.measuredAt)))
         .y(s => yScale(s[key] as number))
         .curve(d3.curveMonotoneX);
 
-      g.append('path')
+      const linePath = g.append('path')
         .datum(snapshots)
         .attr('fill', 'none')
         .attr('stroke', AXIS_COLORS[key])
         .attr('stroke-width', 1.8)
         .attr('d', lineGen);
 
+      /* 축별 순차 딜레이 (0, 120, 240, ...) */
+      applyD3LineAnimation(linePath, 800, axisIdx * 120);
+
       // 데이터 포인트
-      g.selectAll<SVGCircleElement, DnaSnapshot>(`.dot-${key}`)
+      const dots = g.selectAll<SVGCircleElement, DnaSnapshot>(`.dot-${key}`)
         .data(snapshots)
         .join('circle')
         .attr('cx', s => xScale(new Date(s.measuredAt)))
         .attr('cy', s => yScale(s[key] as number))
-        .attr('r', s => selectedIds.includes(s.id) ? 7 : 4)
         .attr('fill', s => selectedIds.includes(s.id) ? UI_COLORS.textWhite : AXIS_COLORS[key])
         .attr('stroke', AXIS_COLORS[key])
         .attr('stroke-width', s => selectedIds.includes(s.id) ? 2.5 : 0)
         .attr('cursor', 'pointer')
         .on('click', (_, s) => onSelectSnapshot(s.id));
+
+      applyD3PointAnimation(dots, 40, 400 + axisIdx * 120);
     });
 
     // 변경점 이벤트 수직 마커
@@ -217,10 +222,21 @@ function CompareRadar({ comparison }: CompareRadarProps) {
       const r = rScale(v);
       return [r * Math.cos(angle), r * Math.sin(angle)];
     });
+    /* before 폴리곤 — 원점에서 펼쳐지는 애니메이션 */
+    const originPts = axes.map((_, i) => {
+      const angle = slice * i - Math.PI / 2;
+      return [0 * Math.cos(angle), 0 * Math.sin(angle)];
+    });
+    const originStr = originPts.map(p => p.join(',')).join(' ');
+
     g.append('polygon')
-      .attr('points', beforePts.map(p => p.join(',')).join(' '))
+      .attr('points', originStr)
       .attr('fill', UI_COLORS.referenceBlue).attr('fill-opacity', 0.15)
-      .attr('stroke', UI_COLORS.referenceBlue).attr('stroke-width', 1.8);
+      .attr('stroke', UI_COLORS.referenceBlue).attr('stroke-width', 1.8)
+      .transition()
+      .duration(600)
+      .delay(100)
+      .attr('points', beforePts.map(p => p.join(',')).join(' '));
 
     // after 폴리곤 (빨간색)
     const afterVals = [
@@ -235,10 +251,15 @@ function CompareRadar({ comparison }: CompareRadarProps) {
       const r = rScale(v);
       return [r * Math.cos(angle), r * Math.sin(angle)];
     });
+    /* after 폴리곤 — 순차 펼침 (before보다 약간 딜레이) */
     g.append('polygon')
-      .attr('points', afterPts.map(p => p.join(',')).join(' '))
+      .attr('points', originStr)
       .attr('fill', UI_COLORS.accentGold).attr('fill-opacity', 0.2)
-      .attr('stroke', UI_COLORS.accentGold).attr('stroke-width', 2);
+      .attr('stroke', UI_COLORS.accentGold).attr('stroke-width', 2)
+      .transition()
+      .duration(600)
+      .delay(300)
+      .attr('points', afterPts.map(p => p.join(',')).join(' '));
   }, [comparison]);
 
   return <svg ref={svgRef} />;
