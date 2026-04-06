@@ -208,7 +208,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
   const handleAnalyze = async () => {
     try {
       const dna = await safeInvoke<AimDnaProfile>('compute_aim_dna_cmd', {
-        params: { profile_id: 1, session_id: null },
+        params: { profile_id: 1, /* 단일 사용자 — user profiles.id */ session_id: null },
       });
       if (dna) {
         /** GP 기반 감도 제안 — 캘리브레이션 결과가 있으면 그것 사용 */

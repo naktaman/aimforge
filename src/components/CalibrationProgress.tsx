@@ -18,11 +18,11 @@ export function CalibrationProgress({ onCancel, onLaunchTrial }: CalibrationProg
     convergenceLevel,
     iteration,
     maxIterations,
+    nextCm360,
     screeningProgress,
     currentBest,
     gpCurve,
     observations,
-    nextCm360,
     fatigueStopped,
   } = useCalibrationStore();
   const { t } = useTranslation();

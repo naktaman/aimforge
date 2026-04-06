@@ -112,7 +112,7 @@ export const useGameProfileStore = create<GameProfileState>((set, get) => ({
   /** 프로필 목록 로드 — Rust get_game_profiles(profile_id) 호출 */
   loadProfiles: () =>
     storeInvoke<GameProfileState, GameProfileRow[]>(
-      set, 'get_game_profiles', { profileId: 1 }, // TODO: Phase 1-3에서 동적 profileId
+      set, 'get_game_profiles', { profileId: 1 }, // 단일 사용자 — user profiles.id
       (rows) => ({ profiles: rows.map(toProfile) }),
       '게임 프로필 로드',
     ),

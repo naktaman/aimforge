@@ -234,7 +234,7 @@ export function useZoomCalibrationHandlers(deps: ZoomCalibrationHandlerDeps): {
       const hfov = useSettingsStore.getState().hfov || 103;
       await invoke('start_zoom_calibration', {
         params: {
-          profile_id: 1, game_id: 1, hipfire_fov: hfov, base_cm360: cmPer360,
+          profile_id: 1, /* 단일 사용자 — user profiles.id */ game_id: 1, hipfire_fov: hfov, base_cm360: cmPer360,
           selected_profile_ids: selectedProfileIds, convergence_mode: zoomConvergenceMode,
         },
       });

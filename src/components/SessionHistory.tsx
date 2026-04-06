@@ -24,7 +24,7 @@ export function SessionHistory({ onBack }: Props) {
     (async () => {
       try {
         const list = await invoke<SessionSummary[]>('get_sessions_history', {
-          params: { profile_id: 1, limit: 50 },
+          params: { profile_id: 1, /* 단일 사용자 — user profiles.id */ limit: 50 },
         });
         setSessions(list);
       } catch (e) {
