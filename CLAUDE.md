@@ -18,6 +18,26 @@ cd src-tauri && cargo test  # Rust 테스트
 npm run build           # 프론트엔드만
 ```
 
+## 코딩 규칙
+
+### Rust
+- `unwrap()`/`expect()` 금지 (prod). `map_err` + `?` 패턴 사용
+- clippy 경고 0 유지
+- 모든 IPC 커맨드에 `validate::` 입력 검증
+- 에러는 `AppError` → `PublicError` 통일
+- DB 스키마 변경 시 시드 데이터 동반 확인
+
+### TypeScript
+- `any` / `as any` 금지 (불가피 시 `// eslint-disable-next-line` + 사유 주석)
+- 모든 함수에 return type 명시
+- 하드코딩 hex 금지 — `theme.ts` 토큰 사용
+
+### 공통
+- 새 파일 → 테스트 동반 필수
+- 빈 catch 블록 금지 — 최소 `console.error` 또는 로깅
+- 500줄 초과 파일 금지 — 분리
+- 외부 의존성 추가 시 `npm audit` / `cargo audit` 통과 확인
+
 ## Docs
 - `docs/architecture/` — 시스템 설계, DB 스키마, 시나리오
 - `docs/progress/` — 진행 현황, 인시던트 로그
