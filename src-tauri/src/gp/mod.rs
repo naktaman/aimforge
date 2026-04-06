@@ -14,10 +14,11 @@ pub mod model;
 pub mod normal;
 
 // 주요 타입 re-export
-pub use acquisition::{expected_improvement, next_candidate, NextCandidate};
+pub use acquisition::next_candidate;
+// SignificanceLabel은 calibration/go_no_go.rs에서 crate::gp::SignificanceLabel로 사용
+#[allow(unused_imports)]
 pub use analysis::{
-    check_convergence, detect_bimodal, significance_test, ConvergenceMode, ConvergenceStatus,
-    Peak, SignificanceLabel, SignificanceResult,
+    check_convergence, detect_bimodal, significance_test, ConvergenceMode, Peak, SignificanceLabel,
+    SignificanceResult,
 };
-pub use kernel::Matern52Kernel;
-pub use model::{GaussianProcess, Prediction};
+pub use model::GaussianProcess;

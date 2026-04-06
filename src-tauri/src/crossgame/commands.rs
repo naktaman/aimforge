@@ -254,7 +254,8 @@ pub struct ConvertCrossgameZoomParams {
     pub target_game: String,
     /// 소스 게임 감도 값
     pub source_sens: f64,
-    /// 옵틱/스코프 이름 (예: "3x")
+    /// 옵틱/스코프 이름 — 향후 옵틱별 변환 로직 확장 시 사용 예정
+    #[allow(dead_code)]
     pub optic: String,
     /// 소스 줌 배율 (예: 4.0)
     pub zoom_ratio: f64,
@@ -294,7 +295,7 @@ pub struct CrossgameZoomResult {
 /// 소스 게임의 줌 감도를 타겟 게임의 동일 배율 줌으로 변환
 #[tauri::command]
 pub fn convert_crossgame_zoom_sensitivity(
-    state: State<AppState>,
+    _state: State<AppState>,
     params: ConvertCrossgameZoomParams,
 ) -> Result<CrossgameZoomResult, PublicError> {
     // 입력 검증

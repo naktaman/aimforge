@@ -121,6 +121,8 @@ impl super::Database {
     // ── DNA 스냅샷 + 변경점 이벤트 ──
 
     /// DNA 스냅샷 저장 — 매 DNA 측정마다 5축 점수 보존
+    /// (인수 다수: DB 컬럼 직접 매핑)
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_dna_snapshot(
         &self,
         profile_id: i64,

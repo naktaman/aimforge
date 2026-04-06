@@ -17,6 +17,8 @@ impl super::Database {
     }
 
     /// 트라이얼 저장 — 트라이얼 ID 반환
+    /// (인수 다수: DB 컬럼 직접 매핑으로 구조체 대신 개별 파라미터 사용)
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_trial(
         &self,
         session_id: i64,

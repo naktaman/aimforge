@@ -20,7 +20,8 @@ pub struct TrainingPrescription {
     pub description: String,
 }
 
-/// 훈련 스테이지 카테고리
+/// 훈련 스테이지 카테고리 — 향후 스테이지 필터링 및 UI 분류에 사용 예정
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum StageCategory {

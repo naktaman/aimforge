@@ -9,7 +9,11 @@ use serde::Serialize;
 #[serde(rename_all = "camelCase")]
 pub struct TrajectoryPoint {
     pub timestamp_us: f64,
+    /// 향후 카메라 회전 기반 3D 궤적 분석 시 사용 예정
+    #[allow(dead_code)]
     pub camera_yaw: f64,
+    /// 향후 카메라 회전 기반 3D 궤적 분석 시 사용 예정
+    #[allow(dead_code)]
     pub camera_pitch: f64,
     pub dx_cm: f64,
     pub dy_cm: f64,
@@ -21,13 +25,23 @@ pub struct TrajectoryPoint {
 pub struct ClickEvent {
     pub timestamp_us: f64,
     pub crosshair_velocity: f64,
+    /// 향후 가속도 기반 클릭 분류 시 사용 예정
+    #[allow(dead_code)]
     #[serde(default)]
     pub crosshair_acceleration: f64,
+    /// 향후 감속 패턴 분석 시 사용 예정
+    #[allow(dead_code)]
     pub is_decelerating: bool,
+    /// 향후 각도 오차 세분화 분석 시 사용 예정
+    #[allow(dead_code)]
     pub angular_error: f64,
     pub hit: bool,
+    /// 향후 방향 전환 패턴 분석 시 사용 예정
+    #[allow(dead_code)]
     #[serde(default)]
     pub time_since_direction_change: f64,
+    /// 향후 클릭 타입별 분리 분석 시 사용 예정
+    #[allow(dead_code)]
     #[serde(default)]
     pub click_type: String,
 }

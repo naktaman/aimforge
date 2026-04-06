@@ -125,9 +125,9 @@ pub fn detect_bimodal(
     // local maxima 탐색
     let mut peaks = Vec::new();
     for i in 1..predictions.len() - 1 {
-        let (x_prev, mean_prev, _) = predictions[i - 1];
+        let (_x_prev, mean_prev, _) = predictions[i - 1];
         let (x_curr, mean_curr, var_curr) = predictions[i];
-        let (x_next, mean_next, _) = predictions[i + 1];
+        let (_x_next, mean_next, _) = predictions[i + 1];
 
         // local maximum: 양쪽보다 높음
         if mean_curr > mean_prev && mean_curr > mean_next {

@@ -6,6 +6,8 @@ impl super::Database {
     // ── Movement Profile CRUD ──
 
     /// 무브먼트 프로필 저장
+    /// (인수 다수: DB 컬럼 직접 매핑)
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_movement_profile(
         &self,
         game_id: i64,
@@ -73,6 +75,8 @@ impl super::Database {
     }
 
     /// 무브먼트 프로필 수정
+    /// (인수 다수: DB 컬럼 직접 매핑)
+    #[allow(clippy::too_many_arguments)]
     pub fn update_movement_profile(
         &self,
         id: i64,
@@ -127,6 +131,8 @@ impl super::Database {
     }
 
     /// 반동 패턴 저장 (커스텀, is_custom=1)
+    /// (인수 다수: DB 컬럼 직접 매핑)
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_recoil_pattern(
         &self, game_id: i64, weapon_name: &str, pattern_points: &str,
         randomness: f64, vertical: f64, horizontal: f64, rpm: i64,
@@ -140,6 +146,8 @@ impl super::Database {
     }
 
     /// 반동 패턴 수정
+    /// (인수 다수: DB 컬럼 직접 매핑)
+    #[allow(clippy::too_many_arguments)]
     pub fn update_recoil_pattern(
         &self, id: i64, weapon_name: &str, pattern_points: &str,
         randomness: f64, vertical: f64, horizontal: f64, rpm: i64,

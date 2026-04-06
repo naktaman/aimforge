@@ -194,7 +194,8 @@ pub struct MovementExportData {
 }
 
 impl MovementExportData {
-    /// MovementPreset으로부터 export 데이터 생성
+    /// MovementPreset으로부터 export 데이터 생성 — 향후 import/export 기능 구현 시 사용 예정
+    #[allow(dead_code)]
     pub fn from_preset(preset: &MovementPreset) -> Self {
         Self {
             version: 1,

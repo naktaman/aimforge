@@ -182,7 +182,7 @@ pub fn export_movement_profile(
         cs_bonus: params.cs_bonus,
     };
     export_data.validate()
-        .map_err(|e| AppError::Validation(e))?;
+        .map_err(AppError::Validation)?;
 
     let json = serde_json::to_string_pretty(&export_data)
         .map_err(|e| AppError::Internal(format!("JSON 직렬화 실패: {}", e)))?;
@@ -216,7 +216,7 @@ pub fn import_movement_profile_from_string(
     let export_data: MovementExportData = serde_json::from_str(&json_string)
         .map_err(|e| AppError::Validation(format!("JSON 파싱 실패: {}", e)))?;
     export_data.validate()
-        .map_err(|e| AppError::Validation(e))?;
+        .map_err(AppError::Validation)?;
     Ok(export_data.to_preset())
 }
 
@@ -256,7 +256,7 @@ pub fn calibrate_max_speed(
     };
 
     let speed = calculate_max_speed_from_wall_time(distance, params.measured_time_sec)
-        .map_err(|e| AppError::Validation(e))?;
+        .map_err(AppError::Validation)?;
 
     Ok(CalibrateMaxSpeedResult {
         calculated_max_speed: (speed * 10.0).round() / 10.0, // 소수점 1자리 반올림

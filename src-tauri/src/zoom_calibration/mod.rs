@@ -15,7 +15,7 @@ pub mod comparator;
 pub mod k_fitting;
 
 use crate::calibration::fatigue::FatigueTracker;
-use crate::game_db::conversion::{mdm_multiplier, zoom_multiplier};
+use crate::game_db::conversion::mdm_multiplier;
 use crate::gp::{
     check_convergence, next_candidate, ConvergenceMode, GaussianProcess,
 };
@@ -231,7 +231,8 @@ pub struct AdjustedPredictions {
 pub struct ZoomCalibrationEngine {
     /// 프로파일 ID
     pub profile_id: i64,
-    /// 힙파이어 cm/360
+    /// 힙파이어 cm/360 — 향후 절대값 기반 보간 시 사용 예정
+    #[allow(dead_code)]
     base_cm360: f64,
     /// 힙파이어 hFOV
     hipfire_fov: f64,
@@ -629,7 +630,7 @@ impl ZoomCalibrationEngine {
             .map(|f| f.k_value)
             .unwrap_or(1.0);
 
-        let new_k = (current_k + delta).max(0.0).min(3.0); // k 범위 제한
+        let new_k = (current_k + delta).clamp(0.0, 3.0); // k 범위 제한
 
         let completed: Vec<ZoomRatioResult> = self
             .ratio_results
@@ -744,10 +745,7 @@ impl ZoomCalibrationEngine {
             let ei = self.last_ei[i];
             let is_complete = self.ratio_results[i].is_some();
 
-            let status = if is_complete {
-                converged_count += 1;
-                "sufficient".to_string()
-            } else if obs_count >= 3 && ei < ei_threshold {
+            let status = if is_complete || (obs_count >= 3 && ei < ei_threshold) {
                 converged_count += 1;
                 "sufficient".to_string()
             } else if obs_count >= 1 {
@@ -805,6 +803,7 @@ pub struct ZoomCalibrationStatus {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::game_db::conversion::zoom_multiplier;
 
     /// 기본 엔진 생성 및 트라이얼 실행
     #[test]

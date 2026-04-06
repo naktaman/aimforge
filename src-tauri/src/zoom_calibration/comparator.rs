@@ -23,7 +23,8 @@ pub struct ComparatorEngine {
     trial_order: Vec<(usize, usize)>,
     /// 방식별 반복별 결과
     results: Vec<Vec<ComparatorTrialData>>, // [method_idx][rep]
-    /// 반복 횟수
+    /// 반복 횟수 — 향후 반복 횟수 동적 변경 시 사용 예정
+    #[allow(dead_code)]
     repetitions: usize,
     /// 현재 트라이얼 인덱스
     current_trial: usize,
@@ -342,14 +343,14 @@ fn t_distribution_p_value(t_abs: f64, df: f64) -> f64 {
     // df가 충분히 크면 정규분포 근사
     if df >= 30.0 {
         let p = 2.0 * (1.0 - crate::gp::normal::standard_normal_cdf(t_abs));
-        return p.max(0.0).min(1.0);
+        return p.clamp(0.0, 1.0);
     }
 
     // df < 30: 보정된 정규분포 근사 (Bailey 근사)
     // z ≈ t × (1 - 1/(4df)) / sqrt(1 + t²/(2df))
     let z = t_abs * (1.0 - 1.0 / (4.0 * df)) / (1.0 + t_abs * t_abs / (2.0 * df)).sqrt();
     let p = 2.0 * (1.0 - crate::gp::normal::standard_normal_cdf(z));
-    p.max(0.0).min(1.0)
+    p.clamp(0.0, 1.0)
 }
 
 /// Cohen's d 효과 크기 — 두 그룹 간 표준화된 평균 차이

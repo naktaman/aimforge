@@ -4,7 +4,7 @@ use crate::db::ZoomProfileRow;
 use crate::error::{AppError, PublicError, lock_state};
 use crate::validate;
 use crate::AppState;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use tauri::State;
 
 use super::comparator::{ComparatorEngine, ComparatorTrialData, ComparatorTrialFeedback, ComparatorResult};

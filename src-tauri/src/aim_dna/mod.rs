@@ -20,6 +20,8 @@ pub struct BatteryMetricsInput {
     pub stochastic_metrics: Option<String>,
     pub counter_strafe_metrics: Option<String>,
     pub micro_flick_metrics: Option<String>,
+    /// 향후 줌 시나리오 구현 시 사용 예정
+    #[allow(dead_code)]
     pub zoom_metrics: Option<String>,
     /// 시나리오별 점수 (가중 합산용)
     pub scenario_scores: ScenarioScores,
@@ -70,15 +72,24 @@ pub struct TrackingMetric {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MicroFlickMetric {
+    /// 향후 MicroFlick 분석 확장 시 사용 예정 (serde 역직렬화 대상)
+    #[allow(dead_code)]
     pub tracking_mad: f64,
     pub tracking_velocity_match: f64,
     pub flick_hit_rate: f64,
+    /// 향후 MicroFlick 분석 확장 시 사용 예정
+    #[allow(dead_code)]
     pub flick_avg_ttt: f64,
+    /// 향후 MicroFlick 분석 확장 시 사용 예정
+    #[allow(dead_code)]
     pub avg_reacquire_time_ms: f64,
+    /// 향후 MicroFlick 분석 확장 시 사용 예정
+    #[allow(dead_code)]
     pub composite_score: f64,
 }
 
-/// Zoom 복합 메트릭
+/// Zoom 복합 메트릭 — 향후 줌 시나리오 활성화 시 사용 예정
+#[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ZoomMetric {
@@ -291,11 +302,9 @@ pub fn compute_aim_dna(input: &BatteryMetricsInput) -> AimDnaProfile {
 /// Flick + CounterStrafe 메트릭 파싱 (합산)
 fn parse_flick_metrics(input: &BatteryMetricsInput) -> Vec<FlickTargetMetric> {
     let mut all = Vec::new();
-    for json_str in [&input.flick_metrics, &input.counter_strafe_metrics] {
-        if let Some(s) = json_str {
-            if let Ok(parsed) = serde_json::from_str::<Vec<FlickTargetMetric>>(s) {
-                all.extend(parsed);
-            }
+    for s in [&input.flick_metrics, &input.counter_strafe_metrics].into_iter().flatten() {
+        if let Ok(parsed) = serde_json::from_str::<Vec<FlickTargetMetric>>(s) {
+            all.extend(parsed);
         }
     }
     all
@@ -304,11 +313,9 @@ fn parse_flick_metrics(input: &BatteryMetricsInput) -> Vec<FlickTargetMetric> {
 /// Tracking 계열 메트릭 파싱 (tracking + circular + stochastic)
 fn parse_tracking_metrics(input: &BatteryMetricsInput) -> Vec<TrackingMetric> {
     let mut all = Vec::new();
-    for json_str in [&input.tracking_metrics, &input.circular_metrics, &input.stochastic_metrics] {
-        if let Some(s) = json_str {
-            if let Ok(parsed) = serde_json::from_str::<TrackingMetric>(s) {
-                all.push(parsed);
-            }
+    for s in [&input.tracking_metrics, &input.circular_metrics, &input.stochastic_metrics].into_iter().flatten() {
+        if let Ok(parsed) = serde_json::from_str::<TrackingMetric>(s) {
+            all.push(parsed);
         }
     }
     all
@@ -796,7 +803,7 @@ pub fn compute_radar_axes(dna: &AimDnaProfile) -> RadarAxes {
 
     // Speed: fitts_b 역수 (낮을수록 빠름)
     let fitts_b = dna.fitts_b.unwrap_or(200.0);
-    let speed = ((300.0 - fitts_b) / 250.0 * 100.0).max(0.0).min(100.0);
+    let speed = ((300.0 - fitts_b) / 250.0 * 100.0).clamp(0.0, 100.0);
 
     // Consistency: direction_bias 역수 + v_h_ratio→1 근접도 + fatigue 역수
     let bias_norm = (1.0 - dna.direction_bias.unwrap_or(0.0)) * 100.0;

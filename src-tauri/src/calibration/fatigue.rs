@@ -75,12 +75,14 @@ impl FatigueTracker {
         self.trials_since_baseline >= self.baseline_interval
     }
 
-    /// 피로 감지 여부
+    /// 피로 감지 여부 — 향후 API 확장 시 사용 예정
+    #[allow(dead_code)]
     pub fn is_fatigued(&self) -> bool {
         self.fatigued
     }
 
-    /// baseline 측정 횟수
+    /// baseline 측정 횟수 — 향후 API 확장 시 사용 예정
+    #[allow(dead_code)]
     pub fn baseline_count(&self) -> usize {
         self.baseline_scores.len()
     }

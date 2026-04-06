@@ -70,7 +70,8 @@ impl GaussianProcess {
         self.recompute_cholesky();
     }
 
-    /// 여러 관측 데이터 일괄 추가
+    /// 여러 관측 데이터 일괄 추가 — 향후 배치 초기화 시 사용 예정
+    #[allow(dead_code)]
     pub fn add_observations(&mut self, xs: &[f64], ys: &[f64]) {
         assert_eq!(xs.len(), ys.len(), "입력/출력 길이 불일치");
         self.x_train.extend_from_slice(xs);
@@ -157,8 +158,8 @@ impl GaussianProcess {
         let mut k_matrix = self.kernel.compute_matrix(&self.x_train);
 
         // 대각에 노이즈 + jitter 추가
-        for i in 0..n {
-            k_matrix[i][i] += self.noise_var + self.jitter;
+        for (i, row) in k_matrix.iter_mut().enumerate().take(n) {
+            row[i] += self.noise_var + self.jitter;
         }
 
         // Cholesky 분해: K = LLᵀ (실패 시 prior 분포로 폴백)
@@ -192,9 +193,7 @@ fn cholesky_decompose(a: &[Vec<f64>]) -> Result<Vec<Vec<f64>>, String> {
     for i in 0..n {
         for j in 0..=i {
             let mut sum = 0.0;
-            for k in 0..j {
-                sum += l[i][k] * l[j][k];
-            }
+            sum += l[i][..j].iter().zip(l[j][..j].iter()).map(|(a, b)| a * b).sum::<f64>();
 
             if i == j {
                 let diag = a[i][i] - sum;

@@ -30,7 +30,8 @@ pub struct GameZoomProfile {
     pub flicking_ratio: f64,
 }
 
-/// 기본 게임별 줌 사용 패턴
+/// 기본 게임별 줌 사용 패턴 — 향후 게임별 k 분리 분석 시 사용 예정
+#[allow(dead_code)]
 pub fn default_game_zoom_profiles() -> Vec<GameZoomProfile> {
     vec![
         GameZoomProfile { id: "cs2_awp".into(), tracking_ratio: 0.0, flicking_ratio: 1.0 },
@@ -271,7 +272,8 @@ pub fn interpolate_multiplier(hipfire_fov: f64, scope_fov: f64, k: f64) -> f64 {
     (hip_half / scope_half).powf(k)
 }
 
-/// Piecewise k로 보간 — 해당 구간의 k를 사용
+/// Piecewise k로 보간 — 향후 구간별 k 피팅 정밀 보간 시 사용 예정
+#[allow(dead_code)]
 pub fn interpolate_multiplier_piecewise(
     hipfire_fov: f64,
     scope_fov: f64,

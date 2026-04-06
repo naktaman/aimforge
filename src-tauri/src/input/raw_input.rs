@@ -1,7 +1,7 @@
-/// WinAPI Raw Input 구현
-/// RegisterRawInputDevices로 마우스 raw delta를 캡처하고
-/// QueryPerformanceCounter로 sub-μs 정밀도 타임스탬프 제공
-/// RawInputThread로 백그라운드 스레드에서 WM_INPUT 메시지 루프 실행
+//! WinAPI Raw Input 구현
+//! RegisterRawInputDevices로 마우스 raw delta를 캡처하고
+//! QueryPerformanceCounter로 sub-μs 정밀도 타임스탬프 제공
+//! RawInputThread로 백그라운드 스레드에서 WM_INPUT 메시지 루프 실행
 
 use super::{MouseButton, MouseEvent};
 use std::sync::atomic::{AtomicBool, Ordering};

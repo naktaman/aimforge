@@ -1,7 +1,7 @@
-/// 물리 변환 함수
-/// raw mouse delta → cm → degrees, 게임 감도 ↔ cm/360, FOV 변환
-/// 6가지 변환 방식 (MDM 0/56.25/75/100%, Viewspeed H/V)
-/// 모든 에임 분석의 기반이 되는 핵심 변환 로직
+//! 물리 변환 함수
+//! raw mouse delta → cm → degrees, 게임 감도 ↔ cm/360, FOV 변환
+//! 6가지 변환 방식 (MDM 0/56.25/75/100%, Viewspeed H/V)
+//! 모든 에임 분석의 기반이 되는 핵심 변환 로직
 
 use std::collections::HashMap;
 
@@ -11,6 +11,8 @@ const EPSILON: f64 = 1e-10;
 /// raw delta를 센티미터로 변환
 /// DPI = dots per inch, 1 inch = 2.54 cm
 /// cm = counts / dpi * 2.54
+/// 향후 실시간 궤적 분석 파이프라인에서 사용 예정
+#[allow(dead_code)]
 pub fn raw_to_cm(dx: i32, dy: i32, dpi: u32) -> (f64, f64) {
     let factor = 2.54 / dpi as f64;
     (dx as f64 * factor, dy as f64 * factor)
@@ -19,6 +21,8 @@ pub fn raw_to_cm(dx: i32, dy: i32, dpi: u32) -> (f64, f64) {
 /// 센티미터 이동량을 회전 각도로 변환
 /// cm_per_360: 360도 회전에 필요한 마우스 이동 거리 (cm)
 /// degrees = cm / cm_per_360 * 360
+/// 향후 실시간 각도 오차 분석에서 사용 예정
+#[allow(dead_code)]
 pub fn cm_to_degrees(cm: f64, cm_per_360: f64) -> f64 {
     if cm_per_360.abs() < EPSILON {
         return 0.0;

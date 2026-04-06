@@ -11,11 +11,11 @@ pub mod screening;
 pub mod warmup;
 
 use crate::gp::{
-    self, check_convergence, detect_bimodal, next_candidate, significance_test, ConvergenceMode,
-    GaussianProcess, Matern52Kernel, Peak, SignificanceResult,
+    check_convergence, detect_bimodal, next_candidate, significance_test, ConvergenceMode,
+    GaussianProcess, Peak, SignificanceResult,
 };
 use fatigue::FatigueTracker;
-use screening::{GameCategory, InformedPrior, PartialAimDna, ScreeningData, TrialMetricsSummary};
+use screening::{GameCategory, PartialAimDna, ScreeningData, TrialMetricsSummary};
 use warmup::WarmupDetector;
 
 use serde::{Deserialize, Serialize};
@@ -418,17 +418,15 @@ impl CalibrationEngine {
     /// 캘리브레이션 트라이얼 제출
     fn submit_calibration_trial(&mut self, cm360: f64, score: f64) -> TrialFeedback {
         // 피로 체크
-        if self.fatigue.on_trial_complete() {
-            if self.fatigue.record_baseline(score) {
-                return TrialFeedback {
-                    converged: false,
-                    fatigue_stop: true,
-                    stage_transition: false,
-                    current_best_cm360: self.gp.best_observation().map(|(x, _)| x),
-                    current_best_score: self.gp.best_observation().map(|(_, y)| y),
-                    message: Some("피로 감지 — 세션 중단 권고".to_string()),
-                };
-            }
+        if self.fatigue.on_trial_complete() && self.fatigue.record_baseline(score) {
+            return TrialFeedback {
+                converged: false,
+                fatigue_stop: true,
+                stage_transition: false,
+                current_best_cm360: self.gp.best_observation().map(|(x, _)| x),
+                current_best_score: self.gp.best_observation().map(|(_, y)| y),
+                message: Some("피로 감지 — 세션 중단 권고".to_string()),
+            };
         }
 
         // GP에 관측 추가

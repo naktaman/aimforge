@@ -6,6 +6,8 @@ impl super::Database {
     // ── Training 처방 CRUD ──
 
     /// 훈련 처방 저장 — ID 반환
+    /// (인수 다수: DB 컬럼 직접 매핑)
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_training_prescription(
         &self,
         aim_dna_id: i64,
@@ -27,6 +29,8 @@ impl super::Database {
     // ── Cross-game CRUD ──
 
     /// 크로스게임 비교 결과 저장 — ID 반환
+    /// (인수 다수: DB 컬럼 직접 매핑)
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_crossgame_comparison(
         &self,
         profile_a_id: i64,
@@ -101,6 +105,8 @@ impl super::Database {
     // ── Training Stage 결과 CRUD ──
 
     /// 스테이지 결과 저장 — ID 반환
+    /// (인수 다수: DB 컬럼 직접 매핑)
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_stage_result(
         &self,
         profile_id: i64,

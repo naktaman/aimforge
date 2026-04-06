@@ -19,6 +19,8 @@ impl super::Database {
     }
 
     /// 캘리브레이션 결과 업데이트
+    /// (인수 다수: DB 컬럼 직접 매핑)
+    #[allow(clippy::too_many_arguments)]
     pub fn update_calibration_result(
         &self,
         session_id: i64,
@@ -68,6 +70,8 @@ impl super::Database {
     }
 
     /// GP 관측 데이터 저장
+    /// (인수 다수: DB 컬럼 직접 매핑)
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_gp_observation(
         &self,
         gp_model_id: i64,
@@ -88,6 +92,8 @@ impl super::Database {
     }
 
     /// 부분 Aim DNA 저장
+    /// (인수 다수: DB 컬럼 직접 매핑)
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_partial_aim_dna(
         &self,
         calibration_session_id: i64,
@@ -120,6 +126,8 @@ impl super::Database {
     // ── 줌 캘리브레이션 CRUD ──
 
     /// 줌 캘리브레이션 결과 저장 — ID 반환
+    /// (인수 다수: DB 컬럼 직접 매핑)
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_zoom_calibration(
         &self,
         profile_id: i64,
@@ -165,6 +173,8 @@ impl super::Database {
     }
 
     /// 변환 방식 비교 트라이얼 저장 — ID 반환
+    /// (인수 다수: DB 컬럼 직접 매핑)
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_conversion_comparison(
         &self,
         profile_id: i64,

@@ -15,7 +15,8 @@ pub struct Matern52Kernel {
 }
 
 impl Matern52Kernel {
-    /// 기본 하이퍼파라미터로 커널 생성
+    /// 기본 하이퍼파라미터로 커널 생성 — 향후 커널 커스텀 초기화 시 사용 예정
+    #[allow(dead_code)]
     pub fn new(length_scale: f64, signal_var: f64) -> Self {
         Self {
             length_scale,

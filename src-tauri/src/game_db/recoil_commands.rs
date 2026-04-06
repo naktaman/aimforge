@@ -1,4 +1,4 @@
-/// 반동 패턴 Tauri IPC 커맨드
+//! 반동 패턴 Tauri IPC 커맨드
 
 use crate::error::{AppError, PublicError, lock_state};
 use crate::validate;

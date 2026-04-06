@@ -1,6 +1,6 @@
-/// Game DB 모듈
-/// 게임별 감도 변환 공식, FOV 정보, 물리 변환 함수 제공
-/// 각 게임의 yaw 값과 FOV 모델을 기반으로 cm/360, sens 변환 수행
+//! Game DB 모듈
+//! 게임별 감도 변환 공식, FOV 정보, 물리 변환 함수 제공
+//! 각 게임의 yaw 값과 FOV 모델을 기반으로 cm/360, sens 변환 수행
 
 pub mod commands;
 pub mod conversion;

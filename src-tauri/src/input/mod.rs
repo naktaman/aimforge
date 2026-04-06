@@ -1,6 +1,6 @@
-/// Raw Mouse Input 모듈
-/// WinAPI를 통해 마우스 raw delta를 sub-μs 타임스탬프로 캡처
-/// DPI 검증 및 마우스 가속 감지 기능 포함
+//! Raw Mouse Input 모듈
+//! WinAPI를 통해 마우스 raw delta를 sub-μs 타임스탬프로 캡처
+//! DPI 검증 및 마우스 가속 감지 기능 포함
 
 pub mod commands;
 pub mod raw_input;

@@ -1,7 +1,7 @@
 //! 정규분포 관련 수학 함수 — erf, cdf, pdf
 //! Abramowitz & Stegun 7.1.26 근사 사용 (외부 의존 없음)
 
-use std::f64::consts::{FRAC_2_SQRT_PI, PI};
+use std::f64::consts::PI;
 
 /// 오차 함수 (error function) — Horner 형태의 유리 근사
 /// Abramowitz & Stegun 7.1.28 기반, 최대 오차 ~2.5×10⁻⁵

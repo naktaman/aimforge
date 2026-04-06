@@ -49,6 +49,8 @@ impl super::Database {
     // ── 게임 프로필 ──
 
     /// 게임 프로필 생성
+    /// (인수 다수: DB 컬럼 직접 매핑)
+    #[allow(clippy::too_many_arguments)]
     pub fn insert_game_profile(
         &self,
         profile_id: i64,
