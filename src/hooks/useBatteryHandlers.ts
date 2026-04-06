@@ -43,7 +43,7 @@ export function useBatteryHandlers(deps: BatteryHandlerDeps) {
     async (params: BatteryParams) => {
       try {
         const sessionId = await invoke<number>('start_session', {
-          params: { profile_id: 1, mode: 'battery', session_type: params.preset },
+          params: { profile_id: 1, /* 단일 사용자 — user profiles.id */ mode: 'battery', session_type: params.preset },
         });
         useBatteryStore.getState().startBattery(params.preset, sessionId);
         setScreen('battery-progress');

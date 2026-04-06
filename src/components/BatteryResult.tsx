@@ -46,7 +46,7 @@ export function BatteryResult({ onBack, onViewDna }: Props) {
       const dna = await invoke<AimDnaProfile>('compute_aim_dna_cmd', {
         params: {
           input: {
-            profileId: 1,
+            profileId: 1, // 단일 사용자 — user profiles.id
             sessionId: sessionId,
             flickMetrics: toJson('flick'),
             trackingMetrics: toJson('tracking'),
