@@ -193,7 +193,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
     <div className="dash-root">
       {/* ── 상단 바: 탭 네비게이션 + 설정 요약 ── */}
       <header className="dash-topbar">
-        <div className="dash-tabs" role="tablist" aria-label={t('scenario.tabSensitivity')} ref={mainTabRef} onKeyDown={mainTabKeyDown}>
+        <div className="dash-tabs rail-tabs" role="tablist" aria-label={t('scenario.tabSensitivity')} ref={mainTabRef} onKeyDown={mainTabKeyDown}>
           {([
             { key: 'sensitivity' as MainTab, label: t('scenario.tabSensitivity') },
             { key: 'training' as MainTab, label: t('scenario.tabTraining') },
@@ -204,7 +204,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
               role="tab"
               aria-selected={mainTab === key}
               tabIndex={mainTab === key ? 0 : -1}
-              className={`dash-tab ${mainTab === key ? 'active' : ''}`}
+              className={`dash-tab rail-tab ${mainTab === key ? 'active' : ''}`}
               onClick={() => setMainTab(key)}
             >
               {label}
