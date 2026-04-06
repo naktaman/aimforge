@@ -235,12 +235,12 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps): React.JSX.Ele
         <button className="btn-secondary" onClick={onBack}>{t('common.back')}</button>
       </div>
 
-      {/* 섹션 탭 네비게이션 */}
-      <div className="settings-tabs">
+      {/* 섹션 탭 네비게이션 — §2.11 Rail Slide */}
+      <div className="settings-tabs rail-tabs">
         {SECTIONS.map(({ key, label }) => (
           <button
             key={key}
-            className={`settings-tab ${section === key ? 'active' : ''}`}
+            className={`settings-tab rail-tab ${section === key ? 'active' : ''}`}
             onClick={() => setSection(key)}
           >
             {label}
@@ -409,17 +409,15 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps): React.JSX.Ele
           </div>
           <div className="setting-row">
             <label>{t('display.vsync')}</label>
-            <div className="toggle-switch">
-              <input
-                type="checkbox"
-                id="vsync-toggle"
-                checked={settings.vsyncEnabled}
-                onChange={(e) => setSettings(s => ({ ...s, vsyncEnabled: e.target.checked }))}
-              />
-              <label htmlFor="vsync-toggle" className="toggle-label">
-                {settings.vsyncEnabled ? 'ON' : 'OFF'}
-              </label>
-            </div>
+            {/* §2.10 Relay Switch 토글 */}
+            <button
+              type="button"
+              className={`relay-switch ${settings.vsyncEnabled ? 'on' : ''}`}
+              onClick={() => setSettings(s => ({ ...s, vsyncEnabled: !s.vsyncEnabled }))}
+              aria-pressed={settings.vsyncEnabled}
+            >
+              <span className="relay-switch-thumb" />
+            </button>
             <span className="setting-hint">{t('display.vsyncHint')}</span>
           </div>
           <div className="setting-row">
@@ -530,20 +528,17 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps): React.JSX.Ele
         <div className="settings-grid">
           <h3 className="settings-section-heading">{t('settings.sectionSound')}</h3>
 
-          {/* 사운드 ON/OFF 토글 */}
+          {/* 사운드 ON/OFF 토글 — §2.10 Relay Switch */}
           <div className="setting-row">
             <label>{t('settings.soundEffects')}</label>
-            <div className="toggle-switch">
-              <input
-                type="checkbox"
-                id="sound-toggle"
-                checked={soundEnabled}
-                onChange={(e) => handleSoundToggle(e.target.checked)}
-              />
-              <label htmlFor="sound-toggle" className="toggle-label">
-                {soundEnabled ? 'ON' : 'OFF'}
-              </label>
-            </div>
+            <button
+              type="button"
+              className={`relay-switch ${soundEnabled ? 'on' : ''}`}
+              onClick={() => handleSoundToggle(!soundEnabled)}
+              aria-pressed={soundEnabled}
+            >
+              <span className="relay-switch-thumb" />
+            </button>
           </div>
 
           {/* 마스터 볼륨 슬라이더 */}
