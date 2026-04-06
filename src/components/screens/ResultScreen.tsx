@@ -11,6 +11,8 @@ import { useTranslation } from '../../i18n';
 import { ResultGrade, getGrade } from './ResultGrade';
 import { ResultStats } from './ResultStats';
 import { ResultActions } from './ResultActions';
+/* 결과 차트 순환 색상 토큰 — 컨페티 파티클 색상에 사용 */
+import { RESULT_CHART_COLORS } from '../../config/theme';
 
 /** PB 저장 키 생성 — 시나리오별 최고 점수를 localStorage에 저장 */
 function pbKey(scenarioType: string): string {
@@ -65,7 +67,7 @@ function Confetti() {
       left: `${Math.random() * 100}%`,
       delay: Math.random() * 0.8,
       duration: 1.5 + Math.random() * 1.5,
-      color: ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A'][i % 5],
+      color: RESULT_CHART_COLORS[i % RESULT_CHART_COLORS.length], /* 결과 차트 순환 색상 토큰 */
       size: 6 + Math.random() * 6,
       rotation: Math.random() * 360,
     })),

@@ -17,10 +17,10 @@ const PHASE_LABEL_KEYS: Record<string, string> = {
   zoomout: 'zoom.phaseC',
 };
 
-/** 페이즈 색상 */
+/** 페이즈 색상 — 테마 토큰 사용 */
 const PHASE_COLORS: Record<string, string> = {
   steady: UI_COLORS.successGreen,
-  correction: '#f59e0b',
+  correction: UI_COLORS.phaseAmber, /* 교정 단계 앰버 토큰 */
   zoomout: UI_COLORS.infoBlue,
 };
 
@@ -74,7 +74,7 @@ export function ZoomCalibrationProgress({ onCancel }: ZoomCalibrationProgressPro
                 className={`phase-chip ${currentPhase === phase ? 'active' : ''}`}
                 style={{
                   borderColor: currentPhase === phase ? PHASE_COLORS[phase] : 'transparent',
-                  color: currentPhase === phase ? PHASE_COLORS[phase] : '#666',
+                  color: currentPhase === phase ? PHASE_COLORS[phase] : UI_COLORS.chartTickText, /* 비활성 틱 텍스트 토큰 */
                 }}
               >
                 {t(PHASE_LABEL_KEYS[phase])}

@@ -6,7 +6,8 @@ import { useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { useProgressStore } from '../stores/progressStore';
 import { BackButton } from './BackButton';
-import { UI_COLORS } from '../config/theme';
+// 테마 토큰 — 모터 영역 색상 + UI 색상
+import { MOTOR_COLORS, UI_COLORS } from '../config/theme';
 import type { ClickVector, GmmClusterResult } from '../utils/types';
 
 interface Props {
@@ -15,12 +16,6 @@ interface Props {
   trialId?: number;
 }
 
-/** 모터 영역 색상 (D3 차트용) */
-const MOTOR_COLORS: Record<string, string> = {
-  finger: '#60a5fa',
-  wrist: '#4ade80',
-  arm: '#8A9AB5',
-};
 
 /** 클릭 벡터 산점도 — D3로 렌더링 */
 function ClickVectorScatter({ vectors }: { vectors: ClickVector[] }) {
@@ -77,7 +72,7 @@ function ClickVectorScatter({ vectors }: { vectors: ClickVector[] }) {
       .attr('cx', d => xScale(d.dxDeg))
       .attr('cy', d => yScale(d.dyDeg))
       .attr('r', 4)
-      .attr('fill', d => MOTOR_COLORS[d.motorRegion] || '#888')
+      .attr('fill', d => MOTOR_COLORS[d.motorRegion] || UI_COLORS.textMuted)
       .attr('opacity', 0.7)
       .attr('stroke', d => d.overshoot ? UI_COLORS.dangerRed : 'none')
       .attr('stroke-width', d => d.overshoot ? 2 : 0);

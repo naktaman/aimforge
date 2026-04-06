@@ -397,7 +397,7 @@ function MovementPreviewPanel({ maxSpeed, stopTime, accelType, airControl, csBon
       if (dotX > W - 20) dotX = W - 20;
 
       // 배경
-      ctx.fillStyle = '#0d1117';
+      ctx.fillStyle = UI_COLORS.canvasBg;
       ctx.fillRect(0, 0, W, H);
 
       // 바닥 라인
@@ -409,7 +409,7 @@ function MovementPreviewPanel({ maxSpeed, stopTime, accelType, airControl, csBon
       ctx.stroke();
 
       // 이동 점 — 가속/감속/정지 색상 분기
-      const dotColor = phase === 0 ? UI_COLORS.successGreen : phase === 1 ? '#fbbf24' : UI_COLORS.dangerRed;
+      const dotColor = phase === 0 ? UI_COLORS.successGreen : phase === 1 ? UI_COLORS.warningYellow : UI_COLORS.dangerRed;
       ctx.fillStyle = dotColor;
       ctx.beginPath();
       ctx.arc(dotX, H - 30, 8, 0, Math.PI * 2);
@@ -420,7 +420,7 @@ function MovementPreviewPanel({ maxSpeed, stopTime, accelType, airControl, csBon
       ctx.fillRect(10, 10, W - 20, 8);
       const speedPct = (maxSpeed - 100) / 500;
       const gradient = ctx.createLinearGradient(10, 0, 10 + (W - 20) * speedPct, 0);
-      gradient.addColorStop(0, '#38bdf8');
+      gradient.addColorStop(0, UI_COLORS.chartCurveSky);
       gradient.addColorStop(1, UI_COLORS.dangerRed);
       ctx.fillStyle = gradient;
       ctx.fillRect(10, 10, (W - 20) * speedPct, 8);
@@ -437,13 +437,13 @@ function MovementPreviewPanel({ maxSpeed, stopTime, accelType, airControl, csBon
       const airY = 70;
       ctx.fillStyle = UI_COLORS.chartDomain;
       ctx.fillRect(10, airY, 80, 6);
-      ctx.fillStyle = '#c084fc';
+      ctx.fillStyle = UI_COLORS.chartCurvePurple;
       ctx.fillRect(10, airY, 80 * airControl, 6);
       ctx.fillStyle = UI_COLORS.chartLabel;
       ctx.fillText(`${t('movement.air')}: ${(airControl * 100).toFixed(0)}%`, 95, airY + 6);
 
       // CS 보너스 뱃지
-      const badgeColor = csBonus < 0.9 ? UI_COLORS.successGreen : csBonus > 1.0 ? UI_COLORS.dangerRed : '#666';
+      const badgeColor = csBonus < 0.9 ? UI_COLORS.successGreen : csBonus > 1.0 ? UI_COLORS.dangerRed : UI_COLORS.chartTickText;
       ctx.fillStyle = badgeColor;
       ctx.fillText(`${t('movement.csBonus')}: ${csBonus}x`, 10, airY + 20);
 

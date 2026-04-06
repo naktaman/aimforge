@@ -168,7 +168,7 @@ export function CrossGameConverter() {
         disabled={loading}
         style={{
           padding: '10px 24px',
-          background: loading ? '#475569' : '#2563eb',
+          background: loading ? UI_COLORS.actionDisabled : UI_COLORS.actionBlue,
           color: UI_COLORS.textWhite,
           border: 'none',
           borderRadius: 6,
@@ -183,7 +183,7 @@ export function CrossGameConverter() {
 
       {/* 에러 */}
       {error && (
-        <div style={{ padding: 8, background: '#7f1d1d', borderRadius: 6, marginBottom: 12, fontSize: 13 }}>
+        <div style={{ padding: 8, background: UI_COLORS.errorBg, borderRadius: 6, marginBottom: 12, fontSize: 13 }}>
           {error}
         </div>
       )}
@@ -229,7 +229,7 @@ export function CrossGameConverter() {
 /** 결과 테이블 행 */
 function ResultRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <tr style={{ borderBottom: '1px solid #334155' }}>
+    <tr style={{ borderBottom: `1px solid ${UI_COLORS.tableBorder}` }}>
       <td style={{ padding: '6px 8px', color: UI_COLORS.textSecondary }}>{label}</td>
       <td style={{
         padding: '6px 8px',
@@ -247,7 +247,7 @@ const selectStyle: React.CSSProperties = {
   padding: '8px 10px',
   background: UI_COLORS.bgSurface,
   color: UI_COLORS.textPrimary,
-  border: '1px solid #334155',
+  border: `1px solid ${UI_COLORS.tableBorder}`,
   borderRadius: 6,
   fontSize: 13,
 };
@@ -257,7 +257,7 @@ const inputStyle: React.CSSProperties = {
   padding: '8px 10px',
   background: UI_COLORS.bgSurface,
   color: UI_COLORS.textPrimary,
-  border: '1px solid #334155',
+  border: `1px solid ${UI_COLORS.tableBorder}`,
   borderRadius: 6,
   fontSize: 13,
   boxSizing: 'border-box',

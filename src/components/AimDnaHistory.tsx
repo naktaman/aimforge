@@ -8,17 +8,11 @@ import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { useTranslation } from '../i18n';
 import { useAimDnaStore } from '../stores/aimDnaStore';
-import { UI_COLORS } from '../config/theme';
+import { DNA_AXIS_COLORS, UI_COLORS } from '../config/theme';
 import type { DnaSnapshot, DnaChangeEvent, SnapshotComparison } from '../utils/types';
 
-// 5축 색상 팔레트
-const AXIS_COLORS: Record<string, string> = {
-  flickPower:         '#FFB81C',
-  trackingPrecision:  '#4ecdc4',
-  motorControl:       '#ffe66d',
-  speed:              '#a29bfe',
-  consistency:        '#fd79a8',
-};
+// 5축 색상 팔레트 — theme.ts DNA_AXIS_COLORS 참조
+const AXIS_COLORS: Record<string, string> = DNA_AXIS_COLORS;
 
 const AXIS_LABELS: Record<string, string> = {
   flickPower:         'Flick Power',
@@ -122,7 +116,7 @@ function TimelineChart({ snapshots, changeEvents, selectedIds, onSelectSnapshot,
         .attr('cx', s => xScale(new Date(s.measuredAt)))
         .attr('cy', s => yScale(s[key] as number))
         .attr('r', s => selectedIds.includes(s.id) ? 7 : 4)
-        .attr('fill', s => selectedIds.includes(s.id) ? '#fff' : AXIS_COLORS[key])
+        .attr('fill', s => selectedIds.includes(s.id) ? UI_COLORS.textWhite : AXIS_COLORS[key])
         .attr('stroke', AXIS_COLORS[key])
         .attr('stroke-width', s => selectedIds.includes(s.id) ? 2.5 : 0)
         .attr('cursor', 'pointer')
@@ -315,7 +309,7 @@ export function AimDnaHistory({ profileId }: Props) {
       {/* 정체기 감지 배너 */}
       {stagnation?.isStagnant && (
         <div className="stagnation-banner" style={{
-          background: '#3d2a1a', border: '1px solid var(--color-amber)',
+          background: UI_COLORS.warningBgDark, border: '1px solid var(--color-amber)',
           borderRadius: 8, padding: '12px 16px', marginBottom: 16,
         }}>
           <strong style={{ color: 'var(--color-amber)' }}>

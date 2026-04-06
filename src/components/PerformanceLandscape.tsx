@@ -7,7 +7,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
-import { UI_COLORS } from '../config/theme';
+import { UI_COLORS, SCENARIO_TYPE_COLORS } from '../config/theme';
 
 /** GP 곡선 데이터 포인트 */
 interface GpCurvePoint {
@@ -56,16 +56,8 @@ interface PerformanceLandscapeProps {
   height?: number;
 }
 
-/** 시나리오별 색상 */
-const SCENARIO_COLORS: Record<string, string> = {
-  flick: '#f97316',           // 주황
-  tracking: '#D4960A',        // 파랑
-  circular_tracking: '#8b5cf6', // 보라
-  stochastic: '#ec4899',      // 분홍
-  counter_strafe: '#14b8a6',  // 청록
-  micro_flick: '#eab308',     // 노랑
-  zoom_composite: '#a855f7',  // 자주
-};
+/** 시나리오별 색상 — theme.ts SCENARIO_TYPE_COLORS 참조 */
+const SCENARIO_COLORS: Record<string, string> = SCENARIO_TYPE_COLORS;
 
 export function PerformanceLandscape({
   gpCurve,
@@ -217,7 +209,7 @@ export function PerformanceLandscape({
       .attr('cy', (d) => yScale(d.score))
       .attr('r', 4)
       .attr('fill', UI_COLORS.infoBlue)
-      .attr('stroke', '#1e3a5f')
+      .attr('stroke', UI_COLORS.chartSubGrid)
       .attr('stroke-width', 1.5);
 
     // ──── 레이어 5: 이봉 피크 마커 ────
@@ -385,7 +377,7 @@ export function PerformanceLandscape({
           display: 'none',
           position: 'absolute',
           background: 'rgba(15,23,42,0.95)',
-          border: '1px solid #334155',
+          border: `1px solid ${UI_COLORS.tableBorder}`,
           borderRadius: '6px',
           padding: '6px 10px',
           fontSize: '11px',
@@ -399,7 +391,7 @@ export function PerformanceLandscape({
       {convergenceMode !== 'quick' && (
         <div className="convergence-badge" style={{
           position: 'absolute', top: 4, right: 8,
-          background: convergenceMode === 'obsessive' ? '#7c3aed' : '#2563eb',
+          background: convergenceMode === 'obsessive' ? UI_COLORS.convergencePurple : UI_COLORS.actionBlue,
           color: UI_COLORS.textWhite, borderRadius: '4px', padding: '2px 8px',
           fontSize: '10px', fontWeight: 600,
         }}>

@@ -71,12 +71,12 @@ export function SessionHeatmap({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // 배경
-    ctx.fillStyle = '#0a0a0f';
+    // 배경 — 캔버스 배경 (짙은 검정) 토큰 사용
+    ctx.fillStyle = UI_COLORS.canvasBgDark;
     ctx.fillRect(0, 0, width, height);
 
-    // 그리드
-    ctx.strokeStyle = '#1a1a2e';
+    // 그리드 — 패널 배경 토큰 사용
+    ctx.strokeStyle = UI_COLORS.bgPanel;
     ctx.lineWidth = 1;
     for (let i = 1; i < 10; i++) {
       const x = (width * i) / 10;

@@ -206,7 +206,7 @@ export default function DualLandscape({ onBack }: Props) {
 
       {/* 결과 표시 */}
       {recommendation && (
-        <div style={{ background: '#0f3460', padding: 16, borderRadius: 8, display: 'flex', gap: 32 }}>
+        <div style={{ background: UI_COLORS.infoBgDark, padding: 16, borderRadius: 8, display: 'flex', gap: 32 }}> {/* 인포 배경 토큰 (짙은 네이비) */}
           <div>
             <div style={{ fontSize: 12, opacity: 0.7 }}>{t('landscape.staticOpt')}</div>
             <div style={{ fontSize: 20, color: 'var(--color-sky)' }}>{recommendation.staticOptimal.toFixed(1)}</div>

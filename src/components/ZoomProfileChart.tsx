@@ -115,7 +115,7 @@ export function ZoomProfileChart({
       viewBox={`0 0 ${width} ${height}`}
       width={width}
       height={height}
-      style={{ background: '#0f1923', borderRadius: 8 }}
+      style={{ background: UI_COLORS.svgBgDeep, borderRadius: 8 }}
     >
       {/* 그리드 */}
       {xTicks.map(x => (
@@ -123,7 +123,7 @@ export function ZoomProfileChart({
           key={`gx-${x}`}
           x1={scaleX(x)} y1={PADDING.top}
           x2={scaleX(x)} y2={PADDING.top + plotH}
-          stroke="#1e2d3d" strokeWidth={1}
+          stroke={UI_COLORS.svgGridDark} strokeWidth={1}
         />
       ))}
       {yTicks.map(y => (
@@ -131,7 +131,7 @@ export function ZoomProfileChart({
           key={`gy-${y}`}
           x1={PADDING.left} y1={scaleY(y)}
           x2={PADDING.left + plotW} y2={scaleY(y)}
-          stroke="#1e2d3d" strokeWidth={1}
+          stroke={UI_COLORS.svgGridDark} strokeWidth={1}
         />
       ))}
 
@@ -173,7 +173,7 @@ export function ZoomProfileChart({
         <motion.path
           key={`pw-${i}`}
           d={seg.path}
-          fill="none" stroke="#c084fc" strokeWidth={2.5}
+          fill="none" stroke={UI_COLORS.chartCurvePurple} strokeWidth={2.5}
           initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
           transition={{ duration: 0.5, delay: i * 0.15 }}
         />
@@ -183,7 +183,7 @@ export function ZoomProfileChart({
       {curvePath && (
         <motion.path
           d={curvePath}
-          fill="none" stroke="#38bdf8" strokeWidth={2}
+          fill="none" stroke={UI_COLORS.chartCurveSky} strokeWidth={2}
           initial={{ pathLength: 0 }} animate={{ pathLength: 1 }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
         />
@@ -196,8 +196,8 @@ export function ZoomProfileChart({
           cx={scaleX(p.zoomRatio)}
           cy={scaleY(p.kValue)}
           r={p.isMeasured ? 5 : 3.5}
-          fill={p.isMeasured ? '#38bdf8' : '#64748b'}
-          stroke={p.isMeasured ? '#fff' : '#94a3b8'}
+          fill={p.isMeasured ? UI_COLORS.chartCurveSky : UI_COLORS.pointInactive}
+          stroke={p.isMeasured ? UI_COLORS.textWhite : UI_COLORS.textSecondary}
           strokeWidth={p.isMeasured ? 2 : 1}
           initial={{ scale: 0 }} animate={{ scale: 1 }}
           transition={{ type: 'spring', delay: 0.1 * i }}
@@ -220,7 +220,7 @@ export function ZoomProfileChart({
           fill={UI_COLORS.textSecondary} fontSize={10} textAnchor="middle">{x}x</text>
       ))}
       <text x={PADDING.left + plotW / 2} y={height - 4}
-        fill="#cbd5e1" fontSize={11} textAnchor="middle">줌 배율</text>
+        fill={UI_COLORS.axisLabel} fontSize={11} textAnchor="middle">줌 배율</text>
 
       {/* Y축 */}
       {yTicks.map(y => (
@@ -228,18 +228,18 @@ export function ZoomProfileChart({
           fill={UI_COLORS.textSecondary} fontSize={10} textAnchor="end">{y.toFixed(1)}</text>
       ))}
       <text x={14} y={PADDING.top + plotH / 2}
-        fill="#cbd5e1" fontSize={11} textAnchor="middle"
+        fill={UI_COLORS.axisLabel} fontSize={11} textAnchor="middle"
         transform={`rotate(-90, 14, ${PADDING.top + plotH / 2})`}>k 파라미터</text>
 
       {/* 범례 */}
       <g transform={`translate(${PADDING.left + 10}, ${PADDING.top + 10})`}>
-        <circle cx={0} cy={0} r={4} fill="#38bdf8" stroke="#fff" strokeWidth={1.5} />
+        <circle cx={0} cy={0} r={4} fill={UI_COLORS.chartCurveSky} stroke={UI_COLORS.textWhite} strokeWidth={1.5} />
         <text x={10} y={4} fill={UI_COLORS.textPrimary} fontSize={9}>측정</text>
-        <circle cx={60} cy={0} r={3} fill="#64748b" stroke={UI_COLORS.textSecondary} strokeWidth={1} />
+        <circle cx={60} cy={0} r={3} fill={UI_COLORS.pointInactive} stroke={UI_COLORS.textSecondary} strokeWidth={1} />
         <text x={70} y={4} fill={UI_COLORS.textPrimary} fontSize={9}>보간</text>
         {piecewise && piecewise.length > 0 && (
           <>
-            <line x1={120} y1={0} x2={140} y2={0} stroke="#c084fc" strokeWidth={2.5} />
+            <line x1={120} y1={0} x2={140} y2={0} stroke={UI_COLORS.chartCurvePurple} strokeWidth={2.5} />
             <text x={145} y={4} fill={UI_COLORS.textPrimary} fontSize={9}>Piecewise</text>
           </>
         )}

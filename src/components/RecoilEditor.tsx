@@ -9,6 +9,8 @@ import { safeInvoke } from '../utils/ipc';
 import { useToastStore } from '../stores/toastStore';
 import { BackButton } from './BackButton';
 import { LoadingSpinner } from './LoadingSpinner';
+// 테마 토큰 — 하드코딩 색상 대체
+import { UI_COLORS } from '../config/theme';
 
 /** DB에서 로드된 커스텀 패턴 */
 interface RecoilPatternRow {
@@ -271,16 +273,16 @@ export default function RecoilEditor({ onBack }: { onBack: () => void }) {
                 onMouseLeave={handleSvgUp}
               >
                 {/* 그리드 */}
-                <line x1={SVG_W / 2} y1={0} x2={SVG_W / 2} y2={SVG_H} stroke="#1a1a2e" />
-                <line x1={0} y1={20} x2={SVG_W} y2={20} stroke="#1a1a2e" />
+                <line x1={SVG_W / 2} y1={0} x2={SVG_W / 2} y2={SVG_H} stroke={UI_COLORS.bgPanel} />
+                <line x1={0} y1={20} x2={SVG_W} y2={20} stroke={UI_COLORS.bgPanel} />
                 {/* 원점 표시 */}
-                <circle cx={SVG_W / 2} cy={20} r={4} fill="#FFB81C" opacity={0.5} />
+                <circle cx={SVG_W / 2} cy={20} r={4} fill={UI_COLORS.accentGold} opacity={0.5} />
 
                 {/* 패턴 연결선 */}
                 {editPoints.length > 1 && (
                   <polyline
                     points={editPoints.map(([dx, dy]) => toSvg(dx, dy).join(',')).join(' ')}
-                    fill="none" stroke="#4ade80" strokeWidth={1.5} opacity={0.6}
+                    fill="none" stroke={UI_COLORS.successGreen} strokeWidth={1.5} opacity={0.6}
                   />
                 )}
 
@@ -291,13 +293,13 @@ export default function RecoilEditor({ onBack }: { onBack: () => void }) {
                     <g key={i}>
                       <circle
                         cx={sx} cy={sy} r={6}
-                        fill={dragging === i ? '#fbbf24' : '#4ade80'}
-                        stroke="#fff" strokeWidth={1}
+                        fill={dragging === i ? UI_COLORS.warningYellow : UI_COLORS.successGreen}
+                        stroke={UI_COLORS.textWhite} strokeWidth={1}
                         style={{ cursor: 'grab' }}
                         onMouseDown={(e) => handlePointDown(i, e)}
                         onContextMenu={(e) => handlePointContext(i, e)}
                       />
-                      <text x={sx + 8} y={sy + 4} fill="#888" fontSize={9}>
+                      <text x={sx + 8} y={sy + 4} fill={UI_COLORS.textMuted} fontSize={9}>
                         {i + 1}
                       </text>
                     </g>
@@ -307,7 +309,7 @@ export default function RecoilEditor({ onBack }: { onBack: () => void }) {
                 {/* 스프레이 미리보기 점 */}
                 {sprayDots.map(([dx, dy], i) => {
                   const [sx, sy] = toSvg(dx, dy);
-                  return <circle key={`s${i}`} cx={sx} cy={sy} r={2.5} fill="#f87171" opacity={0.8} />;
+                  return <circle key={`s${i}`} cx={sx} cy={sy} r={2.5} fill={UI_COLORS.dangerRed} opacity={0.8} />;
                 })}
               </svg>
 

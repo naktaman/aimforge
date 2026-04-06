@@ -6,6 +6,8 @@
 import { useState } from 'react';
 import { useTranslation } from '../i18n';
 import { useTabKeyboard } from '../utils/useTabKeyboard';
+// 그립 가이드 SVG 색상 토큰
+import { GRIP_COLORS } from '../config/theme';
 import type { AimDnaProfile } from '../utils/types';
 
 type GripType = 'palm' | 'claw' | 'fingertip' | 'relaxed-claw';
@@ -264,19 +266,19 @@ function GripSvg({ type }: { type: GripType }) {
   return (
     <svg viewBox="0 0 100 120" className="grip-svg" aria-label={label}>
       {/* 마우스 본체 */}
-      <rect x="20" y="50" width="60" height="65" rx="14" fill="#2a2a3a" stroke="#444" strokeWidth="1.5" />
+      <rect x="20" y="50" width="60" height="65" rx="14" fill={GRIP_COLORS.mouseBody} stroke={GRIP_COLORS.mouseStrokeBright} strokeWidth="1.5" />
       {/* 왼쪽 버튼 */}
-      <path d="M20,64 Q25,50 50,50 L50,80 L20,80 Z" fill="#1e1e2e" stroke="#555" strokeWidth="1" />
+      <path d="M20,64 Q25,50 50,50 L50,80 L20,80 Z" fill={GRIP_COLORS.mouseShadowL} stroke={GRIP_COLORS.mouseStrokeMid} strokeWidth="1" />
       {/* 오른쪽 버튼 */}
-      <path d="M80,64 Q75,50 50,50 L50,80 L80,80 Z" fill="#232333" stroke="#555" strokeWidth="1" />
+      <path d="M80,64 Q75,50 50,50 L50,80 L80,80 Z" fill={GRIP_COLORS.mouseShadowR} stroke={GRIP_COLORS.mouseStrokeMid} strokeWidth="1" />
       {/* 휠 */}
-      <rect x="44" y="55" width="12" height="18" rx="4" fill="#333" stroke="#666" strokeWidth="1" />
+      <rect x="44" y="55" width="12" height="18" rx="4" fill={GRIP_COLORS.mouseScroll} stroke={GRIP_COLORS.mouseScrollStroke} strokeWidth="1" />
 
       {/* 손 — 손바닥 */}
       <ellipse
         cx="50" cy={palmY}
         rx="26" ry="18"
-        fill="#c8a97e"
+        fill={GRIP_COLORS.handSkin}
         opacity="0.85"
       />
 
@@ -290,7 +292,7 @@ function GripSvg({ type }: { type: GripType }) {
           <path
             key={i}
             d={`M${x},${baseY} Q${x + (i === 4 ? -4 : 0)},${(baseY + tip) / 2} ${x},${tip}`}
-            stroke="#c8a97e"
+            stroke={GRIP_COLORS.handSkin}
             strokeWidth={i === 4 ? 6 : 5}
             fill="none"
             strokeLinecap="round"

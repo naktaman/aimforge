@@ -5,6 +5,8 @@
  */
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { HitZone } from '../../utils/types';
+// 테마 토큰 — 헤드샷 마커 색상
+import { UI_COLORS } from '../../config/theme';
 
 /** 피드백 이벤트 타입 */
 type FeedbackType = 'hit' | 'headshot' | 'miss' | 'flash';
@@ -161,10 +163,10 @@ export function ShootingFeedback() {
               return (
                 <div key={evt.id} className="hitmarker hitmarker-headshot">
                   <svg width="40" height="40" viewBox="0 0 40 40">
-                    <line x1="6" y1="6" x2="14" y2="14" stroke="#FF4444" strokeWidth="3" />
-                    <line x1="26" y1="6" x2="34" y2="14" stroke="#FF4444" strokeWidth="3" />
-                    <line x1="6" y1="34" x2="14" y2="26" stroke="#FF4444" strokeWidth="3" />
-                    <line x1="26" y1="34" x2="34" y2="26" stroke="#FF4444" strokeWidth="3" />
+                    <line x1="6" y1="6" x2="14" y2="14" stroke={UI_COLORS.feedbackCross} strokeWidth="3" />
+                    <line x1="26" y1="6" x2="34" y2="14" stroke={UI_COLORS.feedbackCross} strokeWidth="3" />
+                    <line x1="6" y1="34" x2="14" y2="26" stroke={UI_COLORS.feedbackCross} strokeWidth="3" />
+                    <line x1="26" y1="34" x2="34" y2="26" stroke={UI_COLORS.feedbackCross} strokeWidth="3" />
                   </svg>
                 </div>
               );

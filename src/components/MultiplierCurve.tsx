@@ -87,7 +87,7 @@ export function MultiplierCurve({
       .attr('cy', (d) => yScale(d.multiplier))
       .attr('r', 6)
       .attr('fill', UI_COLORS.infoBlue)
-      .attr('stroke', '#1e3a5f')
+      .attr('stroke', UI_COLORS.chartSubGrid) /* 차트 서브그리드 토큰 (어두운 파랑) */
       .attr('stroke-width', 2);
 
     // ── 보간점 (○) ──

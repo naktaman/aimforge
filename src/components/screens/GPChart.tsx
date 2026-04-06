@@ -6,6 +6,8 @@
 import { useMemo } from 'react';
 import { motion } from 'motion/react';
 import type { GPCurvePoint, Observation, EIRecommendation } from '../../utils/gpTypes';
+/* 등급 색상 토큰 — B등급(골드-앰버)을 범례 rect에 사용 */
+import { GRADE_COLORS } from '../../config/theme';
 
 interface GPChartProps {
   curve: GPCurvePoint[];
@@ -231,7 +233,7 @@ export function GPChart({
 
       {/* 범례 */}
       <g transform={`translate(${PADDING.left + 10}, ${PADDING.top + 10})`}>
-        <rect x={0} y={0} width={12} height={3} fill="#D4960A" rx={1} />
+        <rect x={0} y={0} width={12} height={3} fill={GRADE_COLORS.B} rx={1} /> {/* B등급 골드-앰버 토큰 */}
         <text x={16} y={5} className="gp-chart-legend">예측 곡선</text>
         <circle cx={6} cy={16} r={4} className="gp-chart-obs" />
         <text x={16} y={19} className="gp-chart-legend">관측점</text>

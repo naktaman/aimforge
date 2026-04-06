@@ -5,7 +5,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRoutineStore, type RoutineStep } from '../stores/routineStore';
 import type { ScenarioType } from '../utils/types';
 import { useTranslation } from '../i18n';
-import { UI_COLORS } from '../config/theme';
+// 테마 토큰 — 시나리오 색상 + UI 색상
+import { SCENARIO_TYPE_COLORS, UI_COLORS } from '../config/theme';
 
 /** 추가 가능한 시나리오 목록 */
 const AVAILABLE_SCENARIOS: { type: ScenarioType; name: string; defaultDuration: number }[] = [
@@ -17,15 +18,8 @@ const AVAILABLE_SCENARIOS: { type: ScenarioType; name: string; defaultDuration: 
   { type: 'micro_flick', name: 'Micro Flick', defaultDuration: 30 },
 ];
 
-/** 시나리오별 색상 */
-const SCENARIO_COLORS: Record<string, string> = {
-  flick: UI_COLORS.accentGold,
-  tracking: UI_COLORS.successGreen,
-  circular_tracking: '#38bdf8',
-  stochastic_tracking: '#c084fc',
-  counter_strafe_flick: '#fb923c',
-  micro_flick: '#fbbf24',
-};
+/** 시나리오별 색상 — 테마 토큰에서 가져옴 */
+const SCENARIO_COLORS: Record<string, string> = SCENARIO_TYPE_COLORS;
 
 /** 시나리오 한국어 이름 매핑 */
 const SCENARIO_LABELS: Record<string, string> = {
@@ -132,7 +126,7 @@ export function RoutineBuilder({ routineId, routineName, onBack, onPlay }: Routi
             <span className="step-order">{idx + 1}</span>
             <span
               className="step-name"
-              style={{ color: SCENARIO_COLORS[step.scenarioType] ?? '#ccc' }}
+              style={{ color: SCENARIO_COLORS[step.scenarioType] ?? UI_COLORS.chartLabel }}
             >
               {SCENARIO_LABELS[step.scenarioType] ?? step.scenarioType}
             </span>
@@ -193,7 +187,7 @@ function TimeAllocationBar({ steps, totalSec }: { steps: RoutineStep[]; totalSec
               key={type}
               style={{
                 width: `${pct}%`,
-                background: SCENARIO_COLORS[type] ?? '#666',
+                background: SCENARIO_COLORS[type] ?? UI_COLORS.chartTickText,
                 minWidth: 2,
               }}
               title={`${SCENARIO_LABELS[type] ?? type}: ${sec}초 (${pct.toFixed(0)}%)`}
@@ -209,7 +203,7 @@ function TimeAllocationBar({ steps, totalSec }: { steps: RoutineStep[]; totalSec
             <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <div style={{
                 width: 10, height: 10, borderRadius: 2,
-                background: SCENARIO_COLORS[type] ?? '#666',
+                background: SCENARIO_COLORS[type] ?? UI_COLORS.chartTickText,
               }} />
               <span>{SCENARIO_LABELS[type] ?? type}</span>
               <span style={{ opacity: 0.6 }}>{pct}%</span>

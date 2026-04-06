@@ -60,7 +60,7 @@ function DualRadarChart({ refAxes, targetAxes }: { refAxes: RadarAxis[]; targetA
     // 동심원 그리드
     for (let level = 1; level <= levels; level++) {
       const r = (maxR / levels) * level;
-      g.append('circle').attr('r', r).attr('fill', 'none').attr('stroke', '#333').attr('stroke-width', 0.5);
+      g.append('circle').attr('r', r).attr('fill', 'none').attr('stroke', UI_COLORS.chartDomain).attr('stroke-width', 0.5);
     }
 
     // 축 라인 + 라벨
@@ -78,7 +78,7 @@ function DualRadarChart({ refAxes, targetAxes }: { refAxes: RadarAxis[]; targetA
         .attr('y', labelR * Math.sin(angle))
         .attr('text-anchor', 'middle')
         .attr('dominant-baseline', 'middle')
-        .attr('fill', '#ccc')
+        .attr('fill', UI_COLORS.chartLabel)
         .attr('font-size', '11px')
         .text(axis.label);
     });
@@ -103,15 +103,15 @@ function DualRadarChart({ refAxes, targetAxes }: { refAxes: RadarAxis[]; targetA
       });
     };
 
-    drawPoly(refAxes, '#4a9eff');   // Reference — 파랑
+    drawPoly(refAxes, UI_COLORS.radarReference);   // Reference — 파랑
     drawPoly(targetAxes, UI_COLORS.accentGold); // Target — 오렌지(forge)
 
     // 범례
     const legendY = -maxR - 15;
-    [{ color: '#4a9eff', label: 'Reference' }, { color: UI_COLORS.accentGold, label: 'Target' }].forEach((item, i) => {
+    [{ color: UI_COLORS.radarReference, label: 'Reference' }, { color: UI_COLORS.accentGold, label: 'Target' }].forEach((item, i) => {
       const x = -40 + i * 100;
       g.append('rect').attr('x', x).attr('y', legendY).attr('width', 12).attr('height', 12).attr('fill', item.color).attr('rx', 2);
-      g.append('text').attr('x', x + 16).attr('y', legendY + 10).attr('fill', '#ccc').attr('font-size', '11px').text(item.label);
+      g.append('text').attr('x', x + 16).attr('y', legendY + 10).attr('fill', UI_COLORS.chartLabel).attr('font-size', '11px').text(item.label);
     });
   }, [refAxes, targetAxes]);
 

@@ -120,7 +120,96 @@ export const UI_COLORS = {
   radarTarget: '#FFB81C',
   /** 스코프 빨간 점 */
   scopeRedDot: '#ff3333',
+
+  // ── 추가 시맨틱 ──
+  /** 경고/활성 노랑 */
+  warningYellow: '#fbbf24',
+  /** 보라 (수렴 모드) */
+  convergencePurple: '#7c3aed',
+  /** 주 액션 버튼 */
+  actionBlue: '#2563eb',
+  /** 비활성 버튼 */
+  actionDisabled: '#475569',
+  /** 에러 배경 (짙은 빨강) */
+  errorBg: '#7f1d1d',
+  /** 테이블 구분선 */
+  tableBorder: '#334155',
+  /** 차트 곡선 보라 */
+  chartCurvePurple: '#c084fc',
+  /** 차트 곡선 하늘 */
+  chartCurveSky: '#38bdf8',
+  /** 비활성 포인트 */
+  pointInactive: '#64748b',
+  /** 축 라벨 밝은 회색 */
+  axisLabel: '#cbd5e1',
+  /** SVG 그리드 진한 배경 */
+  svgGridDark: '#1e2d3d',
+  /** SVG 깊은 배경 */
+  svgBgDeep: '#0f1923',
+  /** 캔버스 배경 (짙은 네이비) */
+  canvasBg: '#0d1117',
+  /** 캔버스 배경 (짙은 검정) */
+  canvasBgDark: '#0a0a0f',
+  /** 피드백 X 마크 (빨강) */
+  feedbackCross: '#FF4444',
+  /** 인포 배경 (짙은 네이비) */
+  infoBgDark: '#0f3460',
+  /** 경고 배경 (짙은 갈색) */
+  warningBgDark: '#3d2a1a',
+  /** 참조 배경 (짙은 금색) */
+  referenceBgDark: '#3d3520',
+  /** 차트 서브그리드 (어두운 파랑) */
+  chartSubGrid: '#1e3a5f',
+  /** 교정 단계 앰버 (줌 캘리브레이션 correction 페이즈) */
+  phaseAmber: '#f59e0b',
 } as const;
+
+// ===== 시나리오 타입 색상 (CSS hex 문자열 — 차트/루틴 빌더) =====
+
+export const SCENARIO_TYPE_COLORS: Record<string, string> = {
+  flick: '#f97316',
+  tracking: '#D4960A',
+  circular_tracking: '#38bdf8',
+  stochastic_tracking: '#c084fc',
+  stochastic: '#ec4899',
+  counter_strafe_flick: '#fb923c',
+  counter_strafe: '#14b8a6',
+  micro_flick: '#fbbf24',
+  zoom_composite: '#a855f7',
+} as const;
+
+// ===== Aim DNA 축 색상 (CSS hex 문자열 — 레이더/히스토리) =====
+
+export const DNA_AXIS_COLORS: Record<string, string> = {
+  flickPower: '#FFB81C',
+  trackingPrecision: '#4ecdc4',
+  motorControl: '#ffe66d',
+  speed: '#a29bfe',
+  consistency: '#fd79a8',
+} as const;
+
+// ===== 모터 영역 색상 (CSS hex 문자열 — 트라젝토리 분석) =====
+
+export const MOTOR_COLORS: Record<string, string> = {
+  finger: '#60a5fa',
+  wrist: '#4ade80',
+  arm: '#8A9AB5',
+} as const;
+
+// ===== 게임 카테고리 색상 (CSS hex 문자열 — 프로필 위저드) =====
+
+export const GAME_CATEGORY_COLORS: Record<string, string> = {
+  tactical: '#34d399',
+  'battle-royale': '#fbbf24',
+  arena: '#a78bfa',
+  default: '#a78bfa',
+} as const;
+
+// ===== 결과 차트 색상 (CSS hex 문자열 — 결과 화면 순환) =====
+
+export const RESULT_CHART_COLORS = [
+  '#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A',
+] as const;
 
 // ===== 등급 색상 (CSS hex 문자열) =====
 
@@ -143,6 +232,27 @@ export const CROSSHAIR_COLORS = {
   overwatchDefault: '#00ff00',
   minimal: '#ffffff',
   outline: '#000000',
+} as const;
+
+// ===== 그립 가이드 SVG 색상 (CSS hex 문자열) =====
+
+export const GRIP_COLORS = {
+  /** 마우스 본체 */
+  mouseBody: '#2a2a3a',
+  /** 마우스 좌측 그림자 */
+  mouseShadowL: '#1e1e2e',
+  /** 마우스 우측 그림자 */
+  mouseShadowR: '#232333',
+  /** 마우스 스크롤 영역 */
+  mouseScroll: '#333',
+  /** 마우스 스트로크 (밝은) */
+  mouseStrokeBright: '#444',
+  /** 마우스 스트로크 (중간) */
+  mouseStrokeMid: '#555',
+  /** 마우스 스크롤 스트로크 */
+  mouseScrollStroke: '#666',
+  /** 손 피부색 */
+  handSkin: '#c8a97e',
 } as const;
 
 // ===== 무기 뷰모델 색상 (THREE.js hex) =====

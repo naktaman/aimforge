@@ -75,7 +75,7 @@ function RadarChart({ axes }: { axes: RadarAxis[] }) {
       g.append('circle')
         .attr('r', r)
         .attr('fill', 'none')
-        .attr('stroke', '#333')
+        .attr('stroke', UI_COLORS.chartDomain)
         .attr('stroke-width', 0.5);
     }
 
@@ -86,7 +86,7 @@ function RadarChart({ axes }: { axes: RadarAxis[] }) {
         .attr('x1', 0).attr('y1', 0)
         .attr('x2', maxR * Math.cos(angle))
         .attr('y2', maxR * Math.sin(angle))
-        .attr('stroke', '#444')
+        .attr('stroke', UI_COLORS.chartAxisLine)
         .attr('stroke-width', 0.5);
     });
 
@@ -133,7 +133,7 @@ function RadarChart({ axes }: { axes: RadarAxis[] }) {
         .attr('y', labelR * Math.sin(angle))
         .attr('text-anchor', 'middle')
         .attr('dominant-baseline', 'middle')
-        .attr('fill', '#ccc')
+        .attr('fill', UI_COLORS.chartLabel)
         .attr('font-size', '12px')
         .text(`${axes[i].label}`);
 
@@ -278,7 +278,7 @@ export function AimDnaResult({ onBack }: Props) {
             {/* 재교정 추천 배너 */}
             {trend?.recalibrationRecommended && (
               <div className="trend-banner" style={{
-                background: '#3d3520', border: '1px solid var(--color-amber)', borderRadius: 8,
+                background: UI_COLORS.referenceBgDark, border: '1px solid var(--color-amber)', borderRadius: 8,
                 padding: '12px 16px', marginBottom: 16,
               }}>
                 <strong style={{ color: 'var(--color-amber)' }}>{t('dna.recalibrationNotice')}</strong>

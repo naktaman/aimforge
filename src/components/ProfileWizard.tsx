@@ -21,7 +21,7 @@ import {
 } from '../stores/profileWizardStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useCalibrationStore } from '../stores/calibrationStore';
-import { UI_COLORS } from '../config/theme';
+import { UI_COLORS, GAME_CATEGORY_COLORS } from '../config/theme'; /* 게임 카테고리 색상 토큰 추가 */
 import { gameSensToCm360, cm360ToSens } from '../utils/physics';
 import type { GamePreset, StageType, AimDnaProfile } from '../utils/types';
 
@@ -93,10 +93,14 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
       .catch((e) => console.error('게임 목록 로드 실패:', e));
   }, []);
 
-  /** 카테고리 → 아바타 배경색 */
+  /** 카테고리 → 아바타 배경색 — GAME_CATEGORY_COLORS 토큰 사용 */
   const CATEGORY_COLORS: Record<string, string> = {
-    fps: UI_COLORS.infoBlue, tactical: '#34d399', 'battle-royale': '#fbbf24',
-    tps: UI_COLORS.accentGold, arena: '#a78bfa', default: '#a78bfa',
+    fps: UI_COLORS.infoBlue,
+    tactical: GAME_CATEGORY_COLORS.tactical,
+    'battle-royale': GAME_CATEGORY_COLORS['battle-royale'],
+    tps: UI_COLORS.accentGold,
+    arena: GAME_CATEGORY_COLORS.arena,
+    default: GAME_CATEGORY_COLORS.default,
   };
   const FILTER_CATEGORIES = ['all', 'fps', 'tactical', 'battle-royale', 'tps', 'arena'] as const;
   const CATEGORY_LABEL_KEYS: Record<string, string> = {

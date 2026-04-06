@@ -14,11 +14,11 @@ interface Props {
   onMeasure?: () => void;
 }
 
-/** 카테고리별 색상 */
+/** 카테고리별 색상 — 테마 토큰 사용 */
 const CATEGORY_COLORS: Record<string, string> = {
   peak: UI_COLORS.successGreen,
-  ready: '#60a5fa',
-  moderate: '#8A9AB5',
+  ready: UI_COLORS.infoBlue,       /* 정보 파랑 토큰 */
+  moderate: UI_COLORS.metalChrome, /* 메탈 크롬 토큰 */
   rest: UI_COLORS.dangerRed,
 };
 
@@ -61,12 +61,12 @@ export default function ReadinessWidget({ result, onMeasure }: Props) {
 
     g.append('path')
       .attr('d', bgArc({}) as string)
-      .attr('fill', '#2a2a3e');
+      .attr('fill', UI_COLORS.bgPanel); /* 패널 배경 토큰 — 게이지 배경 arc */
 
     // 값 arc
     const score = result?.score ?? 0;
     const scoreAngle = startAngle + (endAngle - startAngle) * (score / 100);
-    const color = result ? (CATEGORY_COLORS[result.category] || '#888') : '#888';
+    const color = result ? (CATEGORY_COLORS[result.category] || UI_COLORS.textMuted) : UI_COLORS.textMuted; /* 비활성 텍스트 토큰 */
 
     const valueArc = d3.arc<unknown>()
       .innerRadius(innerRadius)
@@ -93,7 +93,7 @@ export default function ReadinessWidget({ result, onMeasure }: Props) {
       g.append('text')
         .attr('text-anchor', 'middle')
         .attr('y', 5)
-        .attr('fill', '#aaa')
+        .attr('fill', UI_COLORS.chartLabel) /* 차트 레이블 토큰 */
         .attr('font-size', 12)
         .text(CATEGORY_LABEL_KEYS[result.category] ? t(CATEGORY_LABEL_KEYS[result.category]) : '');
     }
@@ -111,7 +111,7 @@ export default function ReadinessWidget({ result, onMeasure }: Props) {
         <button
           onClick={onMeasure}
           style={{
-            background: 'var(--info)', color: '#fff', border: 'none',
+            background: 'var(--info)', color: UI_COLORS.textWhite, border: 'none', /* 흰색 텍스트 토큰 */
             borderRadius: 6, padding: '8px 20px', cursor: 'pointer',
             fontSize: 13, fontWeight: 500, marginTop: 8,
           }}
