@@ -92,7 +92,7 @@ export default function TrainingPrescription({ onBack, onTrainingStart, profileI
         </button>
       </div>
 
-      {/* 빈 상태 */}
+      {/* 빈 상태 — Aim DNA 배터리 안내 */}
       {filtered.length === 0 && !isLoading && (
         <EmptyState
           icon={
@@ -104,6 +104,11 @@ export default function TrainingPrescription({ onBack, onTrainingStart, profileI
           }
           title={t('empty.prescriptionTitle')}
           description={t('empty.prescriptionDesc')}
+          action={
+            <button className="btn-primary" onClick={onBack}>
+              {t('empty.prescriptionAction')}
+            </button>
+          }
         />
       )}
 

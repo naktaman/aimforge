@@ -274,6 +274,11 @@ export default function ProgressDashboard({ onBack, profileId }: Props) {
             }
             title={t('empty.progressTitle')}
             description={t('empty.progressDesc')}
+            action={
+              <button className="btn-primary" onClick={onBack}>
+                {t('empty.progressAction')}
+              </button>
+            }
           />
         ) : (
           <div className="skill-grid">

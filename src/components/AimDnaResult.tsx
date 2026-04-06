@@ -223,7 +223,10 @@ export function AimDnaResult({ onBack }: Props) {
           title={t('empty.dnaTitle')}
           description={t('empty.dnaDesc')}
           action={
-            <button className="btn-secondary" onClick={onBack}>{t('common.back')}</button>
+            <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'center' }}>
+              <button className="btn-primary" onClick={onBack}>{t('empty.dnaAction')}</button>
+              <button className="btn-secondary" onClick={onBack}>{t('common.back')}</button>
+            </div>
           }
         />
       </main>
