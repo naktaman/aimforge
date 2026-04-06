@@ -1,20 +1,18 @@
 import { useCallback, useRef, useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useEngineStore } from './stores/engineStore';
 import { usePageTransition } from './hooks/usePageTransition';
 import { useSettingsStore } from './stores/settingsStore';
 import { useUiStore } from './stores/uiStore';
 import { isScreenAccessible } from './utils/screenAccess';
-import { useCalibrationStore, type CalibrationMode, type ConvergenceLevel } from './stores/calibrationStore';
+import { useCalibrationStore } from './stores/calibrationStore';
 import { useBatteryStore } from './stores/batteryStore';
 import { ScenarioSelect, type ScenarioParams } from './components/ScenarioSelect';
 import { Viewport } from './components/Viewport';
 import { PerformanceOverlay } from './components/overlays/PerformanceOverlay';
 import { SteamLogin } from './components/SteamLogin';
 import { Toast } from './components/Toast';
-import { useToastStore } from './stores/toastStore';
 import { Onboarding } from './components/Onboarding';
 import { SplashScreen } from './components/screens/SplashScreen';
 import { WelcomeScreen } from './components/screens/WelcomeScreen';
@@ -35,7 +33,7 @@ import { useComparatorHandlers } from './hooks/useComparatorHandlers';
 import { useProfileWizardStore } from './stores/profileWizardStore';
 import { useZoomCalibrationStore } from './stores/zoomCalibrationStore';
 import type { GameEngine } from './engine/GameEngine';
-import type { ScenarioType, StageType, AdjustedPredictions } from './utils/types';
+import type { ScenarioType, StageType } from './utils/types';
 import { useTranslation } from './i18n';
 
 // ── React.lazy 코드 스플리팅 — 화면별 지연 로딩 ──
@@ -121,11 +119,9 @@ function App() {
   const [editingRoutineName, setEditingRoutineName] = useState('');
   const [playingRoutineId, setPlayingRoutineId] = useState<number | null>(null);
   const { cmPer360, currentZoom, scopeMultiplier } = useSettingsStore();
-  const { startCalibration, resetCalibration } = useCalibrationStore();
+  const { resetCalibration } = useCalibrationStore();
   const {
     kFitResult, predictedMultipliers, comparatorResult, comparatorState, resetZoomCalibration,
-    startZoomCalibration: startZoomCal, selectedProfileIds,
-    convergenceMode: zoomConvergenceMode, availableProfiles,
   } = useZoomCalibrationStore();
 
   const engineRef = useRef<GameEngine | null>(null);
@@ -139,10 +135,10 @@ function App() {
   const { handleBattery, handleBatteryLaunchScenario, handleBatteryCancel, handleBatteryComplete } = useBatteryHandlers({
     engineRef, targetManagerRef, soundEngine, syncRecoilToEngine,
   });
-  const { handleCalibrationLaunchTrial } = useCalibrationHandlers({
+  const { handleCalibrationLaunchTrial, handleCalibrationStart, handleCalibrationCancel, handleCalibrationApply } = useCalibrationHandlers({
     engineRef, targetManagerRef, soundEngine, syncRecoilToEngine,
   });
-  const { handleZoomLaunchTrial } = useZoomCalibrationHandlers({
+  const { handleZoomLaunchTrial, handleZoomCalibrationStart, handleZoomCalibrationCancel, handleAdjustK } = useZoomCalibrationHandlers({
     engineRef, targetManagerRef, soundEngine,
   });
   const { handleComparatorStart, handleComparatorRunTrial } = useComparatorHandlers({
@@ -186,91 +182,6 @@ function App() {
     engine.setFireRpm(fireRpm);
     engine.setWeaponVisible(weaponVisible);
   }, []);
-
-  /** 캘리브레이션 시작 */
-  const handleCalibrationStart = useCallback(
-    async (mode: CalibrationMode, convergence: ConvergenceLevel = 'quick') => {
-      try {
-        const sessionId = await invoke<number>('start_calibration', {
-          params: {
-            profile_id: 1, mode, current_cm360: cmPer360,
-            game_category: 'tactical', convergence_mode: convergence,
-          },
-        });
-        startCalibration(mode, sessionId, convergence);
-        setScreen('calibration-progress');
-      } catch (e) {
-        console.error('캘리브레이션 시작 실패:', e);
-        useToastStore.getState().addToast(t('cal.startFailed') + ': ' + String(e), 'error');
-      }
-    },
-    [cmPer360, startCalibration, setScreen, t],
-  );
-
-  /** 캘리브레이션 취소 */
-  const handleCalibrationCancel = useCallback(async () => {
-    try { await invoke('cancel_calibration'); } catch (_) { /* 이미 없을 수 있음 */ }
-    resetCalibration();
-    setScreen('settings');
-  }, [resetCalibration, setScreen]);
-
-  /** 줌 캘리브레이션 시작 */
-  const handleZoomCalibrationStart = useCallback(async () => {
-    try {
-      const hfov = useSettingsStore.getState().hfov || 103;
-      await invoke('start_zoom_calibration', {
-        params: {
-          profile_id: 1, game_id: 1, hipfire_fov: hfov, base_cm360: cmPer360,
-          selected_profile_ids: selectedProfileIds, convergence_mode: zoomConvergenceMode,
-        },
-      });
-      const statuses = selectedProfileIds.map((id) => {
-        const p = availableProfiles.find((ap) => ap.id === id);
-        return {
-          scopeName: p?.scopeName || `${id}`, zoomRatio: p?.zoomRatio || 1,
-          completed: false, iteration: 0, bestMultiplier: null, bestScore: null,
-        };
-      });
-      startZoomCal(statuses);
-      setScreen('zoom-calibration-progress');
-    } catch (e) {
-      console.error('줌 캘리브레이션 시작 실패:', e);
-      useToastStore.getState().addToast(t('cal.startFailed') + ': ' + String(e), 'error');
-    }
-  }, [cmPer360, selectedProfileIds, zoomConvergenceMode, availableProfiles, startZoomCal, setScreen, t]);
-
-  /** 줌 캘리브레이션 취소 */
-  const handleZoomCalibrationCancel = useCallback(() => {
-    resetZoomCalibration();
-    setScreen('settings');
-  }, [resetZoomCalibration, setScreen]);
-
-  /** K 조정 */
-  const handleAdjustK = useCallback(async (delta: number) => {
-    try {
-      const result = await invoke<AdjustedPredictions>('adjust_k', { delta });
-      useZoomCalibrationStore.getState().setKFitResult({
-        ...useZoomCalibrationStore.getState().kFitResult!,
-        kValue: result.kValue,
-      });
-      useZoomCalibrationStore.getState().setPredictedMultipliers(
-        result.predictions.map((p) => ({
-          scopeName: p.scopeName,
-          zoomRatio: p.zoomRatio,
-          multiplier: p.multiplier,
-          isMeasured: p.isMeasured,
-        })),
-      );
-    } catch (e) {
-      console.error('K 조정 실패:', e);
-    }
-  }, []);
-
-  /** 캘리브레이션 결과 감도 적용 */
-  const handleCalibrationApply = useCallback(
-    (_cm360: number) => { resetCalibration(); setScreen('settings'); },
-    [resetCalibration, setScreen],
-  );
 
   /* UI 설정 로드 전 빈 화면 */
   if (!uiLoaded) return null;

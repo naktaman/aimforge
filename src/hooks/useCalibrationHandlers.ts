@@ -8,7 +8,9 @@ import { useEngineStore } from '../stores/engineStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useSessionStore } from '../stores/sessionStore';
 import { useCalibrationStore } from '../stores/calibrationStore';
+import type { CalibrationMode, ConvergenceLevel } from '../stores/calibrationStore';
 import { useToastStore } from '../stores/toastStore';
+import { useTranslation } from '../i18n';
 import { useGameMetricsStore } from './useGameMetrics';
 import { FlickScenario } from '../engine/scenarios/FlickScenario';
 import { calculateFlickScore } from '../engine/metrics/CompositeScore';
@@ -32,9 +34,14 @@ interface CalibrationHandlerDeps {
 export function useCalibrationHandlers(deps: CalibrationHandlerDeps): {
   handleCalibrationLaunchTrial: () => void;
   handleCalibrationFinalize: () => Promise<void>;
+  handleCalibrationStart: (mode: CalibrationMode, convergence?: ConvergenceLevel) => Promise<void>;
+  handleCalibrationCancel: () => Promise<void>;
+  handleCalibrationApply: (cm360: number) => void;
 } {
   const { engineRef, targetManagerRef, soundEngine } = deps;
-  const { dpi } = useSettingsStore();
+  const { dpi, cmPer360 } = useSettingsStore();
+  const { startCalibration, resetCalibration } = useCalibrationStore();
+  const { t } = useTranslation();
   const { startScenario, endScenario } = useSessionStore();
   const setScreen = useEngineStore((s) => s.setScreen);
 
@@ -159,5 +166,38 @@ export function useCalibrationHandlers(deps: CalibrationHandlerDeps): {
     })();
   }, [dpi, startScenario, endScenario, setScreen, engineRef, targetManagerRef, soundEngine, handleCalibrationFinalize]);
 
-  return { handleCalibrationLaunchTrial, handleCalibrationFinalize };
+  /** 캘리브레이션 시작 */
+  const handleCalibrationStart = useCallback(
+    async (mode: CalibrationMode, convergence: ConvergenceLevel = 'quick'): Promise<void> => {
+      try {
+        const sessionId = await invoke<number>('start_calibration', {
+          params: {
+            profile_id: 1, mode, current_cm360: cmPer360,
+            game_category: 'tactical', convergence_mode: convergence,
+          },
+        });
+        startCalibration(mode, sessionId, convergence);
+        setScreen('calibration-progress');
+      } catch (e) {
+        console.error('캘리브레이션 시작 실패:', e);
+        useToastStore.getState().addToast(t('cal.startFailed') + ': ' + String(e), 'error');
+      }
+    },
+    [cmPer360, startCalibration, setScreen, t],
+  );
+
+  /** 캘리브레이션 취소 */
+  const handleCalibrationCancel = useCallback(async (): Promise<void> => {
+    try { await invoke('cancel_calibration'); } catch (_) { /* 이미 없을 수 있음 */ }
+    resetCalibration();
+    setScreen('settings');
+  }, [resetCalibration, setScreen]);
+
+  /** 캘리브레이션 결과 감도 적용 */
+  const handleCalibrationApply = useCallback(
+    (_cm360: number): void => { resetCalibration(); setScreen('settings'); },
+    [resetCalibration, setScreen],
+  );
+
+  return { handleCalibrationLaunchTrial, handleCalibrationFinalize, handleCalibrationStart, handleCalibrationCancel, handleCalibrationApply };
 }

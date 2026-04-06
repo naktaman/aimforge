@@ -19,32 +19,15 @@ import type { TargetManager } from '../TargetManager';
 import type { MicroFlickConfig, Direction } from '../../utils/types';
 import type { MicroFlickTrialMetrics } from '../../utils/types';
 import {
-  calculateTrackingScore,
-  calculateFlickScore,
-  calculateMicroFlickScore,
-} from '../metrics/CompositeScore';
+  REACQUIRE_MULTIPLIER,
+  FLICK_TIMEOUT,
+  getDirection,
+  getNearestBucket,
+  computeMicroFlickResults,
+} from './MicroFlickHelpers';
 
 /** 상태 머신 */
 type MFState = 'TRACKING' | 'FLICK_INTERRUPT' | 'RE_ACQUIRE';
-
-/** 8방향 */
-const DIRECTION_SECTORS: Array<{ dir: Direction; min: number; max: number }> = [
-  { dir: 'right', min: -22.5, max: 22.5 },
-  { dir: 'upper_right', min: 22.5, max: 67.5 },
-  { dir: 'up', min: 67.5, max: 112.5 },
-  { dir: 'upper_left', min: 112.5, max: 157.5 },
-  { dir: 'left', min: 157.5, max: 202.5 },
-  { dir: 'lower_left', min: 202.5, max: 247.5 },
-  { dir: 'down', min: 247.5, max: 292.5 },
-  { dir: 'lower_right', min: 292.5, max: 337.5 },
-];
-
-const BUCKETS = [10, 30, 60, 90, 120, 150, 180];
-
-/** 재획득 판정 임계값: 타겟 각도 반지름의 2배 이내 */
-const REACQUIRE_MULTIPLIER = 2;
-/** 인터럽트 플릭 타임아웃 (ms) */
-const FLICK_TIMEOUT = 3000;
 
 export class MicroFlickScenario extends Scenario {
   private config: MicroFlickConfig;
@@ -223,7 +206,7 @@ export class MicroFlickScenario extends Scenario {
       settleTime: ttt * 0.3,
       pathEfficiency,
       hit,
-      angleBucket: this.getNearestBucket(this.interruptAngle),
+      angleBucket: getNearestBucket(this.interruptAngle),
       direction: this.interruptDirection,
       motorRegion,
       clickType,
@@ -242,7 +225,7 @@ export class MicroFlickScenario extends Scenario {
   }
 
   getResults(): MicroFlickTrialMetrics {
-    return this.computeResults();
+    return computeMicroFlickResults(this.metrics, 'horizontal');
   }
 
   getTrialJson() {
@@ -287,7 +270,7 @@ export class MicroFlickScenario extends Scenario {
         settleTime: FLICK_TIMEOUT,
         pathEfficiency: 0,
         hit: false,
-        angleBucket: this.getNearestBucket(this.interruptAngle),
+        angleBucket: getNearestBucket(this.interruptAngle),
         direction: this.interruptDirection,
         motorRegion: classifyMotor(moveDist),
         clickType: 'Flick',
@@ -410,7 +393,7 @@ export class MicroFlickScenario extends Scenario {
     // 120° 방위각 제한 (±60°)
     const azimuth = constrainedAzimuth();
     const azimuthNormalized = ((azimuth % 360) + 360) % 360;
-    this.interruptDirection = this.getDirection(azimuthNormalized);
+    this.interruptDirection = getDirection(azimuthNormalized);
 
     const camera = this.engine.getCamera();
     const distance = 5 + Math.random() * 10;
@@ -452,66 +435,11 @@ export class MicroFlickScenario extends Scenario {
     }
   }
 
-  /** 최종 결과 계산 */
-  private computeResults(): MicroFlickTrialMetrics {
-    const hybrid = this.metrics.computeHybridMetrics('horizontal');
-    const trackingScore = calculateTrackingScore(
-      hybrid.tracking.mad,
-      hybrid.tracking.velocityMatchRatio,
-    );
-    const flickScore = calculateFlickScore(
-      hybrid.flick.hitRate,
-      hybrid.flick.avgTtt,
-      hybrid.flick.avgOvershoot,
-      hybrid.flick.preFireRatio,
-    );
-    const compositeScore = calculateMicroFlickScore(
-      trackingScore,
-      flickScore,
-      hybrid.avgReacquireTimeMs,
-    );
-
-    return {
-      trackingMad: hybrid.tracking.mad,
-      trackingVelocityMatch: hybrid.tracking.velocityMatchRatio,
-      flickHitRate: hybrid.flick.hitRate,
-      flickAvgTtt: hybrid.flick.avgTtt,
-      avgReacquireTimeMs: hybrid.avgReacquireTimeMs,
-      compositeScore,
-    };
-  }
-
   /** 시나리오 종료 처리 */
   private finalize(): void {
     this.removeInterruptTarget();
-    const results = this.computeResults();
+    const results = computeMicroFlickResults(this.metrics, 'horizontal');
     this.onComplete?.(results);
   }
 
-  /** azimuth → 8방향 */
-  private getDirection(azimuthDeg: number): Direction {
-    const norm = ((azimuthDeg % 360) + 360) % 360;
-    for (const sector of DIRECTION_SECTORS) {
-      if (sector.min < 0) {
-        if (norm >= 360 + sector.min || norm < sector.max) return sector.dir;
-      } else if (norm >= sector.min && norm < sector.max) {
-        return sector.dir;
-      }
-    }
-    return 'right';
-  }
-
-  /** 각도 → 가장 가까운 버킷 */
-  private getNearestBucket(angleDeg: number): number {
-    let closest = BUCKETS[0];
-    let minDiff = Infinity;
-    for (const bucket of BUCKETS) {
-      const diff = Math.abs(angleDeg - bucket);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closest = bucket;
-      }
-    }
-    return closest;
-  }
 }

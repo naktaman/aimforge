@@ -2,6 +2,8 @@
  * 프로파일 생성 가이드 위저드
  * 8단계 플로우: Welcome → 게임 세팅 → 하드웨어 → 캘리브레이션 → 전체 점검 → 분석 → 재테스트 → 완료
  * 상단 진행률 바, 이전/다음 네비게이션, 중간 저장 지원
+ *
+ * 각 단계 JSX는 src/components/wizard/ 하위 컴포넌트로 분리
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { invoke } from '@tauri-apps/api/core';
@@ -12,8 +14,6 @@ import {
   useProfileWizardStore,
   WIZARD_STEPS,
   ASSESSMENT_STAGES,
-  STAGE_DESCRIPTIONS,
-  GAME_SENS_FIELDS,
   GAME_YAW_VALUES,
   AIMFORGE_YAW,
   type WizardStep,
@@ -21,9 +21,19 @@ import {
 } from '../stores/profileWizardStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useCalibrationStore } from '../stores/calibrationStore';
-import { UI_COLORS, GAME_CATEGORY_COLORS } from '../config/theme'; /* 게임 카테고리 색상 토큰 추가 */
-import { gameSensToCm360, cm360ToSens } from '../utils/physics';
+import { UI_COLORS, GAME_CATEGORY_COLORS } from '../config/theme';
+import { cm360ToSens } from '../utils/physics';
 import type { GamePreset, StageType, AimDnaProfile } from '../utils/types';
+
+/* 위저드 단계 컴포넌트 */
+import { WizardStepWelcome } from './wizard/WizardStepWelcome';
+import { WizardStepGame } from './wizard/WizardStepGame';
+import { WizardStepHardware } from './wizard/WizardStepHardware';
+import { WizardStepCalibration } from './wizard/WizardStepCalibration';
+import { WizardStepAssessment } from './wizard/WizardStepAssessment';
+import { WizardStepAnalysis } from './wizard/WizardStepAnalysis';
+import { WizardStepRetest } from './wizard/WizardStepRetest';
+import { WizardStepComplete } from './wizard/WizardStepComplete';
 
 interface ProfileWizardProps {
   /** 위저드 닫기 */
@@ -181,9 +191,7 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
 
   /** 감도 변환 계산 — 프로파일 완료 시 */
   const computeConversions = useCallback((aimforgeCm360: number): SensConversion[] => {
-    /** aimforge 내부 감도 = cm360ToSens(cm360, dpi, AIMFORGE_YAW) */
     const aimforgeSens = cm360ToSens(aimforgeCm360, dpi, AIMFORGE_YAW);
-
     return Object.entries(GAME_YAW_VALUES).map(([gameName, targetYaw]) => ({
       gameName,
       yaw: targetYaw,
@@ -285,538 +293,102 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
       </div>
 
       <div className="pw-content">
-        {/* ============ Step 1: Welcome ============ */}
+        {/* 각 단계 컴포넌트 렌더링 */}
         {currentStep === 'welcome' && (
-          <div className="pw-step">
-            <h2>{t('wizard.createProfile')}</h2>
-            <p className="pw-description">
-              {t('wizard.profileDesc')}
-            </p>
-            <div className="pw-flow-preview">
-              <div className="pw-flow-item">
-                <span className="pw-flow-num">1</span>
-                <span>{t('wizard.step1')}</span>
-              </div>
-              <div className="pw-flow-item">
-                <span className="pw-flow-num">2</span>
-                <span>{t('wizard.step2')}</span>
-              </div>
-              <div className="pw-flow-item">
-                <span className="pw-flow-num">3</span>
-                <span>{t('wizard.step3')}</span>
-              </div>
-              <div className="pw-flow-item">
-                <span className="pw-flow-num">4</span>
-                <span>{t('wizard.step4')}</span>
-              </div>
-              <div className="pw-flow-item">
-                <span className="pw-flow-num">5</span>
-                <span>{t('wizard.step5')}</span>
-              </div>
-            </div>
-            <p className="pw-note">
-              {t('wizard.timeEstimate')}
-            </p>
-          </div>
+          <WizardStepWelcome t={t} />
         )}
 
-        {/* ============ Step 2: 게임 세팅 ============ */}
         {currentStep === 'game-settings' && (
-          <div className="pw-step">
-            <h2>{t('wizard.selectMainGame')}</h2>
-            <p className="pw-description">{t('wizard.selectMainGameDesc')}</p>
-
-            {/* 게임 검색 */}
-            <div className="game-search-field">
-              <input
-                type="text"
-                placeholder={t('wizard.searchGame')}
-                value={gameSearch}
-                onChange={e => setGameSearch(e.target.value)}
-              />
-            </div>
-
-            {/* 카테고리 필터 칩 */}
-            <div className="game-filter-chips">
-              {FILTER_CATEGORIES.map((cat) => {
-                const isActive = categoryFilter === cat;
-                const color = cat === 'all' ? 'var(--accent)' : CATEGORY_COLORS[cat as GameCategory] ?? CATEGORY_COLORS.default;
-                return (
-                  <button
-                    key={cat}
-                    className={`filter-chip ${isActive ? 'active' : ''}`}
-                    style={isActive ? { background: color, borderColor: color } : undefined}
-                    onClick={() => setCategoryFilter(cat)}
-                  >
-                    {cat !== 'all' && <span className="chip-dot" style={{ background: color }} />}
-                    {t(CATEGORY_LABEL_KEYS[cat])}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="pw-game-grid">
-              {filteredGames.map(g => {
-                const cat = getGameCategory(g);
-                const color = CATEGORY_COLORS[cat];
-                return (
-                  <div
-                    key={g.name}
-                    className={`pw-game-card ${selectedGame?.name === g.name ? 'selected' : ''}`}
-                    onClick={() => setSelectedGame(g)}
-                  >
-                    <div className="game-avatar" style={{ background: color }}>
-                      {getGameInitials(g.name)}
-                    </div>
-                    <span className="pw-game-name">{g.name}</span>
-                    <span className="pw-game-yaw">yaw: {g.yaw}</span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* 게임별 전용 감도 필드 */}
-            {selectedGame && (
-              <div className="pw-sens-form">
-                <h3>{selectedGame.name} {t('wizard.sensSettings')}</h3>
-                {(GAME_SENS_FIELDS[selectedGame.name] ?? [
-                  { key: 'sensitivity', label: t('settings.sensitivity'), min: 0.01, max: 100, step: 0.01, defaultValue: 1.0 },
-                ]).map(field => (
-                  <div key={field.key} className="pw-field">
-                    <label>{field.label}</label>
-                    <input
-                      type="number"
-                      min={field.min}
-                      max={field.max}
-                      step={field.step}
-                      value={gameSensValues[field.key] ?? field.defaultValue}
-                      onChange={e => setGameSensValue(field.key, Number(e.target.value) || field.defaultValue)}
-                    />
-                  </div>
-                ))}
-                {/* cm/360 미리보기 */}
-                {selectedGame && gameSensValues['sensitivity'] && (
-                  <div className="pw-cm360-preview">
-                    {gameSensToCm360(
-                      gameSensValues['sensitivity'],
-                      dpi,
-                      selectedGame.yaw,
-                    ).toFixed(1)} cm/360
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <WizardStepGame
+            t={t}
+            gameSearch={gameSearch}
+            setGameSearch={setGameSearch}
+            categoryFilter={categoryFilter}
+            setCategoryFilter={setCategoryFilter}
+            filteredGames={filteredGames}
+            selectedGame={selectedGame}
+            setSelectedGame={setSelectedGame}
+            gameSensValues={gameSensValues}
+            setGameSensValue={setGameSensValue}
+            dpi={dpi}
+            getGameCategory={getGameCategory}
+            getGameInitials={getGameInitials}
+            CATEGORY_COLORS={CATEGORY_COLORS}
+            FILTER_CATEGORIES={FILTER_CATEGORIES}
+            CATEGORY_LABEL_KEYS={CATEGORY_LABEL_KEYS}
+          />
         )}
 
-        {/* ============ Step 3: 하드웨어 ============ */}
         {currentStep === 'hardware' && (
-          <div className="pw-step">
-            <h2>{t('wizard.hardwareSettings')}</h2>
-            <p className="pw-description">{t('wizard.hardwareDesc')}</p>
-
-            <div className="pw-hardware-grid">
-              <div className="pw-field">
-                <label>{t('wizard.mouseDpi')}</label>
-                <input
-                  type="number"
-                  min={100}
-                  max={32000}
-                  step={50}
-                  value={dpi}
-                  onChange={e => setWizardDpi(Number(e.target.value) || 800)}
-                />
-              </div>
-              <div className="pw-field">
-                <label>{t('wizard.monitorWidth')}</label>
-                <input
-                  type="number"
-                  min={800}
-                  max={7680}
-                  value={monitorWidth}
-                  onChange={e => setHardware(
-                    dpi,
-                    Number(e.target.value) || 1920,
-                    monitorHeight,
-                    refreshRate,
-                  )}
-                />
-              </div>
-              <div className="pw-field">
-                <label>{t('wizard.monitorHeight')}</label>
-                <input
-                  type="number"
-                  min={600}
-                  max={4320}
-                  value={monitorHeight}
-                  onChange={e => setHardware(
-                    dpi,
-                    monitorWidth,
-                    Number(e.target.value) || 1080,
-                    refreshRate,
-                  )}
-                />
-              </div>
-              <div className="pw-field">
-                <label>{t('wizard.refreshRate')}</label>
-                <select
-                  value={refreshRate}
-                  onChange={e => setHardware(
-                    dpi,
-                    monitorWidth,
-                    monitorHeight,
-                    Number(e.target.value),
-                  )}
-                >
-                  <option value={60}>60 Hz</option>
-                  <option value={75}>75 Hz</option>
-                  <option value={120}>120 Hz</option>
-                  <option value={144}>144 Hz</option>
-                  <option value={165}>165 Hz</option>
-                  <option value={240}>240 Hz</option>
-                  <option value={360}>360 Hz</option>
-                </select>
-              </div>
-            </div>
-          </div>
+          <WizardStepHardware
+            t={t}
+            dpi={dpi}
+            setWizardDpi={setWizardDpi}
+            monitorWidth={monitorWidth}
+            monitorHeight={monitorHeight}
+            refreshRate={refreshRate}
+            setHardware={setHardware}
+          />
         )}
 
-        {/* ============ Step 4: 캘리브레이션 ============ */}
         {currentStep === 'calibration' && (
-          <div className="pw-step">
-            <h2>{t('wizard.sensCalibration')}</h2>
-            <p className="pw-description">
-              {t('wizard.sensCalDesc')}
-            </p>
-            {calibratedCm360 ? (
-              <div className="pw-calibration-done">
-                <div className="pw-result-badge">
-                  <span className="pw-result-value">{calibratedCm360.toFixed(1)}</span>
-                  <span className="pw-result-unit">cm/360</span>
-                </div>
-                <p>{t('wizard.calDone')}</p>
-              </div>
-            ) : (
-              <div className="pw-calibration-start">
-                <p>{t('wizard.notCalibrated')}</p>
-                <button className="btn-primary" onClick={onStartCalibration}>
-                  {t('wizard.startCal')}
-                </button>
-                <button
-                  className="btn-secondary"
-                  style={{ marginTop: 12 }}
-                  onClick={() => {
-                    /** 캘리브레이션 건너뛰기 — 현재 감도 사용 */
-                    setCalibrationResult(cmPer360);
-                  }}
-                >
-                  {t('wizard.skipCal')}
-                </button>
-              </div>
-            )}
-          </div>
+          <WizardStepCalibration
+            t={t}
+            calibratedCm360={calibratedCm360}
+            cmPer360={cmPer360}
+            onStartCalibration={onStartCalibration}
+            setCalibrationResult={setCalibrationResult}
+          />
         )}
 
-        {/* ============ Step 5: 전체 점검 ============ */}
         {currentStep === 'full-assessment' && (
-          <div className="pw-step">
-            <h2>{t('wizard.fullAssessment')}</h2>
-            <p className="pw-description">
-              {t('wizard.fullAssessmentDesc')}
-            </p>
-
-            {/* 시나리오 목록 */}
-            <div className="pw-assessment-list">
-              {ASSESSMENT_STAGES.map((stage, i) => {
-                const info = STAGE_DESCRIPTIONS[stage];
-                const result = assessmentResults.find(r => r.stageType === stage);
-                const isCurrent = assessmentRunning && i === assessmentIndex;
-                return (
-                  <div
-                    key={stage}
-                    className={`pw-assessment-item ${result ? 'completed' : ''} ${isCurrent ? 'current' : ''}`}
-                  >
-                    <div className="pw-assessment-num">{i + 1}</div>
-                    <div className="pw-assessment-info">
-                      <span className="pw-assessment-name">{info?.name ?? stage}</span>
-                      <span className="pw-assessment-desc">{info?.description ?? ''}</span>
-                    </div>
-                    {result && (
-                      <span className="pw-assessment-score">{result.score.toFixed(0)}pts</span>
-                    )}
-                    {isCurrent && !result && (
-                      <span className="pw-assessment-badge">{t('common.inProgress')}</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* 점검 컨트롤 */}
-            {!assessmentRunning && assessmentResults.length === 0 && (
-              <button className="btn-primary" onClick={handleStartAssessment}>
-                {t('wizard.startAssessment')}
-              </button>
-            )}
-
-            {/* 현재 시나리오 시작 프롬프트 */}
-            {assessmentRunning && currentAssessmentStage && (
-              <div className="pw-current-scenario">
-                <h3>{STAGE_DESCRIPTIONS[currentAssessmentStage]?.name}</h3>
-                <p>{STAGE_DESCRIPTIONS[currentAssessmentStage]?.description}</p>
-                <button
-                  className="btn-primary"
-                  onClick={() => onStartTraining(currentAssessmentStage)}
-                >
-                  {t('wizard.startScenario')}
-                </button>
-              </div>
-            )}
-
-            {/* 전체 완료 */}
-            {!assessmentRunning && assessmentResults.length >= ASSESSMENT_STAGES.length && (
-              <div className="pw-assessment-done">
-                <p>{t('wizard.assessmentDone')}</p>
-              </div>
-            )}
-          </div>
+          <WizardStepAssessment
+            t={t}
+            assessmentRunning={assessmentRunning}
+            assessmentResults={assessmentResults}
+            assessmentIndex={assessmentIndex}
+            currentAssessmentStage={currentAssessmentStage}
+            handleStartAssessment={handleStartAssessment}
+            onStartTraining={onStartTraining}
+          />
         )}
 
-        {/* ============ Step 6: 결과 분석 ============ */}
         {currentStep === 'analysis' && (
-          <div className="pw-step">
-            <h2>{t('wizard.dnaAnalysis')}</h2>
-            <p className="pw-description">
-              {t('wizard.dnaAnalysisDesc')}
-            </p>
-
-            {!aimDna ? (
-              <div className="pw-analysis-start">
-                <button className="btn-primary" onClick={handleAnalyze}>
-                  {t('wizard.startAnalysis')}
-                </button>
-              </div>
-            ) : (
-              <div className="pw-analysis-result">
-                {/* 레이더 차트 간소화 — 5축 점수 표시 */}
-                <div className="pw-radar-summary">
-                  <h3>{t('wizard.aimSummary')}</h3>
-                  {aimDna.typeLabel && (
-                    <div className="pw-type-badge">{aimDna.typeLabel}</div>
-                  )}
-                  <div className="pw-radar-grid">
-                    <div className="pw-radar-axis">
-                      <span className="pw-radar-label">{t('wizard.flickSpeed')}</span>
-                      <div className="pw-radar-bar">
-                        <div
-                          className="pw-radar-fill"
-                          style={{ width: `${Math.min((aimDna.flickPeakVelocity ?? 0) / 10 * 100, 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                    <div className="pw-radar-axis">
-                      <span className="pw-radar-label">{t('wizard.trackingAccuracy')}</span>
-                      <div className="pw-radar-bar">
-                        <div
-                          className="pw-radar-fill"
-                          style={{ width: `${Math.max(100 - (aimDna.trackingMad ?? 5) * 20, 0)}%` }}
-                        />
-                      </div>
-                    </div>
-                    <div className="pw-radar-axis">
-                      <span className="pw-radar-label">{t('wizard.smoothnessLabel')}</span>
-                      <div className="pw-radar-bar">
-                        <div
-                          className="pw-radar-fill"
-                          style={{ width: `${(aimDna.smoothness ?? 0) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                    <div className="pw-radar-axis">
-                      <span className="pw-radar-label">{t('wizard.overshootSuppression')}</span>
-                      <div className="pw-radar-bar">
-                        <div
-                          className="pw-radar-fill"
-                          style={{ width: `${Math.max(100 - (aimDna.overshootAvg ?? 5) * 10, 0)}%` }}
-                        />
-                      </div>
-                    </div>
-                    <div className="pw-radar-axis">
-                      <span className="pw-radar-label">{t('wizard.velocityMatching')}</span>
-                      <div className="pw-radar-bar">
-                        <div
-                          className="pw-radar-fill"
-                          style={{ width: `${(aimDna.velocityMatch ?? 0) * 100}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 감도 제안 */}
-                {suggestedCm360 && (
-                  <div className="pw-sens-suggestion">
-                    <h3>{t('wizard.sensSuggestion')}</h3>
-                    <div className="pw-result-badge">
-                      <span className="pw-result-value">{suggestedCm360.toFixed(1)}</span>
-                      <span className="pw-result-unit">cm/360</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* 점검 점수 요약 */}
-                <div className="pw-scores-summary">
-                  <h3>{t('wizard.scenarioScores')}</h3>
-                  <div className="pw-scores-grid">
-                    {assessmentResults.map(r => (
-                      <div key={r.stageType} className="pw-score-item">
-                        <span className="pw-score-name">
-                          {STAGE_DESCRIPTIONS[r.stageType]?.name ?? r.stageType}
-                        </span>
-                        <span className={`pw-score-value ${r.score < (Math.max(...assessmentResults.map(x => x.score)) * 0.7) ? 'weak' : ''}`}>
-                          {r.score.toFixed(0)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          <WizardStepAnalysis
+            t={t}
+            aimDna={aimDna}
+            suggestedCm360={suggestedCm360}
+            assessmentResults={assessmentResults}
+            handleAnalyze={handleAnalyze}
+          />
         )}
 
-        {/* ============ Step 7: 재테스트 ============ */}
         {currentStep === 'retest' && (
-          <div className="pw-step">
-            <h2>{t('wizard.weakRetest')}</h2>
-            <p className="pw-description">
-              {t('wizard.weakRetestDesc')}
-            </p>
-
-            {weakStages.length === 0 ? (
-              <div className="pw-retest-start">
-                <p>{t('wizard.analyzingWeak')}</p>
-                <button className="btn-primary" onClick={handleStartRetest}>
-                  {t('wizard.identifyWeak')}
-                </button>
-                <button
-                  className="btn-secondary"
-                  style={{ marginTop: 12 }}
-                  onClick={() => {
-                    /** 재테스트 건너뛰기 */
-                    const finalCm = suggestedCm360 ?? calibratedCm360 ?? cmPer360;
-                    finalize(finalCm, computeConversions(finalCm));
-                    goToStep('complete');
-                  }}
-                >
-                  {t('common.skip')}
-                </button>
-              </div>
-            ) : (
-              <div className="pw-retest-progress">
-                <p>{t('style.retestRound')} {retestRound} — {weakStages.length} {t('style.areas')}</p>
-                <div className="pw-assessment-list">
-                  {weakStages.map((stage, i) => {
-                    const result = retestResults.find(r => r.stageType === stage);
-                    const isCurrent = !result && retestResults.length === i;
-                    return (
-                      <div
-                        key={stage}
-                        className={`pw-assessment-item ${result ? 'completed' : ''} ${isCurrent ? 'current' : ''}`}
-                      >
-                        <div className="pw-assessment-num">{i + 1}</div>
-                        <div className="pw-assessment-info">
-                          <span className="pw-assessment-name">
-                            {STAGE_DESCRIPTIONS[stage]?.name ?? stage}
-                          </span>
-                        </div>
-                        {result && (
-                          <span className="pw-assessment-score">{result.score.toFixed(0)}pts</span>
-                        )}
-                        {isCurrent && (
-                          <button
-                            className="btn-primary btn-sm"
-                            onClick={() => onStartTraining(stage)}
-                          >
-                            {t('common.start')}
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {retestResults.length >= weakStages.length && (
-                  <div className="pw-retest-done">
-                    <p>{t('wizard.retestDone')}</p>
-                    <button
-                      className="btn-primary"
-                      onClick={() => {
-                        const finalCm = suggestedCm360 ?? calibratedCm360 ?? cmPer360;
-                        finalize(finalCm, computeConversions(finalCm));
-                        goToStep('complete');
-                      }}
-                    >
-                      {t('wizard.viewResult')}
-                    </button>
-                    <button
-                      className="btn-secondary"
-                      style={{ marginLeft: 8 }}
-                      onClick={handleStartRetest}
-                    >
-                      {t('wizard.oneMoreTest')}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <WizardStepRetest
+            t={t}
+            weakStages={weakStages}
+            retestRound={retestRound}
+            retestResults={retestResults}
+            handleStartRetest={handleStartRetest}
+            onStartTraining={onStartTraining}
+            suggestedCm360={suggestedCm360}
+            calibratedCm360={calibratedCm360}
+            cmPer360={cmPer360}
+            finalize={finalize}
+            computeConversions={computeConversions}
+            goToStep={goToStep}
+          />
         )}
 
-        {/* ============ Step 8: 완료 ============ */}
         {currentStep === 'complete' && (
-          <div className="pw-step">
-            <h2>{t('wizard.profileComplete')}</h2>
-
-            {/* 최종 감도 */}
-            <div className="pw-final-result">
-              <div className="pw-result-badge large">
-                <span className="pw-result-value">{finalCm360?.toFixed(1) ?? '—'}</span>
-                <span className="pw-result-unit">cm/360</span>
-              </div>
-            </div>
-
-            {/* Aim DNA 타입 */}
-            {aimDna?.typeLabel && (
-              <div className="pw-type-badge large">{aimDna.typeLabel}</div>
-            )}
-
-            {/* 게임별 감도 변환 */}
-            <div className="pw-conversions">
-              <h3>{t('wizard.gameConversions')}</h3>
-              <div className="pw-conversion-table">
-                <div className="pw-conversion-header">
-                  <span>{t('wizard.game')}</span>
-                  <span>{t('wizard.convertedSens')}</span>
-                </div>
-                {sensConversions.map(c => (
-                  <div key={c.gameName} className="pw-conversion-row">
-                    <span className="pw-conversion-game">{c.gameName}</span>
-                    <span className="pw-conversion-sens">{c.convertedSens.toFixed(4)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="pw-actions" style={{ marginTop: 24 }}>
-              <button className="btn-primary" onClick={async () => {
-                await handleComplete();
-                onClose();
-              }}>
-                {t('wizard.saveAndComplete')}
-              </button>
-            </div>
-          </div>
+          <WizardStepComplete
+            t={t}
+            finalCm360={finalCm360}
+            aimDna={aimDna}
+            sensConversions={sensConversions}
+            handleComplete={handleComplete}
+            onClose={onClose}
+          />
         )}
       </div>
 
