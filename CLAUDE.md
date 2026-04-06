@@ -41,8 +41,7 @@ npm run build          # 프론트엔드 빌드만
 - **@docs/planning/** — 로드맵
   - [roadmap.md](docs/planning/roadmap.md) — 30일 로드맵 참조, 설계 원칙, 프로파일 5축
 - **@docs/research/** — 딥리서치 아카이브
-  - [README.md](docs/research/README.md) — 딥리서치 아카이브 인덱스 (22개 에임포지 + 3개 VooChu)
-  - [voochu-research-index.md](docs/research/voochu-research-index.md) — VooChu 프로젝트 리서치 인덱스
+  - [AimForge_DeepResearch_Wiki.docx](docs/research/AimForge_DeepResearch_Wiki.docx) — 딥리서치 통합 문서 (22개 에임포지 + 3개 VooChu)
 - [CHANGELOG.md](CHANGELOG.md) — 버전별 변경사항 요약
 
 ---
