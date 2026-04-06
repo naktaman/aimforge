@@ -4,8 +4,8 @@
  * Rust SQLite user_game_profiles 테이블과 동기화
  */
 import { create } from 'zustand';
-import { invoke } from '@tauri-apps/api/core';
-import { useToastStore } from './toastStore';
+import { storeInvoke } from './storeHelpers';
+import { safeInvoke } from '../utils/ipc';
 
 /** 게임 프로필 */
 export interface GameProfile {
@@ -33,7 +33,7 @@ interface GameProfileRow {
 
 interface GameProfileState {
   profiles: GameProfile[];
-  loading: boolean;
+  isLoading: boolean;
 
   /** 프로필 목록 로드 */
   loadProfiles: () => Promise<void>;
@@ -63,65 +63,59 @@ function toProfile(row: GameProfileRow): GameProfile {
 
 export const useGameProfileStore = create<GameProfileState>((set) => ({
   profiles: [],
-  loading: false,
+  isLoading: false,
 
-  loadProfiles: async () => {
-    set({ loading: true });
-    try {
-      const rows = await invoke<GameProfileRow[]>('get_game_profiles');
-      set({ profiles: rows.map(toProfile) });
-    } catch (e) {
-      console.error('[GameProfile] 로드 실패:', e);
-    } finally {
-      set({ loading: false });
-    }
-  },
+  /** 프로필 목록 로드 — storeInvoke로 로딩 상태 자동 관리 */
+  loadProfiles: () =>
+    storeInvoke<GameProfileState, GameProfileRow[]>(
+      set, 'get_game_profiles', undefined,
+      (rows) => ({ profiles: rows.map(toProfile) }),
+      '게임 프로필 로드',
+    ),
 
+  /** 생성 후 목록 재로드 — safeInvoke로 mutation, storeInvoke로 재로드 */
   createProfile: async (gameName, dpi, sensitivity, fov, scopeMultiplier) => {
-    try {
-      await invoke('create_game_profile', {
-        gameName, dpi, sensitivity, fov, scopeMultiplier,
-      });
-      // 재로드
-      const rows = await invoke<GameProfileRow[]>('get_game_profiles');
-      set({ profiles: rows.map(toProfile) });
-    } catch (e) {
-      console.error('[GameProfile] 생성 실패:', e);
+    const ok = await safeInvoke('create_game_profile', {
+      gameName, dpi, sensitivity, fov, scopeMultiplier,
+    }, true);
+    if (ok !== null) {
+      await storeInvoke<GameProfileState, GameProfileRow[]>(
+        set, 'get_game_profiles', undefined,
+        (rows) => ({ profiles: rows.map(toProfile) }),
+        '게임 프로필 재로드',
+      );
     }
   },
 
+  /** 수정 후 목록 재로드 */
   updateProfile: async (id, gameName, dpi, sensitivity, fov, scopeMultiplier) => {
-    try {
-      await invoke('update_game_profile', {
-        id, gameName, dpi, sensitivity, fov, scopeMultiplier,
-      });
-      const rows = await invoke<GameProfileRow[]>('get_game_profiles');
-      set({ profiles: rows.map(toProfile) });
-    } catch (e) {
-      console.error('[GameProfile] 수정 실패:', e);
-      useToastStore.getState().addToast('프로필 수정 실패', 'error');
+    const ok = await safeInvoke('update_game_profile', {
+      id, gameName, dpi, sensitivity, fov, scopeMultiplier,
+    });
+    if (ok !== null) {
+      await storeInvoke<GameProfileState, GameProfileRow[]>(
+        set, 'get_game_profiles', undefined,
+        (rows) => ({ profiles: rows.map(toProfile) }),
+        '게임 프로필 재로드',
+      );
     }
   },
 
+  /** 삭제 — 성공 시 로컬 상태에서 즉시 제거 */
   deleteProfile: async (id) => {
-    try {
-      await invoke('delete_game_profile', { id });
+    const ok = await safeInvoke('delete_game_profile', { id });
+    if (ok !== null) {
       set((s) => ({ profiles: s.profiles.filter(p => p.id !== id) }));
-    } catch (e) {
-      console.error('[GameProfile] 삭제 실패:', e);
-      useToastStore.getState().addToast('프로필 삭제 실패', 'error');
     }
   },
 
+  /** 활성 프로필 설정 — 성공 시 로컬 상태 업데이트 */
   setActive: async (id) => {
-    try {
-      await invoke('set_active_game_profile', { id });
+    const ok = await safeInvoke('set_active_game_profile', { id });
+    if (ok !== null) {
       set((s) => ({
         profiles: s.profiles.map(p => ({ ...p, isActive: p.id === id })),
       }));
-    } catch (e) {
-      console.error('[GameProfile] 활성 설정 실패:', e);
-      useToastStore.getState().addToast('프로필 활성 설정 실패', 'error');
     }
   },
 }));

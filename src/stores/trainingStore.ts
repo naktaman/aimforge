@@ -2,8 +2,8 @@
  * 훈련 처방 + Readiness + Style Transition 상태 스토어
  */
 import { create } from 'zustand';
-import { invoke } from '@tauri-apps/api/core';
 import { storeInvoke } from './storeHelpers';
+import { safeInvoke } from '../utils/ipc';
 import type {
   TrainingPrescription,
   StageRecommendation,
@@ -39,20 +39,18 @@ interface TrainingState {
   clear: () => void;
 }
 
-/** 스타일 전환 상태를 로드하여 set에 반영하는 공통 함수 */
-async function loadTransitionStatus(
-  set: (partial: Partial<TrainingState>) => void,
+/** 스타일 전환 상태를 로드하여 set에 반영하는 공통 함수 — storeInvoke 패턴 */
+function loadTransitionStatus(
+  set: Parameters<typeof storeInvoke<TrainingState, unknown>>[0],
   profileId: number,
 ): Promise<void> {
-  try {
-    const result = await invoke<{ transition: StyleTransitionRow | null; progress: TransitionProgress | null }>(
-      'get_style_transition_status',
-      { params: { profile_id: profileId } }
-    );
-    set({ styleTransition: result.transition, transitionProgress: result.progress });
-  } catch (e) {
-    console.error('스타일 전환 상태 로드 실패:', e);
-  }
+  return storeInvoke<TrainingState, { transition: StyleTransitionRow | null; progress: TransitionProgress | null }>(
+    set, 'get_style_transition_status',
+    { params: { profile_id: profileId } },
+    (result) => ({ styleTransition: result.transition, transitionProgress: result.progress }),
+    '스타일 전환 상태 로드',
+    false,
+  );
 }
 
 export const useTrainingStore = create<TrainingState>((set) => ({
@@ -119,32 +117,30 @@ export const useTrainingStore = create<TrainingState>((set) => ({
       false,
     ),
 
+  /** 스타일 전환 시작 — safeInvoke로 mutation 후 상태 재로드 */
   startStyleTransition: async (profileId, fromType, toType, sensRange) => {
-    try {
-      await invoke('start_style_transition', {
-        params: {
-          profile_id: profileId,
-          from_type: fromType,
-          to_type: toType,
-          target_sens_range: sensRange,
-        },
-      });
+    const ok = await safeInvoke('start_style_transition', {
+      params: {
+        profile_id: profileId,
+        from_type: fromType,
+        to_type: toType,
+        target_sens_range: sensRange,
+      },
+    });
+    if (ok !== null) {
       await loadTransitionStatus(set, profileId);
-    } catch (e) {
-      console.error('스타일 전환 시작 실패:', e);
     }
   },
 
   loadStyleTransition: (profileId) => loadTransitionStatus(set, profileId),
 
+  /** 스타일 전환 업데이트 — safeInvoke로 mutation 후 상태 재로드 */
   updateStyleTransition: async (profileId, action) => {
-    try {
-      await invoke('update_style_transition', {
-        params: { profile_id: profileId, action },
-      });
+    const ok = await safeInvoke('update_style_transition', {
+      params: { profile_id: profileId, action },
+    });
+    if (ok !== null) {
       await loadTransitionStatus(set, profileId);
-    } catch (e) {
-      console.error('스타일 전환 업데이트 실패:', e);
     }
   },
 

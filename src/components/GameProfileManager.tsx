@@ -13,7 +13,7 @@ interface GameProfileManagerProps {
 const EMPTY_FORM = { gameName: '', dpi: 800, sensitivity: '1.0', fov: 103, scopeMultiplier: '1.0' };
 
 export function GameProfileManager({ onBack }: GameProfileManagerProps) {
-  const { profiles, loading, loadProfiles, createProfile, updateProfile, deleteProfile, setActive } = useGameProfileStore();
+  const { profiles, isLoading: loading, loadProfiles, createProfile, updateProfile, deleteProfile, setActive } = useGameProfileStore();
   const { t } = useTranslation();
   const [editing, setEditing] = useState<number | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);

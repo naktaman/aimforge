@@ -4,8 +4,8 @@
  * Rust SQLite routines, routine_steps 테이블과 동기화
  */
 import { create } from 'zustand';
-import { invoke } from '@tauri-apps/api/core';
-import { useToastStore } from './toastStore';
+import { storeInvoke } from './storeHelpers';
+import { safeInvoke } from '../utils/ipc';
 
 /** 루틴 스텝 */
 export interface RoutineStep {
@@ -47,7 +47,7 @@ interface RoutineStepRow {
 interface RoutineState {
   routines: Routine[];
   currentSteps: RoutineStep[];
-  loading: boolean;
+  isLoading: boolean;
 
   /** 루틴 목록 로드 */
   loadRoutines: () => Promise<void>;
@@ -89,86 +89,85 @@ function toStep(row: RoutineStepRow): RoutineStep {
 export const useRoutineStore = create<RoutineState>((set) => ({
   routines: [],
   currentSteps: [],
-  loading: false,
+  isLoading: false,
 
-  loadRoutines: async () => {
-    set({ loading: true });
-    try {
-      const rows = await invoke<RoutineRow[]>('get_routines');
-      set({ routines: rows.map(toRoutine) });
-    } catch (e) {
-      console.error('[Routine] 로드 실패:', e);
-    } finally {
-      set({ loading: false });
-    }
-  },
+  /** 루틴 목록 로드 — storeInvoke로 로딩 상태 자동 관리 */
+  loadRoutines: () =>
+    storeInvoke<RoutineState, RoutineRow[]>(
+      set, 'get_routines', undefined,
+      (rows) => ({ routines: rows.map(toRoutine) }),
+      '루틴 목록 로드',
+    ),
 
+  /** 생성 후 목록 재로드 — safeInvoke로 mutation 후 id 반환 */
   createRoutine: async (name, description) => {
-    try {
-      const id = await invoke<number>('create_routine', { name, description });
-      const rows = await invoke<RoutineRow[]>('get_routines');
-      set({ routines: rows.map(toRoutine) });
-      return id;
-    } catch (e) {
-      console.error('[Routine] 생성 실패:', e);
-      useToastStore.getState().addToast('루틴 생성 실패', 'error');
-      return null;
+    const id = await safeInvoke<number>('create_routine', { name, description });
+    if (id !== null) {
+      await storeInvoke<RoutineState, RoutineRow[]>(
+        set, 'get_routines', undefined,
+        (rows) => ({ routines: rows.map(toRoutine) }),
+        '루틴 목록 재로드',
+        false,
+      );
     }
+    return id;
   },
 
+  /** 삭제 — 성공 시 로컬 상태에서 즉시 제거 */
   deleteRoutine: async (id) => {
-    try {
-      await invoke('delete_routine', { id });
+    const ok = await safeInvoke('delete_routine', { id });
+    if (ok !== null) {
       set((s) => ({ routines: s.routines.filter(r => r.id !== id) }));
-    } catch (e) {
-      console.error('[Routine] 삭제 실패:', e);
-      useToastStore.getState().addToast('루틴 삭제 실패', 'error');
     }
   },
 
-  loadSteps: async (routineId) => {
-    try {
-      const rows = await invoke<RoutineStepRow[]>('get_routine_steps', { routineId });
-      set({ currentSteps: rows.map(toStep) });
-    } catch (e) {
-      console.error('[Routine] 스텝 로드 실패:', e);
-      useToastStore.getState().addToast('루틴 스텝 로드 실패', 'error');
-    }
-  },
+  /** 스텝 로드 — 로딩 없이 조용히 로드 */
+  loadSteps: (routineId) =>
+    storeInvoke<RoutineState, RoutineStepRow[]>(
+      set, 'get_routine_steps', { routineId },
+      (rows) => ({ currentSteps: rows.map(toStep) }),
+      '루틴 스텝 로드',
+      false,
+    ),
 
+  /** 스텝 추가 후 재로드 */
   addStep: async (routineId, scenarioType, configJson, durationSec, stepOrder) => {
-    try {
-      await invoke('add_routine_step', {
-        routineId, scenarioType, configJson, durationSec, stepOrder,
-      });
-      // 스텝 재로드
-      const rows = await invoke<RoutineStepRow[]>('get_routine_steps', { routineId });
-      set({ currentSteps: rows.map(toStep) });
-    } catch (e) {
-      console.error('[Routine] 스텝 추가 실패:', e);
-      useToastStore.getState().addToast('스텝 추가 실패', 'error');
+    const ok = await safeInvoke('add_routine_step', {
+      routineId, scenarioType, configJson, durationSec, stepOrder,
+    });
+    if (ok !== null) {
+      await storeInvoke<RoutineState, RoutineStepRow[]>(
+        set, 'get_routine_steps', { routineId },
+        (rows) => ({ currentSteps: rows.map(toStep) }),
+        '루틴 스텝 재로드',
+        false,
+      );
     }
   },
 
+  /** 스텝 삭제 후 재로드 */
   removeStep: async (stepId, routineId) => {
-    try {
-      await invoke('remove_routine_step', { stepId, routineId });
-      const rows = await invoke<RoutineStepRow[]>('get_routine_steps', { routineId });
-      set({ currentSteps: rows.map(toStep) });
-    } catch (e) {
-      console.error('[Routine] 스텝 삭제 실패:', e);
-      useToastStore.getState().addToast('스텝 삭제 실패', 'error');
+    const ok = await safeInvoke('remove_routine_step', { stepId, routineId });
+    if (ok !== null) {
+      await storeInvoke<RoutineState, RoutineStepRow[]>(
+        set, 'get_routine_steps', { routineId },
+        (rows) => ({ currentSteps: rows.map(toStep) }),
+        '루틴 스텝 재로드',
+        false,
+      );
     }
   },
 
+  /** 스텝 순서 교환 후 재로드 */
   swapStepOrder: async (routineId, stepIdA, stepIdB) => {
-    try {
-      await invoke('swap_routine_step_order', { stepIdA, stepIdB, routineId });
-      const rows = await invoke<RoutineStepRow[]>('get_routine_steps', { routineId });
-      set({ currentSteps: rows.map(toStep) });
-    } catch (e) {
-      console.error('[Routine] 스텝 순서 교환 실패:', e);
-      useToastStore.getState().addToast('스텝 순서 변경 실패', 'error');
+    const ok = await safeInvoke('swap_routine_step_order', { stepIdA, stepIdB, routineId });
+    if (ok !== null) {
+      await storeInvoke<RoutineState, RoutineStepRow[]>(
+        set, 'get_routine_steps', { routineId },
+        (rows) => ({ currentSteps: rows.map(toStep) }),
+        '루틴 스텝 재로드',
+        false,
+      );
     }
   },
 }));

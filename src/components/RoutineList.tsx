@@ -12,7 +12,7 @@ interface RoutineListProps {
 }
 
 export function RoutineList({ onBack, onEdit, onPlay }: RoutineListProps) {
-  const { routines, loading, loadRoutines, createRoutine, deleteRoutine } = useRoutineStore();
+  const { routines, isLoading: loading, loadRoutines, createRoutine, deleteRoutine } = useRoutineStore();
   const { t } = useTranslation();
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
