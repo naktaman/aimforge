@@ -15,36 +15,11 @@ import { calculateFlickScore } from '../engine/metrics/CompositeScore';
 import { SoundEngine } from '../engine/SoundEngine';
 import type { GameEngine } from '../engine/GameEngine';
 import type { TargetManager } from '../engine/TargetManager';
-
-/** Rust IPC: get_next_trial_sens 반환 타입 */
-interface NextTrialAction {
-  cm360: number;
-  stage: string;
-  iteration: number;
-  isBaseline: boolean;
-}
-
-/** Rust IPC: submit_calibration_trial 반환 타입 */
-interface TrialFeedback {
-  converged: boolean;
-  fatigueStop: boolean;
-  stageTransition: boolean;
-  currentBestCm360: number | null;
-  currentBestScore: number | null;
-  message: string | null;
-}
-
-/** Rust IPC: get_calibration_status 반환 타입 */
-interface CalibrationStatus {
-  stage: string;
-  mode: string;
-  iteration: number;
-  maxIterations: number;
-  screeningProgress: [number, number] | null;
-  currentBest: [number, number] | null;
-  gpCurve: [number, number, number][];
-  observations: [number, number][];
-}
+import type {
+  NextTrialAction,
+  TrialFeedback,
+  CalibrationStatusResponse,
+} from '../utils/types';
 
 interface CalibrationHandlerDeps {
   engineRef: MutableRefObject<GameEngine | null>;
@@ -141,7 +116,7 @@ export function useCalibrationHandlers(deps: CalibrationHandlerDeps): {
               });
 
               // 상태 업데이트
-              const status = await invoke<CalibrationStatus>('get_calibration_status');
+              const status = await invoke<CalibrationStatusResponse>('get_calibration_status');
               useCalibrationStore.getState().updateStatus(status);
 
               // 시나리오 정리

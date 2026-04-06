@@ -178,6 +178,127 @@ export interface MicroFlickTrialMetrics {
   compositeScore: number;
 }
 
+// ── 캘리브레이션 IPC 응답 타입 ──────────────────────────────────
+
+/** 다음 트라이얼 지시 (get_next_trial_sens 응답) */
+export interface NextTrialAction {
+  cm360: number;
+  stage: 'screening' | 'calibration' | 'complete';
+  iteration: number;
+  isBaseline: boolean;
+}
+
+/** 트라이얼 제출 피드백 (submit_calibration_trial 응답) */
+export interface TrialFeedback {
+  converged: boolean;
+  fatigueStop: boolean;
+  stageTransition: boolean;
+  currentBestCm360: number | null;
+  currentBestScore: number | null;
+  message: string | null;
+}
+
+/** 캘리브레이션 상태 (get_calibration_status 응답) */
+export interface CalibrationStatusResponse {
+  stage: 'screening' | 'calibration' | 'complete';
+  mode: 'explore' | 'refine' | 'fixed';
+  iteration: number;
+  maxIterations: number;
+  screeningProgress: [number, number] | null;
+  currentBest: [number, number] | null;
+  gpCurve: [number, number, number][];
+  observations: [number, number][];
+}
+
+// ── 줌 캘리브레이션 IPC 응답 타입 ──────────────────────────────
+
+/** 다음 줌 트라이얼 지시 (get_next_zoom_trial 응답) */
+export interface ZoomTrialAction {
+  ratioIndex: number;
+  ratio: number;
+  scopeName: string;
+  multiplier: number;
+  phase: 'steady' | 'correction' | 'zoomout';
+  iteration: number;
+  isBaseline: boolean;
+}
+
+/** 줌 트라이얼 피드백 (submit_zoom_trial 응답) */
+export interface ZoomTrialFeedback {
+  ratioConverged: boolean;
+  advanceToNextRatio: boolean;
+  allComplete: boolean;
+  fatigueStop: boolean;
+  currentBestMultiplier: number | null;
+  currentBestScore: number | null;
+}
+
+/** 줌 캘리브레이션 최종 결과 (finalize_zoom_calibration 응답) */
+export interface ZoomCalibrationResultResponse {
+  ratioResults: ZoomRatioResultItem[];
+  kFit: ZoomKFitResult;
+  predictedMultipliers: ZoomPredictedMultiplier[];
+  totalIterations: number;
+}
+
+/** 줌 비율별 결과 */
+export interface ZoomRatioResultItem {
+  zoomProfileId: number;
+  ratio: number;
+  scopeFov: number;
+  optimalMultiplier: number;
+  steadyScore: number;
+  correctionScore: number;
+  zoomoutScore: number;
+  compositeScore: number;
+  mdmPredicted: number;
+  deviation: number;
+  observations: [number, number][];
+}
+
+/** K 피팅 결과 (Rust → TS) */
+export interface ZoomKFitResult {
+  kValue: number;
+  kVariance: number;
+  quality: 'low' | 'medium' | 'high';
+  dataPoints: { zoomRatio: number; scopeFov: number; optimalMultiplier: number; score: number }[];
+  piecewiseK: { ratioStart: number; ratioEnd: number; k: number }[] | null;
+  aimType: string | null;
+}
+
+/** 예측 배율 (Rust → TS) */
+export interface ZoomPredictedMultiplier {
+  scopeName: string;
+  zoomRatio: number;
+  multiplier: number;
+  isMeasured: boolean;
+}
+
+/** K 조정 결과 (adjust_k 응답) */
+export interface AdjustedPredictions {
+  kValue: number;
+  predictions: ZoomPredictedMultiplier[];
+}
+
+// ── Comparator IPC 응답 타입 ────────────────────────────────────
+
+/** Comparator 트라이얼 지시 (get_next_comparator_trial 응답) */
+export interface ComparatorTrialAction {
+  method: string;
+  methodIndex: number;
+  repetition: number;
+  trialNumber: number;
+  totalTrials: number;
+  multiplier: number;
+}
+
+/** Comparator 트라이얼 피드백 (submit_comparator_trial 응답) */
+export interface ComparatorTrialFeedbackResponse {
+  hasNext: boolean;
+  completed: number;
+  total: number;
+}
+
 /** 배터리 프리셋 */
 export type BatteryPreset = 'TACTICAL' | 'MOVEMENT' | 'BR' | 'CUSTOM';
 

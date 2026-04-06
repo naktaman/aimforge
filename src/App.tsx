@@ -30,10 +30,12 @@ import { isPointerLocked } from './engine/PointerLock';
 import { useScenarioLauncher } from './hooks/useScenarioLauncher';
 import { useBatteryHandlers } from './hooks/useBatteryHandlers';
 import { useCalibrationHandlers } from './hooks/useCalibrationHandlers';
+import { useZoomCalibrationHandlers } from './hooks/useZoomCalibrationHandlers';
+import { useComparatorHandlers } from './hooks/useComparatorHandlers';
 import { useProfileWizardStore } from './stores/profileWizardStore';
 import { useZoomCalibrationStore } from './stores/zoomCalibrationStore';
 import type { GameEngine } from './engine/GameEngine';
-import type { ScenarioType, StageType } from './utils/types';
+import type { ScenarioType, StageType, AdjustedPredictions } from './utils/types';
 import { useTranslation } from './i18n';
 
 // ── React.lazy 코드 스플리팅 — 화면별 지연 로딩 ──
@@ -121,7 +123,7 @@ function App() {
   const { cmPer360, currentZoom, scopeMultiplier } = useSettingsStore();
   const { startCalibration, resetCalibration } = useCalibrationStore();
   const {
-    kFitResult, predictedMultipliers, comparatorResult, resetZoomCalibration,
+    kFitResult, predictedMultipliers, comparatorResult, comparatorState, resetZoomCalibration,
     startZoomCalibration: startZoomCal, selectedProfileIds,
     convergenceMode: zoomConvergenceMode, availableProfiles,
   } = useZoomCalibrationStore();
@@ -139,6 +141,12 @@ function App() {
   });
   const { handleCalibrationLaunchTrial } = useCalibrationHandlers({
     engineRef, targetManagerRef, soundEngine, syncRecoilToEngine,
+  });
+  const { handleZoomLaunchTrial } = useZoomCalibrationHandlers({
+    engineRef, targetManagerRef, soundEngine,
+  });
+  const { handleComparatorStart, handleComparatorRunTrial } = useComparatorHandlers({
+    engineRef, targetManagerRef, soundEngine,
   });
 
   /** 엔진 준비 완료 시 호출 */
@@ -240,12 +248,19 @@ function App() {
   /** K 조정 */
   const handleAdjustK = useCallback(async (delta: number) => {
     try {
-      const result = await invoke<any>('adjust_k', { delta });
+      const result = await invoke<AdjustedPredictions>('adjust_k', { delta });
       useZoomCalibrationStore.getState().setKFitResult({
         ...useZoomCalibrationStore.getState().kFitResult!,
         kValue: result.kValue,
       });
-      useZoomCalibrationStore.getState().setPredictedMultipliers(result.predictions);
+      useZoomCalibrationStore.getState().setPredictedMultipliers(
+        result.predictions.map((p) => ({
+          scopeName: p.scopeName,
+          zoomRatio: p.zoomRatio,
+          multiplier: p.multiplier,
+          isMeasured: p.isMeasured,
+        })),
+      );
     } catch (e) {
       console.error('K 조정 실패:', e);
     }
@@ -364,7 +379,10 @@ function App() {
         <main className="app-main"><ZoomCalibrationSetup onStart={handleZoomCalibrationStart} onBack={() => setScreen('settings')} /></main>
       )}
       {currentScreen === 'zoom-calibration-progress' && (
-        <main className="app-main"><ZoomCalibrationProgress onCancel={handleZoomCalibrationCancel} /></main>
+        <main className="app-main"><ZoomCalibrationProgress
+          onCancel={handleZoomCalibrationCancel}
+          onLaunchTrial={comparatorState?.isRunning ? handleComparatorRunTrial : handleZoomLaunchTrial}
+        /></main>
       )}
       {currentScreen === 'zoom-calibration-result' && kFitResult && (
         <main className="app-main">
@@ -372,7 +390,14 @@ function App() {
           <MultiplierCurve kFit={kFitResult} predictions={predictedMultipliers} hipfireFov={useSettingsStore.getState().hfov || 103} onAdjustK={handleAdjustK} />
           <div className="result-actions">
             <button className="btn-secondary" onClick={() => { resetZoomCalibration(); setScreen('settings'); }}>돌아가기</button>
-            <button className="btn-primary" onClick={() => setScreen('comparator-result')}>방식 비교하기</button>
+            <button className="btn-primary" onClick={() => {
+              /* Comparator 시작 — 예측 배율로 방식 비교 */
+              const preds = useZoomCalibrationStore.getState().predictedMultipliers;
+              const mults = preds.map((p) => p.multiplier);
+              if (mults.length > 0) {
+                handleComparatorStart(1, 1, mults);
+              }
+            }}>방식 비교하기</button>
           </div>
         </main>
       )}

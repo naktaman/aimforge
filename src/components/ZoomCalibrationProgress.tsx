@@ -8,6 +8,7 @@ import { UI_COLORS } from '../config/theme';
 
 interface ZoomCalibrationProgressProps {
   onCancel: () => void;
+  onLaunchTrial: () => void;
 }
 
 /** 페이즈 i18n 키 */
@@ -24,7 +25,7 @@ const PHASE_COLORS: Record<string, string> = {
   zoomout: UI_COLORS.infoBlue,
 };
 
-export function ZoomCalibrationProgress({ onCancel }: ZoomCalibrationProgressProps) {
+export function ZoomCalibrationProgress({ onCancel, onLaunchTrial }: ZoomCalibrationProgressProps) {
   const {
     currentRatioIndex,
     totalRatios,
@@ -105,6 +106,11 @@ export function ZoomCalibrationProgress({ onCancel }: ZoomCalibrationProgressPro
           {currentRatioIndex} / {totalRatios} {t('zoom.ratiosComplete')}
         </span>
       </div>
+
+      {/* 트라이얼 시작 버튼 */}
+      <button className="btn-primary" onClick={onLaunchTrial}>
+        {t('zoom.launchTrial')}
+      </button>
 
       <button className="btn-secondary" onClick={onCancel}>
         {t('common.cancel')}
