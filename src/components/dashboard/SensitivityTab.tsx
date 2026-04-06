@@ -159,21 +159,21 @@ export function SensitivityTab({
         </div>
       </div>
 
-      {/* 우측 30% — 도구 & 프로파일 */}
+      {/* 우측 30% — 도구 카드 그리드 */}
       <div className="dash-col-right">
-        <div className="dash-section-label">{t('nav.gameProfile')}</div>
-        <div className="dash-tool-list">
-          <button className="dash-tool-item menu-item" onClick={() => useEngineStore.getState().setScreen('game-profiles')}>
-            <span className="dash-tool-icon">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="3" width="12" height="10" rx="2" /><line x1="5" y1="7" x2="11" y2="7" /><line x1="5" y1="10" x2="9" y2="10" /></svg>
+        <div className="dash-section-label">{t('dash.quickTools')}</div>
+        <div className="dash-tool-grid">
+          <button className="dash-tool-card menu-item" onClick={() => useEngineStore.getState().setScreen('game-profiles')}>
+            <span className="dash-tool-card-icon">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="4" width="14" height="12" rx="2" /><line x1="6" y1="8" x2="14" y2="8" /><line x1="6" y1="12" x2="11" y2="12" /></svg>
             </span>
-            <span className="dash-tool-name">{t('nav.gameProfile')}</span>
+            <span className="dash-tool-card-name">{t('nav.gameProfile')}</span>
           </button>
-          <button className="dash-tool-item menu-item" onClick={() => useEngineStore.getState().setScreen('conversion-selector')}>
-            <span className="dash-tool-icon">
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 6l4-4 4 4M4 10l4 4 4-4" /></svg>
+          <button className="dash-tool-card menu-item" onClick={() => useEngineStore.getState().setScreen('conversion-selector')}>
+            <span className="dash-tool-card-icon">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M5 7l5-5 5 5M5 13l5 5 5-5" /></svg>
             </span>
-            <span className="dash-tool-name">{t('nav.conversion')}</span>
+            <span className="dash-tool-card-name">{t('nav.conversion')}</span>
           </button>
           {mode === 'advanced' && (
             <>
@@ -181,34 +181,35 @@ export function SensitivityTab({
                 className="dash-advanced-toggle btn-ghost"
                 onClick={() => setShowAdvanced(prev => !prev)}
                 aria-expanded={showAdvanced}
+                style={{ gridColumn: '1 / -1' }}
               >
                 {t('dash.advancedTools')} {showAdvanced ? '\u25B2' : '\u25BC'}
               </button>
               {showAdvanced && (
                 <>
-                  <button className="dash-tool-item menu-item" onClick={() => useEngineStore.getState().setScreen('fov-comparison')}>
-                    <span className="dash-tool-icon">
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M1 8 L8 2 L15 8" /><line x1="8" y1="2" x2="8" y2="14" /></svg>
+                  <button className="dash-tool-card menu-item" onClick={() => useEngineStore.getState().setScreen('fov-comparison')}>
+                    <span className="dash-tool-card-icon">
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M1 10 L10 2 L19 10" /><line x1="10" y1="2" x2="10" y2="18" /></svg>
                     </span>
-                    <span className="dash-tool-name">{t('tool.fovComparison')}</span>
+                    <span className="dash-tool-card-name">{t('tool.fovComparison')}</span>
                   </button>
-                  <button className="dash-tool-item menu-item" onClick={() => useEngineStore.getState().setScreen('hardware-compare')}>
-                    <span className="dash-tool-icon">
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="6" width="6" height="8" rx="1" /><rect x="9" y="2" width="6" height="12" rx="1" /></svg>
+                  <button className="dash-tool-card menu-item" onClick={() => useEngineStore.getState().setScreen('hardware-compare')}>
+                    <span className="dash-tool-card-icon">
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="7" width="7" height="10" rx="1" /><rect x="11" y="3" width="7" height="14" rx="1" /></svg>
                     </span>
-                    <span className="dash-tool-name">{t('tool.hardwareCompare')}</span>
+                    <span className="dash-tool-card-name">{t('tool.hardwareCompare')}</span>
                   </button>
-                  <button className="dash-tool-item menu-item" onClick={() => useEngineStore.getState().setScreen('dual-landscape')}>
-                    <span className="dash-tool-icon">
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="8" cy="8" r="6" /><path d="M8 2 Q12 6 8 14 Q4 6 8 2" /></svg>
+                  <button className="dash-tool-card menu-item" onClick={() => useEngineStore.getState().setScreen('dual-landscape')}>
+                    <span className="dash-tool-card-icon">
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="10" cy="10" r="7" /><path d="M10 3 Q14 7 10 17 Q6 7 10 3" /></svg>
                     </span>
-                    <span className="dash-tool-name">{t('tool.dualLandscape')}</span>
+                    <span className="dash-tool-card-name">{t('tool.dualLandscape')}</span>
                   </button>
-                  <button className="dash-tool-item menu-item" onClick={() => useEngineStore.getState().setScreen('movement-editor')}>
-                    <span className="dash-tool-icon">
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M2 14 L6 6 L10 10 L14 2" /></svg>
+                  <button className="dash-tool-card menu-item" onClick={() => useEngineStore.getState().setScreen('movement-editor')}>
+                    <span className="dash-tool-card-icon">
+                      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 17 L7 7 L12 12 L17 3" /></svg>
                     </span>
-                    <span className="dash-tool-name">{t('tool.movementEditor')}</span>
+                    <span className="dash-tool-card-name">{t('tool.movementEditor')}</span>
                   </button>
                 </>
               )}

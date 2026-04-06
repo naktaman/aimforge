@@ -945,5 +945,24 @@
   "empty.sessionData": "아직 데이터가 없습니다",
   "empty.noSearchResults": "검색 결과가 없습니다",
 
-  "sensitivity.title": "감도 최적화"
+  "sensitivity.title": "감도 최적화",
+
+  "cta.createProfileTitle": "게임 프로필을 만들어 보세요",
+  "cta.createProfileDesc": "플레이하는 게임을 등록하면 맞춤 감도 최적화를 시작할 수 있습니다.",
+  "cta.createProfileBtn": "게임 프로필 만들기",
+  "cta.calibrateTitle": "나만의 최적 감도를 찾아보세요",
+  "cta.calibrateDesc": "AI가 여러 감도를 테스트하고 가장 적합한 감도를 추천합니다.",
+  "cta.calibrateBtn": "감도 캘리브레이션 시작",
+  "cta.readyTitle": "오늘의 훈련을 시작하세요",
+  "cta.readyDesc": "감도가 설정되었습니다. 훈련으로 실력을 키우거나 Aim DNA 테스트를 진행해 보세요.",
+  "cta.startTrainingBtn": "훈련 시작",
+  "cta.dnaTestBtn": "Aim DNA 배터리",
+
+  "empty.analysisNoData": "아직 분석할 데이터가 없습니다",
+  "empty.analysisAction": "첫 훈련을 완료하면 여기에 성과 분석이 표시됩니다.",
+  "empty.analysisStartTraining": "훈련 탭으로 이동",
+  "empty.analysisCalibrate": "감도 캘리브레이션부터",
+  "empty.trendNoData": "세션 데이터가 쌓이면 트렌드를 확인할 수 있습니다",
+  "empty.recentNoData": "최근 플레이 기록이 없습니다",
+  "empty.recentAction": "훈련을 시작해 보세요"
 }

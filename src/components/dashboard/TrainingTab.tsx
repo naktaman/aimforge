@@ -1,13 +1,14 @@
 /**
  * 훈련 탭 — 3열 대시보드
- * 좌: 훈련 요약 + 서브탭 전환, 중앙: 카탈로그/커스텀/배터리, 우: 최근 기록
+ * 좌: 훈련 요약 + 배터리, 중앙: 프리셋 카탈로그(우선) + 접힌 커스텀/배터리, 우: 최근 기록
  */
+import { useState } from 'react';
 import type { ScenarioType, GamePreset, BatteryPreset } from '../../utils/types';
 import type { ScenarioParamsState } from '../../types/scenarioSelect';
 import type { BatteryParams, TrainingStartParams } from '../../types/scenarioSelect';
 import { CategoryIcons, TRAINING_CATALOG, SCENARIO_TABS } from '../../config/scenarioConstants';
 
-/** 훈련 서브탭 */
+/** 훈련 서브탭 — 좌측 모드 전환용 (유지) */
 type TrainingSub = 'catalog' | 'custom' | 'battery';
 
 /** 훈련 탭 Props */
@@ -37,12 +38,15 @@ export function TrainingTab({
   renderParams, handleStart,
   params, setParam, t,
 }: TrainingTabProps) {
+  /** 커스텀 플레이 접힘 상태 */
+  const [customExpanded, setCustomExpanded] = useState(false);
+
   return (
     <div className="dash-grid-3col">
       {/* 좌측 25% — 훈련 요약 */}
       <div className="dash-col-left">
         <div className="dash-section-label">{t('dash.trainingStats')}</div>
-        {/* 오늘 훈련 통계 — 실데이터 없으면 "데이터 없음" 서브라벨 */}
+        {/* 오늘 훈련 통계 */}
         <div className="dash-stat-card">
           <span className="dash-stat-label">{t('dash.todaySessions')}</span>
           <span className="dash-stat-value">{'\u2014'}</span>
@@ -88,15 +92,13 @@ export function TrainingTab({
         </div>
       </div>
 
-      {/* 중앙 45% — 카탈로그/커스텀/배터리 콘텐츠 */}
+      {/* 중앙 45% — 프리셋 카탈로그 우선 + 접힌 커스텀/배터리 */}
       <div className="dash-col-center">
-        <div className="dash-section-label">
-          {trainingSub === 'catalog' ? t('scenario.catalog') : trainingSub === 'custom' ? t('scenario.customScenario') : t('scenario.battery')}
-        </div>
-
-        {/* 카탈로그 — 카테고리 헤더 + 아이콘 + 2열 그리드 */}
+        {/* 카탈로그 모드: 프리셋 그리드 + 접힌 커스텀 */}
         {trainingSub === 'catalog' && (
           <div>
+            <div className="dash-section-label">{t('scenario.catalog')}</div>
+            {/* 프리셋 카탈로그 — 항상 먼저 표시 */}
             {TRAINING_CATALOG.map(({ category, items }) => (
               <div key={category}>
                 <div className="dash-catalog-category">
@@ -122,44 +124,74 @@ export function TrainingTab({
                 </div>
               </div>
             ))}
-          </div>
-        )}
 
-        {/* 커스텀 플레이 */}
-        {trainingSub === 'custom' && (
-          <div className="dash-custom-play">
-            <div className="scenario-tabs">
-              {SCENARIO_TABS.map(({ type, label }) => (
-                <button key={type} className={scenarioType === type ? 'active' : ''} onClick={() => setScenarioType(type)}>
-                  {label}
-                </button>
-              ))}
-            </div>
-            {renderParams()}
-            <button className="btn-primary btn-lg" onClick={handleStart} disabled={!selectedGame} style={{ marginTop: 'var(--space-4)', width: '100%' }}>
-              {t('scenario.startScenario')}
+            {/* 커스텀 플레이 — 접힌 상태로 하단 배치 */}
+            <button
+              className="dash-collapse-toggle btn-ghost"
+              onClick={() => setCustomExpanded(prev => !prev)}
+              aria-expanded={customExpanded}
+            >
+              {t('scenario.customPlay')} {customExpanded ? '\u25B2' : '\u25BC'}
             </button>
-          </div>
-        )}
-
-        {/* 배터리 테스트 */}
-        {trainingSub === 'battery' && (
-          <div className="dash-battery">
-            <p className="dash-battery-desc">{t('scenario.batteryDesc')}</p>
-            <div className="dash-battery-presets">
-              {(['TACTICAL', 'MOVEMENT', 'BR', 'CUSTOM'] as BatteryPreset[]).map((preset) => (
-                <label key={preset} className="dash-battery-radio">
-                  <input type="radio" name="battery" value={preset} checked={params.batteryPreset === preset} onChange={() => setParam('batteryPreset', preset)} />
-                  {preset}
-                </label>
-              ))}
-            </div>
-            {onBattery && (
-              <button className="btn-primary btn-lg" onClick={() => onBattery({ preset: params.batteryPreset })} disabled={!selectedGame} style={{ width: '100%' }}>
-                {t('scenario.startBattery')} ({params.batteryPreset})
-              </button>
+            {customExpanded && (
+              <div className="dash-custom-play">
+                <div className="scenario-tabs">
+                  {SCENARIO_TABS.map(({ type, label }) => (
+                    <button key={type} className={scenarioType === type ? 'active' : ''} onClick={() => setScenarioType(type)}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {renderParams()}
+                <button className="btn-primary btn-lg" onClick={handleStart} disabled={!selectedGame} style={{ marginTop: 'var(--space-4)', width: '100%' }}>
+                  {t('scenario.startScenario')}
+                </button>
+              </div>
             )}
           </div>
+        )}
+
+        {/* 커스텀 모드 — 서브탭 직접 전환 시 */}
+        {trainingSub === 'custom' && (
+          <>
+            <div className="dash-section-label">{t('scenario.customScenario')}</div>
+            <div className="dash-custom-play">
+              <div className="scenario-tabs">
+                {SCENARIO_TABS.map(({ type, label }) => (
+                  <button key={type} className={scenarioType === type ? 'active' : ''} onClick={() => setScenarioType(type)}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {renderParams()}
+              <button className="btn-primary btn-lg" onClick={handleStart} disabled={!selectedGame} style={{ marginTop: 'var(--space-4)', width: '100%' }}>
+                {t('scenario.startScenario')}
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* 배터리 테스트 모드 */}
+        {trainingSub === 'battery' && (
+          <>
+            <div className="dash-section-label">{t('scenario.battery')}</div>
+            <div className="dash-battery">
+              <p className="dash-battery-desc">{t('scenario.batteryDesc')}</p>
+              <div className="dash-battery-presets">
+                {(['TACTICAL', 'MOVEMENT', 'BR', 'CUSTOM'] as BatteryPreset[]).map((preset) => (
+                  <label key={preset} className="dash-battery-radio">
+                    <input type="radio" name="battery" value={preset} checked={params.batteryPreset === preset} onChange={() => setParam('batteryPreset', preset)} />
+                    {preset}
+                  </label>
+                ))}
+              </div>
+              {onBattery && (
+                <button className="btn-primary btn-lg" onClick={() => onBattery({ preset: params.batteryPreset })} disabled={!selectedGame} style={{ width: '100%' }}>
+                  {t('scenario.startBattery')} ({params.batteryPreset})
+                </button>
+              )}
+            </div>
+          </>
         )}
       </div>
 
@@ -172,7 +204,10 @@ export function TrainingTab({
               <rect x="6" y="4" width="24" height="28" rx="3" />
               <line x1="11" y1="12" x2="25" y2="12" /><line x1="11" y1="18" x2="22" y2="18" /><line x1="11" y1="24" x2="19" y2="24" />
             </svg>
-            <span className="dash-empty-text">{t('empty.sessionData')}</span>
+            <span className="dash-empty-text">{t('empty.recentNoData')}</span>
+            <button className="btn-secondary btn-sm" onClick={() => setTrainingSub('catalog')}>
+              {t('empty.recentAction')}
+            </button>
           </div>
         </div>
 
@@ -186,7 +221,7 @@ export function TrainingTab({
               <line x1="6" y1="30" x2="6" y2="6" /><line x1="6" y1="30" x2="30" y2="30" />
               <polyline points="10,24 16,18 20,22 26,12" />
             </svg>
-            <span className="dash-empty-text">{t('empty.sessionData')}</span>
+            <span className="dash-empty-text">{t('empty.trendNoData')}</span>
           </div>
         </div>
       </div>

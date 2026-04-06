@@ -17,6 +17,7 @@ import { useScenarioParams } from '../hooks/useScenarioParams';
 import { SensitivityTab } from './dashboard/SensitivityTab';
 import { TrainingTab } from './dashboard/TrainingTab';
 import { AnalysisTab } from './dashboard/AnalysisTab';
+import { DashboardHero } from './dashboard/DashboardHero';
 
 /* 하위 호환성을 위한 타입 재수출 */
 export type { ScenarioParams, BatteryParams, TrainingStartParams } from '../types/scenarioSelect';
@@ -267,6 +268,15 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
         </section>
       )}
 
+      {/* ── 상태 기반 CTA 히어로 ── */}
+      <DashboardHero
+        t={t}
+        onCalibration={onCalibration}
+        onTrainingStart={() => { setMainTab('training'); setTrainingSub('catalog'); }}
+        onBattery={onBattery ? () => onBattery({ preset: 'TACTICAL' }) : undefined}
+        hasSelectedGame={!!selectedGame}
+      />
+
       {/* ── 메인 콘텐츠 (탭별 3열 대시보드) ── */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -329,6 +339,7 @@ export function ScenarioSelect({ onStart, onTrainingStart, onCalibration, onZoom
           {mainTab === 'analysis' && (
             <AnalysisTab
               onHistory={onHistory}
+              onCalibration={onCalibration}
               mode={mode}
               t={t}
               setMainTab={setMainTab}

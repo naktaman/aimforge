@@ -945,5 +945,24 @@
   "empty.sessionData": "No data yet",
   "empty.noSearchResults": "No search results",
 
-  "sensitivity.title": "Sensitivity Optimization"
+  "sensitivity.title": "Sensitivity Optimization",
+
+  "cta.createProfileTitle": "Create a Game Profile",
+  "cta.createProfileDesc": "Register your game to start personalized sensitivity optimization.",
+  "cta.createProfileBtn": "Create Game Profile",
+  "cta.calibrateTitle": "Find Your Optimal Sensitivity",
+  "cta.calibrateDesc": "AI tests multiple sensitivities and recommends the best one for you.",
+  "cta.calibrateBtn": "Start Calibration",
+  "cta.readyTitle": "Start Today's Training",
+  "cta.readyDesc": "Your sensitivity is set. Train to improve or take the Aim DNA test.",
+  "cta.startTrainingBtn": "Start Training",
+  "cta.dnaTestBtn": "Aim DNA Battery",
+
+  "empty.analysisNoData": "No analysis data yet",
+  "empty.analysisAction": "Complete your first training to see performance analysis here.",
+  "empty.analysisStartTraining": "Go to Training",
+  "empty.analysisCalibrate": "Start with Calibration",
+  "empty.trendNoData": "Trends will appear as you complete sessions",
+  "empty.recentNoData": "No recent play history",
+  "empty.recentAction": "Start training"
 }

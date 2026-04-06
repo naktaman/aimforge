@@ -1,20 +1,25 @@
 /**
  * 분석 탭 — 3열 대시보드
  * 좌: 종합 통계, 중앙: 세션 트렌드 + 분석 도구, 우: 최근 시나리오 점수
+ * 데이터 없을 때: Actionable Empty State (다음 행동 안내 + 실행 버튼)
  */
 import { useEngineStore } from '../../stores/engineStore';
+import { useCalibrationStore } from '../../stores/calibrationStore';
 import { CategoryIcons } from '../../config/scenarioConstants';
 
 /** 분석 탭 Props */
 interface AnalysisTabProps {
   onHistory?: () => void;
+  onCalibration?: () => void;
   mode: string;
   t: (key: string) => string;
   setMainTab: (tab: 'sensitivity' | 'training' | 'analysis') => void;
 }
 
 /** 분석 탭 컴포넌트 */
-export function AnalysisTab({ onHistory, mode, t, setMainTab }: AnalysisTabProps) {
+export function AnalysisTab({ onHistory, onCalibration, mode, t, setMainTab }: AnalysisTabProps) {
+  const hasCalibration = useCalibrationStore((s) => s.result !== null);
+
   return (
     <div className="dash-grid-3col">
       {/* 좌측 25% — 종합 통계 카드 */}
@@ -49,16 +54,27 @@ export function AnalysisTab({ onHistory, mode, t, setMainTab }: AnalysisTabProps
           <div className="dash-chart-header">
             <span className="dash-chart-title">{t('dash.last90days')}</span>
           </div>
-          <div className="dash-empty-state">
+          {/* Actionable Empty State — 트렌드 */}
+          <div className="dash-empty-state dash-empty-actionable">
             <svg className="dash-empty-icon" width="48" height="32" viewBox="0 0 48 32" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.2">
               <line x1="4" y1="28" x2="44" y2="28" />
               <polyline points="4,22 12,18 20,20 28,12 36,16 44,8" strokeDasharray="3 3" />
             </svg>
-            <span className="dash-empty-text">{t('empty.sessionData')}</span>
+            <span className="dash-empty-text">{t('empty.trendNoData')}</span>
+            <div className="dash-empty-actions">
+              {!hasCalibration && onCalibration && (
+                <button className="btn-secondary btn-sm" onClick={onCalibration}>
+                  {t('empty.analysisCalibrate')}
+                </button>
+              )}
+              <button className="btn-secondary btn-sm" onClick={() => setMainTab('training')}>
+                {t('empty.analysisStartTraining')}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* 분석 도구 서브탭 카드 그리드 */}
+        {/* 분석 도구 카드 그리드 */}
         <div className="dash-section-label" style={{ marginTop: 'var(--space-4)' }}>{t('dash.analysisTools')}</div>
         <div className="dash-analysis-grid">
           <button className="dash-analysis-card" onClick={() => useEngineStore.getState().setScreen('progress-dashboard')}>
@@ -104,12 +120,19 @@ export function AnalysisTab({ onHistory, mode, t, setMainTab }: AnalysisTabProps
       <div className="dash-col-right">
         <div className="dash-section-label">{t('dash.recentScenarios')}</div>
         <div className="dash-recent-list">
-          <div className="dash-empty-state">
+          {/* Actionable Empty State — 최근 시나리오 */}
+          <div className="dash-empty-state dash-empty-actionable">
             <svg className="dash-empty-icon" width="36" height="36" viewBox="0 0 36 36" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.25">
               <rect x="6" y="4" width="24" height="28" rx="3" />
               <line x1="11" y1="12" x2="25" y2="12" /><line x1="11" y1="18" x2="22" y2="18" /><line x1="11" y1="24" x2="19" y2="24" />
             </svg>
-            <span className="dash-empty-text">{t('empty.sessionData')}</span>
+            <span className="dash-empty-text">{t('empty.analysisNoData')}</span>
+            <span className="dash-empty-hint">{t('empty.analysisAction')}</span>
+            <div className="dash-empty-actions">
+              <button className="btn-secondary btn-sm" onClick={() => setMainTab('training')}>
+                {t('empty.analysisStartTraining')}
+              </button>
+            </div>
           </div>
         </div>
       </div>
