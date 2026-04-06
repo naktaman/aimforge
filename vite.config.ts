@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
@@ -6,6 +7,12 @@ const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig(async () => ({
   plugins: [react()],
+  test: {
+    globals: true,
+    environment: "happy-dom",
+    setupFiles: "./src/__tests__/setup.ts",
+    include: ["src/**/*.test.{ts,tsx}"],
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
