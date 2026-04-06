@@ -60,6 +60,7 @@ const AimDnaResult = namedLazy(() => import('./components/AimDnaResult'), 'AimDn
 const CrossGameComparison = namedLazy(() => import('./components/CrossGameComparison'), 'CrossGameComparison');
 const SessionHistory = namedLazy(() => import('./components/SessionHistory'), 'SessionHistory');
 const DisplaySettings = namedLazy(() => import('./components/DisplaySettings'), 'DisplaySettings');
+const CrosshairSettings = namedLazy(() => import('./components/CrosshairSettings'), 'CrosshairSettings');
 const GameProfileManager = namedLazy(() => import('./components/GameProfileManager'), 'GameProfileManager');
 const RoutineList = namedLazy(() => import('./components/RoutineList'), 'RoutineList');
 const RoutineBuilder = namedLazy(() => import('./components/RoutineBuilder'), 'RoutineBuilder');
@@ -334,6 +335,7 @@ function App() {
       {currentScreen === 'aim-dna-result' && <AimDnaResult onBack={() => setScreen('battery-result')} />}
       {currentScreen === 'session-history' && <SessionHistory onBack={() => setScreen('settings')} />}
       {currentScreen === 'display-settings' && (<main className="app-main"><DisplaySettings onBack={() => setScreen('settings')} /></main>)}
+      {currentScreen === 'crosshair-settings' && (<main className="app-main"><CrosshairSettings /><div className="settings-actions"><button className="btn-secondary" onClick={() => setScreen('display-settings')}>← {t('common.back')}</button></div></main>)}
       {currentScreen === 'game-profiles' && (<main className="app-main"><GameProfileManager onBack={() => setScreen('settings')} /></main>)}
 
       {currentScreen === 'routines' && editingRoutineId === null && (

@@ -1,5 +1,5 @@
 /**
- * 설정 화면 — 하드웨어 / 감도&프로필 / 디스플레이 / 언어 / 사운드 / 데이터 관리 / 앱 정보
+ * 설정 화면 — 하드웨어 / 감도 / 크로스헤어 / 디스플레이 / HUD / 사운드 / 단축키 / 데이터 / 언어 / 정보
  * 섹션별로 분리된 통합 설정 UI
  */
 import { useState, useEffect, useCallback } from 'react';
@@ -9,6 +9,7 @@ import { useUiStore, type AppLocale } from '../stores/uiStore';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useGameProfileStore } from '../stores/gameProfileStore';
 import { useEngineStore } from '../stores/engineStore';
+import { Crosshair } from './overlays/Crosshair';
 import { useTranslation } from '../i18n';
 
 /** 디스플레이 모드 */
@@ -39,7 +40,9 @@ const POLLING_RATES = [125, 250, 500, 1000, 2000, 4000, 8000];
 type SensUnit = 'cm360' | 'inch360' | 'edpi';
 
 /** 현재 활성 설정 섹션 */
-type SettingsSection = 'hardware' | 'sensitivity' | 'display' | 'language' | 'sound' | 'data' | 'about';
+type SettingsSection =
+  | 'hardware' | 'sensitivity' | 'crosshair' | 'display'
+  | 'hud' | 'sound' | 'keybinds' | 'data' | 'language' | 'about';
 
 interface DisplaySettingsProps {
   onBack: () => void;
@@ -54,12 +57,28 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps): React.JSX.Ele
   const [exporting, setExporting] = useState(false);
   const [sensUnit, setSensUnit] = useState<SensUnit>('cm360');
 
+  /* 볼륨 상태 (0~100, step 5) */
+  const [masterVolume, setMasterVolume] = useState(70);
+  const [sfxVolume, setSfxVolume] = useState(70);
+  const [hitSoundVolume, setHitSoundVolume] = useState(70);
+  const [hitSoundType, setHitSoundType] = useState('default');
+
+  /* HUD & 피드백 상태 */
+  const [hudHitmarker, setHudHitmarker] = useState(true);
+  const [hudDamageNumbers, setHudDamageNumbers] = useState(false);
+  const [hudTimerPosition, setHudTimerPosition] = useState('top-center');
+  const [hudScoreDisplay, setHudScoreDisplay] = useState(true);
+  const [hudFpsCounter, setHudFpsCounter] = useState(false);
+
+  /* 데이터 초기화 확인 다이얼로그 */
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
   /* 하드웨어 설정 — settingsStore에서 초기값, DB에서도 로드 */
   const [mouseAccel, setMouseAccel] = useState(false);
   const [rawInput, setRawInput] = useState(true);
 
   const { locale, setLocale } = useUiStore();
-  const { dpi, pollingRate, setDpi, setPollingRate } = useSettingsStore();
+  const { dpi, pollingRate, setDpi, setPollingRate, crosshair } = useSettingsStore();
   const { t } = useTranslation();
 
   /** 활성 프로필 구독 */
@@ -81,6 +100,26 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps): React.JSX.Ele
         /* 사운드 설정 로드 */
         const sound = map.get('sound_enabled');
         if (sound === 'false') setSoundEnabled(false);
+        /* 볼륨 설정 로드 */
+        const mv = map.get('master_volume');
+        if (mv) setMasterVolume(parseInt(mv, 10));
+        const sv = map.get('sfx_volume');
+        if (sv) setSfxVolume(parseInt(sv, 10));
+        const hv = map.get('hit_sound_volume');
+        if (hv) setHitSoundVolume(parseInt(hv, 10));
+        const ht = map.get('hit_sound_type');
+        if (ht) setHitSoundType(ht);
+        /* HUD 설정 로드 */
+        const hm = map.get('hud_hitmarker');
+        if (hm === 'false') setHudHitmarker(false);
+        const dn = map.get('hud_damage_numbers');
+        if (dn === 'true') setHudDamageNumbers(true);
+        const tp = map.get('hud_timer_position');
+        if (tp) setHudTimerPosition(tp);
+        const sd = map.get('hud_score_display');
+        if (sd === 'false') setHudScoreDisplay(false);
+        const fc = map.get('hud_fps_counter');
+        if (fc === 'true') setHudFpsCounter(true);
         /* 하드웨어 설정 로드 */
         const accel = map.get('mouse_accel');
         if (accel === 'true') setMouseAccel(true);
@@ -175,14 +214,17 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps): React.JSX.Ele
   const sensUnitLabel = sensUnit === 'cm360' ? 'cm/360'
     : sensUnit === 'inch360' ? 'inch/360' : 'eDPI';
 
-  /** 섹션 탭 목록 */
+  /** 섹션 탭 목록 — 하드웨어→감도→크로스헤어→디스플레이→HUD→사운드→단축키→데이터→언어→정보 */
   const SECTIONS: Array<{ key: SettingsSection; label: string }> = [
     { key: 'hardware', label: t('settings.sectionHardware') },
     { key: 'sensitivity', label: t('settings.sectionSensitivity') },
+    { key: 'crosshair', label: t('settings.sectionCrosshair') },
     { key: 'display', label: t('settings.sectionDisplay') },
-    { key: 'language', label: t('settings.sectionLanguage') },
+    { key: 'hud', label: t('settings.sectionHud') },
     { key: 'sound', label: t('settings.sectionSound') },
+    { key: 'keybinds', label: t('settings.sectionKeybinds') },
     { key: 'data', label: t('settings.sectionData') },
+    { key: 'language', label: t('settings.sectionLanguage') },
     { key: 'about', label: t('settings.sectionAbout') },
   ];
 
@@ -320,6 +362,24 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps): React.JSX.Ele
         </div>
       )}
 
+      {/* ─── 크로스헤어 섹션 ─── */}
+      {section === 'crosshair' && (
+        <div className="settings-grid">
+          <h3 className="settings-section-heading">{t('settings.sectionCrosshair')}</h3>
+          <p className="text-secondary">{t('settings.crosshairPreview')}</p>
+          {/* 크로스헤어 미리보기 영역 */}
+          <div className="crosshair-preview-area">
+            <Crosshair config={crosshair} />
+          </div>
+          <button
+            className="btn-primary"
+            onClick={() => useEngineStore.getState().setScreen('crosshair-settings')}
+          >
+            {t('settings.crosshairCustomize')}
+          </button>
+        </div>
+      )}
+
       {/* ─── 디스플레이 섹션 ─── */}
       {section === 'display' && (
         <div className="settings-grid">
@@ -397,9 +457,80 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps): React.JSX.Ele
         </div>
       )}
 
+      {/* ─── HUD & 피드백 섹션 ─── */}
+      {section === 'hud' && (
+        <div className="settings-grid">
+          <h3 className="settings-section-heading">{t('settings.sectionHud')}</h3>
+
+          {/* 히트마커 표시 */}
+          <div className="setting-row">
+            <label>
+              <input
+                type="checkbox"
+                checked={hudHitmarker}
+                onChange={(e) => { setHudHitmarker(e.target.checked); saveSetting('hud_hitmarker', String(e.target.checked)); }}
+              />
+              {' '}{t('settings.hudHitmarker')}
+            </label>
+          </div>
+
+          {/* 데미지 수치 표시 */}
+          <div className="setting-row">
+            <label>
+              <input
+                type="checkbox"
+                checked={hudDamageNumbers}
+                onChange={(e) => { setHudDamageNumbers(e.target.checked); saveSetting('hud_damage_numbers', String(e.target.checked)); }}
+              />
+              {' '}{t('settings.hudDamageNumbers')}
+            </label>
+          </div>
+
+          {/* 타이머 위치 */}
+          <div className="setting-row">
+            <label>{t('settings.hudTimerPosition')}</label>
+            <select
+              value={hudTimerPosition}
+              onChange={(e) => { setHudTimerPosition(e.target.value); saveSetting('hud_timer_position', e.target.value); }}
+            >
+              <option value="top-center">{t('settings.hudTimerTopCenter')}</option>
+              <option value="top-left">{t('settings.hudTimerTopLeft')}</option>
+              <option value="top-right">{t('settings.hudTimerTopRight')}</option>
+            </select>
+          </div>
+
+          {/* 점수 표시 */}
+          <div className="setting-row">
+            <label>
+              <input
+                type="checkbox"
+                checked={hudScoreDisplay}
+                onChange={(e) => { setHudScoreDisplay(e.target.checked); saveSetting('hud_score_display', String(e.target.checked)); }}
+              />
+              {' '}{t('settings.hudScoreDisplay')}
+            </label>
+          </div>
+
+          {/* FPS 카운터 */}
+          <div className="setting-row">
+            <label>
+              <input
+                type="checkbox"
+                checked={hudFpsCounter}
+                onChange={(e) => { setHudFpsCounter(e.target.checked); saveSetting('hud_fps_counter', String(e.target.checked)); }}
+              />
+              {' '}{t('settings.hudFpsCounter')}
+            </label>
+          </div>
+        </div>
+      )}
+
       {/* ─── 사운드 섹션 ─── */}
       {section === 'sound' && (
         <div className="settings-grid">
+          <h3 className="settings-section-heading">{t('settings.sectionSound')}</h3>
+
+          {/* 사운드 ON/OFF 토글 */}
           <div className="setting-row">
             <label>{t('settings.soundEffects')}</label>
             <div className="toggle-switch">
@@ -414,12 +545,75 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps): React.JSX.Ele
               </label>
             </div>
           </div>
+
+          {/* 마스터 볼륨 슬라이더 */}
+          <div className="volume-row">
+            <label>{t('settings.masterVolume')}</label>
+            <input
+              type="range" min={0} max={100} step={5}
+              value={masterVolume}
+              onChange={(e) => { const v = parseInt(e.target.value, 10); setMasterVolume(v); saveSetting('master_volume', String(v)); }}
+            />
+            <span className="volume-value">{masterVolume}%</span>
+          </div>
+
+          {/* 효과음 볼륨 슬라이더 */}
+          <div className="volume-row">
+            <label>{t('settings.sfxVolume')}</label>
+            <input
+              type="range" min={0} max={100} step={5}
+              value={sfxVolume}
+              onChange={(e) => { const v = parseInt(e.target.value, 10); setSfxVolume(v); saveSetting('sfx_volume', String(v)); }}
+            />
+            <span className="volume-value">{sfxVolume}%</span>
+          </div>
+
+          {/* 히트 사운드 볼륨 슬라이더 */}
+          <div className="volume-row">
+            <label>{t('settings.hitSoundVolume')}</label>
+            <input
+              type="range" min={0} max={100} step={5}
+              value={hitSoundVolume}
+              onChange={(e) => { const v = parseInt(e.target.value, 10); setHitSoundVolume(v); saveSetting('hit_sound_volume', String(v)); }}
+            />
+            <span className="volume-value">{hitSoundVolume}%</span>
+          </div>
+
+          {/* 히트 사운드 종류 드롭다운 */}
+          <div className="setting-row">
+            <label>{t('settings.hitSoundType')}</label>
+            <select
+              value={hitSoundType}
+              onChange={(e) => { setHitSoundType(e.target.value); saveSetting('hit_sound_type', e.target.value); }}
+            >
+              <option value="default">{t('settings.hitSoundDefault')}</option>
+              <option value="metallic">{t('settings.hitSoundMetallic')}</option>
+              <option value="soft">{t('settings.hitSoundSoft')}</option>
+            </select>
+          </div>
+        </div>
+      )}
+
+      {/* ─── 단축키 섹션 ─── */}
+      {section === 'keybinds' && (
+        <div className="settings-grid">
+          <h3 className="settings-section-heading">{t('settings.keybindsTitle')}</h3>
+          <div className="keybind-list">
+            <div className="keybind-row"><kbd>ESC</kbd><span>{t('settings.keybindPause')}</span></div>
+            <div className="keybind-row"><kbd>Tab</kbd><span>{t('settings.keybindScoreboard')}</span></div>
+            <div className="keybind-row"><kbd>R</kbd><span>{t('settings.keybindRestart')}</span></div>
+            <div className="keybind-row"><kbd>F11</kbd><span>{t('settings.keybindFullscreen')}</span></div>
+            <div className="keybind-row"><kbd>LMB</kbd><span>{t('settings.keybindFire')}</span></div>
+            <div className="keybind-row"><kbd>RMB</kbd><span>{t('settings.keybindAds')}</span></div>
+          </div>
+          <p className="keybinds-future">{t('settings.keybindsFuture')}</p>
         </div>
       )}
 
       {/* ─── 데이터 관리 섹션 ─── */}
       {section === 'data' && (
         <div className="settings-grid">
+          {/* 내보내기 */}
           <div className="data-section">
             <h3>{t('data.exportAll')}</h3>
             <p className="text-secondary">{t('data.exportDesc')}</p>
@@ -428,6 +622,41 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps): React.JSX.Ele
             </button>
           </div>
           {exportStatus && <p className="data-status">{exportStatus}</p>}
+
+          {/* 가져오기 (placeholder) */}
+          <div className="data-section">
+            <h3>{t('data.importData')}</h3>
+            <p className="text-secondary">{t('data.importDesc')}</p>
+            <button className="btn-secondary" onClick={() => console.warn('[Data] 가져오기 — 추후 구현')}>
+              {t('data.importJson')}
+            </button>
+          </div>
+
+          {/* 전체 초기화 */}
+          <div className="data-section">
+            <h3>{t('data.resetAll')}</h3>
+            <p className="text-secondary">{t('data.resetDesc')}</p>
+            <button className="btn-danger" onClick={() => setShowResetConfirm(true)}>
+              {t('data.resetButton')}
+            </button>
+          </div>
+
+          {/* 초기화 확인 다이얼로그 */}
+          {showResetConfirm && (
+            <div className="confirm-overlay" onClick={() => setShowResetConfirm(false)}>
+              <div className="confirm-dialog" onClick={(e) => e.stopPropagation()}>
+                <p>{t('data.resetConfirmTitle')}</p>
+                <div className="confirm-dialog-actions">
+                  <button className="btn-secondary" onClick={() => setShowResetConfirm(false)}>
+                    {t('common.cancel')}
+                  </button>
+                  <button className="btn-danger" onClick={() => { console.warn('[Data] 전체 데이터 초기화 — 추후 구현'); setShowResetConfirm(false); }}>
+                    {t('data.resetButton')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

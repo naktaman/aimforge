@@ -27,7 +27,8 @@ export type AppScreen =
   | 'recoil-editor'
   | 'conversion-selector'
   | 'profile-wizard'
-  | 'sensitivity-dashboard';
+  | 'sensitivity-dashboard'
+  | 'crosshair-settings';
 
 /** 반동(리코일) 프리셋 */
 export type RecoilPreset = 'none' | 'light' | 'heavy' | 'shotgun';
