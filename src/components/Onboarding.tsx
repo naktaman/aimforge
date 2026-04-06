@@ -8,6 +8,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { AnimatePresence, motion } from 'motion/react';
 import { useSettingsStore } from '../stores/settingsStore';
+import { useGameProfileStore } from '../stores/gameProfileStore';
 import { useUiStore, type AppMode } from '../stores/uiStore';
 import { useTranslation } from '../i18n';
 import { gameSensToCm360 } from '../utils/physics';
@@ -137,12 +138,53 @@ export function Onboarding() {
     ? gameSensToCm360(sensitivity, dpi, selectedGame.yaw)
     : null;
 
-  /** 완료 처리 — 설정 저장 후 메인 화면 전환 */
-  const handleComplete = () => {
+  /** 완료 처리 — 설정 저장 + DB 프로필 생성 후 메인 화면 전환 */
+  const handleComplete = async (): Promise<void> => {
     setStoreDpi(dpi);
     if (selectedGame) {
       selectGame(selectedGame);
       setStoreSensitivity(sensitivity);
+
+      // GAME_DATABASE에서 게임 정보 조회
+      const gameEntry = GAME_DATABASE.find(g => g.id === selectedGame.id || g.name === selectedGame.name);
+
+      // cm/360 계산
+      const cm360Val = gameSensToCm360(sensitivity, dpi, selectedGame.yaw);
+
+      // sensitivityFields 기본값 JSON 생성
+      const sensFields: Record<string, number> = {};
+      if (gameEntry) {
+        for (const field of gameEntry.sensitivityFields) {
+          // 유저가 입력한 감도는 sensitivity 키에, 나머지는 기본값
+          sensFields[field.key] = field.key === 'sensitivity'
+            ? sensitivity
+            : field.defaultValue;
+        }
+      } else {
+        sensFields['sensitivity'] = sensitivity;
+      }
+
+      // DB에 게임 프로필 생성 + active 설정
+      try {
+        const createdId = await useGameProfileStore.getState().createProfile({
+          profileId: 1,
+          gameId: selectedGame.id,
+          gameName: selectedGame.name,
+          customSens: sensitivity,
+          customDpi: dpi,
+          customFov: selectedGame.defaultFov,
+          customCm360: cm360Val,
+          sensFieldsJson: JSON.stringify(sensFields),
+        });
+
+        // 생성 성공 시 active 설정
+        if (createdId !== null) {
+          await useGameProfileStore.getState().setActive(createdId);
+        }
+      } catch (e) {
+        console.error('온보딩 프로필 자동 생성 실패:', e);
+        // 프로필 생성 실패해도 온보딩은 완료 (나중에 수동 생성 가능)
+      }
     }
     setMode_(mode);
     completeOnboarding();
