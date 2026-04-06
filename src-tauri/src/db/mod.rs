@@ -48,6 +48,26 @@ impl Database {
 
     pub fn initialize_schema(&self) -> Result<()> {
         self.conn.execute_batch(SCHEMA_SQL)?;
+        self.seed_defaults()?;
+        Ok(())
+    }
+
+    /// 기본 게임 + 기본 프로필 시드 — 이미 존재하면 무시 (INSERT OR IGNORE)
+    fn seed_defaults(&self) -> Result<()> {
+        // 기본 게임 (CS2) — 다른 테이블의 FK 참조용
+        self.conn.execute(
+            "INSERT OR IGNORE INTO games (id, name, yaw_formula, fov_default, fov_type, sens_step, movement_ratio) \
+             VALUES (1, 'CS2', '0.022', 106.26, 'horizontal', 0.01, 0.34)",
+            [],
+        )?;
+
+        // 기본 프로필 — 프론트엔드가 profile_id=1 하드코딩 참조
+        self.conn.execute(
+            "INSERT OR IGNORE INTO profiles (id, game_id, current_sens, current_cm360, calibration_mode) \
+             VALUES (1, 1, 1.0, 46.18, 'explore')",
+            [],
+        )?;
+
         Ok(())
     }
 
