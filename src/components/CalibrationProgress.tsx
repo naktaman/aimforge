@@ -5,6 +5,7 @@
 import { useCalibrationStore } from '../stores/calibrationStore';
 import { useTranslation } from '../i18n';
 import { PerformanceLandscape } from './PerformanceLandscape';
+import { useAnimatedValue } from '../hooks/useChartAnimation';
 
 interface CalibrationProgressProps {
   onCancel: () => void;
@@ -30,10 +31,11 @@ export function CalibrationProgress({ onCancel, onLaunchTrial }: CalibrationProg
   /** 스테이지 라벨 */
   const stageLabel = stage === 'screening' ? t('cal.screening') : t('cal.sensSearch');
 
-  /** 진행률 계산 */
-  const progress = stage === 'screening' && screeningProgress
+  /** 진행률 계산 — 부드러운 상승 애니메이션 */
+  const progressRaw = stage === 'screening' && screeningProgress
     ? (screeningProgress.current / screeningProgress.target) * 100
     : (iteration / maxIterations) * 100;
+  const progress = useAnimatedValue(progressRaw, 600);
 
   return (
     <div className="calibration-progress">

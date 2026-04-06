@@ -11,6 +11,8 @@ import { useTabKeyboard } from '../utils/useTabKeyboard';
 import ReadinessWidget from './ReadinessWidget';
 import { EmptyState } from './EmptyState';
 import { UI_COLORS } from '../config/theme';
+import { applyD3LineAnimation, applyD3PointAnimation } from '../hooks/useChartAnimation';
+import { useAnimatedValue } from '../hooks/useChartAnimation';
 import type { AimDnaHistoryEntry, SkillProgressRow } from '../utils/types';
 
 interface Props {
@@ -85,28 +87,31 @@ function DnaLineChart({ data, label, unit, noDataLabel }: { data: AimDnaHistoryE
       .call(g => g.selectAll('text').attr('fill', UI_COLORS.chartAxisText).attr('font-size', 10))
       .call(g => g.selectAll('line, path').attr('stroke', UI_COLORS.chartAxisLine));
 
-    // 라인
+    // 라인 — 선 그리기 애니메이션
     const line = d3.line<typeof parsed[0]>()
       .x(d => xScale(d.date))
       .y(d => yScale(d.value))
       .curve(d3.curveMonotoneX);
 
-    g.append('path')
+    const linePath = g.append('path')
       .datum(parsed)
       .attr('fill', 'none')
       .attr('stroke', UI_COLORS.infoBlue)
       .attr('stroke-width', 2)
       .attr('d', line);
 
-    // 포인트
-    g.selectAll('.dot')
+    applyD3LineAnimation(linePath, 800, 200);
+
+    // 포인트 — 순차 등장 애니메이션
+    const dots = g.selectAll('.dot')
       .data(parsed)
       .enter()
       .append('circle')
       .attr('cx', d => xScale(d.date))
       .attr('cy', d => yScale(d.value))
-      .attr('r', 3)
       .attr('fill', UI_COLORS.infoBlue);
+
+    applyD3PointAnimation(dots, 60, 500);
 
     // 라벨
     g.append('text')
@@ -134,17 +139,19 @@ function skillBarClass(pct: number): string {
   return 'skill-bar__fill skill-bar__fill--low';
 }
 
-/** 스킬 진행 카드 */
-function SkillCard({ skill }: { skill: SkillProgressRow }) {
+/** 스킬 진행 카드 — 바 상승 애니메이션 */
+function SkillCard({ skill, index }: { skill: SkillProgressRow; index: number }) {
   const { t } = useTranslation();
   const pct = Math.min(100, skill.rollingAvgScore);
+  /** 0→목표 바 애니메이션 (순차 딜레이) */
+  const animatedPct = useAnimatedValue(pct, 600, 200 + index * 80);
   return (
     <div className="glass-card--compact">
       <div className="skill-card__name">
         {skill.stageType.replace(/_/g, ' ')}
       </div>
       <div className="skill-bar">
-        <div className={skillBarClass(pct)} style={{ width: `${pct}%` }} />
+        <div className={skillBarClass(pct)} style={{ width: `${animatedPct}%` }} />
       </div>
       <div className="skill-card__meta text-sm text-muted">
         <span>{t('common.average')} {skill.rollingAvgScore.toFixed(1)}</span>
@@ -282,8 +289,8 @@ export default function ProgressDashboard({ onBack, profileId }: Props) {
           />
         ) : (
           <div className="skill-grid">
-            {skillProgress.map(s => (
-              <SkillCard key={s.id} skill={s} />
+            {skillProgress.map((s, i) => (
+              <SkillCard key={s.id} skill={s} index={i} />
             ))}
           </div>
         )}

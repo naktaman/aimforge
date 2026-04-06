@@ -8,6 +8,7 @@ import { useProgressStore } from '../stores/progressStore';
 import { BackButton } from './BackButton';
 // 테마 토큰 — 모터 영역 색상 + UI 색상
 import { MOTOR_COLORS, UI_COLORS } from '../config/theme';
+import { applyD3PointAnimation } from '../hooks/useChartAnimation';
 import type { ClickVector, GmmClusterResult } from '../utils/types';
 
 interface Props {
@@ -64,18 +65,18 @@ function ClickVectorScatter({ vectors }: { vectors: ClickVector[] }) {
     g.append('line').attr('x1', 0).attr('x2', w).attr('y1', yScale(0)).attr('y2', yScale(0))
       .attr('stroke', UI_COLORS.chartGrid).attr('stroke-dasharray', '4,4');
 
-    // 데이터 포인트
-    g.selectAll('.click-dot')
+    // 데이터 포인트 — 순차 등장 애니메이션
+    const dots = g.selectAll('.click-dot')
       .data(vectors)
       .enter()
       .append('circle')
       .attr('cx', d => xScale(d.dxDeg))
       .attr('cy', d => yScale(d.dyDeg))
-      .attr('r', 4)
       .attr('fill', d => MOTOR_COLORS[d.motorRegion] || UI_COLORS.textMuted)
-      .attr('opacity', 0.7)
       .attr('stroke', d => d.overshoot ? UI_COLORS.dangerRed : 'none')
       .attr('stroke-width', d => d.overshoot ? 2 : 0);
+
+    applyD3PointAnimation(dots, 15, 200);
 
     // 축 라벨
     g.append('text').attr('x', w / 2).attr('y', h + 32).attr('text-anchor', 'middle')
@@ -130,17 +131,22 @@ function GmmHistogram({ vectors, gmm }: { vectors: ClickVector[]; gmm: GmmCluste
       .call(g => g.selectAll('text').attr('fill', UI_COLORS.chartAxisText).attr('font-size', 10))
       .call(g => g.selectAll('line, path').attr('stroke', UI_COLORS.chartAxisLine));
 
-    // 히스토그램 바
+    // 히스토그램 바 — 바닥에서 상승 애니메이션
     g.selectAll('.bar')
       .data(bins)
       .enter()
       .append('rect')
       .attr('x', d => xScale(d.x0 ?? 0))
-      .attr('y', d => yScale(d.length))
+      .attr('y', h)                /* 바닥에서 시작 */
       .attr('width', d => Math.max(0, xScale(d.x1 ?? 0) - xScale(d.x0 ?? 0) - 1))
-      .attr('height', d => h - yScale(d.length))
+      .attr('height', 0)           /* 높이 0에서 시작 */
       .attr('fill', `${UI_COLORS.infoBlue}44`)
-      .attr('stroke', UI_COLORS.infoBlue);
+      .attr('stroke', UI_COLORS.infoBlue)
+      .transition()
+      .delay((_d: unknown, i: number) => 200 + i * 30)
+      .duration(500)
+      .attr('y', d => yScale((d as d3.Bin<number, number>).length))
+      .attr('height', d => h - yScale((d as d3.Bin<number, number>).length));
 
     // GMM 가우시안 오버레이
     if (gmm) {

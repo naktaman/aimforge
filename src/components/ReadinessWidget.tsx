@@ -63,30 +63,46 @@ export default function ReadinessWidget({ result, onMeasure }: Props) {
       .attr('d', bgArc({}) as string)
       .attr('fill', UI_COLORS.bgPanel); /* 패널 배경 토큰 — 게이지 배경 arc */
 
-    // 값 arc
+    // 값 arc — 0에서 목표 각도까지 애니메이션
     const score = result?.score ?? 0;
     const scoreAngle = startAngle + (endAngle - startAngle) * (score / 100);
-    const color = result ? (CATEGORY_COLORS[result.category] || UI_COLORS.textMuted) : UI_COLORS.textMuted; /* 비활성 텍스트 토큰 */
+    const color = result ? (CATEGORY_COLORS[result.category] || UI_COLORS.textMuted) : UI_COLORS.textMuted;
 
     const valueArc = d3.arc<unknown>()
       .innerRadius(innerRadius)
       .outerRadius(outerRadius)
-      .startAngle(startAngle)
-      .endAngle(scoreAngle)
       .cornerRadius(4);
 
-    g.append('path')
-      .attr('d', valueArc({}) as string)
+    const valuePath = g.append('path')
       .attr('fill', color);
 
-    // 점수 텍스트
-    g.append('text')
+    // 게이지 arc 상승 애니메이션 (startAngle → scoreAngle)
+    valuePath
+      .transition()
+      .duration(800)
+      .ease(d3.easeCubicOut)
+      .attrTween('d', () => {
+        const interp = d3.interpolate(startAngle, scoreAngle);
+        return (tt: number) => valueArc({ startAngle, endAngle: interp(tt) }) as string;
+      });
+
+    // 점수 텍스트 — 카운트업 애니메이션
+    const scoreText = g.append('text')
       .attr('text-anchor', 'middle')
       .attr('y', -20)
       .attr('fill', color)
       .attr('font-size', 32)
       .attr('font-weight', 700)
-      .text(Math.round(score));
+      .text('0');
+
+    scoreText
+      .transition()
+      .duration(800)
+      .ease(d3.easeCubicOut)
+      .tween('text', () => {
+        const interp = d3.interpolateRound(0, Math.round(score));
+        return (tt: number) => { scoreText.text(interp(tt)); };
+      });
 
     // 카테고리 라벨
     if (result) {

@@ -7,6 +7,7 @@ import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import type { KFitResult, PredictedMultiplier } from '../stores/zoomCalibrationStore';
 import { UI_COLORS } from '../config/theme';
+import { applyD3LineAnimation, applyD3PointAnimation } from '../hooks/useChartAnimation';
 
 interface MultiplierCurveProps {
   /** K 피팅 결과 */
@@ -70,39 +71,44 @@ export function MultiplierCurve({
       .y((d) => yScale(d.mult))
       .curve(d3.curveBasis);
 
-    g.append('path')
+    /* 피팅 곡선 — 선 그리기 애니메이션 */
+    const curvePath = g.append('path')
       .datum(curvePoints)
       .attr('d', curveLine)
       .attr('fill', 'none')
       .attr('stroke', UI_COLORS.successGreen)
       .attr('stroke-width', 2.5);
 
-    // ── 측정점 (●) ──
+    applyD3LineAnimation(curvePath, 800, 200);
+
+    // ── 측정점 (●) — 순차 등장 ──
     const measured = predictions.filter((p) => p.isMeasured);
-    g.selectAll('.measured-point')
+    const measuredDots = g.selectAll('.measured-point')
       .data(measured)
       .enter()
       .append('circle')
       .attr('cx', (d) => xScale(d.zoomRatio))
       .attr('cy', (d) => yScale(d.multiplier))
-      .attr('r', 6)
       .attr('fill', UI_COLORS.infoBlue)
       .attr('stroke', UI_COLORS.chartSubGrid) /* 차트 서브그리드 토큰 (어두운 파랑) */
       .attr('stroke-width', 2);
 
-    // ── 보간점 (○) ──
+    applyD3PointAnimation(measuredDots, 80, 500);
+
+    // ── 보간점 (○) — 순차 등장 ──
     const interpolated = predictions.filter((p) => !p.isMeasured);
-    g.selectAll('.interp-point')
+    const interpDots = g.selectAll('.interp-point')
       .data(interpolated)
       .enter()
       .append('circle')
       .attr('cx', (d) => xScale(d.zoomRatio))
       .attr('cy', (d) => yScale(d.multiplier))
-      .attr('r', 5)
       .attr('fill', 'none')
       .attr('stroke', UI_COLORS.textSecondary)
       .attr('stroke-width', 2)
       .attr('stroke-dasharray', '3,2');
+
+    applyD3PointAnimation(interpDots, 80, 700);
 
     // ── 포인트 라벨 ──
     g.selectAll('.point-label')
