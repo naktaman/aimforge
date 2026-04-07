@@ -3,6 +3,7 @@
  * - 프로시저럴 무기 지오메트리 (권총/라이플)
  * - 별도 오버레이 씬/카메라로 월드 오브젝트에 가려지지 않게 렌더
  * - 발사 시 반동 킥백 애니메이션
+ * - Phase 3: View Bob, Weapon Sway, ADS 전환
  */
 import * as THREE from 'three';
 
@@ -19,6 +20,34 @@ const RECOIL_ANIM = {
   recoverSpeed: 12,
 };
 
+/** View Bob 설정 — 이동 시 무기 흔들림 */
+const VIEW_BOB = {
+  /** 사이클 속도 (rad/s) */
+  speed: 10,
+  /** 수직 진폭 */
+  vertAmp: 0.003,
+  /** 수평 진폭 */
+  horizAmp: 0.002,
+};
+
+/** Weapon Sway 설정 — 마우스 이동에 따른 관성 */
+const SWAY = {
+  /** sway 양 (px → offset 변환 계수) */
+  amount: 0.0004,
+  /** 부드러움 (lerp 속도) */
+  smooth: 5,
+  /** 최대 오프셋 */
+  maxOffset: 0.015,
+};
+
+/** ADS (Aim Down Sights) 설정 */
+const ADS_CONFIG = {
+  /** hip→ADS 전환 속도 */
+  transitionSpeed: 8,
+  /** ADS 시 FOV 배율 (1.0 미만 = 줌인) */
+  fovMultiplier: 0.85,
+};
+
 export class WeaponViewModel {
   /** 무기 전용 오버레이 씬 */
   private overlayScene: THREE.Scene;
@@ -30,19 +59,35 @@ export class WeaponViewModel {
   private currentStyle: WeaponStyle = 'pistol';
 
   // === 반동 애니메이션 상태 ===
-  /** 현재 킥백 회전량 (라디안, pitch up) */
   private kickRotation = 0;
-  /** 현재 킥백 밀림량 (Z축) */
   private kickTranslation = 0;
-  /** 킥백 목표값 (순간 설정 후 감쇠) */
   private targetKickRotation = 0;
   private targetKickTranslation = 0;
 
-  constructor() {
-    // 오버레이 씬 생성 (투명 배경)
-    this.overlayScene = new THREE.Scene();
+  // === View Bob 상태 (Phase 3) ===
+  /** bob 위상 (라디안) */
+  private bobPhase = 0;
+  /** 이동 여부 — true면 bob 활성 */
+  private isMoving = false;
 
-    // 오버레이 카메라 — 좁은 near plane으로 무기가 항상 보이게
+  // === Weapon Sway 상태 (Phase 3) ===
+  /** 현재 sway 오프셋 (X/Y) */
+  private swayX = 0;
+  private swayY = 0;
+  /** 마우스 델타 누적 (프레임당 리셋) */
+  private mouseDeltaX = 0;
+  private mouseDeltaY = 0;
+
+  // === ADS 상태 (Phase 3) ===
+  /** ADS 진행도 (0=hip, 1=ADS) */
+  private adsProgress = 0;
+  /** ADS 목표 (0 또는 1) */
+  private adsTarget = 0;
+  /** 머즐(총구) 월드 위치 — 이펙트 시스템에서 사용 */
+  private muzzleWorldPos = new THREE.Vector3();
+
+  constructor() {
+    this.overlayScene = new THREE.Scene();
     this.overlayCamera = new THREE.PerspectiveCamera(70, 16 / 9, 0.01, 10);
     this.overlayCamera.position.set(0, 0, 0);
 
@@ -53,9 +98,10 @@ export class WeaponViewModel {
     dirLight.position.set(2, 3, 1);
     this.overlayScene.add(dirLight);
 
-    // 기본 무기 생성
     this.buildWeapon('pistol');
   }
+
+  // === 공개 API ===
 
   /** 무기 스타일 변경 */
   setStyle(style: WeaponStyle): void {
@@ -68,55 +114,119 @@ export class WeaponViewModel {
     return this.currentStyle;
   }
 
-  /**
-   * 발사 반동 애니메이션 트리거
-   * @param intensity 반동 강도 (0~1 범위 권장, recoilVerticalDeg / 2.0 정도)
-   */
+  /** 발사 반동 애니메이션 트리거 */
   triggerFireAnimation(intensity: number): void {
-    // 누적 방식 — 연사 시 킥백이 쌓임
     const clampedIntensity = Math.min(Math.max(intensity, 0.1), 2.0);
     this.targetKickRotation += RECOIL_ANIM.baseKickRad * clampedIntensity;
     this.targetKickTranslation += RECOIL_ANIM.baseKickZ * clampedIntensity;
-
-    // 최대값 제한 (과도한 누적 방지)
     this.targetKickRotation = Math.min(this.targetKickRotation, 0.4);
     this.targetKickTranslation = Math.min(this.targetKickTranslation, 0.15);
   }
 
-  /** 매 프레임 업데이트 — 킥백 복귀 애니메이션 */
+  /** 이동 상태 설정 — View Bob 활성화 */
+  setMoving(moving: boolean): void {
+    this.isMoving = moving;
+  }
+
+  /** 마우스 델타 입력 — Sway 계산용 */
+  feedMouseDelta(dx: number, dy: number): void {
+    this.mouseDeltaX += dx;
+    this.mouseDeltaY += dy;
+  }
+
+  /** ADS 토글 */
+  toggleADS(): void {
+    this.adsTarget = this.adsTarget > 0.5 ? 0 : 1;
+  }
+
+  /** ADS 상태 직접 설정 */
+  setADS(active: boolean): void {
+    this.adsTarget = active ? 1 : 0;
+  }
+
+  /** ADS 진행도 반환 (0=hip, 1=ADS) */
+  getAdsProgress(): number {
+    return this.adsProgress;
+  }
+
+  /** ADS 기반 FOV 배율 — 엔진에서 FOV 적용에 사용 */
+  getAdsFovMultiplier(): number {
+    return 1.0 - this.adsProgress * (1.0 - ADS_CONFIG.fovMultiplier);
+  }
+
+  /** 머즐(총구) 위치 반환 — 이펙트 발생 위치 */
+  getMuzzlePosition(): THREE.Vector3 {
+    return this.muzzleWorldPos.clone();
+  }
+
+  /** 매 프레임 업데이트 — 킥백 + Bob + Sway + ADS */
   update(deltaTime: number): void {
     if (!this.weaponGroup) return;
 
+    // 킥백 복귀
     const speed = RECOIL_ANIM.recoverSpeed * deltaTime;
-
-    // 킥백 → 현재값으로 빠르게 점프
     this.kickRotation += (this.targetKickRotation - this.kickRotation) * Math.min(speed * 3, 1);
     this.kickTranslation += (this.targetKickTranslation - this.kickTranslation) * Math.min(speed * 3, 1);
-
-    // 타겟값 감쇠 (복귀)
     this.targetKickRotation *= Math.max(0, 1 - speed);
     this.targetKickTranslation *= Math.max(0, 1 - speed);
 
-    // 무기 그룹에 반동 적용
-    const basePos = this.getBasePosition();
+    // View Bob — 이동 시 sin/cos 기반 흔들림
+    let bobX = 0;
+    let bobY = 0;
+    if (this.isMoving) {
+      this.bobPhase += VIEW_BOB.speed * deltaTime;
+      bobX = Math.cos(this.bobPhase) * VIEW_BOB.horizAmp;
+      bobY = Math.abs(Math.sin(this.bobPhase)) * VIEW_BOB.vertAmp;
+    } else {
+      // 정지 시 위상 감쇠
+      this.bobPhase *= 0.9;
+    }
+
+    // Weapon Sway — 마우스 움직임에 대한 관성 지연
+    const targetSwayX = Math.max(-SWAY.maxOffset,
+      Math.min(SWAY.maxOffset, -this.mouseDeltaX * SWAY.amount));
+    const targetSwayY = Math.max(-SWAY.maxOffset,
+      Math.min(SWAY.maxOffset, -this.mouseDeltaY * SWAY.amount));
+    const swayLerp = 1 - Math.exp(-SWAY.smooth * deltaTime);
+    this.swayX += (targetSwayX - this.swayX) * swayLerp;
+    this.swayY += (targetSwayY - this.swayY) * swayLerp;
+    this.mouseDeltaX = 0;
+    this.mouseDeltaY = 0;
+
+    // ADS 전환 — lerp로 부드럽게
+    const adsLerp = 1 - Math.exp(-ADS_CONFIG.transitionSpeed * deltaTime);
+    this.adsProgress += (this.adsTarget - this.adsProgress) * adsLerp;
+
+    // 최종 위치/회전 계산
+    const hipPos = this.getBasePosition();
+    const adsPos = this.getAdsPosition();
     const baseRot = this.getBaseRotation();
 
+    // hip ↔ ADS 위치 보간
+    const posX = hipPos.x + (adsPos.x - hipPos.x) * this.adsProgress;
+    const posY = hipPos.y + (adsPos.y - hipPos.y) * this.adsProgress;
+    const posZ = hipPos.z + (adsPos.z - hipPos.z) * this.adsProgress;
+
+    // ADS 중에는 Bob/Sway 감소
+    const adsSuppress = 1 - this.adsProgress * 0.8;
+
     this.weaponGroup.position.set(
-      basePos.x,
-      basePos.y + this.kickRotation * 0.1, // 약간 위로
-      basePos.z + this.kickTranslation,      // 뒤로 밀림
+      posX + (bobX + this.swayX) * adsSuppress,
+      posY + (bobY + this.swayY + this.kickRotation * 0.1) * adsSuppress,
+      posZ + this.kickTranslation,
     );
     this.weaponGroup.rotation.set(
-      baseRot.x - this.kickRotation, // pitch up (음수 방향이 위)
-      baseRot.y,
+      baseRot.x - this.kickRotation * adsSuppress,
+      baseRot.y + this.swayX * 2 * adsSuppress,
       baseRot.z,
     );
+
+    // 머즐 위치 업데이트 (총구 앞쪽)
+    this.muzzleWorldPos.copy(this.weaponGroup.position);
+    this.muzzleWorldPos.z -= this.currentStyle === 'rifle' ? 0.4 : 0.17;
   }
 
-  /**
-   * 오버레이 렌더 — 메인 씬 렌더 후 호출
-   * 깊이 버퍼만 클리어하여 무기가 월드 위에 그려짐
-   */
+  /** 오버레이 렌더 — 깊이 클리어 후 무기 그리기 */
   render(renderer: THREE.WebGLRenderer): void {
     const prevAutoClear = renderer.autoClear;
     renderer.autoClear = false;
@@ -125,10 +235,15 @@ export class WeaponViewModel {
     renderer.autoClear = prevAutoClear;
   }
 
-  /** 카메라 종횡비 업데이트 (리사이즈 시) */
+  /** 카메라 종횡비 업데이트 */
   updateAspect(aspect: number): void {
     this.overlayCamera.aspect = aspect;
     this.overlayCamera.updateProjectionMatrix();
+  }
+
+  /** 오버레이 씬 접근 — 머즐 플래시 등 이펙트 추가용 */
+  getOverlayScene(): THREE.Scene {
+    return this.overlayScene;
   }
 
   /** 리소스 정리 */
@@ -139,7 +254,7 @@ export class WeaponViewModel {
 
   // === 내부 메서드 ===
 
-  /** 무기 빌드 (기존 무기 정리 후 새로 생성) */
+  /** 무기 빌드 */
   private buildWeapon(style: WeaponStyle): void {
     this.disposeWeapon();
     this.currentStyle = style;
@@ -162,7 +277,7 @@ export class WeaponViewModel {
     }
   }
 
-  /** 무기 스타일별 기본 위치 */
+  /** hip 기본 위치 */
   private getBasePosition(): THREE.Vector3 {
     switch (this.currentStyle) {
       case 'pistol':
@@ -172,17 +287,22 @@ export class WeaponViewModel {
     }
   }
 
-  /** 무기 스타일별 기본 회전 */
-  private getBaseRotation(): THREE.Euler {
+  /** ADS 위치 — 화면 중앙으로 이동 */
+  private getAdsPosition(): THREE.Vector3 {
     switch (this.currentStyle) {
       case 'pistol':
-        return new THREE.Euler(0, Math.PI, 0);
+        return new THREE.Vector3(0.0, -0.15, -0.35);
       case 'rifle':
-        return new THREE.Euler(0, Math.PI, 0);
+        return new THREE.Vector3(0.0, -0.14, -0.38);
     }
   }
 
-  /** 기존 무기 지오메트리/머티리얼 정리 */
+  /** 기본 회전 */
+  private getBaseRotation(): THREE.Euler {
+    return new THREE.Euler(0, Math.PI, 0);
+  }
+
+  /** 기존 무기 정리 */
   private disposeWeapon(): void {
     if (!this.weaponGroup) return;
     this.weaponGroup.traverse((obj) => {
@@ -199,219 +319,117 @@ export class WeaponViewModel {
     this.weaponGroup = null;
   }
 
-  /**
-   * 권총 프로시저럴 모델 생성
-   * BoxGeometry + CylinderGeometry 조합
-   */
+  /** 권총 프로시저럴 모델 */
   private createPistol(): THREE.Group {
     const group = new THREE.Group();
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2e, metalness: 0.7, roughness: 0.3 });
+    const gripMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1e, metalness: 0.3, roughness: 0.7 });
+    const accentMat = new THREE.MeshStandardMaterial({ color: 0x3a3a40, metalness: 0.8, roughness: 0.2 });
 
-    // 공통 머티리얼 — 어두운 금속 느낌
-    const bodyMat = new THREE.MeshStandardMaterial({
-      color: 0x2a2a2e,
-      metalness: 0.7,
-      roughness: 0.3,
-    });
-    const gripMat = new THREE.MeshStandardMaterial({
-      color: 0x1a1a1e,
-      metalness: 0.3,
-      roughness: 0.7,
-    });
-    const accentMat = new THREE.MeshStandardMaterial({
-      color: 0x3a3a40,
-      metalness: 0.8,
-      roughness: 0.2,
-    });
-
-    // 슬라이드 (상단 본체)
-    const slide = new THREE.Mesh(
-      new THREE.BoxGeometry(0.035, 0.035, 0.17),
-      bodyMat,
-    );
+    // 슬라이드 (상단)
+    const slide = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.035, 0.17), bodyMat);
     slide.position.set(0, 0.015, 0);
     group.add(slide);
 
-    // 프레임 (하단 본체)
-    const frame = new THREE.Mesh(
-      new THREE.BoxGeometry(0.03, 0.025, 0.13),
-      accentMat,
-    );
+    // 프레임 (하단)
+    const frame = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.025, 0.13), accentMat);
     frame.position.set(0, -0.015, -0.01);
     group.add(frame);
 
     // 총열
-    const barrel = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.006, 0.006, 0.04, 8),
-      bodyMat,
-    );
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.04, 8), bodyMat);
     barrel.rotation.x = Math.PI / 2;
     barrel.position.set(0, 0.015, 0.1);
     group.add(barrel);
 
-    // 그립 (아래로 기울어짐)
-    const grip = new THREE.Mesh(
-      new THREE.BoxGeometry(0.028, 0.08, 0.032),
-      gripMat,
-    );
+    // 그립
+    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.028, 0.08, 0.032), gripMat);
     grip.position.set(0, -0.06, -0.035);
-    grip.rotation.x = 0.15; // 약간 뒤로 기울임
+    grip.rotation.x = 0.15;
     group.add(grip);
 
     // 트리거 가드
-    const triggerGuard = new THREE.Mesh(
-      new THREE.BoxGeometry(0.022, 0.008, 0.04),
-      accentMat,
-    );
-    triggerGuard.position.set(0, -0.03, -0.005);
-    group.add(triggerGuard);
+    const tg = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.008, 0.04), accentMat);
+    tg.position.set(0, -0.03, -0.005);
+    group.add(tg);
 
-    // 조준기 (프론트 사이트)
-    const frontSight = new THREE.Mesh(
-      new THREE.BoxGeometry(0.004, 0.008, 0.004),
-      accentMat,
-    );
-    frontSight.position.set(0, 0.037, 0.07);
-    group.add(frontSight);
-
-    // 조준기 (리어 사이트)
-    const rearSight = new THREE.Mesh(
-      new THREE.BoxGeometry(0.015, 0.006, 0.004),
-      accentMat,
-    );
-    rearSight.position.set(0, 0.035, -0.05);
-    group.add(rearSight);
+    // 프론트/리어 사이트
+    const fs = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.008, 0.004), accentMat);
+    fs.position.set(0, 0.037, 0.07);
+    group.add(fs);
+    const rs = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.006, 0.004), accentMat);
+    rs.position.set(0, 0.035, -0.05);
+    group.add(rs);
 
     return group;
   }
 
-  /**
-   * 라이플 프로시저럴 모델 생성
-   * 더 긴 본체 + 스톡 + 탄창 + 핸드가드
-   */
+  /** 라이플 프로시저럴 모델 */
   private createRifle(): THREE.Group {
     const group = new THREE.Group();
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2e, metalness: 0.7, roughness: 0.3 });
+    const gripMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1e, metalness: 0.3, roughness: 0.7 });
+    const accentMat = new THREE.MeshStandardMaterial({ color: 0x3a3a40, metalness: 0.8, roughness: 0.2 });
+    const stockMat = new THREE.MeshStandardMaterial({ color: 0x222226, metalness: 0.4, roughness: 0.6 });
 
-    // 머티리얼
-    const bodyMat = new THREE.MeshStandardMaterial({
-      color: 0x2a2a2e,
-      metalness: 0.7,
-      roughness: 0.3,
-    });
-    const gripMat = new THREE.MeshStandardMaterial({
-      color: 0x1a1a1e,
-      metalness: 0.3,
-      roughness: 0.7,
-    });
-    const accentMat = new THREE.MeshStandardMaterial({
-      color: 0x3a3a40,
-      metalness: 0.8,
-      roughness: 0.2,
-    });
-    const stockMat = new THREE.MeshStandardMaterial({
-      color: 0x222226,
-      metalness: 0.4,
-      roughness: 0.6,
-    });
-
-    // 리시버 (본체)
-    const receiver = new THREE.Mesh(
-      new THREE.BoxGeometry(0.04, 0.045, 0.2),
-      bodyMat,
-    );
-    receiver.position.set(0, 0, 0);
+    // 리시버
+    const receiver = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.045, 0.2), bodyMat);
     group.add(receiver);
 
-    // 핸드가드 (총열 덮개)
-    const handguard = new THREE.Mesh(
-      new THREE.BoxGeometry(0.035, 0.038, 0.18),
-      accentMat,
-    );
-    handguard.position.set(0, -0.003, 0.18);
-    group.add(handguard);
+    // 핸드가드
+    const hg = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.038, 0.18), accentMat);
+    hg.position.set(0, -0.003, 0.18);
+    group.add(hg);
 
     // 총열
-    const barrel = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.006, 0.006, 0.12, 8),
-      bodyMat,
-    );
+    const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.12, 8), bodyMat);
     barrel.rotation.x = Math.PI / 2;
     barrel.position.set(0, 0.005, 0.33);
     group.add(barrel);
 
-    // 소염기 (머즐 브레이크)
-    const muzzle = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.01, 0.008, 0.03, 8),
-      accentMat,
-    );
+    // 소염기
+    const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.008, 0.03, 8), accentMat);
     muzzle.rotation.x = Math.PI / 2;
     muzzle.position.set(0, 0.005, 0.4);
     group.add(muzzle);
 
-    // 스톡 (개머리판)
-    const stock = new THREE.Mesh(
-      new THREE.BoxGeometry(0.035, 0.05, 0.15),
-      stockMat,
-    );
+    // 스톡 + 패드
+    const stock = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.05, 0.15), stockMat);
     stock.position.set(0, -0.005, -0.17);
     group.add(stock);
-
-    // 스톡 패드
-    const stockPad = new THREE.Mesh(
-      new THREE.BoxGeometry(0.038, 0.055, 0.01),
-      gripMat,
-    );
-    stockPad.position.set(0, -0.005, -0.245);
-    group.add(stockPad);
+    const sp = new THREE.Mesh(new THREE.BoxGeometry(0.038, 0.055, 0.01), gripMat);
+    sp.position.set(0, -0.005, -0.245);
+    group.add(sp);
 
     // 피스톨 그립
-    const grip = new THREE.Mesh(
-      new THREE.BoxGeometry(0.025, 0.07, 0.028),
-      gripMat,
-    );
+    const grip = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.07, 0.028), gripMat);
     grip.position.set(0, -0.055, -0.05);
     grip.rotation.x = 0.2;
     group.add(grip);
 
     // 트리거 가드
-    const triggerGuard = new THREE.Mesh(
-      new THREE.BoxGeometry(0.02, 0.008, 0.04),
-      accentMat,
-    );
-    triggerGuard.position.set(0, -0.025, 0.005);
-    group.add(triggerGuard);
+    const tg = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.008, 0.04), accentMat);
+    tg.position.set(0, -0.025, 0.005);
+    group.add(tg);
 
     // 탄창
-    const magazine = new THREE.Mesh(
-      new THREE.BoxGeometry(0.022, 0.1, 0.025),
-      bodyMat,
-    );
-    magazine.position.set(0, -0.07, 0.04);
-    magazine.rotation.x = 0.05; // 약간 앞으로 기울임
-    group.add(magazine);
+    const mag = new THREE.Mesh(new THREE.BoxGeometry(0.022, 0.1, 0.025), bodyMat);
+    mag.position.set(0, -0.07, 0.04);
+    mag.rotation.x = 0.05;
+    group.add(mag);
 
-    // 캐리 핸들 / 레일
-    const rail = new THREE.Mesh(
-      new THREE.BoxGeometry(0.02, 0.006, 0.22),
-      accentMat,
-    );
+    // 레일
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.006, 0.22), accentMat);
     rail.position.set(0, 0.028, 0.05);
     group.add(rail);
 
-    // 프론트 사이트
-    const frontSight = new THREE.Mesh(
-      new THREE.BoxGeometry(0.004, 0.012, 0.004),
-      accentMat,
-    );
-    frontSight.position.set(0, 0.037, 0.25);
-    group.add(frontSight);
-
-    // 리어 사이트
-    const rearSight = new THREE.Mesh(
-      new THREE.BoxGeometry(0.015, 0.008, 0.004),
-      accentMat,
-    );
-    rearSight.position.set(0, 0.035, -0.05);
-    group.add(rearSight);
+    // 프론트/리어 사이트
+    const fs = new THREE.Mesh(new THREE.BoxGeometry(0.004, 0.012, 0.004), accentMat);
+    fs.position.set(0, 0.037, 0.25);
+    group.add(fs);
+    const rs = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.008, 0.004), accentMat);
+    rs.position.set(0, 0.035, -0.05);
+    group.add(rs);
 
     return group;
   }

@@ -10,6 +10,7 @@ import { createEnvironment } from './Environment';
 import { requestPointerLock, isPointerLocked, onPointerLockChange } from './PointerLock';
 import { InputHandler } from './InputHandler';
 import { WeaponViewModel } from './WeaponViewModel';
+import { WeaponEffects } from './WeaponEffects';
 import type { FireMode } from './FireModeController';
 import type { RecoilPatternConfig } from './RecoilPattern';
 import { EYE_HEIGHT_M } from '../config/constants';
@@ -60,8 +61,9 @@ export class GameEngine {
   private frameTimeMs = 0;
   private onPerfUpdate: ((data: PerfData) => void) | null = null;
 
-  // === 1인칭 무기 뷰모델 ===
+  // === 1인칭 무기 뷰모델 + 이펙트 ===
   private weaponViewModel: WeaponViewModel;
+  private weaponEffects: WeaponEffects | null = null;
   private weaponVisible = true;
 
   constructor(canvas: HTMLCanvasElement, config: EngineConfig) {
@@ -94,9 +96,13 @@ export class GameEngine {
     // 환경 구성 (Group 반환 — counter-strafe에서 이동용)
     this.environmentGroup = createEnvironment(this.scene);
 
-    // 1인칭 무기 뷰모델 초기화
+    // 1인칭 무기 뷰모델 + 이펙트 초기화
     this.weaponViewModel = new WeaponViewModel();
     this.weaponViewModel.updateAspect(config.aspectRatio);
+    this.weaponEffects = new WeaponEffects(
+      this.scene,
+      this.weaponViewModel.getOverlayScene(),
+    );
 
     // WebGL 컨텍스트 손실 핸들링
     this.setupContextHandlers();
@@ -296,7 +302,9 @@ export class GameEngine {
       this.handleContextRestored = null;
     }
 
-    // 무기 뷰모델 정리
+    // 무기 뷰모델 + 이펙트 정리
+    this.weaponEffects?.dispose();
+    this.weaponEffects = null;
     this.weaponViewModel.dispose();
 
     // 씬 내 모든 geometry/material 명시적 dispose (메모리 누수 방지)
@@ -371,12 +379,13 @@ export class GameEngine {
       this.fpsAccumulator = 0;
     }
 
-    // 입력 처리 — InputHandler에 위임 (마우스 + 발사 + 반동)
+    // 입력 처리 — InputHandler에 위임 (마우스 + 발사 + 반동 + 이펙트)
     this.inputHandler.processFrame(deltaTime, this.camera, {
       targetManager: this.targetManager,
       activeScenario: this.activeScenario,
       onShoot: this.onShoot,
       weaponViewModel: this.weaponViewModel,
+      weaponEffects: this.weaponEffects,
     });
 
     // 시나리오 업데이트
@@ -389,8 +398,9 @@ export class GameEngine {
       this.targetManager.update(deltaTime);
     }
 
-    // 무기 뷰모델 애니메이션 업데이트
+    // 무기 뷰모델 + 이펙트 업데이트
     this.weaponViewModel.update(deltaTime);
+    this.weaponEffects?.update(deltaTime);
 
     // 메인 씬 렌더
     this.renderer.render(this.scene, this.camera);

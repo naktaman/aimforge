@@ -15,6 +15,7 @@ import { isPointerLocked } from './PointerLock';
 import { FireModeController } from './FireModeController';
 import type { FireMode } from './FireModeController';
 import type { WeaponViewModel } from './WeaponViewModel';
+import type { WeaponEffects } from './WeaponEffects';
 import type { MouseBatch, HitResult } from '../utils/types';
 import type { TargetManager } from './TargetManager';
 import type { Scenario } from './scenarios/Scenario';
@@ -31,6 +32,7 @@ export interface InputContext {
   activeScenario: Scenario | null;
   onShoot: ((hit: boolean, hitResult: HitResult | null) => void) | null;
   weaponViewModel: WeaponViewModel;
+  weaponEffects: WeaponEffects | null;
 }
 
 /**
@@ -303,8 +305,23 @@ export class InputHandler {
       ? context.targetManager.checkHit(camera.position, dir)
       : null;
     context.activeScenario?.onClick();
-    // 사격 피드백 콜백 (오디오 + 머즐플래시 + 히트마커 + 콤보)
+    // 사격 피드백 콜백 (오디오 + 히트마커 + 콤보)
     context.onShoot?.(hitBefore?.hit ?? false, hitBefore ?? null);
+
+    // 발사 이펙트 — 머즐 플래시 + 탄피 + 트레이서 + 피격
+    if (context.weaponEffects) {
+      const muzzlePos = context.weaponViewModel.getMuzzlePosition();
+      context.weaponEffects.triggerMuzzleFlash(muzzlePos);
+      context.weaponEffects.ejectShell(muzzlePos);
+      // 트레이서 종점: 히트 시 추정 거리(5m), 미스 시 200m
+      const tracerDist = hitBefore?.hit ? 5 : 200;
+      const endPos = camera.position.clone().addScaledVector(dir, tracerDist);
+      context.weaponEffects.spawnTracer(camera.position, endPos);
+      // 피격 이펙트 (히트 시 추정 착탄점)
+      if (hitBefore?.hit) {
+        context.weaponEffects.spawnImpact(endPos);
+      }
+    }
 
     if (this.patternProcessor) {
       // Phase 2: 패턴 기반 반동 — AimPunch + ViewPunch 분리
