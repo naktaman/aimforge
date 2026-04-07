@@ -10,6 +10,12 @@
 import * as THREE from 'three';
 import type { WeaponConfig, FireMode } from '../utils/types';
 import { WEAPON_PRESETS } from './WeaponPresets';
+import {
+  RecoilPatternProcessor,
+  RECOIL_PATTERN_PRESETS,
+  type RecoilPatternConfig,
+  type RecoilOutput,
+} from './RecoilPattern';
 
 /* re-export — 기존 import 호환 유지 */
 export { WEAPON_PRESETS, SCENARIO_WEAPON_PRESETS } from './WeaponPresets';
@@ -90,6 +96,11 @@ export class WeaponSystem {
   private bloom: BloomState;
   private isZoomed = false;
 
+  /** 패턴 기반 반동 프로세서 (Phase 2) */
+  private patternProcessor: RecoilPatternProcessor;
+  /** 패턴 프로세서 활성화 여부 */
+  private usePatternProcessor = false;
+
   constructor(config: WeaponConfig = WEAPON_PRESETS.default) {
     this.config = { ...config };
     this.recoil = { shotIndex: 0, lastShotTime: 0, accumulatedRecoil: new THREE.Vector2(0, 0) };
@@ -100,6 +111,7 @@ export class WeaponSystem {
     };
     this.burst = { remaining: 0, lastBurstShotTime: 0 };
     this.bloom = { current: config.firstShotAccuracy ?? 0, lastUpdateTime: 0 };
+    this.patternProcessor = new RecoilPatternProcessor(RECOIL_PATTERN_PRESETS.none);
   }
 
   /** 무기 설정 변경 */
@@ -110,6 +122,36 @@ export class WeaponSystem {
     this.magazine.isReloading = false;
     this.burst.remaining = 0;
     this.bloom.current = config.firstShotAccuracy ?? 0;
+  }
+
+  /** 패턴 프로세서 설정 — Phase 2 반동 시스템 활성화 */
+  setPatternConfig(config: RecoilPatternConfig): void {
+    this.patternProcessor.setConfig(config);
+    this.usePatternProcessor = true;
+  }
+
+  /** 프리셋 이름으로 패턴 프로세서 설정 */
+  setPatternPreset(presetName: string): void {
+    const preset = RECOIL_PATTERN_PRESETS[presetName];
+    if (preset) {
+      this.setPatternConfig(preset);
+    }
+  }
+
+  /** 패턴 프로세서 비활성화 (레거시 모드로 복귀) */
+  disablePatternProcessor(): void {
+    this.usePatternProcessor = false;
+    this.patternProcessor.reset();
+  }
+
+  /** 패턴 프로세서 직접 접근 (보정 분석 등) */
+  getPatternProcessor(): RecoilPatternProcessor {
+    return this.patternProcessor;
+  }
+
+  /** 패턴 프로세서 활성화 여부 */
+  isPatternProcessorActive(): boolean {
+    return this.usePatternProcessor;
   }
 
   /** 현재 유효 발사 모드 (기존 설정과 호환) */
@@ -310,11 +352,29 @@ export class WeaponSystem {
     return new THREE.Vector2(0, 0);
   }
 
+  /** 패턴 프로세서 기반 발사 — AimPunch + ViewPunch 분리 반환 (Phase 2) */
+  fireWithPattern(currentTimeMs: number): RecoilOutput | null {
+    if (!this.usePatternProcessor) return null;
+    if (!this.canFire(currentTimeMs)) return null;
+
+    this.recoil.lastShotTime = currentTimeMs;
+    this.recoil.shotIndex++;
+
+    if (!this.isUnlimitedAmmo()) {
+      this.magazine.current--;
+    }
+
+    return this.patternProcessor.fire(currentTimeMs);
+  }
+
   /** 반동 리셋 */
   resetRecoil(): void {
     this.recoil.shotIndex = 0;
     this.recoil.accumulatedRecoil.set(0, 0);
     this.bloom.current = this.config.firstShotAccuracy ?? 0;
+    if (this.usePatternProcessor) {
+      this.patternProcessor.reset();
+    }
   }
 
   // ── 탄창/리로드 ──
