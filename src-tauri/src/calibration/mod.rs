@@ -169,6 +169,8 @@ pub struct CalibrationEngine {
     recent_bests: Vec<f64>,
     /// 초기 탐색점 큐 (Explore 모드)
     initial_points: Vec<f64>,
+    /// DB 세션 ID — GP 관측점 저장용 (start_calibration에서 설정)
+    pub session_id: Option<i64>,
 }
 
 impl CalibrationEngine {
@@ -241,6 +243,7 @@ impl CalibrationEngine {
             screening_data: ScreeningData::new(),
             recent_bests: Vec::new(),
             initial_points,
+            session_id: None,
         }
     }
 
@@ -524,6 +527,15 @@ impl CalibrationEngine {
             gp_curve,
             observations,
         }
+    }
+
+    /// GP 관측 DB 저장용 정보 조회 (iteration + posterior mean/var at point)
+    pub fn get_observation_info(&self, cm360: f64) -> (usize, Option<f64>, Option<f64>) {
+        if self.gp.n_observations() == 0 {
+            return (self.iteration, None, None);
+        }
+        let pred = self.gp.predict(cm360);
+        (self.iteration, Some(pred.mean), Some(pred.variance))
     }
 
     /// 현재 상태 조회

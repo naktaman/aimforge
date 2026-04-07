@@ -363,6 +363,7 @@
   "settings.aboutDesc": "FPS Aim Calibration & Training Desktop App",
   "settings.loadFailed": "Failed to load settings",
   "settings.saveFailed": "Failed to save settings",
+  "cal.applied": "Sensitivity applied: {cm360} cm/360",
   "cal.startFailed": "Failed to start calibration",
   "cal.launchTrial": "Launch Trial",
   "cal.nextTrial": "Next test sensitivity",

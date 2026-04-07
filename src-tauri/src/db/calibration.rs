@@ -91,6 +91,15 @@ impl super::Database {
         Ok(self.conn.last_insert_rowid())
     }
 
+    /// 캘리브레이션 세션에 연결된 GP 모델 ID 조회
+    pub fn get_gp_model_id(&self, calibration_session_id: i64) -> Result<Option<i64>> {
+        let mut stmt = self.conn.prepare(
+            "SELECT id FROM gp_models WHERE calibration_session_id = ?1 ORDER BY id DESC LIMIT 1"
+        )?;
+        let id = stmt.query_row(rusqlite::params![calibration_session_id], |row| row.get(0)).ok();
+        Ok(id)
+    }
+
     /// 부분 Aim DNA 저장
     /// (인수 다수: DB 컬럼 직접 매핑)
     #[allow(clippy::too_many_arguments)]
