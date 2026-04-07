@@ -1,13 +1,23 @@
 /**
- * 사운드 엔진 — Web Audio API 기반 프로그래매틱 사운드 생성
+ * 사운드 엔진 — Web Audio API 기반 프로그래매틱 사운드 생성 (B-1 Phase 4)
  * 외부 오디오 파일 없이 절차적으로 모든 사운드를 합성
- * AudioContext 싱글턴, 프리로드 불필요
+ * AudioContext 싱글턴, 5채널 볼륨 버스 (총성/히트/UI/환경/마스터)
  *
  * Phase 1 MVP:
  * - PannerNode 3D 공간 오디오 (equalpower)
  * - 거리 감쇠 + 공기 흡수 (고주파 로우패스)
  * - 3레이어 히트 사운드 (punch + ping + sub)
  * - 레이어드 총기 발사음 + 랜덤화
+ *
+ * Phase 3:
+ * - 5레이어 발사음, HRTF 공간 오디오, ConvolverNode 리버브
+ *
+ * Phase 4:
+ * - 5채널 볼륨 밸런싱 (총성, 히트, UI, 환경, 마스터)
+ * - 히트 사운드 pitch/gain variation (반복 방지)
+ * - 앰비언트 페이드 인/아웃
+ * - 사운드 프리로드 (AudioContext + 노이즈 버퍼 사전 생성)
+ * - Mute/Unmute 즉시 반영
  *
  * 사운드 디자인 원칙:
  * - 히트 피드백은 즉각적 (<100ms 지연)
@@ -27,19 +37,58 @@ export type { Vec3, ReverbPreset } from './SpatialAudio';
 export type { GunSoundType } from './SoundRecipes';
 export { REVERB_PRESETS } from './SpatialAudio';
 
-/** 볼륨 설정 인터페이스 */
+// ═══════════════ Phase 4 상수 ═══════════════
+
+/** 기본 마스터 볼륨 */
+const DEFAULT_MASTER_VOLUME = 0.7;
+/** 기본 히트 사운드 볼륨 */
+const DEFAULT_HIT_VOLUME = 0.7;
+/** 기본 UI 사운드 볼륨 */
+const DEFAULT_UI_VOLUME = 0.7;
+/** 기본 총성 볼륨 */
+const DEFAULT_GUN_VOLUME = 0.6;
+/** 기본 환경음 볼륨 */
+const DEFAULT_AMBIENT_VOLUME = 0.4;
+
+/** 히트 사운드 pitch variation 범위 (±semitone) — 음악적으로 자연스러운 범위 */
+const HIT_PITCH_VARIATION_SEMITONES = 4;
+
+/** 페이드 인/아웃 기본 시간 (초) */
+const FADE_DURATION_SEC = 1.5;
+
+/** 앰비언트 루프 재생 간격 (초) — 루프 끊김 방지 오버랩 */
+const AMBIENT_LOOP_OVERLAP = 0.1;
+
+// ═══════════════ 타입 ═══════════════
+
+/** 5채널 볼륨 설정 인터페이스 */
 export interface VolumeSettings {
-  master: number;   // 0~1, 기본 0.7
-  hit: number;      // 0~1, 기본 0.7
-  ui: number;       // 0~1, 기본 0.7
+  /** 마스터 (0~1) */
+  master: number;
+  /** 히트 사운드 (0~1) */
+  hit: number;
+  /** UI 사운드 (0~1) */
+  ui: number;
+  /** 총성 (0~1) */
+  gun: number;
+  /** 환경음 (0~1) */
+  ambient: number;
 }
+
+// ═══════════════ SoundEngine ═══════════════
 
 export class SoundEngine {
   private ctx: AudioContext | null = null;
   private masterGain: GainNode | null = null;
   private hitGain: GainNode | null = null;
   private uiGain: GainNode | null = null;
+  /** 총성 전용 버스 (B-1 Phase 4) */
+  private gunGain: GainNode | null = null;
+  /** 환경음 전용 버스 (B-1 Phase 4) */
+  private ambientGain: GainNode | null = null;
   private enabled = true;
+  /** 뮤트 상태 — 마스터 게인을 0으로 설정 (B-1 Phase 4) */
+  private muted = false;
 
   /** 공간 오디오 모듈 */
   private spatial = new SpatialAudio();
@@ -52,11 +101,22 @@ export class SoundEngine {
   /** 현재 무기 사운드 타입 (Phase 3) */
   private gunSoundType: GunSoundType = 'rifle';
 
-  /** 볼륨 설정 (0~1) */
-  private volumes: VolumeSettings = { master: 0.7, hit: 0.7, ui: 0.7 };
+  /** 볼륨 설정 (0~1) — 5채널 */
+  private volumes: VolumeSettings = {
+    master: DEFAULT_MASTER_VOLUME,
+    hit: DEFAULT_HIT_VOLUME,
+    ui: DEFAULT_UI_VOLUME,
+    gun: DEFAULT_GUN_VOLUME,
+    ambient: DEFAULT_AMBIENT_VOLUME,
+  };
 
   /** 재사용 노이즈 버퍼 캐시 (ms → AudioBuffer) */
   private noiseCache = new Map<number, AudioBuffer>();
+
+  // ── 앰비언트 루프 상태 (B-1 Phase 4) ──
+  private ambientSource: OscillatorNode | null = null;
+  private ambientNoiseSource: AudioBufferSourceNode | null = null;
+  private ambientActive = false;
 
   /** AudioContext + 마스터 게인 체인 초기화 (사용자 인터랙션 후 호출) */
   private ensureContext(): AudioContext {
@@ -64,7 +124,7 @@ export class SoundEngine {
       this.ctx = new AudioContext({ latencyHint: 'interactive' });
       // 마스터 → destination 게인 체인 구성
       this.masterGain = this.ctx.createGain();
-      this.masterGain.gain.value = this.volumes.master;
+      this.masterGain.gain.value = this.muted ? 0 : this.volumes.master;
       this.masterGain.connect(this.ctx.destination);
 
       // 히트 사운드 버스
@@ -76,6 +136,16 @@ export class SoundEngine {
       this.uiGain = this.ctx.createGain();
       this.uiGain.gain.value = this.volumes.ui;
       this.uiGain.connect(this.masterGain);
+
+      // 총성 버스 (B-1 Phase 4)
+      this.gunGain = this.ctx.createGain();
+      this.gunGain.gain.value = this.volumes.gun;
+      this.gunGain.connect(this.masterGain);
+
+      // 환경음 버스 (B-1 Phase 4)
+      this.ambientGain = this.ctx.createGain();
+      this.ambientGain.gain.value = this.volumes.ambient;
+      this.ambientGain.connect(this.masterGain);
     }
     if (this.ctx.state === 'suspended') {
       this.ctx.resume();
@@ -93,6 +163,18 @@ export class SoundEngine {
   private getUiDest(): GainNode {
     this.ensureContext();
     return this.uiGain!;
+  }
+
+  /** 총성 게인 노드 (B-1 Phase 4) */
+  private getGunDest(): GainNode {
+    this.ensureContext();
+    return this.gunGain!;
+  }
+
+  /** 환경음 게인 노드 (B-1 Phase 4) */
+  private getAmbientDest(): GainNode {
+    this.ensureContext();
+    return this.ambientGain!;
   }
 
   /**
@@ -115,10 +197,22 @@ export class SoundEngine {
     return input;
   }
 
+  // ═══════════════ 히트 사운드 변형 (B-1 Phase 4) ═══════════════
+
+  /**
+   * 랜덤 pitch 변형 배율 생성 — 세미톤 기반
+   * ±HIT_PITCH_VARIATION_SEMITONES 범위에서 랜덤 선택
+   */
+  private randomPitchVariation(): number {
+    const semitones = (Math.random() * 2 - 1) * HIT_PITCH_VARIATION_SEMITONES;
+    return Math.pow(2, semitones / 12);
+  }
+
   // ─── 히트 사운드 ──────────────────────────────────────────────
 
   /**
    * 바디 히트 사운드 — 3-레이어 (punch + ping + sub), <100ms
+   * B-1 Phase 4: pitch/gain variation 적용 (synthHit 내부 pitchMultiplier로 전달)
    * @param pitchMultiplier 콤보 피치 배율 (1.0~1.5)
    * @param sourcePos 타겟 월드 위치 (공간 오디오용, 생략 시 2D)
    */
@@ -126,9 +220,12 @@ export class SoundEngine {
     if (!this.enabled) return;
     try {
       const ctx = this.ensureContext();
+      // Phase 4: pitch/gain variation
+      const pitchVar = this.randomPitchVariation();
+      const totalPitch = pitchMultiplier * pitchVar;
       // 히트 사운드 — HRTF 적용 (핵심 소스)
       const dest = this.getSpatialOrDirect(ctx, sourcePos, this.getHitDest(), true);
-      synthHit(ctx, dest, pitchMultiplier);
+      synthHit(ctx, dest, totalPitch);
     } catch (e) {
       console.error('[SoundEngine] playHitSound 실패:', e);
     }
@@ -136,6 +233,7 @@ export class SoundEngine {
 
   /**
    * 헤드샷 사운드 — CS2 "딩크" 금속성 강화
+   * B-1 Phase 4: pitch/gain variation 적용
    * @param pitchMultiplier 콤보 피치 배율
    * @param sourcePos 타겟 월드 위치 (공간 오디오용)
    */
@@ -143,9 +241,12 @@ export class SoundEngine {
     if (!this.enabled) return;
     try {
       const ctx = this.ensureContext();
+      // Phase 4: pitch/gain variation
+      const pitchVar = this.randomPitchVariation();
+      const totalPitch = pitchMultiplier * pitchVar;
       // 헤드샷 사운드 — HRTF 적용 (핵심 소스)
       const dest = this.getSpatialOrDirect(ctx, sourcePos, this.getHitDest(), true);
-      synthHeadshot(ctx, dest, pitchMultiplier, this.noiseCache);
+      synthHeadshot(ctx, dest, totalPitch, this.noiseCache);
     } catch (e) {
       console.error('[SoundEngine] playHeadshotSound 실패:', e);
     }
@@ -183,13 +284,15 @@ export class SoundEngine {
   /**
    * 총기 발사음 — 5레이어 또는 3레이어 합성
    * Phase 3: 무기 타입별 프로파일, 연발 시 Tail 자연 오버랩
+   * Phase 4: 전용 gun 버스 사용
    * @param typeOverride 무기 타입 오버라이드 (생략 시 현재 설정)
    */
   playGunshot(typeOverride?: GunSoundType): void {
     if (!this.enabled) return;
     try {
       const ctx = this.ensureContext();
-      const dest = this.getHitDest();
+      // Phase 4: gun 전용 버스로 라우팅
+      const dest = this.getGunDest();
       if (this.use5LayerGunshot) {
         synthGunshot5Layer(ctx, dest, this.noiseCache, typeOverride ?? this.gunSoundType);
       } else {
@@ -358,12 +461,102 @@ export class SoundEngine {
     return this.spatialEnabled;
   }
 
-  // ─── 볼륨 제어 ──────────────────────────────────────────────
+  // ═══════════════ 앰비언트 사운드 (B-1 Phase 4) ═══════════════
+
+  /**
+   * 앰비언트 시작 (페이드 인) — 저주파 드론 + 미세 노이즈
+   * 게임 시작 시 호출, 공간감 있는 배경음 생성
+   * @param fadeDuration 페이드 인 시간 (초, 기본 1.5)
+   */
+  startAmbient(fadeDuration = FADE_DURATION_SEC): void {
+    if (!this.enabled || this.ambientActive) return;
+    const ctx = this.ensureContext();
+    const dest = this.getAmbientDest();
+    const t = ctx.currentTime;
+
+    // 저주파 드론 — 매우 낮은 볼륨의 사인파
+    this.ambientSource = ctx.createOscillator();
+    this.ambientSource.type = 'sine';
+    this.ambientSource.frequency.value = 55; // A1 — 깊은 저음
+
+    const droneGain = ctx.createGain();
+    droneGain.gain.setValueAtTime(0, t);
+    droneGain.gain.linearRampToValueAtTime(0.06, t + fadeDuration);
+
+    this.ambientSource.connect(droneGain);
+    droneGain.connect(dest);
+    this.ambientSource.start(t);
+
+    // 미세 노이즈 레이어 — 공간감
+    const noiseDuration = 4; // 4초 루프
+    const noiseBufferSize = Math.floor(ctx.sampleRate * noiseDuration);
+    const noiseBuffer = ctx.createBuffer(1, noiseBufferSize, ctx.sampleRate);
+    const noiseData = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < noiseBufferSize; i++) {
+      noiseData[i] = Math.random() * 2 - 1;
+    }
+
+    this.ambientNoiseSource = ctx.createBufferSource();
+    this.ambientNoiseSource.buffer = noiseBuffer;
+    this.ambientNoiseSource.loop = true;
+    // 루프 끊김 방지 — loopEnd를 약간 전으로
+    this.ambientNoiseSource.loopEnd = noiseDuration - AMBIENT_LOOP_OVERLAP;
+
+    const noiseFilter = ctx.createBiquadFilter();
+    noiseFilter.type = 'lowpass';
+    noiseFilter.frequency.value = 400;
+
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.setValueAtTime(0, t);
+    noiseGain.gain.linearRampToValueAtTime(0.03, t + fadeDuration);
+
+    this.ambientNoiseSource.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(dest);
+    this.ambientNoiseSource.start(t);
+
+    this.ambientActive = true;
+  }
+
+  /**
+   * 앰비언트 종료 (페이드 아웃) — 자연스러운 감쇠 후 정지
+   * @param fadeDuration 페이드 아웃 시간 (초, 기본 1.5)
+   */
+  stopAmbient(fadeDuration = FADE_DURATION_SEC): void {
+    if (!this.ambientActive || !this.ctx) return;
+    const t = this.ctx.currentTime;
+
+    // 드론 페이드 아웃 후 정지
+    if (this.ambientSource) {
+      try {
+        this.ambientSource.stop(t + fadeDuration);
+      } catch {
+        // 이미 중지됨
+      }
+      this.ambientSource = null;
+    }
+
+    // 노이즈 페이드 아웃
+    if (this.ambientNoiseSource) {
+      try {
+        this.ambientNoiseSource.stop(t + fadeDuration);
+      } catch {
+        // 이미 중지됨
+      }
+      this.ambientNoiseSource = null;
+    }
+
+    this.ambientActive = false;
+  }
+
+  // ═══════════════ 볼륨 제어 ═══════════════
 
   /** 마스터 볼륨 설정 (0~1) */
   setMasterVolume(v: number): void {
     this.volumes.master = Math.max(0, Math.min(1, v));
-    if (this.masterGain) this.masterGain.gain.value = this.volumes.master;
+    if (this.masterGain && !this.muted) {
+      this.masterGain.gain.value = this.volumes.master;
+    }
   }
 
   /** 히트 사운드 볼륨 설정 (0~1) */
@@ -378,14 +571,59 @@ export class SoundEngine {
     if (this.uiGain) this.uiGain.gain.value = this.volumes.ui;
   }
 
+  /** 총성 볼륨 설정 (0~1) (B-1 Phase 4) */
+  setGunVolume(v: number): void {
+    this.volumes.gun = Math.max(0, Math.min(1, v));
+    if (this.gunGain) this.gunGain.gain.value = this.volumes.gun;
+  }
+
+  /** 환경음 볼륨 설정 (0~1) (B-1 Phase 4) */
+  setAmbientVolume(v: number): void {
+    this.volumes.ambient = Math.max(0, Math.min(1, v));
+    if (this.ambientGain) this.ambientGain.gain.value = this.volumes.ambient;
+  }
+
+  /** 전체 볼륨 일괄 설정 (B-1 Phase 4) */
+  setVolumes(settings: Partial<VolumeSettings>): void {
+    if (settings.master !== undefined) this.setMasterVolume(settings.master);
+    if (settings.hit !== undefined) this.setHitVolume(settings.hit);
+    if (settings.ui !== undefined) this.setUIVolume(settings.ui);
+    if (settings.gun !== undefined) this.setGunVolume(settings.gun);
+    if (settings.ambient !== undefined) this.setAmbientVolume(settings.ambient);
+  }
+
   /** 현재 볼륨 설정 반환 */
   getVolumes(): VolumeSettings {
     return { ...this.volumes };
   }
 
+  // ═══════════════ Mute/Unmute (B-1 Phase 4) ═══════════════
+
+  /** 뮤트 토글 — 마스터 게인 즉시 0/복원 */
+  setMuted(muted: boolean): void {
+    this.muted = muted;
+    if (this.masterGain) {
+      this.masterGain.gain.value = muted ? 0 : this.volumes.master;
+    }
+  }
+
+  /** 뮤트 토글 (현재 상태 반전) */
+  toggleMute(): boolean {
+    this.setMuted(!this.muted);
+    return this.muted;
+  }
+
+  /** 뮤트 상태 조회 */
+  isMuted(): boolean {
+    return this.muted;
+  }
+
   /** 사운드 활성화/비활성화 */
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
+    if (!enabled) {
+      this.stopAmbient(0);
+    }
   }
 
   /** 현재 활성화 상태 */
@@ -420,12 +658,15 @@ export class SoundEngine {
 
   /** 리소스 정리 */
   dispose(): void {
+    this.stopAmbient(0);
     this.spatial.dispose();
     this.ctx?.close();
     this.ctx = null;
     this.masterGain = null;
     this.hitGain = null;
     this.uiGain = null;
+    this.gunGain = null;
+    this.ambientGain = null;
     this.noiseCache.clear();
   }
 }

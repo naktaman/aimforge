@@ -71,6 +71,9 @@ export class HumanoidTarget {
   /** 움직임 상태 (null이면 정적) */
   private movementState: MovementState | null = null;
 
+  /** 고급 움직임 상태 (B-3 Phase 2) */
+  private advancedMovement: MovementState | null = null;
+
   // 히트 피드백 상태
   private hitFlashTime = 0;
   private flashedMesh: THREE.Mesh | null = null;
@@ -201,8 +204,24 @@ export class HumanoidTarget {
     }
   }
 
+  /** 고급 움직임 상태 설정 (B-3 Phase 2) */
+  setAdvancedMovement(state: MovementState): void {
+    this.advancedMovement = state;
+  }
+
+  /** 고급 움직임이 활성화되어 있는지 여부 */
+  hasMovement(): boolean {
+    return this.advancedMovement !== null || this.movementState !== null;
+  }
+
   /** 매 프레임 업데이트 — 히트 플래시 복원 + 움직임 */
   update(deltaTime: number): void {
+    // 고급 움직임 시스템 (B-3 Phase 2) — 기존 패턴보다 우선
+    if (this.advancedMovement) {
+      const newPos = this.advancedMovement.update(deltaTime);
+      this.group.position.copy(newPos);
+    }
+
     // 히트 플래시 복원
     if (this.hitFlashTime > 0 && this.flashedMesh) {
       this.hitFlashTime -= deltaTime;

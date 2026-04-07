@@ -11,6 +11,8 @@ import { angularDistance, isHit } from './HitDetection';
 import type { HitResult, HitZone } from '../utils/types';
 import type { TargetPresetName } from './TargetPresets';
 import { getTargetPreset } from './TargetPresets';
+import type { MovementConfig } from './TargetMovement';
+import { MovementState } from './TargetMovement';
 
 /** 기존 SpawnConfig (하위 호환) */
 export interface SpawnConfig {
@@ -21,6 +23,8 @@ export interface SpawnConfig {
   movementParams?: MovementParams;
   /** 타겟 형상 (기본: sphere) */
   shape?: TargetShape;
+  /** 고급 움직임 설정 (B-3 Phase 2) — 설정 시 movementType/movementParams 무시 */
+  advancedMovement?: MovementConfig;
 }
 
 /** 휴머노이드 타겟 래퍼 — Target과 동일한 인터페이스로 관리 */
@@ -59,6 +63,12 @@ export class TargetManager {
       config.movementParams,
       config.shape,
     );
+    // 고급 움직임 설정 시 MovementState 생성 (B-3 Phase 2)
+    if (config.advancedMovement) {
+      const movementState = new MovementState(position, config.advancedMovement);
+      target.setAdvancedMovement(movementState);
+    }
+
     this.targets.set(id, target);
     return target;
   }

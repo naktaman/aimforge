@@ -6,6 +6,7 @@ import { create } from 'zustand';
 import { gameSensToCm360, gameFovToHfov } from '../utils/physics';
 import type { GamePreset, CrosshairConfig } from '../utils/types';
 import { CROSSHAIR_PRESETS } from '../utils/types';
+import type { VolumeSettings } from '../engine/SoundEngine';
 
 interface SettingsState {
   // 하드웨어
@@ -28,6 +29,10 @@ interface SettingsState {
   // 크로스헤어
   crosshair: CrosshairConfig;
 
+  // 사운드 (B-1 Phase 4) — 5채널 볼륨 + 뮤트
+  soundVolumes: VolumeSettings;
+  soundMuted: boolean;
+
   // 액션
   setDpi: (dpi: number) => void;
   setPollingRate: (rate: number) => void;
@@ -39,6 +44,9 @@ interface SettingsState {
   setCrosshairPreset: (presetName: string) => void;
   exportCrosshairCode: () => string;
   importCrosshairCode: (code: string) => boolean;
+  setSoundVolumes: (volumes: Partial<VolumeSettings>) => void;
+  setSoundMuted: (muted: boolean) => void;
+  toggleSoundMute: () => void;
 }
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
@@ -52,6 +60,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   hfov: 106.26,
   currentZoom: 1,
   scopeMultiplier: 1,
+
+  // 사운드 기본값 (B-1 Phase 4)
+  soundVolumes: {
+    master: 0.7,
+    hit: 0.7,
+    ui: 0.7,
+    gun: 0.6,
+    ambient: 0.4,
+  },
+  soundMuted: false,
 
   setDpi: (dpi) => {
     const state = get();
@@ -156,5 +174,19 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     } catch {
       return false;
     }
+  },
+
+  /** 사운드 볼륨 부분 업데이트 (B-1 Phase 4) */
+  setSoundVolumes: (partial) => {
+    const current = get().soundVolumes;
+    set({ soundVolumes: { ...current, ...partial } });
+  },
+
+  /** 사운드 뮤트 설정 (B-1 Phase 4) */
+  setSoundMuted: (muted) => set({ soundMuted: muted }),
+
+  /** 사운드 뮤트 토글 (B-1 Phase 4) */
+  toggleSoundMute: () => {
+    set({ soundMuted: !get().soundMuted });
   },
 }));
