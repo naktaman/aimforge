@@ -32,6 +32,33 @@ Infrastructure, Three.js 엔진, GP Calibration, Go/No-Go 검증
 - v0.2.0 릴리즈 준비 ✅ (2026-04-05) — CI 보안 감사 (cargo audit + npm audit), 버전 0.2.0 업데이트, CHANGELOG.md
 - UX 라운드2 ✅ (2026-04-05) — WelcomeScreen 프로 게이밍 재디자인(스펙 스트립), 히어로스탯 게임감도 교체, Empty State SVG 일러스트, CATEGORY_COLORS CSS변수화, whileHover 정리, 의미없는 정보 제거
 
+## v0.3 — 콘텐츠 확장 + UX 고도화
+
+### A. 코어 개선 ✅
+- A-1 ~ A-5 ✅ — 캘리브레이션/DNA/시나리오/트레이닝 E2E 버그 수정
+
+### B. 콘텐츠 확장
+- B-1 사운드 Phase 1 ✅ — Web Audio 기반 총기/히트/UI 사운드 시스템
+- B-1 사운드 Phase 2~4 — HRTF 3D 오디오, 5레이어 총기음, 폴리시
+- B-2 총기시스템 Phase 1 ✅ — 발사 모드 4종 + 탄창/리로드 + 블룸 + 시나리오 프리셋 6종
+- B-2 Phase 2~4 — 반동 패턴 구현, 뷰모델 비주얼, 이펙트
+- B-3 타겟시스템 딥리서치 ✅ (2026-04-07) — 기획서 저장 (docs/research/target-system-spec.md)
+- B-3 타겟시스템 구현 — 기획서 기반 타겟 행동/외형/히트존 시스템
+- B-4 환경/맵 — 딥리서치 필요
+
+### C. 버그 수정 ✅
+- C-1 ✅ — 캘리브레이션 감도 적용 + GP 관측점 DB 저장
+- C-2 ✅ — Aim DNA IPC 파라미터 케이싱 불일치 수정
+- C-3/C-4 ✅ — 시나리오·트레이닝 E2E 버그 수정
+
+### D. UI 디자인 ✅
+- Cold Forge 디자인 시스템 ✅ (2026-04-07) — 컬러 팔레트 + 타이포 + 전역 스타일 전면 교체
+- 마이크로인터랙션 ✅ — Chrome Sweep, Press Stamp, 버튼 4종, 스크롤바
+
+### E. 인사이트 + 크로스게임
+- E-1 인사이트 시스템 ✅ (2026-04-07) — insightGenerator.ts + InsightPanel + ResultScreen 통합
+- E-2 크로스게임 감도 비교 ✅ (2026-04-07) — CrossGameConverter 개선 (59개 게임 DB 연동) + SensitivityTab 연결
+
 ---
 
 ## 설계 원칙
