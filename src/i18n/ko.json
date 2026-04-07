@@ -363,6 +363,7 @@
   "settings.aboutDesc": "FPS 에임 캘리브레이션 & 훈련 데스크탑 앱",
   "settings.loadFailed": "설정 로드 실패",
   "settings.saveFailed": "설정 저장 실패",
+  "cal.applied": "캘리브레이션 감도 적용 완료: {cm360} cm/360",
   "cal.startFailed": "캘리브레이션 시작 실패",
   "cal.launchTrial": "트라이얼 시작",
   "cal.nextTrial": "다음 테스트 감도",

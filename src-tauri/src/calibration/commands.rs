@@ -53,7 +53,7 @@ pub fn start_calibration(
     };
 
     // CalibrationEngine 생성
-    let engine = CalibrationEngine::with_convergence(
+    let mut engine = CalibrationEngine::with_convergence(
         params.current_cm360, mode, &params.game_category, convergence,
     );
 
@@ -74,7 +74,8 @@ pub fn start_calibration(
 
     drop(db); // DB lock 해제 후 calibration lock
 
-    // 엔진 저장
+    // 엔진에 세션 ID 설정 + 저장
+    engine.session_id = Some(session_id);
     let mut cal = lock_state(&state.calibration)?;
     *cal = Some(engine);
 
@@ -116,7 +117,24 @@ pub fn submit_calibration_trial(
     let engine = cal.as_mut()
         .ok_or_else(|| AppError::NotFound("캘리브레이션이 시작되지 않음".to_string()))?;
 
-    Ok(engine.submit_trial(params.cm360, params.score, metrics))
+    let feedback = engine.submit_trial(params.cm360, params.score, metrics);
+
+    // GP 관측점 DB 저장 (best-effort — 실패해도 캘리브레이션 진행)
+    if let Some(sid) = engine.session_id {
+        let (iteration, gp_mean, gp_var) = engine.get_observation_info(params.cm360);
+        let db = lock_state(&state.db)?;
+        if let Some(gp_model_id) = db.get_gp_model_id(sid)
+            .map_err(|e| AppError::Database(e.to_string()))? {
+            if let Err(e) = db.insert_gp_observation(
+                gp_model_id, params.cm360, params.score,
+                None, iteration as i64, None, gp_mean, gp_var,
+            ) {
+                log::warn!("GP 관측점 DB 저장 실패: {}", e);
+            }
+        }
+    }
+
+    Ok(feedback)
 }
 
 /// 현재 캘리브레이션 상태 조회

@@ -12,6 +12,8 @@ import type { CalibrationMode, ConvergenceLevel } from '../stores/calibrationSto
 import { useToastStore } from '../stores/toastStore';
 import { useTranslation } from '../i18n';
 import { useGameMetricsStore } from './useGameMetrics';
+import { useGameProfileStore } from '../stores/gameProfileStore';
+import { GAME_DATABASE } from '../data/gameDatabase';
 import { FlickScenario } from '../engine/scenarios/FlickScenario';
 import { calculateFlickScore } from '../engine/metrics/CompositeScore';
 import { SoundEngine } from '../engine/SoundEngine';
@@ -22,6 +24,20 @@ import type {
   TrialFeedback,
   CalibrationStatusResponse,
 } from '../utils/types';
+
+/**
+ * 프론트엔드 GameCategory → Rust GameCategory 문자열 매핑
+ * Rust: "tactical" | "movement" | "br" (screening.rs:76-79)
+ * Frontend: 'fps' | 'tps' | 'battle-royale' | 'tactical' | 'arena' | 'trainer'
+ */
+function mapGameCategory(category?: string): string {
+  switch (category) {
+    case 'tactical': return 'tactical';
+    case 'battle-royale': return 'br';
+    case 'arena': return 'movement';       /* 아레나 FPS는 이동 중심 */
+    default: return 'tactical';            /* fps, tps, trainer 등 → 기본값 */
+  }
+}
 
 interface CalibrationHandlerDeps {
   engineRef: MutableRefObject<GameEngine | null>;
@@ -170,10 +186,15 @@ export function useCalibrationHandlers(deps: CalibrationHandlerDeps): {
   const handleCalibrationStart = useCallback(
     async (mode: CalibrationMode, convergence: ConvergenceLevel = 'quick'): Promise<void> => {
       try {
+        /* 활성 프로필에서 게임 카테고리 추출 → Rust GameCategory 매핑 */
+        const activeProfile = useGameProfileStore.getState().activeProfile();
+        const gameEntry = activeProfile ? GAME_DATABASE.find((g) => g.id === activeProfile.gameId) : null;
+        const gameCategory = mapGameCategory(gameEntry?.category);
+
         const sessionId = await invoke<number>('start_calibration', {
           params: {
             profile_id: 1, /* 단일 사용자 — user profiles.id */ mode, current_cm360: cmPer360,
-            game_category: 'tactical', convergence_mode: convergence,
+            game_category: gameCategory, convergence_mode: convergence,
           },
         });
         startCalibration(mode, sessionId, convergence);
@@ -193,10 +214,25 @@ export function useCalibrationHandlers(deps: CalibrationHandlerDeps): {
     setScreen('settings');
   }, [resetCalibration, setScreen]);
 
-  /** 캘리브레이션 결과 감도 적용 */
+  /** 캘리브레이션 결과 감도 적용 — settingsStore + DB 저장 */
   const handleCalibrationApply = useCallback(
-    (_cm360: number): void => { resetCalibration(); setScreen('settings'); },
-    [resetCalibration, setScreen],
+    (cm360: number): void => {
+      /* 1. 인메모리 settingsStore에 즉시 반영 */
+      useSettingsStore.setState({ cmPer360: cm360 });
+
+      /* 2. DB에도 저장 (user_settings 테이블) — 비동기, best-effort */
+      invoke('save_user_setting', { profile_id: 1, key: 'cm_per_360', value: String(cm360) })
+        .catch((e) => console.warn('캘리브레이션 감도 DB 저장 실패:', e));
+
+      /* 3. 정리 + 화면 이동 */
+      resetCalibration();
+      useToastStore.getState().addToast(
+        t('cal.applied').replace('{cm360}', cm360.toFixed(1)),
+        'success',
+      );
+      setScreen('settings');
+    },
+    [resetCalibration, setScreen, t],
   );
 
   return { handleCalibrationLaunchTrial, handleCalibrationFinalize, handleCalibrationStart, handleCalibrationCancel, handleCalibrationApply };
