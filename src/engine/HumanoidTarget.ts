@@ -14,6 +14,7 @@ import {
   HUMANOID_EMISSIVE,
 } from '../config/constants';
 import { TARGET_COLORS, HIT_FLASH_COLORS } from '../config/theme';
+import type { TargetMovementState } from './TargetMovement';
 
 /** 히트 가능한 신체 부위 */
 export type BodyPart = 'head' | 'torso' | 'left_arm' | 'right_arm' | 'left_leg' | 'right_leg';
@@ -53,6 +54,9 @@ export class HumanoidTarget {
 
   /** 머리 메쉬 (2x 히트존 판정용 직접 참조) */
   readonly headMesh: THREE.Mesh;
+
+  /** 고급 움직임 상태 (B-3 Phase 2) */
+  private advancedMovement: TargetMovementState | null = null;
 
   // 히트 피드백 상태
   private hitFlashTime = 0;
@@ -165,8 +169,24 @@ export class HumanoidTarget {
     this.hitFlashTime = HIT_FLASH_DURATION_SEC;
   }
 
-  /** 매 프레임 업데이트 — 히트 플래시 복원 */
+  /** 고급 움직임 상태 설정 (B-3 Phase 2) */
+  setAdvancedMovement(state: TargetMovementState): void {
+    this.advancedMovement = state;
+  }
+
+  /** 고급 움직임이 활성화되어 있는지 여부 */
+  hasMovement(): boolean {
+    return this.advancedMovement !== null;
+  }
+
+  /** 매 프레임 업데이트 — 히트 플래시 복원 + 움직임 */
   update(deltaTime: number): void {
+    // 고급 움직임 시스템 (B-3 Phase 2)
+    if (this.advancedMovement) {
+      const newPos = this.advancedMovement.update(deltaTime);
+      this.group.position.copy(newPos);
+    }
+
     if (this.hitFlashTime > 0 && this.flashedMesh) {
       this.hitFlashTime -= deltaTime;
       if (this.hitFlashTime <= 0) {

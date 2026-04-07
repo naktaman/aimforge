@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { DEG2RAD } from '../utils/physics';
 import { HIT_FLASH_DURATION_SEC, HIT_EMISSIVE_INTENSITY } from '../config/constants';
 import { TARGET_COLORS, HIT_FLASH_COLORS } from '../config/theme';
+import type { TargetMovementState } from './TargetMovement';
 
 /** 타겟 이동 패턴 */
 export type MovementType = 'static' | 'linear' | 'circular' | 'random';
@@ -39,6 +40,9 @@ export class Target {
   private orbitAngle = 0;
   private timeSinceChange = 0;
   private currentDirection: THREE.Vector3;
+
+  /** 고급 움직임 상태 (B-3 Phase 2) — 설정 시 기존 movementType 무시 */
+  private advancedMovement: TargetMovementState | null = null;
 
   // 히트 피드백 상태
   private hitFlashTime = 0;
@@ -96,6 +100,14 @@ export class Target {
       }
     }
 
+    // 고급 움직임 시스템 (B-3 Phase 2) — 기존 패턴보다 우선
+    if (this.advancedMovement) {
+      const newPos = this.advancedMovement.update(deltaTime);
+      this.position.copy(newPos);
+      this.mesh.position.copy(newPos);
+      return;
+    }
+
     switch (this.movementType) {
       case 'linear':
         this.updateLinear(deltaTime);
@@ -134,6 +146,11 @@ export class Target {
     angularSizeDeg: number,
   ): number {
     return distanceM * Math.tan((angularSizeDeg / 2) * DEG2RAD);
+  }
+
+  /** 고급 움직임 상태 설정 (B-3 Phase 2) */
+  setAdvancedMovement(state: TargetMovementState): void {
+    this.advancedMovement = state;
   }
 
   // === 이동 패턴 ===

@@ -8,6 +8,8 @@ import { Target, type MovementType, type MovementParams } from './Target';
 import { HumanoidTarget, getHitZone } from './HumanoidTarget';
 import { angularDistance, isHit } from './HitDetection';
 import type { HitResult, HitZone } from '../utils/types';
+import type { TargetMovementConfig } from './TargetMovement';
+import { TargetMovementState } from './TargetMovement';
 
 export interface SpawnConfig {
   angularSizeDeg: number;
@@ -15,6 +17,8 @@ export interface SpawnConfig {
   color?: number;
   movementType?: MovementType;
   movementParams?: MovementParams;
+  /** 고급 움직임 설정 (B-3 Phase 2) — 설정 시 movementType/movementParams 무시 */
+  advancedMovement?: TargetMovementConfig;
 }
 
 /** 휴머노이드 타겟 래퍼 — Target과 동일한 인터페이스로 관리 */
@@ -52,6 +56,12 @@ export class TargetManager {
       config.movementType,
       config.movementParams,
     );
+    // 고급 움직임 설정 시 TargetMovementState 생성 (B-3 Phase 2)
+    if (config.advancedMovement) {
+      const movementState = new TargetMovementState(config.advancedMovement, position);
+      target.setAdvancedMovement(movementState);
+    }
+
     this.targets.set(id, target);
     return target;
   }
@@ -70,6 +80,12 @@ export class TargetManager {
 
     const DEG2RAD = Math.PI / 180;
     const angularRadius = (config.angularSizeDeg / 2) * DEG2RAD;
+
+    // 고급 움직임 설정 시 TargetMovementState 생성 (B-3 Phase 2)
+    if (config.advancedMovement) {
+      const movementState = new TargetMovementState(config.advancedMovement, position);
+      humanoid.setAdvancedMovement(movementState);
+    }
 
     this.humanoids.set(id, {
       humanoid,
@@ -195,6 +211,10 @@ export class TargetManager {
     }
     for (const entry of this.humanoids.values()) {
       entry.humanoid.update(deltaTime);
+      // 고급 움직임에 의한 position 동기화 (히트 판정 좌표 갱신)
+      if (entry.humanoid.hasMovement()) {
+        entry.position.copy(entry.humanoid.group.position);
+      }
     }
   }
 
