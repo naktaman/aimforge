@@ -21,7 +21,7 @@
 ### Block B: 인게임 경험 (진행 중)
 - **B-1 Phase 1~3 ✅**: SpatialAudio, SoundRecipes, HRTF, ConvolverNode 리버브, 5레이어 무기별 총기음 분화 (Pistol/Rifle/SMG/Sniper), 연발 tail 오버랩
 - **B-2 Phase 1~4 ✅**: 발사 모드 4종, 프리셋 6종, 블룸 반동, 반동 패턴 (CS2/Valorant), ViewPunch/AimPunch, View Bob/Sway/ADS, 머즐플래시/탄피/트레이서/피격 이펙트, 반동 오버레이, 무기설정 UI
-- **B-3 Phase 1 ✅**: 타겟 설정 UI, 히트존 4구역, 움직임 패턴 3종, 피격 피드백
+- **B-3 Phase 1~2 ✅**: 타겟 설정 UI, 히트존 4구역, 움직임 패턴 3종, 피격 피드백, Simplex Noise 유기적 움직임, 고도화 ADAD (가감속/딜레이), 복합 패턴, 난이도 프리셋 4종
 - **B-4 Phase 1 ✅**: Cold Forge 환경 시스템, 맵 프리셋 4종 (Open/Circuit/Pressure/Corridor Forge), 금속 패널 벽, 먼지 파티클, 네온 그리드, 3광원 조명 (PCF 그림자)
 
 ### Block C: 핵심 기능 E2E ✅
@@ -42,7 +42,7 @@
 | 블록 | 내용 | 우선순위 |
 |------|------|----------|
 | B-1 Phase 4 | 사운드 폴리시 (앰비언트, 스폰 사운드, 볼륨 밸런스) | 중 |
-| B-3 Phase 2~4 | 타겟 고도화 (Perlin 움직임, glTF, 인스턴싱) | 중 |
+| B-3 Phase 3~4 | 타겟 고도화 (glTF 인체형, 인스턴싱, 파괴 이펙트) | 중 |
 | B-4 Phase 2~3 | 환경 고도화 (BloomPass, KTX2 텍스처, LOD) | 낮음 |
 
 ## 빌드 상태

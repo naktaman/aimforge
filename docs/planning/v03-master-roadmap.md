@@ -65,12 +65,17 @@
 **Phase 3 ✅** WeaponViewModel 개선 (View Bob, Sway, ADS 줌 전환), 머즐 플래시/탄피 배출/트레이서/피격 이펙트 (WeaponEffects.ts, 오브젝트 풀링)
 **Phase 4 ✅** 반동 패턴 시각화 오버레이 (RecoilOverlay), 무기 설정 UI (WeaponConfigPanel), 프리셋 드롭다운
 
-### B-3: 타겟 시스템 — Phase 1 ✅ / Phase 2~4 남음
+### B-3: 타겟 시스템 — Phase 1~2 ✅ / Phase 3~4 남음
 
 **Phase 1 ✅** 타겟 설정 UI, 히트존 4구역, 움직임 패턴 3종 (sine/random/figure8), 피격 피드백
+**Phase 2 ✅** 타겟 고급 움직임 시스템
+- Simplex Noise 기반 유기적 움직임 (PerlinNoise.ts 순수 구현)
+- 고도화 ADAD Strafing (가속/감속 곡선, 방향전환 딜레이, 랜덤 타이밍 변동)
+- 복합 패턴 (composite) — 복수 패턴 가중 결합
+- 난이도 프리셋 4종 (Easy/Medium/Hard/Extreme)
+- 타겟 프리셋 4종 추가 (perlin/adad/hard/extreme)
 
-**Phase 2~4 — 타겟 고도화 (미완):**
-- [ ] Perlin noise 기반 유기적 움직임
+**Phase 3~4 — 타겟 고도화 (미완):**
 - [ ] 인체형 glTF 모델 (현재 프로시저럴 박스 기반)
 - [ ] InstancedMesh 대량 타겟 최적화
 - [ ] 타겟 파괴 이펙트 (조각/페이드/폭발)
@@ -145,10 +150,11 @@ useChartAnimation 훅 7개, 9개 컴포넌트 D3 동적 모션, useReducedMotion
 11. ~~B-2 Phase 4~~ ✅ 반동 오버레이 + 무기 설정 UI
 12. ~~B-3 Phase 1~~ ✅ 타겟 기본 시스템
 13. ~~B-4 Phase 1~~ ✅ Cold Forge 환경 시스템
+14. ~~B-3 Phase 2~~ ✅ 타겟 고급 움직임 (Perlin, ADAD 고도화, 난이도 프리셋)
 
 **남은 작업:**
 1. **B-1 Phase 4**: 사운드 폴리시 (앰비언트, 스폰 사운드, 볼륨 밸런스)
-2. **B-3 Phase 2~4**: 타겟 고도화 (Perlin 움직임, glTF, 인스턴싱)
+2. **B-3 Phase 3~4**: 타겟 고도화 (glTF, 인스턴싱, 파괴 이펙트)
 3. **B-4 Phase 2~3**: 환경 고도화 (BloomPass, KTX2, LOD)
 
 > 각 단계에서 딥리서치가 필요하면 선행. 기획서 없이 코드 세션 돌리지 않는다.
