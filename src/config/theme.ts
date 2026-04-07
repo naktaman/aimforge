@@ -36,12 +36,14 @@ export const TARGET_COLORS = {
 // ===== 히트 플래시 색상 (THREE.js hex) =====
 
 export const HIT_FLASH_COLORS = {
-  /** 헤드샷 플래시 */
+  /** 헤드샷 플래시 (빨강) */
   headshot: 0xff0000,
-  /** 상체 히트 플래시 */
-  upperBody: 0xffffff,
-  /** 하체 히트 플래시 */
+  /** 상체 히트 플래시 (주황) */
+  upperBody: 0xff8800,
+  /** 하체 히트 플래시 (주황) */
   lowerBody: 0xff8800,
+  /** 팔다리 히트 플래시 (노랑) */
+  limbs: 0xffdd00,
   /** 기본 히트 플래시 (초록) */
   default: 0x4ade80,
 } as const;

@@ -11,6 +11,7 @@ import { requestPointerLock, isPointerLocked, onPointerLockChange } from './Poin
 import { InputHandler } from './InputHandler';
 import { WeaponViewModel } from './WeaponViewModel';
 import type { FireMode } from './FireModeController';
+import type { RecoilPatternConfig } from './RecoilPattern';
 import { EYE_HEIGHT_M } from '../config/constants';
 import type { WeaponStyle } from './WeaponViewModel';
 import type { EngineConfig, PerfData } from '../utils/types';
@@ -258,9 +259,19 @@ export class GameEngine {
     this.weaponVisible = visible;
   }
 
-  /** 반동 파라미터 설정 — InputHandler에 위임 */
+  /** 반동 파라미터 설정 — InputHandler에 위임 (레거시) */
   setRecoil(verticalDeg: number, horizontalSpreadDeg: number, recoveryRate: number): void {
     this.inputHandler.setRecoil(verticalDeg, horizontalSpreadDeg, recoveryRate);
+  }
+
+  /** 패턴 반동 설정 (Phase 2) — InputHandler에 위임 */
+  setRecoilPattern(config: RecoilPatternConfig): void {
+    this.inputHandler.setRecoilPattern(config);
+  }
+
+  /** 패턴 반동 해제 — InputHandler에 위임 */
+  clearRecoilPattern(): void {
+    this.inputHandler.clearRecoilPattern();
   }
 
   /** 리소스 정리 — 모든 Three.js 리소스 명시적 해제 */

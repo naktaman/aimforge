@@ -6,6 +6,7 @@
  * - 더블 버퍼 패턴으로 IPC 지연 최소화
  * - 발사 모드 컨트롤러 (semi/auto/burst)
  * - 반동(리코일) 적용 + 자연 회복
+ * - Phase 2: 패턴 반동 (AimPunch + ViewPunch 분리)
  */
 import * as THREE from 'three';
 import { invoke } from '@tauri-apps/api/core';
@@ -17,6 +18,7 @@ import type { WeaponViewModel } from './WeaponViewModel';
 import type { MouseBatch, HitResult } from '../utils/types';
 import type { TargetManager } from './TargetManager';
 import type { Scenario } from './scenarios/Scenario';
+import { RecoilPatternProcessor, type RecoilPatternConfig } from './RecoilPattern';
 
 /** Y축 단위벡터 (yaw 회전축) */
 const UP = new THREE.Vector3(0, 1, 0);
@@ -52,11 +54,17 @@ export class InputHandler {
   private pendingBatch: MouseBatch | null = null;
   private fetchingBatch = false;
 
-  // === 반동(리코일) ===
+  // === 반동(리코일) — 레거시 시스템 ===
   private recoilVerticalDeg = 0;
   private recoilHorizontalSpreadDeg = 0;
   private recoilRecoveryRate = 0;
   private recoilAccumulated = 0; // 누적 반동 (recovery용)
+
+  // === 패턴 반동 (Phase 2) ===
+  private patternProcessor: RecoilPatternProcessor | null = null;
+  /** ViewPunch 누적 pitch/yaw (자동 복귀 대상) */
+  private viewPunchPitch = 0;
+  private viewPunchYaw = 0;
 
   // === 입력 레이턴시 측정 ===
   private inputLatencyUs = 0;
@@ -105,12 +113,31 @@ export class InputHandler {
     this.currentMultiplier = multiplier;
   }
 
-  /** 반동 파라미터 설정 */
+  /** 반동 파라미터 설정 (레거시) */
   setRecoil(verticalDeg: number, horizontalSpreadDeg: number, recoveryRate: number): void {
     this.recoilVerticalDeg = verticalDeg;
     this.recoilHorizontalSpreadDeg = horizontalSpreadDeg;
     this.recoilRecoveryRate = recoveryRate;
     this.recoilAccumulated = 0;
+  }
+
+  /** 패턴 반동 프로세서 설정 (Phase 2 — 설정 시 레거시 반동 비활성화) */
+  setRecoilPattern(config: RecoilPatternConfig): void {
+    this.patternProcessor = new RecoilPatternProcessor(config);
+    this.recoilVerticalDeg = 0;
+    this.recoilHorizontalSpreadDeg = 0;
+  }
+
+  /** 패턴 반동 해제 (레거시 모드로 복귀) */
+  clearRecoilPattern(): void {
+    this.patternProcessor = null;
+    this.viewPunchPitch = 0;
+    this.viewPunchYaw = 0;
+  }
+
+  /** 패턴 프로세서 직접 접근 (보정 분석용) */
+  getPatternProcessor(): RecoilPatternProcessor | null {
+    return this.patternProcessor;
   }
 
   /** 발사 모드 설정 */
@@ -230,14 +257,31 @@ export class InputHandler {
       }
     }
 
-    // 반동 자연 회복 (recoilRecoveryRate > 0이면 점진적으로 원위치)
-    if (this.recoilAccumulated > 0 && this.recoilRecoveryRate > 0) {
-      const recoveryDeg = this.recoilAccumulated * this.recoilRecoveryRate * deltaTime;
-      this.pitch -= recoveryDeg * DEG2RAD;
-      this.recoilAccumulated = Math.max(0, this.recoilAccumulated - recoveryDeg);
-      const maxPitch = 89 * DEG2RAD;
-      this.pitch = Math.max(-maxPitch, Math.min(maxPitch, this.pitch));
-      this.syncCamera(camera);
+    if (this.patternProcessor) {
+      // Phase 2: ViewPunch 감쇠 (빠른 자동 복귀)
+      const vpRecovery = this.patternProcessor.updateViewPunch(deltaTime);
+      if (Math.abs(vpRecovery.dx) > 0.0001 || Math.abs(vpRecovery.dy) > 0.0001) {
+        this.viewPunchPitch -= vpRecovery.dy * DEG2RAD;
+        this.viewPunchYaw -= vpRecovery.dx * DEG2RAD;
+        this.syncCameraWithViewPunch(camera);
+      }
+      // Phase 2: AimPunch 자연 복귀
+      const aimRecovery = this.patternProcessor.updateAimRecovery(deltaTime);
+      if (Math.abs(aimRecovery.dx) > 0.0001 || Math.abs(aimRecovery.dy) > 0.0001) {
+        this.pitch -= aimRecovery.dy * DEG2RAD;
+        this.yaw -= aimRecovery.dx * DEG2RAD;
+        this.syncCameraWithViewPunch(camera);
+      }
+    } else {
+      // 레거시: 반동 자연 회복
+      if (this.recoilAccumulated > 0 && this.recoilRecoveryRate > 0) {
+        const recoveryDeg = this.recoilAccumulated * this.recoilRecoveryRate * deltaTime;
+        this.pitch -= recoveryDeg * DEG2RAD;
+        this.recoilAccumulated = Math.max(0, this.recoilAccumulated - recoveryDeg);
+        const maxPitch = 89 * DEG2RAD;
+        this.pitch = Math.max(-maxPitch, Math.min(maxPitch, this.pitch));
+        this.syncCamera(camera);
+      }
     }
   }
 
@@ -261,14 +305,23 @@ export class InputHandler {
     context.activeScenario?.onClick();
     // 사격 피드백 콜백 (오디오 + 머즐플래시 + 히트마커 + 콤보)
     context.onShoot?.(hitBefore?.hit ?? false, hitBefore ?? null);
-    // 카메라 반동 적용
-    this.applyRecoil(camera);
-    // 무기 모델 반동 애니메이션
-    const intensity = this.recoilVerticalDeg > 0 ? this.recoilVerticalDeg / 2.0 : 0.3;
-    context.weaponViewModel.triggerFireAnimation(intensity);
+
+    if (this.patternProcessor) {
+      // Phase 2: 패턴 기반 반동 — AimPunch + ViewPunch 분리
+      const output = this.patternProcessor.fire(performance.now());
+      this.applyPatternRecoil(camera, output.aimPunch, output.viewPunch);
+      // 무기 모델 — 반동 크기에 비례한 킥백
+      const mag = Math.sqrt(output.aimPunch.dx ** 2 + output.aimPunch.dy ** 2);
+      context.weaponViewModel.triggerFireAnimation(Math.max(mag / 1.5, 0.2));
+    } else {
+      // 레거시: 단순 반동 적용
+      this.applyRecoil(camera);
+      const intensity = this.recoilVerticalDeg > 0 ? this.recoilVerticalDeg / 2.0 : 0.3;
+      context.weaponViewModel.triggerFireAnimation(intensity);
+    }
   }
 
-  /** 반동 적용 — 카메라를 위로 밀어올림 + 좌우 랜덤 흔들림 */
+  /** 레거시 반동 적용 — 카메라를 위로 밀어올림 + 좌우 랜덤 흔들림 */
   private applyRecoil(camera: THREE.PerspectiveCamera): void {
     if (this.recoilVerticalDeg <= 0) return;
     const vDeg = this.recoilVerticalDeg * (0.8 + Math.random() * 0.4);
@@ -283,6 +336,40 @@ export class InputHandler {
 
     // quaternion 갱신
     this.syncCamera(camera);
+  }
+
+  /** 패턴 기반 반동 적용 — AimPunch(카메라 이동) + ViewPunch(시각 흔들림) 분리 */
+  private applyPatternRecoil(
+    camera: THREE.PerspectiveCamera,
+    aimPunch: { dx: number; dy: number },
+    viewPunch: { dx: number; dy: number },
+  ): void {
+    // AimPunch — 실제 조준점 이동 (영구, 복귀는 별도 처리)
+    this.pitch += aimPunch.dy * DEG2RAD;
+    this.yaw += aimPunch.dx * DEG2RAD;
+
+    // ViewPunch — 시각적 흔들림 (빠르게 자동 복귀)
+    this.viewPunchPitch += viewPunch.dy * DEG2RAD;
+    this.viewPunchYaw += viewPunch.dx * DEG2RAD;
+
+    // pitch clamp
+    const maxPitch = 89 * DEG2RAD;
+    this.pitch = Math.max(-maxPitch, Math.min(maxPitch, this.pitch));
+
+    // 카메라에 AimPunch + ViewPunch 합산 적용
+    this.syncCameraWithViewPunch(camera);
+  }
+
+  /**
+   * 카메라 quaternion에 ViewPunch를 합산하여 동기화
+   * pitch + viewPunchPitch, yaw + viewPunchYaw를 합산한 최종 회전 적용
+   */
+  private syncCameraWithViewPunch(camera: THREE.PerspectiveCamera): void {
+    const totalPitch = this.pitch + this.viewPunchPitch;
+    const totalYaw = this.yaw + this.viewPunchYaw;
+    const qYaw = new THREE.Quaternion().setFromAxisAngle(UP, totalYaw);
+    const qPitch = new THREE.Quaternion().setFromAxisAngle(RIGHT, totalPitch);
+    camera.quaternion.copy(qYaw).multiply(qPitch);
   }
 
   /** raw delta → 카메라 회전 적용 */
@@ -306,8 +393,12 @@ export class InputHandler {
     const maxPitch = 89 * DEG2RAD;
     this.pitch = Math.max(-maxPitch, Math.min(maxPitch, this.pitch));
 
-    // Quaternion으로 카메라 회전 적용 (gimbal lock 방지)
-    this.syncCamera(camera);
+    // ViewPunch 활성 시 합산 동기화, 아니면 기본 동기화
+    if (this.patternProcessor) {
+      this.syncCameraWithViewPunch(camera);
+    } else {
+      this.syncCamera(camera);
+    }
   }
 
   /** 다음 프레임용 마우스 배치를 비동기 프리페치 (렌더 블로킹 없음) */

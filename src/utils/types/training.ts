@@ -102,8 +102,18 @@ export interface DifficultyConfig {
   adaptiveTargetSuccessRate: number;
 }
 
-/** 무기 설정 */
+/** 발사 모드 */
+export type FireMode = 'single' | 'burst' | 'auto' | 'bolt';
+
+/** 반동 유형 */
+export type RecoilType = 'none' | 'fixed' | 'valorant' | 'bloom';
+
+/** 무기 카테고리 */
+export type WeaponCategory = 'pistol' | 'smg' | 'rifle' | 'sniper' | 'custom';
+
+/** 무기 설정 — 기존 필드 유지 + Phase 1 확장 */
 export interface WeaponConfig {
+  // ── 기존 필드 (하위 호환) ──
   fireRateRpm: number;
   recoilPattern: Array<[number, number]>;
   recoilResetMs: number;
@@ -113,6 +123,51 @@ export interface WeaponConfig {
   bulletDropEnabled: boolean;
   bulletDropGravity: number;
   bulletVelocity: number;
+
+  // ── Phase 1 확장 (모두 optional — 기존 프리셋 호환) ──
+
+  /** 무기 식별자 */
+  id?: string;
+  /** 표시 이름 */
+  name?: string;
+  /** 카테고리 */
+  category?: WeaponCategory;
+
+  /** 발사 모드 (기본: auto — fireRateRpm > 0이면 auto, 아니면 single) */
+  fireMode?: FireMode;
+  /** 버스트 발수 (burst 모드 전용, 기본: 3) */
+  burstCount?: number;
+  /** 버스트 내부 RPM (버스트 간격과 별도, 기본: fireRateRpm) */
+  burstInternalRpm?: number;
+
+  /** 탄창 크기 (0 = 무제한, 기본: 0) */
+  magazineSize?: number;
+  /** 리로드 시간 (ms, 기본: 2000) */
+  reloadTimeMs?: number;
+
+  /** 첫발 정확도 (도, 기본: 0) */
+  firstShotAccuracy?: number;
+  /** 기본 스프레드 (도, 기본: 0) */
+  baseSpread?: number;
+
+  /** 반동 유형 (기본: fixed — recoilPattern 있으면 fixed, 없으면 none) */
+  recoilType?: RecoilType;
+  /** 수직 반동 강도 — 도/발 (bloom 타입용, 기본: 0) */
+  verticalRecoilStrength?: number;
+  /** 수평 반동 강도 — 도/발 (bloom 타입용, 기본: 0) */
+  horizontalRecoilStrength?: number;
+  /** 반동 랜덤 편차 σ (기본: 0.2) */
+  recoilRandomDeviation?: number;
+
+  /** 블룸 증가율 — 도/발 (bloom 타입 전용) */
+  bloomPerShot?: number;
+  /** 블룸 최대치 (도) */
+  bloomMax?: number;
+  /** 블룸 회복율 — 도/초 */
+  bloomRecoveryRate?: number;
+
+  /** 뷰모델 스타일 힌트 */
+  viewmodelStyle?: 'pistol' | 'rifle';
 }
 
 /** 스테이지 결과 (프론트→Rust 전달용) */
