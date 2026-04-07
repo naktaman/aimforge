@@ -56,10 +56,12 @@ export const useAimDnaStore = create<AimDnaState>((set) => ({
 
   setCurrentDna: (dna) => set({ currentDna: dna }),
 
+  /* Rust Deserialize 구조체: #[serde(rename_all = "camelCase")] — camelCase 키 필수 */
+
   loadDna: (profileId) =>
     storeInvoke<AimDnaState, AimDnaProfile | null>(
       set, 'get_aim_dna',
-      { params: { profile_id: profileId } },
+      { params: { profileId } },
       (dna) => ({ currentDna: dna }),
       'Aim DNA 로드',
     ),
@@ -67,7 +69,7 @@ export const useAimDnaStore = create<AimDnaState>((set) => ({
   loadHistory: (profileId, featureName) =>
     storeInvoke<AimDnaState, AimDnaHistoryEntry[]>(
       set, 'get_aim_dna_history',
-      { params: { profile_id: profileId, feature_name: featureName ?? null } },
+      { params: { profileId, featureName: featureName ?? null } },
       (history) => ({ history }),
       'Aim DNA 히스토리 로드',
       false,
@@ -76,7 +78,7 @@ export const useAimDnaStore = create<AimDnaState>((set) => ({
   loadSnapshots: (profileId, limit = 30) =>
     storeInvoke<AimDnaState, DnaSnapshot[]>(
       set, 'get_dna_snapshots_cmd',
-      { params: { profile_id: profileId, limit } },
+      { params: { profileId, limit } },
       (snapshots) => ({ snapshots }),
       'DNA 스냅샷 로드',
       false,
@@ -85,7 +87,7 @@ export const useAimDnaStore = create<AimDnaState>((set) => ({
   saveChangeEvent: (profileId, changeType, beforeValue, afterValue, description) =>
     storeInvoke<AimDnaState, number>(
       set, 'save_change_event_cmd',
-      { params: { profile_id: profileId, change_type: changeType, before_value: beforeValue, after_value: afterValue, description } },
+      { params: { profileId, changeType, beforeValue, afterValue, description } },
       () => ({}),
       '변경점 이벤트 저장',
       false,
@@ -94,7 +96,7 @@ export const useAimDnaStore = create<AimDnaState>((set) => ({
   loadChangeEvents: (profileId, limit = 50) =>
     storeInvoke<AimDnaState, DnaChangeEvent[]>(
       set, 'get_change_events_cmd',
-      { params: { profile_id: profileId, limit } },
+      { params: { profileId, limit } },
       (changeEvents) => ({ changeEvents }),
       '변경점 이벤트 로드',
       false,
@@ -103,7 +105,7 @@ export const useAimDnaStore = create<AimDnaState>((set) => ({
   compareSnapshots: (profileId, beforeId, afterId) =>
     storeInvoke<AimDnaState, SnapshotComparison>(
       set, 'compare_snapshots_cmd',
-      { params: { profile_id: profileId, before_id: beforeId, after_id: afterId } },
+      { params: { profileId, beforeId, afterId } },
       (comparison) => ({ comparison }),
       '스냅샷 비교',
       false,
@@ -112,7 +114,7 @@ export const useAimDnaStore = create<AimDnaState>((set) => ({
   detectStagnation: (profileId) =>
     storeInvoke<AimDnaState, StagnationResult>(
       set, 'detect_stagnation_cmd',
-      { params: { profile_id: profileId } },
+      { params: { profileId } },
       (stagnation) => ({ stagnation }),
       '정체기 감지',
       false,
@@ -121,7 +123,7 @@ export const useAimDnaStore = create<AimDnaState>((set) => ({
   loadTrend: (profileId) =>
     storeInvoke<AimDnaState, DnaTrendResult>(
       set, 'get_dna_trend_cmd',
-      { params: { profile_id: profileId } },
+      { params: { profileId } },
       (trend) => ({ trend }),
       'DNA 추세 분석',
       false,

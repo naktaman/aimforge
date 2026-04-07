@@ -204,11 +204,38 @@ export function ProfileWizard({ onClose, onStartCalibration, onStartTraining }: 
     startAssessment();
   };
 
-  /** 분석 수행 */
+  /** 분석 수행 — 위저드 평가 결과로 DNA 산출 */
   const handleAnalyze = async () => {
     try {
+      /* 위저드 평가 결과에서 시나리오별 점수 추출 */
+      const scoreMap: Record<string, number> = {};
+      for (const r of assessmentResults) {
+        scoreMap[r.stageType] = r.score;
+      }
+
       const dna = await safeInvoke<AimDnaProfile>('compute_aim_dna_cmd', {
-        params: { profile_id: 1, /* 단일 사용자 — user profiles.id */ session_id: null },
+        params: {
+          input: {
+            profileId: 1, /* 단일 사용자 — user profiles.id */
+            sessionId: 0,
+            flickMetrics: null,
+            trackingMetrics: null,
+            circularMetrics: null,
+            stochasticMetrics: null,
+            counterStrafeMetrics: null,
+            microFlickMetrics: null,
+            zoomMetrics: null,
+            scenarioScores: {
+              flick: scoreMap['flick'] ?? null,
+              tracking: scoreMap['tracking'] ?? null,
+              circularTracking: scoreMap['circular_tracking'] ?? null,
+              stochasticTracking: scoreMap['stochastic_tracking'] ?? null,
+              counterStrafeFlick: scoreMap['counter_strafe_flick'] ?? null,
+              microFlick: scoreMap['micro_flick'] ?? null,
+              zoomComposite: scoreMap['zoom_composite'] ?? null,
+            },
+          },
+        },
       });
       if (dna) {
         /** GP 기반 감도 제안 — 캘리브레이션 결과가 있으면 그것 사용 */

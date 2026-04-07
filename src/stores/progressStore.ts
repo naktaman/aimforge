@@ -32,10 +32,11 @@ export const useProgressStore = create<ProgressState>((set) => ({
   trajectoryAnalysis: null,
   isLoading: false,
 
+  /* get_daily_stats / get_skill_progress: flat args (params 래퍼 없음, 직접 키) */
   loadDailyStats: (profileId, days = 30) =>
     storeInvoke<ProgressState, DailyStatRow[]>(
       set, 'get_daily_stats',
-      { params: { profile_id: profileId, days } },
+      { profile_id: profileId, days },
       (dailyStats) => ({ dailyStats }),
       '일별 통계 로드',
       false,
@@ -44,21 +45,23 @@ export const useProgressStore = create<ProgressState>((set) => ({
   loadSkillProgress: (profileId) =>
     storeInvoke<ProgressState, SkillProgressRow[]>(
       set, 'get_skill_progress',
-      { params: { profile_id: profileId } },
+      { profile_id: profileId },
       (skillProgress) => ({ skillProgress }),
       '스킬 진행도 로드',
       false,
     ),
 
+  /* Rust GetAimDnaHistoryParams: #[serde(rename_all = "camelCase")] — camelCase 키 필수 */
   loadDnaTimeSeries: (profileId, featureName) =>
     storeInvoke<ProgressState, AimDnaHistoryEntry[]>(
       set, 'get_aim_dna_history',
-      { params: { profile_id: profileId, feature_name: featureName ?? null } },
+      { params: { profileId, featureName: featureName ?? null } },
       (dnaTimeSeries) => ({ dnaTimeSeries }),
       'DNA 시계열 로드',
       false,
     ),
 
+  /* analyze_trajectory_cmd: AnalyzeTrajectoryParams (params 래퍼, rename_all 없음) */
   analyzeTrajectory: (trialId) =>
     storeInvoke<ProgressState, TrajectoryAnalysisResult>(
       set, 'analyze_trajectory_cmd',
