@@ -185,7 +185,15 @@ export function useBatteryHandlers(deps: BatteryHandlerDeps) {
           scenario.setOnComplete((results) => { onBatteryComplete(results.compositeScore, results); });
           engine.setScenario(scenario); scenario.start(); soundEngine.playSpawn(); break;
         }
+        case 'zoom_composite':
+          /* TODO: ZoomCompositeRunner 통합 — 현재 더미 점수 50 기록 */
+          console.warn('[Battery] zoom_composite 미구현 — 더미 점수 기록');
+          useBatteryStore.getState().recordComplete(scenarioType, 50, {});
+          useBatteryStore.getState().advanceNext();
+          setScreen('battery-progress');
+          break;
         default:
+          console.warn('[Battery] 알 수 없는 시나리오 타입:', scenarioType);
           useBatteryStore.getState().recordComplete(scenarioType, 50, {});
           useBatteryStore.getState().advanceNext();
           setScreen('battery-progress');

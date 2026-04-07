@@ -280,6 +280,10 @@ export function useScenarioLauncher(deps: ScenarioLauncherDeps) {
           soundEngine.playSpawn();
           break;
         }
+        case 'zoom_composite':
+          /* TODO: ZoomCompositeRunner는 Scenario 인터페이스 미구현 — 배터리/캘리브레이션 전용 */
+          console.warn('[ScenarioLauncher] zoom_composite는 quick_play 미지원, 배터리 모드를 사용하세요');
+          break;
         default:
           break;
       }
@@ -307,6 +311,7 @@ export function useScenarioLauncher(deps: ScenarioLauncherDeps) {
         return 'flick';
       };
 
+      /* Rust DifficultyConfig: #[serde(rename_all = "camelCase")] — camelCase 키 필수 */
       const defaultDifficulty = {
         mode: 'benchmark' as const, targetSizeDeg: 3, targetSpeedDegPerSec: 40,
         reactionWindowMs: 3000, targetCount: 20, adaptiveTargetSuccessRate: 0.75,
@@ -325,15 +330,17 @@ export function useScenarioLauncher(deps: ScenarioLauncherDeps) {
         engine.setScenario(null);
         setScreen('results');
 
+        /* Rust StageResult: #[serde(rename_all = "camelCase")] — camelCase 키 필수 */
         if (r.stageType) {
           safeInvoke('submit_stage_result', { params: { result: {
-            profile_id: 1, /* 단일 사용자 — user profiles.id */ stage_type: r.stageType,
+            profileId: 1, /* 단일 사용자 — user profiles.id */
+            stageType: r.stageType,
             category: categoryFromStageType(r.stageType),
             difficulty: defaultDifficulty, accuracy: r.accuracy ?? 0,
-            avg_ttk_ms: r.avgTtkMs ?? 0, avg_reaction_ms: r.avgReactionMs ?? 0,
-            avg_overshoot_deg: r.avgOvershootDeg ?? 0, avg_undershoot_deg: r.avgUndershootDeg ?? 0,
-            tracking_mad: r.trackingMad ?? r.mad ?? null,
-            score: r.score ?? 0, raw_metrics: JSON.stringify(results),
+            avgTtkMs: r.avgTtkMs ?? 0, avgReactionMs: r.avgReactionMs ?? 0,
+            avgOvershootDeg: r.avgOvershootDeg ?? 0, avgUndershootDeg: r.avgUndershootDeg ?? 0,
+            trackingMad: r.trackingMad ?? r.mad ?? null,
+            score: r.score ?? 0, rawMetrics: JSON.stringify(results),
           }}});
         }
       };
