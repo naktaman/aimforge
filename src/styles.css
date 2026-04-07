@@ -7618,6 +7618,7 @@ h1, h2, h3, .heading {
   font-weight: var(--fw-medium);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
+}
 
 /* ╔══════════════════════════════════════════════════════════════════════════╗
    ║  Cold Forge 마이크로인터랙션 — §2.1~§2.11                              ║
