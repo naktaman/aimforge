@@ -169,6 +169,8 @@ export class FlickScenario extends Scenario {
             flashMesh = entry.humanoid.headMesh;
           } else if (zone === 'lower_body') {
             flashMesh = entry.humanoid.hitMeshes[4]; // 왼다리 (하체 대표)
+          } else if (zone === 'limbs') {
+            flashMesh = entry.humanoid.hitMeshes[2]; // 왼팔 (팔 대표)
           } else {
             flashMesh = entry.humanoid.hitMeshes[1]; // 몸통 (상체 대표)
           }

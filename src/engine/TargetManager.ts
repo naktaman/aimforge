@@ -1,20 +1,26 @@
 /**
  * 타겟 관리자
  * 타겟 생성/제거/히트 판정을 중앙에서 관리
- * sphere + humanoid 타겟 모두 지원
+ * sphere/cube + humanoid 타겟 모두 지원
+ * TargetConfig 기반 확장 스폰 + 프리셋 지원
  */
 import * as THREE from 'three';
-import { Target, type MovementType, type MovementParams } from './Target';
+import { Target, type MovementType, type MovementParams, type TargetConfig, type TargetShape } from './Target';
 import { HumanoidTarget, getHitZone } from './HumanoidTarget';
 import { angularDistance, isHit } from './HitDetection';
 import type { HitResult, HitZone } from '../utils/types';
+import type { TargetPresetName } from './TargetPresets';
+import { getTargetPreset } from './TargetPresets';
 
+/** 기존 SpawnConfig (하위 호환) */
 export interface SpawnConfig {
   angularSizeDeg: number;
   distanceM: number;
   color?: number;
   movementType?: MovementType;
   movementParams?: MovementParams;
+  /** 타겟 형상 (기본: sphere) */
+  shape?: TargetShape;
 }
 
 /** 휴머노이드 타겟 래퍼 — Target과 동일한 인터페이스로 관리 */
@@ -39,7 +45,7 @@ export class TargetManager {
     this.scene = scene;
   }
 
-  /** sphere 타겟 생성 */
+  /** sphere/cube 타겟 생성 */
   spawnTarget(position: THREE.Vector3, config: SpawnConfig): Target {
     const id = `target_${this.nextId++}`;
     const target = new Target(
@@ -51,9 +57,59 @@ export class TargetManager {
       config.color,
       config.movementType,
       config.movementParams,
+      config.shape,
     );
     this.targets.set(id, target);
     return target;
+  }
+
+  /**
+   * TargetConfig 기반 확장 스폰 — 새 움직임 시스템 + 형상 지원
+   * humanoid가 아닌 sphere/cube 타겟용
+   */
+  spawnFromConfig(position: THREE.Vector3, config: TargetConfig): Target {
+    const id = `target_${this.nextId++}`;
+    const target = new Target(
+      id,
+      this.scene,
+      position,
+      config.angularSizeDeg,
+      config.distanceM,
+      config.color,
+      config.movementType,
+      config.movementParams,
+      config.shape,
+    );
+    // 새 움직임 시스템 적용
+    if (config.movement) {
+      target.setMovement(config.movement);
+    }
+    // 파티클 씬 연결
+    target.setParticleScene(this.scene);
+    this.targets.set(id, target);
+    return target;
+  }
+
+  /**
+   * 프리셋 이름으로 타겟 스폰
+   * humanoid/sphere 자동 분기
+   */
+  spawnFromPreset(
+    position: THREE.Vector3,
+    presetName: TargetPresetName,
+    cameraPos?: THREE.Vector3,
+  ): { id: string; target: Target | HumanoidTarget } | null {
+    const preset = getTargetPreset(presetName);
+    if (!preset) return null;
+
+    if (preset.isHumanoid) {
+      const cam = cameraPos ?? new THREE.Vector3(0, 1.6, 0);
+      const result = this.spawnHumanoidFromConfig(position, preset.config, cam);
+      return { id: result.id, target: result.target };
+    }
+
+    const target = this.spawnFromConfig(position, preset.config);
+    return { id: target.id, target };
   }
 
   /** humanoid 타겟 생성 — 카메라를 바라보도록 배치 */
@@ -66,6 +122,41 @@ export class TargetManager {
     const humanoid = new HumanoidTarget();
     humanoid.setPosition(position);
     humanoid.lookAt(cameraPos);
+    humanoid.setParticleScene(this.scene);
+    this.scene.add(humanoid.group);
+
+    const DEG2RAD = Math.PI / 180;
+    const angularRadius = (config.angularSizeDeg / 2) * DEG2RAD;
+
+    this.humanoids.set(id, {
+      humanoid,
+      position: position.clone(),
+      distanceM: config.distanceM,
+      angularRadius,
+    });
+
+    return { id, target: humanoid };
+  }
+
+  /**
+   * TargetConfig 기반 humanoid 스폰 — 움직임 시스템 적용
+   */
+  spawnHumanoidFromConfig(
+    position: THREE.Vector3,
+    config: TargetConfig,
+    cameraPos: THREE.Vector3,
+  ): { id: string; target: HumanoidTarget } {
+    const id = `target_${this.nextId++}`;
+    const humanoid = new HumanoidTarget();
+    humanoid.setPosition(position);
+    humanoid.lookAt(cameraPos);
+    humanoid.setParticleScene(this.scene);
+
+    // 움직임 설정
+    if (config.movement) {
+      humanoid.setMovement(config.movement);
+    }
+
     this.scene.add(humanoid.group);
 
     const DEG2RAD = Math.PI / 180;
@@ -143,7 +234,6 @@ export class TargetManager {
         for (const [id, entry] of this.humanoids.entries()) {
           if (entry.humanoid.hitMeshes.includes(hitMesh)) {
             const bodyPart = HumanoidTarget.getBodyPartFromMesh(hitMesh);
-            // bodyPart 판별 실패 시 upper_body 기본값 (HitZone에 'body' 없음)
             const hitZone: HitZone = bodyPart ? getHitZone(bodyPart) : 'upper_body';
             const angError = angularDistance(cameraPos, cameraForward, entry.position);
 
@@ -195,6 +285,8 @@ export class TargetManager {
     }
     for (const entry of this.humanoids.values()) {
       entry.humanoid.update(deltaTime);
+      // 움직임 후 위치 동기화 (히트 판정용)
+      entry.position.copy(entry.humanoid.group.position);
     }
   }
 

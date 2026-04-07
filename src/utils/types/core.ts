@@ -118,8 +118,8 @@ export type ClickType = 'PreAim' | 'PreFire' | 'Flick';
 /** 타겟 타입 */
 export type TargetType = 'sphere' | 'humanoid';
 
-/** 3구역 히트존 */
-export type HitZone = 'head' | 'upper_body' | 'lower_body';
+/** 4구역 히트존 */
+export type HitZone = 'head' | 'upper_body' | 'lower_body' | 'limbs';
 
 /** 궤적 타입 */
 export type TrajectoryType =
