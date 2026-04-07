@@ -11,6 +11,7 @@ import { useTranslation } from '../../i18n';
 import { ResultGrade, getGrade } from './ResultGrade';
 import { ResultStats } from './ResultStats';
 import { ResultActions } from './ResultActions';
+import { InsightPanel } from './InsightPanel';
 /* 결과 차트 순환 색상 토큰 — 컨페티 파티클 색상에 사용 */
 import { RESULT_CHART_COLORS } from '../../config/theme';
 
@@ -207,6 +208,9 @@ export function ResultScreen({ onRetry, onMainMenu, onGradeReveal, onPBFanfare }
       <div className="result-screen__analytics">
         <ResultStats stats={stats} />
       </div>
+
+      {/* ── Insight Zone — 이전 세션 대비 성과 변화/추천 ── */}
+      <InsightPanel metrics={metrics} scenarioType={scenarioType} />
 
       {/* ── Action Zone (하단 20%) ── */}
       <div className="result-screen__actions">

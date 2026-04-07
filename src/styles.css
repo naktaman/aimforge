@@ -7131,3 +7131,277 @@ body {
   border-color: rgba(255, 255, 255, 0.12);
   color: var(--text-primary);
 }
+
+/* ══════════════════════════════════════════
+   E-1 인사이트 패널 — ResultScreen 하단
+   Cold Forge 카드 스타일
+   ══════════════════════════════════════════ */
+.insight-panel {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+.insight-panel__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+.insight-panel__title {
+  font-family: var(--font-heading);
+  font-size: var(--font-sm);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.insight-panel__cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* 인사이트 카드 공통 */
+.insight-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  transition: border-color var(--transition-fast);
+}
+.insight-card__icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+}
+.insight-card__content {
+  flex: 1;
+  min-width: 0;
+}
+.insight-card__badge {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 4px;
+}
+.insight-card__message {
+  font-size: var(--font-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* 타입별 색상 변형 — improvement */
+.insight-card--improvement {
+  border-left: 3px solid var(--success);
+}
+.insight-card--improvement .insight-card__icon {
+  color: var(--success);
+  background: var(--semantic-success-bg);
+}
+.insight-card--improvement .insight-card__badge {
+  color: var(--success);
+  background: var(--semantic-success-bg);
+}
+
+/* decline */
+.insight-card--decline {
+  border-left: 3px solid var(--danger);
+}
+.insight-card--decline .insight-card__icon {
+  color: var(--danger);
+  background: var(--semantic-error-bg);
+}
+.insight-card--decline .insight-card__badge {
+  color: var(--danger);
+  background: var(--semantic-error-bg);
+}
+
+/* recommendation */
+.insight-card--recommendation {
+  border-left: 3px solid var(--accent-primary);
+}
+.insight-card--recommendation .insight-card__icon {
+  color: var(--accent-primary);
+  background: var(--accent-primary-muted);
+}
+.insight-card--recommendation .insight-card__badge {
+  color: var(--accent-primary);
+  background: var(--accent-primary-muted);
+}
+
+/* ══════════════════════════════════════════
+   E-2 크로스게임 감도 변환기 — Cold Forge
+   ══════════════════════════════════════════ */
+.cgc {
+  padding: var(--space-5);
+  max-width: 800px;
+  color: var(--text-primary);
+}
+.cgc__title {
+  font-size: var(--font-xl);
+  margin-bottom: var(--space-1);
+}
+.cgc__subtitle {
+  font-size: var(--font-sm);
+  color: var(--text-tertiary);
+  margin-bottom: var(--space-4);
+}
+
+/* 입력 폼 그리드 */
+.cgc__form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.cgc__field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cgc__label {
+  font-family: var(--font-heading);
+  font-size: var(--font-xs);
+  font-weight: var(--fw-medium);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.cgc__hint {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+.cgc__select,
+.cgc__input {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-sm);
+  font-family: var(--font-ui);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.cgc__select:focus,
+.cgc__input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: var(--glow-accent-focus);
+}
+
+/* 개인 k 카드 */
+.cgc__k-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-3);
+  font-size: var(--font-sm);
+}
+.cgc__k-label {
+  color: var(--text-secondary);
+}
+.cgc__k-value {
+  color: var(--accent-cyan);
+  font-weight: var(--fw-bold);
+  font-size: var(--font-md);
+}
+.cgc__k-quality {
+  color: var(--text-tertiary);
+  font-size: var(--font-xs);
+}
+.cgc__k-piecewise {
+  color: var(--text-tertiary);
+  font-size: var(--font-xs);
+  margin-left: auto;
+}
+
+/* 변환 버튼 */
+.cgc__convert-btn {
+  margin-bottom: var(--space-4);
+}
+
+/* 에러 */
+.cgc__error {
+  padding: var(--space-2);
+  background: var(--semantic-error-bg);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-3);
+  font-size: var(--font-sm);
+  color: var(--danger);
+}
+
+/* 결과 카드 */
+.cgc__result-card {
+  background: var(--gradient-metal-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.cgc__result-title {
+  font-size: var(--font-md);
+  margin-bottom: var(--space-3);
+}
+.cgc__result-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.cgc__result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px var(--space-2);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.cgc__result-item:last-child {
+  border-bottom: none;
+}
+.cgc__result-item--highlight {
+  background: var(--accent-primary-muted);
+  border-radius: var(--radius-md);
+  border-bottom-color: transparent;
+}
+.cgc__result-label {
+  color: var(--text-secondary);
+  font-size: var(--font-sm);
+}
+.cgc__result-value {
+  font-size: var(--font-sm);
+  color: var(--text-primary);
+}
+.cgc__result-value--highlight {
+  color: var(--success);
+  font-weight: var(--fw-bold);
+  font-size: var(--font-base);
+}
+
+/* 차트 섹션 */
+.cgc__chart-section {
+  margin-top: var(--space-2);
+}
+.cgc__chart-title {
+  font-size: var(--font-base);
+  margin-bottom: var(--space-2);
+}
