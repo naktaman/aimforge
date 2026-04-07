@@ -10,6 +10,7 @@ import { useSettingsStore } from '../stores/settingsStore';
 import { useGameProfileStore } from '../stores/gameProfileStore';
 import { useEngineStore } from '../stores/engineStore';
 import { Crosshair } from './overlays/Crosshair';
+import { WeaponConfigPanel } from './WeaponConfigPanel';
 import { useTranslation } from '../i18n';
 
 /** 디스플레이 모드 */
@@ -42,7 +43,7 @@ type SensUnit = 'cm360' | 'inch360' | 'edpi';
 /** 현재 활성 설정 섹션 */
 type SettingsSection =
   | 'hardware' | 'sensitivity' | 'crosshair' | 'display'
-  | 'hud' | 'sound' | 'keybinds' | 'data' | 'language' | 'about';
+  | 'hud' | 'sound' | 'weapon' | 'keybinds' | 'data' | 'language' | 'about';
 
 interface DisplaySettingsProps {
   onBack: () => void;
@@ -52,6 +53,7 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps): React.JSX.Ele
   const [settings, setSettings] = useState<DisplaySettingsState>(DEFAULT_SETTINGS);
   const [saved, setSaved] = useState(false);
   const [section, setSection] = useState<SettingsSection>('hardware');
+  const [weaponPresetId, setWeaponPresetId] = useState('flick_pistol');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [exportStatus, setExportStatus] = useState('');
   const [exporting, setExporting] = useState(false);
@@ -222,6 +224,7 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps): React.JSX.Ele
     { key: 'display', label: t('settings.sectionDisplay') },
     { key: 'hud', label: t('settings.sectionHud') },
     { key: 'sound', label: t('settings.sectionSound') },
+    { key: 'weapon', label: '무기' },
     { key: 'keybinds', label: t('settings.sectionKeybinds') },
     { key: 'data', label: t('settings.sectionData') },
     { key: 'language', label: t('settings.sectionLanguage') },
@@ -586,6 +589,17 @@ export function DisplaySettings({ onBack }: DisplaySettingsProps): React.JSX.Ele
               <option value="soft">{t('settings.hitSoundSoft')}</option>
             </select>
           </div>
+        </div>
+      )}
+
+      {/* ─── 무기 설정 섹션 (Phase 4) ─── */}
+      {section === 'weapon' && (
+        <div className="settings-grid">
+          <h3 className="settings-section-heading">무기 설정</h3>
+          <WeaponConfigPanel
+            selectedPresetId={weaponPresetId}
+            onPresetChange={(id) => setWeaponPresetId(id)}
+          />
         </div>
       )}
 

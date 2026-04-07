@@ -182,6 +182,11 @@ export class RecoilPatternProcessor {
     this.compensationInputs = [];
   }
 
+  /** 현재 설정 반환 (오버레이 시각화용) */
+  getConfig(): RecoilPatternConfig {
+    return { ...this.config };
+  }
+
   /** 현재 발사 인덱스 */
   getShotIndex(): number {
     return this.shotIndex;

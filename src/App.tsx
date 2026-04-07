@@ -22,6 +22,7 @@ import { ScopeOverlay } from './components/overlays/ScopeOverlay';
 import { ShootingFeedback, triggerShootingFeedback, getComboState } from './components/overlays/ShootingFeedback';
 import { FireModeIndicator } from './components/overlays/FireModeIndicator';
 import { GameHUD } from './components/overlays/GameHUD';
+import { RecoilOverlay } from './components/overlays/RecoilOverlay';
 import { useGameMetricsStore } from './hooks/useGameMetrics';
 import { TargetManager } from './engine/TargetManager';
 import { SoundEngine } from './engine/SoundEngine';
@@ -134,6 +135,9 @@ function App() {
   const {
     kFitResult, predictedMultipliers, comparatorResult, comparatorState, resetZoomCalibration,
   } = useZoomCalibrationStore();
+
+  /** 반동 패턴 오버레이 표시 여부 (디버그/훈련용) */
+  const [showRecoilOverlay] = useState(true);
 
   const engineRef = useRef<GameEngine | null>(null);
   const targetManagerRef = useRef<TargetManager | null>(null);
@@ -397,6 +401,10 @@ function App() {
             <ShootingFeedback />
             <FireModeIndicator />
             <GameHUD />
+            <RecoilOverlay
+              processor={engineRef.current?.getPatternProcessor() ?? null}
+              visible={showRecoilOverlay}
+            />
             <div className="hud">
               <div className="hud-item">{fps} FPS</div>
               <div className="hud-item">{cmPer360.toFixed(1)} cm/360</div>

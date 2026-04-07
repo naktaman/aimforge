@@ -8564,3 +8564,92 @@ textarea:focus {
   font-size: var(--font-base);
   margin-bottom: var(--space-2);
 }
+
+/* ─── 반동 오버레이 (Phase 4) ──────────────────────────────── */
+
+.recoil-overlay {
+  position: fixed;
+  bottom: 80px;
+  left: 16px;
+  z-index: 26;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.recoil-overlay__canvas {
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.recoil-overlay__info {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+/* ─── 무기 설정 패널 (Phase 4) ─────────────────────────────── */
+
+.weapon-config-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.weapon-config-panel__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.weapon-config-panel__select {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: var(--font-sm);
+  cursor: pointer;
+  appearance: auto;
+}
+.weapon-config-panel__select:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+.weapon-config-panel__slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.weapon-config-panel__slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.weapon-config-panel__slider-label {
+  font-size: var(--font-xs);
+  color: var(--text-secondary);
+}
+.weapon-config-panel__slider-value {
+  font-size: var(--font-xs);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  min-width: 60px;
+  text-align: right;
+}
+.weapon-config-panel__slider {
+  width: 100%;
+  height: 4px;
+  appearance: none;
+  background: var(--bg-tertiary);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+.weapon-config-panel__slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+}

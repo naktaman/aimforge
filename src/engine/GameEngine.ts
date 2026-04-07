@@ -215,6 +215,11 @@ export class GameEngine {
     return this.inputHandler.getRotation();
   }
 
+  /** 반동 패턴 프로세서 접근 (오버레이 시각화용) */
+  getPatternProcessor(): import('./RecoilPattern').RecoilPatternProcessor | null {
+    return this.inputHandler.getPatternProcessor();
+  }
+
   /** 환경 그룹 접근 (counter-strafe 시나리오에서 이동용) */
   getEnvironmentGroup(): THREE.Group | null {
     return this.environmentGroup;
