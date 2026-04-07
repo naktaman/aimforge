@@ -16,6 +16,8 @@ import type { WeaponStyle } from './WeaponViewModel';
 import type { EngineConfig, PerfData } from '../utils/types';
 import type { TargetManager } from './TargetManager';
 import type { Scenario } from './scenarios/Scenario';
+import { PostProcessingPipeline, type PostProcessingConfig, type BloomParams } from './PostProcessingPipeline';
+import { EnvironmentEffects, type EnvironmentEffectsConfig } from './EnvironmentEffects';
 
 export class GameEngine {
   // === Three.js 핵심 객체 ===
@@ -62,6 +64,12 @@ export class GameEngine {
   // === 1인칭 무기 뷰모델 ===
   private weaponViewModel: WeaponViewModel;
   private weaponVisible = true;
+
+  // === 포스트 프로세싱 (B-4 Phase 2) ===
+  private postProcessing: PostProcessingPipeline | null = null;
+
+  // === 환경 이펙트 (B-4 Phase 2) ===
+  private environmentEffects: EnvironmentEffects | null = null;
 
   constructor(canvas: HTMLCanvasElement, config: EngineConfig) {
     this.canvas = canvas;
@@ -263,6 +271,54 @@ export class GameEngine {
     this.inputHandler.setRecoil(verticalDeg, horizontalSpreadDeg, recoveryRate);
   }
 
+  // === 포스트 프로세싱 API (B-4 Phase 2) ===
+
+  /** 포스트 프로세싱 파이프라인 초기화 — 호출 전까지 직접 렌더 */
+  enablePostProcessing(config?: PostProcessingConfig): void {
+    if (this.postProcessing) {
+      this.postProcessing.dispose();
+    }
+    this.postProcessing = new PostProcessingPipeline(
+      this.renderer, this.scene, this.camera, config,
+    );
+  }
+
+  /** 포스트 프로세싱 비활성화 — 직접 렌더로 복귀 */
+  disablePostProcessing(): void {
+    this.postProcessing?.dispose();
+    this.postProcessing = null;
+  }
+
+  /** 블룸 파라미터 실시간 업데이트 */
+  setBloomParams(params: BloomParams): void {
+    this.postProcessing?.setBloomParams(params);
+  }
+
+  /** 블룸 활성화/비활성화 */
+  setBloomEnabled(enabled: boolean): void {
+    this.postProcessing?.setBloomEnabled(enabled);
+  }
+
+  // === 환경 이펙트 API (B-4 Phase 2) ===
+
+  /** 환경 이펙트 초기화 — 머즐 플래시 콜백 자동 연결 */
+  enableEnvironmentEffects(config?: EnvironmentEffectsConfig): void {
+    if (this.environmentEffects) {
+      this.environmentEffects.dispose();
+    }
+    this.environmentEffects = new EnvironmentEffects(this.scene, config);
+
+    // 무기 발사 시 머즐 플래시 라이트 자동 트리거
+    this.weaponViewModel.setOnFire(() => {
+      this.environmentEffects?.triggerMuzzleFlash();
+    });
+  }
+
+  /** 환경 이펙트 접근 (직접 이벤트 호출용) */
+  getEnvironmentEffects(): EnvironmentEffects | null {
+    return this.environmentEffects;
+  }
+
   /** 리소스 정리 — 모든 Three.js 리소스 명시적 해제 */
   dispose(): void {
     this.stop();
@@ -284,6 +340,14 @@ export class GameEngine {
       this.canvas.removeEventListener('webglcontextrestored', this.handleContextRestored);
       this.handleContextRestored = null;
     }
+
+    // 포스트 프로세싱 정리 (B-4 Phase 2)
+    this.postProcessing?.dispose();
+    this.postProcessing = null;
+
+    // 환경 이펙트 정리 (B-4 Phase 2)
+    this.environmentEffects?.dispose();
+    this.environmentEffects = null;
 
     // 무기 뷰모델 정리
     this.weaponViewModel.dispose();
@@ -381,8 +445,15 @@ export class GameEngine {
     // 무기 뷰모델 애니메이션 업데이트
     this.weaponViewModel.update(deltaTime);
 
-    // 메인 씬 렌더
-    this.renderer.render(this.scene, this.camera);
+    // 환경 이펙트 업데이트 (B-4 Phase 2)
+    this.environmentEffects?.update(deltaTime);
+
+    // 메인 씬 렌더 — 포스트 프로세싱 파이프라인 또는 직접 렌더
+    if (this.postProcessing) {
+      this.postProcessing.render();
+    } else {
+      this.renderer.render(this.scene, this.camera);
+    }
 
     // 무기 오버레이 렌더 (깊이 클리어 후 위에 그림)
     if (this.weaponVisible) {
@@ -400,6 +471,8 @@ export class GameEngine {
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);
+    // 포스트 프로세싱 리사이즈 (B-4 Phase 2)
+    this.postProcessing?.setSize(width, height);
     // 무기 오버레이 카메라도 종횡비 업데이트
     this.weaponViewModel.updateAspect(width / height);
   }

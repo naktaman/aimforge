@@ -38,6 +38,9 @@ export class WeaponViewModel {
   private targetKickRotation = 0;
   private targetKickTranslation = 0;
 
+  /** 발사 이벤트 콜백 — 머즐 플래시/파티클 트리거용 (B-4 Phase 2) */
+  private onFireCallback: (() => void) | null = null;
+
   constructor() {
     // 오버레이 씬 생성 (투명 배경)
     this.overlayScene = new THREE.Scene();
@@ -81,6 +84,14 @@ export class WeaponViewModel {
     // 최대값 제한 (과도한 누적 방지)
     this.targetKickRotation = Math.min(this.targetKickRotation, 0.4);
     this.targetKickTranslation = Math.min(this.targetKickTranslation, 0.15);
+
+    // 머즐 플래시/파티클 콜백 (B-4 Phase 2)
+    this.onFireCallback?.();
+  }
+
+  /** 발사 이벤트 콜백 설정 — 머즐 플래시 라이팅 연동 (B-4 Phase 2) */
+  setOnFire(cb: () => void): void {
+    this.onFireCallback = cb;
   }
 
   /** 매 프레임 업데이트 — 킥백 복귀 애니메이션 */

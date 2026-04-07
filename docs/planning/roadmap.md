@@ -32,6 +32,7 @@ Infrastructure, Three.js 엔진, GP Calibration, Go/No-Go 검증
 - v0.2.0 릴리즈 준비 ✅ (2026-04-05) — CI 보안 감사 (cargo audit + npm audit), 버전 0.2.0 업데이트, CHANGELOG.md
 - UX 라운드2 ✅ (2026-04-05) — WelcomeScreen 프로 게이밍 재디자인(스펙 스트립), 히어로스탯 게임감도 교체, Empty State SVG 일러스트, CATEGORY_COLORS CSS변수화, whileHover 정리, 의미없는 정보 제거
 - B-3 Phase 2: 타겟 고급 움직임 시스템 ✅ (2026-04-07) — Perlin Noise 순수 구현(Classic 2D + FBM), ADAD Strafing 고도화(가속/감속/딜레이/페이크), 복합 패턴(ADAD+Perlin), 난이도 프리셋 4종(Easy/Medium/Hard/Extreme), TargetPresets.ts 신규
+- B-4 Phase 2: 환경 이펙트 고도화 ✅ (2026-04-07) — UnrealBloomPass 포스트프로세싱 파이프라인, 파티클 시스템(스파크/먼지/앰비언트), 머즐 플래시 동적 라이팅, 네온 pulse 애니메이션
 
 ---
 
