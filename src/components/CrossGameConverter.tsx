@@ -1,14 +1,15 @@
 /**
- * CrossGameConverter — 크로스게임 줌 감도 변환 UI
- * 소스 게임/감도 입력 → 타겟 게임/옵틱 선택 → 개인 k로 변환 결과 표��
+ * CrossGameConverter — 크로스게임 줌 감도 변환 UI (Cold Forge)
+ * gameDatabase 59개 게임 활용, CSS 변수 기반 스타일링
+ * 소스 게임/감도 입력 → cm/360 변환 → 타겟 게임 감도 출력
  */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { ZoomProfileChart } from './ZoomProfileChart';
 import { useSettingsStore } from '../stores/settingsStore';
 import { useZoomCalibrationStore } from '../stores/zoomCalibrationStore';
 import { DEFAULT_GAME_ZOOM_PROFILES } from '../utils/physics';
-import { UI_COLORS } from '../config/theme';
+import { GAME_DATABASE } from '../data/gameDatabase';
 
 /** 변환 결과 타입 (Rust CrossgameZoomResult 미러) */
 interface CrossgameZoomResult {
@@ -45,12 +46,27 @@ export function CrossGameConverter() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // 검증된 게임만 필터 (yaw 값 있는 게임)
+  const availableGames = useMemo(
+    () => GAME_DATABASE.filter(g => g.yaw > 0).sort((a, b) => a.name.localeCompare(b.name)),
+    [],
+  );
+
+  // 현재 선택된 소스/타겟 게임 정보
+  const sourceGameInfo = useMemo(
+    () => GAME_DATABASE.find(g => g.id === sourceGame),
+    [sourceGame],
+  );
+  const targetGameInfo = useMemo(
+    () => GAME_DATABASE.find(g => g.id === targetGame),
+    [targetGame],
+  );
+
   // 변환 실행
-  const convert = useCallback(async () => {
+  const convert = useCallback(async (): Promise<void> => {
     setError('');
     setLoading(true);
     try {
-      // 게임 줌 프로파일 매칭
       const zoomProfile = DEFAULT_GAME_ZOOM_PROFILES.find(
         p => p.id.startsWith(targetGame),
       );
@@ -85,66 +101,75 @@ export function CrossGameConverter() {
   })) ?? [];
 
   return (
-    <div style={{ padding: 20, maxWidth: 800, color: UI_COLORS.textPrimary }}>
-      <h2 style={{ marginBottom: 16 }}>크로스게임 줌 감도 변환</h2>
+    <div className="cgc">
+      <h2 className="cgc__title heading">크로스게임 줌 감도 변환</h2>
+      <p className="cgc__subtitle">
+        {availableGames.length}개 게임 지원 · cm/360 기반 정밀 변환
+      </p>
 
-      {/* 입력 폼 */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+      {/* ── 입력 폼 ── */}
+      <div className="cgc__form">
         {/* 소스 게임 */}
-        <div>
-          <label style={{ fontSize: 12, color: UI_COLORS.textSecondary }}>소스 게임</label>
+        <div className="cgc__field">
+          <label className="cgc__label">소스 게임</label>
           <select
+            className="cgc__select"
             value={sourceGame}
             onChange={e => setSourceGame(e.target.value)}
-            style={selectStyle}
           >
-            <option value="cs2">CS2</option>
-            <option value="valorant">Valorant</option>
-            <option value="apex">Apex Legends</option>
-            <option value="overwatch2">Overwatch 2</option>
-            <option value="pubg">PUBG</option>
-            <option value="r6siege">Rainbow Six Siege</option>
-            <option value="cod_mw">CoD: Warzone</option>
+            {availableGames.map(g => (
+              <option key={g.id} value={g.id}>
+                {g.name} {g.confidence === 'verified' ? '✓' : ''}
+              </option>
+            ))}
           </select>
+          {sourceGameInfo && (
+            <span className="cgc__hint">
+              yaw: {sourceGameInfo.yaw} · {sourceGameInfo.engine}
+            </span>
+          )}
         </div>
 
         {/* 타겟 게임 */}
-        <div>
-          <label style={{ fontSize: 12, color: UI_COLORS.textSecondary }}>��겟 게임</label>
+        <div className="cgc__field">
+          <label className="cgc__label">타겟 게임</label>
           <select
+            className="cgc__select"
             value={targetGame}
             onChange={e => setTargetGame(e.target.value)}
-            style={selectStyle}
           >
-            <option value="cs2">CS2</option>
-            <option value="valorant">Valorant</option>
-            <option value="apex">Apex Legends</option>
-            <option value="overwatch2">Overwatch 2</option>
-            <option value="pubg">PUBG</option>
-            <option value="r6siege">Rainbow Six Siege</option>
-            <option value="cod_mw">CoD: Warzone</option>
+            {availableGames.map(g => (
+              <option key={g.id} value={g.id}>
+                {g.name} {g.confidence === 'verified' ? '✓' : ''}
+              </option>
+            ))}
           </select>
+          {targetGameInfo && (
+            <span className="cgc__hint">
+              yaw: {targetGameInfo.yaw} · {targetGameInfo.engine}
+            </span>
+          )}
         </div>
 
         {/* 소스 감도 */}
-        <div>
-          <label style={{ fontSize: 12, color: UI_COLORS.textSecondary }}>소스 감도</label>
+        <div className="cgc__field">
+          <label className="cgc__label">소스 감도</label>
           <input
+            className="cgc__input"
             type="number"
             step="0.01"
             value={sourceSens}
             onChange={e => setSourceSens(e.target.value)}
-            style={inputStyle}
           />
         </div>
 
         {/* 줌 배율 선택 */}
-        <div>
-          <label style={{ fontSize: 12, color: UI_COLORS.textSecondary }}>줌 배율</label>
+        <div className="cgc__field">
+          <label className="cgc__label">줌 배율</label>
           <select
+            className="cgc__select"
             value={zoomRatio}
             onChange={e => setZoomRatio(Number(e.target.value))}
-            style={selectStyle}
           >
             {ZOOM_PRESETS.map(p => (
               <option key={p.ratio} value={p.ratio}>{p.label}</option>
@@ -153,64 +178,51 @@ export function CrossGameConverter() {
         </div>
       </div>
 
-      {/* 개인 k 정보 */}
+      {/* ── 개인 k 정보 카드 ── */}
       {kFitResult && (
-        <div style={{ padding: '8px 12px', background: UI_COLORS.bgSurface, borderRadius: 6, marginBottom: 12, fontSize: 13 }}>
-          개인 k: <strong style={{ color: UI_COLORS.infoHighlight }}>{kFitResult.kValue.toFixed(3)}</strong>
-          {' '}({kFitResult.quality})
-          {kFitResult.piecewiseK && ` | Piecewise: ${kFitResult.piecewiseK.length}구간`}
+        <div className="cgc__k-card">
+          <span className="cgc__k-label">개인 k</span>
+          <span className="cgc__k-value data-value">{kFitResult.kValue.toFixed(3)}</span>
+          <span className="cgc__k-quality">{kFitResult.quality}</span>
+          {kFitResult.piecewiseK && (
+            <span className="cgc__k-piecewise">Piecewise: {kFitResult.piecewiseK.length}구간</span>
+          )}
         </div>
       )}
 
-      {/* 변환 버튼 */}
+      {/* ── 변환 버튼 ── */}
       <button
+        className="cgc__convert-btn btn-primary"
         onClick={convert}
         disabled={loading}
-        style={{
-          padding: '10px 24px',
-          background: loading ? UI_COLORS.actionDisabled : UI_COLORS.actionBlue,
-          color: UI_COLORS.textWhite,
-          border: 'none',
-          borderRadius: 6,
-          cursor: loading ? 'wait' : 'pointer',
-          fontSize: 14,
-          fontWeight: 600,
-          marginBottom: 16,
-        }}
       >
         {loading ? '변환 중...' : '변환'}
       </button>
 
-      {/* 에러 */}
-      {error && (
-        <div style={{ padding: 8, background: UI_COLORS.errorBg, borderRadius: 6, marginBottom: 12, fontSize: 13 }}>
-          {error}
-        </div>
-      )}
+      {/* ── 에러 ── */}
+      {error && <div className="cgc__error">{error}</div>}
 
-      {/* 결과 */}
+      {/* ── 결과 카드 ── */}
       {result && (
-        <div style={{ background: UI_COLORS.bgSurface, borderRadius: 8, padding: 16, marginBottom: 16 }}>
-          <h3 style={{ marginBottom: 12, fontSize: 16 }}>변환 결과</h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-            <tbody>
-              <ResultRow label="소스 cm/360 (힙파이어)" value={`${result.sourceCm360.toFixed(2)} cm`} />
-              <ResultRow label="소스 줌 cm/360" value={`${result.sourceZoomCm360.toFixed(2)} cm`} />
-              <ResultRow label="타겟 감도" value={result.targetSens.toFixed(4)} highlight />
-              <ResultRow label="타겟 줌 cm/360" value={`${result.targetZoomCm360.toFixed(2)} cm`} />
-              <ResultRow label="사용된 k" value={result.kUsed.toFixed(3)} />
-              <ResultRow label="소스 배율" value={result.sourceMultiplier.toFixed(3)} />
-              <ResultRow label="타겟 배율" value={result.targetMultiplier.toFixed(3)} />
-              <ResultRow label="배율 차이" value={result.multiplierDiff.toFixed(3)} />
-            </tbody>
-          </table>
+        <div className="cgc__result-card">
+          <h3 className="cgc__result-title heading">변환 결과</h3>
+          <div className="cgc__result-grid">
+            <ResultItem label="소스 cm/360 (힙파이어)" value={`${result.sourceCm360.toFixed(2)} cm`} />
+            <ResultItem label="소스 줌 cm/360" value={`${result.sourceZoomCm360.toFixed(2)} cm`} />
+            <ResultItem label="타겟 감도" value={result.targetSens.toFixed(4)} highlight />
+            <ResultItem label="타겟 줌 cm/360" value={`${result.targetZoomCm360.toFixed(2)} cm`} />
+            <ResultItem label="사용된 k" value={result.kUsed.toFixed(3)} />
+            <ResultItem label="소스 배율" value={result.sourceMultiplier.toFixed(3)} />
+            <ResultItem label="타겟 배율" value={result.targetMultiplier.toFixed(3)} />
+            <ResultItem label="배율 차이" value={result.multiplierDiff.toFixed(3)} />
+          </div>
         </div>
       )}
 
-      {/* k 프로파일 차트 */}
+      {/* ── k 프로파일 차트 ── */}
       {chartPoints.length > 0 && (
-        <div>
-          <h3 style={{ marginBottom: 8, fontSize: 14 }}>줌 프로파일 (배율 vs k)</h3>
+        <div className="cgc__chart-section">
+          <h3 className="cgc__chart-title heading">줌 프로파일 (배율 vs k)</h3>
           <ZoomProfileChart
             points={chartPoints}
             globalK={kFitResult?.kValue}
@@ -226,39 +238,14 @@ export function CrossGameConverter() {
   );
 }
 
-/** 결과 테이블 행 */
-function ResultRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+/** 결과 항목 — Cold Forge 카드 내 개별 행 */
+function ResultItem({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
-    <tr style={{ borderBottom: `1px solid ${UI_COLORS.tableBorder}` }}>
-      <td style={{ padding: '6px 8px', color: UI_COLORS.textSecondary }}>{label}</td>
-      <td style={{
-        padding: '6px 8px',
-        textAlign: 'right',
-        fontWeight: highlight ? 700 : 400,
-        color: highlight ? UI_COLORS.successGreen : UI_COLORS.textPrimary,
-        fontSize: highlight ? 15 : 13,
-      }}>{value}</td>
-    </tr>
+    <div className={`cgc__result-item ${highlight ? 'cgc__result-item--highlight' : ''}`}>
+      <span className="cgc__result-label">{label}</span>
+      <span className={`cgc__result-value data-value ${highlight ? 'cgc__result-value--highlight' : ''}`}>
+        {value}
+      </span>
+    </div>
   );
 }
-
-const selectStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '8px 10px',
-  background: UI_COLORS.bgSurface,
-  color: UI_COLORS.textPrimary,
-  border: `1px solid ${UI_COLORS.tableBorder}`,
-  borderRadius: 6,
-  fontSize: 13,
-};
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '8px 10px',
-  background: UI_COLORS.bgSurface,
-  color: UI_COLORS.textPrimary,
-  border: `1px solid ${UI_COLORS.tableBorder}`,
-  borderRadius: 6,
-  fontSize: 13,
-  boxSizing: 'border-box',
-};
