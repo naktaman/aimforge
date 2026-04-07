@@ -249,6 +249,100 @@ export function synthGunshot(
 }
 
 /**
+ * 5-레이어 총기 발사음 (Phase 2)
+ * 스펙 §3.1 기반 — Body + Transient + Sub + Mechanical + Tail
+ * 각 레이어 독립 주파수 대역/엔벨로프/볼륨
+ *
+ * Layer 1 — Body:       500-2kHz, 200-500ms, 화약 폭발 메인 바디
+ * Layer 2 — Transient:  2-8kHz,   50-80ms,   초기 고역 어택
+ * Layer 3 — Sub:        60-200Hz, 100-300ms,  서브 베이스 충격파
+ * Layer 4 — Mechanical: 1-4kHz,   100-300ms,  슬라이드/볼트 기구음
+ * Layer 5 — Tail:       전대역,   500ms-2s,   잔향/감쇠
+ */
+export function synthGunshot5Layer(
+  ctx: AudioContext,
+  dest: AudioNode,
+  cache: Map<number, AudioBuffer>,
+): void {
+  const t = ctx.currentTime;
+  const pRand = randomPitch(2); // ±2세미톤 (5Layer는 좀 더 보수적)
+  const gRand = Math.pow(10, (Math.random() * 4 - 2) / 20); // ±2dB
+
+  // Layer 1: Body — 밴드패스 노이즈 (500-2kHz), 250ms 감쇠
+  const bodyNoise = ctx.createBufferSource();
+  bodyNoise.buffer = getNoiseBuffer(ctx, 300, cache);
+  const bodyBP = ctx.createBiquadFilter();
+  bodyBP.type = 'bandpass';
+  bodyBP.frequency.setValueAtTime(1500 * pRand, t);
+  bodyBP.frequency.exponentialRampToValueAtTime(600 * pRand, t + 0.25);
+  bodyBP.Q.value = 0.8;
+  const bodyG = ctx.createGain();
+  bodyG.gain.setValueAtTime(0.35 * gRand, t);
+  bodyG.gain.setValueAtTime(0.35 * gRand, t + 0.005); // 어택 유지
+  bodyG.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+  bodyNoise.connect(bodyBP);
+  bodyBP.connect(bodyG).connect(dest);
+  bodyNoise.start(t);
+
+  // Layer 2: Transient — 고역 노이즈 버스트 (2-8kHz), 60ms
+  const transNoise = ctx.createBufferSource();
+  transNoise.buffer = getNoiseBuffer(ctx, 80, cache);
+  const transHP = ctx.createBiquadFilter();
+  transHP.type = 'highpass';
+  transHP.frequency.value = 2000 * pRand;
+  const transLP = ctx.createBiquadFilter();
+  transLP.type = 'lowpass';
+  transLP.frequency.value = 8000 * pRand;
+  const transG = ctx.createGain();
+  transG.gain.setValueAtTime(0.3 * gRand, t);
+  transG.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+  transNoise.connect(transHP);
+  transHP.connect(transLP);
+  transLP.connect(transG).connect(dest);
+  transNoise.start(t);
+
+  // Layer 3: Sub — 사인파 (120→40Hz), 200ms 감쇠
+  const subOsc = ctx.createOscillator();
+  const subG = ctx.createGain();
+  subOsc.type = 'sine';
+  subOsc.frequency.setValueAtTime(120 * pRand, t);
+  subOsc.frequency.exponentialRampToValueAtTime(40, t + 0.2);
+  subG.gain.setValueAtTime(0.45 * gRand, t);
+  subG.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+  subOsc.connect(subG).connect(dest);
+  subOsc.start(t);
+  subOsc.stop(t + 0.2);
+
+  // Layer 4: Mechanical — 금속성 클릭 (1-4kHz), 150ms
+  const mechOsc = ctx.createOscillator();
+  const mechG = ctx.createGain();
+  mechOsc.type = 'square';
+  mechOsc.frequency.setValueAtTime(3500 * pRand, t + 0.01); // 10ms 딜레이 (메커니즘 후행)
+  mechOsc.frequency.exponentialRampToValueAtTime(1200 * pRand, t + 0.15);
+  mechG.gain.setValueAtTime(0.0001, t); // 무음 시작
+  mechG.gain.linearRampToValueAtTime(0.15 * gRand, t + 0.012);
+  mechG.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+  mechOsc.connect(mechG).connect(dest);
+  mechOsc.start(t);
+  mechOsc.stop(t + 0.15);
+
+  // Layer 5: Tail — 로우패스 노이즈 감쇠 (전대역→저역, 800ms)
+  const tailNoise = ctx.createBufferSource();
+  tailNoise.buffer = getNoiseBuffer(ctx, 1000, cache);
+  const tailLP = ctx.createBiquadFilter();
+  tailLP.type = 'lowpass';
+  tailLP.frequency.setValueAtTime(6000, t);
+  tailLP.frequency.exponentialRampToValueAtTime(400, t + 0.8);
+  tailLP.Q.value = 0.5;
+  const tailG = ctx.createGain();
+  tailG.gain.setValueAtTime(0.12 * gRand, t);
+  tailG.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
+  tailNoise.connect(tailLP);
+  tailLP.connect(tailG).connect(dest);
+  tailNoise.start(t);
+}
+
+/**
  * 타겟 스폰 — sine 600→400Hz sweep, 60ms
  */
 export function synthSpawn(ctx: AudioContext, dest: AudioNode): void {

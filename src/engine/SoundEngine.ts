@@ -15,14 +15,15 @@
  * - 장시간 사용에도 피로하지 않는 볼륨 밸런스
  */
 
-import { SpatialAudio, type Vec3 } from './SpatialAudio';
+import { SpatialAudio, REVERB_PRESETS, type Vec3 } from './SpatialAudio';
 import {
   synthHit, synthHeadshot, synthKill, synthMiss,
-  synthGunshot, synthSpawn,
+  synthGunshot, synthGunshot5Layer, synthSpawn,
 } from './SoundRecipes';
 
 /** Vec3 타입 재수출 (호출부 편의) */
-export type { Vec3 } from './SpatialAudio';
+export type { Vec3, ReverbPreset } from './SpatialAudio';
+export { REVERB_PRESETS } from './SpatialAudio';
 
 /** 볼륨 설정 인터페이스 */
 export interface VolumeSettings {
@@ -44,6 +45,8 @@ export class SoundEngine {
   private listenerPos: Vec3 = { x: 0, y: 0, z: 0 };
   /** 공간 오디오 활성화 여부 */
   private spatialEnabled = true;
+  /** 5레이어 발사음 사용 여부 (Phase 2) */
+  private use5LayerGunshot = true;
 
   /** 볼륨 설정 (0~1) */
   private volumes: VolumeSettings = { master: 0.7, hit: 0.7, ui: 0.7 };
@@ -91,17 +94,19 @@ export class SoundEngine {
   /**
    * 공간 오디오 체인 또는 직접 연결 반환
    * 공간 오디오 비활성화 시 destination 직접 반환
+   * @param useHrtf 핵심 소스(히트/발사)는 true — HRTF PannerNode 적용
    */
   private getSpatialOrDirect(
     ctx: AudioContext,
     sourcePos: Vec3 | undefined,
     destination: GainNode,
+    useHrtf = false,
   ): AudioNode {
     if (!this.spatialEnabled || !sourcePos) {
       return destination;
     }
     const { input } = this.spatial.createSpatialChain(
-      ctx, sourcePos, this.listenerPos, destination,
+      ctx, sourcePos, this.listenerPos, destination, useHrtf,
     );
     return input;
   }
@@ -117,7 +122,8 @@ export class SoundEngine {
     if (!this.enabled) return;
     try {
       const ctx = this.ensureContext();
-      const dest = this.getSpatialOrDirect(ctx, sourcePos, this.getHitDest());
+      // 히트 사운드 — HRTF 적용 (핵심 소스)
+      const dest = this.getSpatialOrDirect(ctx, sourcePos, this.getHitDest(), true);
       synthHit(ctx, dest, pitchMultiplier);
     } catch (e) {
       console.error('[SoundEngine] playHitSound 실패:', e);
@@ -133,7 +139,8 @@ export class SoundEngine {
     if (!this.enabled) return;
     try {
       const ctx = this.ensureContext();
-      const dest = this.getSpatialOrDirect(ctx, sourcePos, this.getHitDest());
+      // 헤드샷 사운드 — HRTF 적용 (핵심 소스)
+      const dest = this.getSpatialOrDirect(ctx, sourcePos, this.getHitDest(), true);
       synthHeadshot(ctx, dest, pitchMultiplier, this.noiseCache);
     } catch (e) {
       console.error('[SoundEngine] playHeadshotSound 실패:', e);
@@ -170,16 +177,28 @@ export class SoundEngine {
   }
 
   /**
-   * 총기 발사음 — 레이어드 합성 + ±3세미톤/±3dB 랜덤화
+   * 총기 발사음 — 5레이어 또는 3레이어 합성
+   * Phase 2: Body + Transient + Sub + Mechanical + Tail
+   * 1인칭이므로 sourcePos 없이 HRTF 비적용 (본인 발사음)
    */
   playGunshot(): void {
     if (!this.enabled) return;
     try {
       const ctx = this.ensureContext();
-      synthGunshot(ctx, this.getHitDest(), this.noiseCache);
+      const dest = this.getHitDest();
+      if (this.use5LayerGunshot) {
+        synthGunshot5Layer(ctx, dest, this.noiseCache);
+      } else {
+        synthGunshot(ctx, dest, this.noiseCache);
+      }
     } catch (e) {
       console.error('[SoundEngine] playGunshot 실패:', e);
     }
+  }
+
+  /** 5레이어 발사음 사용 여부 토글 */
+  setUse5LayerGunshot(enabled: boolean): void {
+    this.use5LayerGunshot = enabled;
   }
 
   /** 타겟 스폰 사운드 */
@@ -360,8 +379,34 @@ export class SoundEngine {
     return this.enabled;
   }
 
+  // ─── 리버브 제어 (Phase 2) ─────────────────────────────────
+
+  /**
+   * 리버브 프리셋 설정 — 환경에 따른 공간 잔향
+   * @param presetName 프리셋 이름 (indoor, outdoor, arena, none)
+   */
+  setReverbPreset(presetName: string): void {
+    const preset = REVERB_PRESETS[presetName];
+    if (!preset) {
+      console.error(`[SoundEngine] 알 수 없는 리버브 프리셋: ${presetName}`);
+      return;
+    }
+    try {
+      const ctx = this.ensureContext();
+      this.spatial.setReverbPreset(ctx, preset, this.masterGain!);
+    } catch (e) {
+      console.error('[SoundEngine] setReverbPreset 실패:', e);
+    }
+  }
+
+  /** 현재 리버브 프리셋 이름 반환 */
+  getReverbPreset(): string {
+    return this.spatial.getCurrentReverbPreset().name;
+  }
+
   /** 리소스 정리 */
   dispose(): void {
+    this.spatial.dispose();
     this.ctx?.close();
     this.ctx = null;
     this.masterGain = null;
