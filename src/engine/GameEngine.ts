@@ -6,7 +6,7 @@
  * - 시나리오/타겟 매니저 통합 포인트
  */
 import * as THREE from 'three';
-import { createEnvironment } from './Environment';
+import { createEnvironment, type EnvironmentInstance } from './Environment';
 import { requestPointerLock, isPointerLocked, onPointerLockChange } from './PointerLock';
 import { InputHandler } from './InputHandler';
 import { WeaponViewModel } from './WeaponViewModel';
@@ -43,6 +43,7 @@ export class GameEngine {
   private targetManager: TargetManager | null = null;
   private activeScenario: Scenario | null = null;
   private environmentGroup: THREE.Group | null = null;
+  private environmentInstance: EnvironmentInstance | null = null;
 
   // === Pointer Lock 해제 콜백 ===
   private cleanupPointerLock: (() => void) | null = null;
@@ -93,8 +94,9 @@ export class GameEngine {
     );
     this.camera.position.set(0, EYE_HEIGHT_M, 0); // 눈 높이
 
-    // 환경 구성 (Group 반환 — counter-strafe에서 이동용)
-    this.environmentGroup = createEnvironment(this.scene);
+    // 환경 구성 (프리셋 기반 — Group + update/dispose API)
+    this.environmentInstance = createEnvironment(this.scene, undefined, this.renderer);
+    this.environmentGroup = this.environmentInstance.group;
 
     // 1인칭 무기 뷰모델 + 이펙트 초기화
     this.weaponViewModel = new WeaponViewModel();
@@ -312,6 +314,10 @@ export class GameEngine {
     this.weaponEffects = null;
     this.weaponViewModel.dispose();
 
+    // 환경 이펙트 해제
+    this.environmentInstance?.dispose();
+    this.environmentInstance = null;
+
     // 씬 내 모든 geometry/material 명시적 dispose (메모리 누수 방지)
     this.scene.traverse((obj) => {
       if (obj instanceof THREE.Mesh) {
@@ -392,6 +398,9 @@ export class GameEngine {
       weaponViewModel: this.weaponViewModel,
       weaponEffects: this.weaponEffects,
     });
+
+    // 환경 이펙트 업데이트 (먼지 파티클 등)
+    this.environmentInstance?.update(deltaTime);
 
     // 시나리오 업데이트
     if (this.activeScenario) {

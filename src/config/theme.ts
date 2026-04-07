@@ -257,6 +257,31 @@ export const GRIP_COLORS = {
   handSkin: '#c8a97e',
 } as const;
 
+// ===== Cold Forge 환경 색상 (THREE.js hex) =====
+
+export const FORGE_COLORS = {
+  /** 배경/안개 — 깊은 네이비 */
+  baseDark: 0x0a0a1a,
+  /** 바닥 — 어두운 콘크리트 */
+  floorDark: 0x1a1a2e,
+  /** 금속 벽 */
+  wallMetal: 0x2a2a3e,
+  /** 콘크리트 벽 */
+  wallConcrete: 0x16213e,
+  /** 천장 */
+  ceiling: 0x0f0f23,
+  /** 네온 시안 (주 액센트) */
+  neonCyan: 0x00e5ff,
+  /** 네온 마젠타 (보조 액센트) */
+  neonMagenta: 0xff2daa,
+  /** 먼지 파티클 */
+  dustParticle: 0x88aacc,
+  /** 반구광 상단 */
+  hemiSky: 0x1a1a4e,
+  /** 반구광 하단 */
+  hemiGround: 0x2a1a0a,
+} as const;
+
 // ===== 무기 뷰모델 색상 (THREE.js hex) =====
 
 export const WEAPON_COLORS = {
