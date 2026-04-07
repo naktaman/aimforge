@@ -19,10 +19,12 @@ import { SpatialAudio, REVERB_PRESETS, type Vec3 } from './SpatialAudio';
 import {
   synthHit, synthHeadshot, synthKill, synthMiss,
   synthGunshot, synthGunshot5Layer, synthSpawn,
+  type GunSoundType,
 } from './SoundRecipes';
 
-/** Vec3 타입 재수출 (호출부 편의) */
+/** 타입 재수출 (호출부 편의) */
 export type { Vec3, ReverbPreset } from './SpatialAudio';
+export type { GunSoundType } from './SoundRecipes';
 export { REVERB_PRESETS } from './SpatialAudio';
 
 /** 볼륨 설정 인터페이스 */
@@ -47,6 +49,8 @@ export class SoundEngine {
   private spatialEnabled = true;
   /** 5레이어 발사음 사용 여부 (Phase 2) */
   private use5LayerGunshot = true;
+  /** 현재 무기 사운드 타입 (Phase 3) */
+  private gunSoundType: GunSoundType = 'rifle';
 
   /** 볼륨 설정 (0~1) */
   private volumes: VolumeSettings = { master: 0.7, hit: 0.7, ui: 0.7 };
@@ -178,16 +182,16 @@ export class SoundEngine {
 
   /**
    * 총기 발사음 — 5레이어 또는 3레이어 합성
-   * Phase 2: Body + Transient + Sub + Mechanical + Tail
-   * 1인칭이므로 sourcePos 없이 HRTF 비적용 (본인 발사음)
+   * Phase 3: 무기 타입별 프로파일, 연발 시 Tail 자연 오버랩
+   * @param typeOverride 무기 타입 오버라이드 (생략 시 현재 설정)
    */
-  playGunshot(): void {
+  playGunshot(typeOverride?: GunSoundType): void {
     if (!this.enabled) return;
     try {
       const ctx = this.ensureContext();
       const dest = this.getHitDest();
       if (this.use5LayerGunshot) {
-        synthGunshot5Layer(ctx, dest, this.noiseCache);
+        synthGunshot5Layer(ctx, dest, this.noiseCache, typeOverride ?? this.gunSoundType);
       } else {
         synthGunshot(ctx, dest, this.noiseCache);
       }
@@ -199,6 +203,16 @@ export class SoundEngine {
   /** 5레이어 발사음 사용 여부 토글 */
   setUse5LayerGunshot(enabled: boolean): void {
     this.use5LayerGunshot = enabled;
+  }
+
+  /** 무기 사운드 타입 설정 (Phase 3) */
+  setGunSoundType(type: GunSoundType): void {
+    this.gunSoundType = type;
+  }
+
+  /** 현재 무기 사운드 타입 반환 */
+  getGunSoundType(): GunSoundType {
+    return this.gunSoundType;
   }
 
   /** 타겟 스폰 사운드 */

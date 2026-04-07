@@ -248,45 +248,91 @@ export function synthGunshot(
   bass.stop(t + 0.06);
 }
 
+/** 무기 사운드 타입 (5레이어 프로파일 분류) */
+export type GunSoundType = 'pistol' | 'rifle' | 'smg' | 'sniper';
+
+/** 5레이어 프로파일 — 무기 타입별 레이어 게인/지속시간 설정 */
+interface GunLayerProfile {
+  bodyGain: number;   bodyDecay: number;
+  transGain: number;  transDecay: number;
+  subGain: number;    subDecay: number;   subFreqStart: number;
+  mechGain: number;   mechDecay: number;  mechDelay: number;
+  tailGain: number;   tailDecay: number;  tailBufMs: number;
+}
+
 /**
- * 5-레이어 총기 발사음 (Phase 2)
- * 스펙 §3.1 기반 — Body + Transient + Sub + Mechanical + Tail
- * 각 레이어 독립 주파수 대역/엔벨로프/볼륨
- *
- * Layer 1 — Body:       500-2kHz, 200-500ms, 화약 폭발 메인 바디
- * Layer 2 — Transient:  2-8kHz,   50-80ms,   초기 고역 어택
- * Layer 3 — Sub:        60-200Hz, 100-300ms,  서브 베이스 충격파
- * Layer 4 — Mechanical: 1-4kHz,   100-300ms,  슬라이드/볼트 기구음
- * Layer 5 — Tail:       전대역,   500ms-2s,   잔향/감쇠
+ * 무기 타입별 레이어 프로파일
+ * Pistol: 짧은 Transient 강조, 약한 Tail
+ * Rifle:  Body+Sub 강조, 긴 Tail
+ * SMG:    빠른 Mechanical, 약한 Sub
+ * Sniper: 극강 Transient+Sub, 3초 Tail
+ */
+const GUN_PROFILES: Record<GunSoundType, GunLayerProfile> = {
+  pistol: {
+    bodyGain: 0.25, bodyDecay: 0.15,
+    transGain: 0.4,  transDecay: 0.04,
+    subGain: 0.2,   subDecay: 0.1,   subFreqStart: 80,
+    mechGain: 0.2,  mechDecay: 0.08, mechDelay: 0.005,
+    tailGain: 0.06, tailDecay: 0.3,  tailBufMs: 400,
+  },
+  rifle: {
+    bodyGain: 0.35, bodyDecay: 0.25,
+    transGain: 0.3,  transDecay: 0.06,
+    subGain: 0.45,  subDecay: 0.2,   subFreqStart: 120,
+    mechGain: 0.15, mechDecay: 0.15, mechDelay: 0.01,
+    tailGain: 0.12, tailDecay: 0.8,  tailBufMs: 1000,
+  },
+  smg: {
+    bodyGain: 0.2,  bodyDecay: 0.1,
+    transGain: 0.25, transDecay: 0.035,
+    subGain: 0.15,  subDecay: 0.08,  subFreqStart: 90,
+    mechGain: 0.3,  mechDecay: 0.06, mechDelay: 0.003,
+    tailGain: 0.04, tailDecay: 0.2,  tailBufMs: 300,
+  },
+  sniper: {
+    bodyGain: 0.3,  bodyDecay: 0.4,
+    transGain: 0.5,  transDecay: 0.08,
+    subGain: 0.6,   subDecay: 0.35,  subFreqStart: 150,
+    mechGain: 0.12, mechDecay: 0.25, mechDelay: 0.02,
+    tailGain: 0.2,  tailDecay: 3.0,  tailBufMs: 3500,
+  },
+};
+
+/**
+ * 5-레이어 총기 발사음 (Phase 3)
+ * Body + Transient + Sub + Mechanical + Tail
+ * 무기 타입별 프로파일로 레이어 밸런스 조절
+ * 연발 시 Tail이 자연스럽게 오버랩됨 (별도 중단 없음)
+ * @param gunType 무기 사운드 타입 (기본: rifle — 하위 호환)
  */
 export function synthGunshot5Layer(
   ctx: AudioContext,
   dest: AudioNode,
   cache: Map<number, AudioBuffer>,
+  gunType: GunSoundType = 'rifle',
 ): void {
   const t = ctx.currentTime;
-  const pRand = randomPitch(2); // ±2세미톤 (5Layer는 좀 더 보수적)
-  const gRand = Math.pow(10, (Math.random() * 4 - 2) / 20); // ±2dB
+  const p = GUN_PROFILES[gunType];
+  const pRand = randomPitch(2);
+  const gRand = Math.pow(10, (Math.random() * 4 - 2) / 20);
 
-  // Layer 1: Body — 밴드패스 노이즈 (500-2kHz), 250ms 감쇠
+  // Layer 1: Body — 밴드패스 노이즈 (500-2kHz)
   const bodyNoise = ctx.createBufferSource();
-  bodyNoise.buffer = getNoiseBuffer(ctx, 300, cache);
+  bodyNoise.buffer = getNoiseBuffer(ctx, Math.ceil(p.bodyDecay * 1000) + 50, cache);
   const bodyBP = ctx.createBiquadFilter();
   bodyBP.type = 'bandpass';
   bodyBP.frequency.setValueAtTime(1500 * pRand, t);
-  bodyBP.frequency.exponentialRampToValueAtTime(600 * pRand, t + 0.25);
+  bodyBP.frequency.exponentialRampToValueAtTime(600 * pRand, t + p.bodyDecay);
   bodyBP.Q.value = 0.8;
   const bodyG = ctx.createGain();
-  bodyG.gain.setValueAtTime(0.35 * gRand, t);
-  bodyG.gain.setValueAtTime(0.35 * gRand, t + 0.005); // 어택 유지
-  bodyG.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-  bodyNoise.connect(bodyBP);
-  bodyBP.connect(bodyG).connect(dest);
+  bodyG.gain.setValueAtTime(p.bodyGain * gRand, t);
+  bodyG.gain.exponentialRampToValueAtTime(0.001, t + p.bodyDecay);
+  bodyNoise.connect(bodyBP).connect(bodyG).connect(dest);
   bodyNoise.start(t);
 
-  // Layer 2: Transient — 고역 노이즈 버스트 (2-8kHz), 60ms
+  // Layer 2: Transient — 고역 노이즈 버스트 (2-8kHz)
   const transNoise = ctx.createBufferSource();
-  transNoise.buffer = getNoiseBuffer(ctx, 80, cache);
+  transNoise.buffer = getNoiseBuffer(ctx, Math.ceil(p.transDecay * 1000) + 20, cache);
   const transHP = ctx.createBiquadFilter();
   transHP.type = 'highpass';
   transHP.frequency.value = 2000 * pRand;
@@ -294,51 +340,48 @@ export function synthGunshot5Layer(
   transLP.type = 'lowpass';
   transLP.frequency.value = 8000 * pRand;
   const transG = ctx.createGain();
-  transG.gain.setValueAtTime(0.3 * gRand, t);
-  transG.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
-  transNoise.connect(transHP);
-  transHP.connect(transLP);
-  transLP.connect(transG).connect(dest);
+  transG.gain.setValueAtTime(p.transGain * gRand, t);
+  transG.gain.exponentialRampToValueAtTime(0.001, t + p.transDecay);
+  transNoise.connect(transHP).connect(transLP).connect(transG).connect(dest);
   transNoise.start(t);
 
-  // Layer 3: Sub — 사인파 (120→40Hz), 200ms 감쇠
+  // Layer 3: Sub — 사인파 감쇠
   const subOsc = ctx.createOscillator();
   const subG = ctx.createGain();
   subOsc.type = 'sine';
-  subOsc.frequency.setValueAtTime(120 * pRand, t);
-  subOsc.frequency.exponentialRampToValueAtTime(40, t + 0.2);
-  subG.gain.setValueAtTime(0.45 * gRand, t);
-  subG.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+  subOsc.frequency.setValueAtTime(p.subFreqStart * pRand, t);
+  subOsc.frequency.exponentialRampToValueAtTime(30, t + p.subDecay);
+  subG.gain.setValueAtTime(p.subGain * gRand, t);
+  subG.gain.exponentialRampToValueAtTime(0.001, t + p.subDecay);
   subOsc.connect(subG).connect(dest);
   subOsc.start(t);
-  subOsc.stop(t + 0.2);
+  subOsc.stop(t + p.subDecay);
 
-  // Layer 4: Mechanical — 금속성 클릭 (1-4kHz), 150ms
+  // Layer 4: Mechanical — 금속성 클릭
   const mechOsc = ctx.createOscillator();
   const mechG = ctx.createGain();
   mechOsc.type = 'square';
-  mechOsc.frequency.setValueAtTime(3500 * pRand, t + 0.01); // 10ms 딜레이 (메커니즘 후행)
-  mechOsc.frequency.exponentialRampToValueAtTime(1200 * pRand, t + 0.15);
-  mechG.gain.setValueAtTime(0.0001, t); // 무음 시작
-  mechG.gain.linearRampToValueAtTime(0.15 * gRand, t + 0.012);
-  mechG.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+  mechOsc.frequency.setValueAtTime(3500 * pRand, t + p.mechDelay);
+  mechOsc.frequency.exponentialRampToValueAtTime(1200 * pRand, t + p.mechDecay);
+  mechG.gain.setValueAtTime(0.0001, t);
+  mechG.gain.linearRampToValueAtTime(p.mechGain * gRand, t + p.mechDelay + 0.002);
+  mechG.gain.exponentialRampToValueAtTime(0.001, t + p.mechDecay);
   mechOsc.connect(mechG).connect(dest);
   mechOsc.start(t);
-  mechOsc.stop(t + 0.15);
+  mechOsc.stop(t + p.mechDecay);
 
-  // Layer 5: Tail — 로우패스 노이즈 감쇠 (전대역→저역, 800ms)
+  // Layer 5: Tail — 로우패스 노이즈 (연발 시 자연 오버랩)
   const tailNoise = ctx.createBufferSource();
-  tailNoise.buffer = getNoiseBuffer(ctx, 1000, cache);
+  tailNoise.buffer = getNoiseBuffer(ctx, p.tailBufMs, cache);
   const tailLP = ctx.createBiquadFilter();
   tailLP.type = 'lowpass';
   tailLP.frequency.setValueAtTime(6000, t);
-  tailLP.frequency.exponentialRampToValueAtTime(400, t + 0.8);
+  tailLP.frequency.exponentialRampToValueAtTime(300, t + p.tailDecay);
   tailLP.Q.value = 0.5;
   const tailG = ctx.createGain();
-  tailG.gain.setValueAtTime(0.12 * gRand, t);
-  tailG.gain.exponentialRampToValueAtTime(0.001, t + 0.8);
-  tailNoise.connect(tailLP);
-  tailLP.connect(tailG).connect(dest);
+  tailG.gain.setValueAtTime(p.tailGain * gRand, t);
+  tailG.gain.exponentialRampToValueAtTime(0.001, t + p.tailDecay);
+  tailNoise.connect(tailLP).connect(tailG).connect(dest);
   tailNoise.start(t);
 }
 
